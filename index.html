@@ -179,11 +179,11 @@
         .article-card {
             background: var(--surface);
             border-radius: 12px;
-            overflow: hidden;
+            overflow: visible; /* Changed from hidden to visible */
             box-shadow: var(--shadow);
             transition: all 0.3s ease;
             border: 1px solid var(--border);
-            position: relative;
+            position: relative; /* Ensure positioning context */
             display: flex;
             flex-direction: column;
         }
@@ -194,7 +194,7 @@
         }
 
         .article-card:hover .article-actions {
-            opacity: 1;
+            opacity: 1 !important; /* Force visibility on hover */
         }
 
         .article-image {
@@ -270,34 +270,35 @@
 
         .article-actions {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 15px; /* Moved down slightly */
+            right: 15px; /* Moved in slightly */
             display: flex;
-            gap: 6px;
-            opacity: 0;
-            transition: opacity 0.2s ease;
+            gap: 8px; /* Increased gap */
+            opacity: 0.3; /* Make slightly visible by default */
+            transition: opacity 0.3s ease;
+            z-index: 10; /* Ensure it's above other elements */
         }
 
         .action-btn {
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.95); /* More opaque */
+            border: 2px solid var(--border); /* Thicker border */
             border-radius: 8px;
-            padding: 8px;
+            padding: 10px; /* Larger padding */
             cursor: pointer;
             font-size: 16px;
             transition: all 0.2s ease;
             backdrop-filter: blur(10px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            min-width: 36px;
-            height: 36px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Stronger shadow */
+            min-width: 40px; /* Larger buttons */
+            height: 40px; /* Larger buttons */
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-3px) scale(1.1); /* More dramatic hover */
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
         }
 
         .read-btn:hover {
@@ -318,6 +319,21 @@
             background: #ffebee;
             border-color: #f44336;
             color: #d32f2f;
+        }
+
+        /* Force visibility on any hover */
+        .article-card:hover .article-actions,
+        .article-actions:hover {
+            opacity: 1 !important;
+        }
+
+        /* Test mode - always show buttons */
+        body.test-mode .article-actions {
+            opacity: 1 !important;
+            background: rgba(255, 255, 0, 0.1); /* Yellow background for testing */
+            border: 2px dashed #ff9800;
+            border-radius: 8px;
+            padding: 5px;
         }
 
         /* Reader View */
@@ -553,6 +569,9 @@
                     </button>
                     <button id="debugBtn" class="btn btn-secondary" onclick="webReader.showDebugInfo()">
                         <span>🔧</span> Debug
+                    </button>
+                    <button id="testBtn" class="btn btn-secondary" onclick="webReader.toggleTestMode()">
+                        <span>👁️</span> Show Buttons
                     </button>
                 </div>
             </div>
@@ -1160,6 +1179,7 @@ Client ID: ${this.clientId}
 Protocol: ${window.location.protocol}
 Host: ${window.location.host}
 Has Access Token: ${!!this.accessToken}
+Articles Loaded: ${this.articles.length}
 
 Azure AD Redirect URI Requirements:
 - Must be absolute URI (http:// or https://)
@@ -1177,6 +1197,11 @@ Next Steps:
 3. Go to Authentication → Platform configurations
 4. Add Web platform with redirect URI: ${this.redirectUri}
 5. Make sure URI is exact match
+
+Button Issues:
+- Try clicking "Show Buttons" to test if buttons work
+- Check browser console for JavaScript errors
+- Inspect element to see if buttons are in DOM
                 `;
                 
                 alert(info);
@@ -1185,8 +1210,29 @@ Next Steps:
                     redirectUri: this.redirectUri,
                     clientId: this.clientId,
                     protocol: window.location.protocol,
-                    hasToken: !!this.accessToken
+                    hasToken: !!this.accessToken,
+                    articlesCount: this.articles.length
                 });
+            }
+
+            // Toggle test mode to always show buttons
+            toggleTestMode() {
+                document.body.classList.toggle('test-mode');
+                const isTestMode = document.body.classList.contains('test-mode');
+                
+                const testBtn = document.getElementById('testBtn');
+                if (testBtn) {
+                    testBtn.innerHTML = isTestMode 
+                        ? '<span>👁️</span> Hide Buttons' 
+                        : '<span>👁️</span> Show Buttons';
+                }
+                
+                this.updateStatus(
+                    isTestMode 
+                        ? '🔍 Test mode ON - Action buttons always visible' 
+                        : '👁️ Test mode OFF - Action buttons show on hover', 
+                    'success'
+                );
             }
         }
 
