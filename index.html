@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyPocket - Web Reader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #ee5a24;
+            --secondary-color: #667eea;
+            --background: #f8f9fa;
+            --surface: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #6c757d;
+            --border: #e9ecef;
+            --shadow: 0 2px 12px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--background);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            color: white;
+            padding: 20px 0;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .logo {
+            font-size: 1.8em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .btn-primary:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text-primary);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+            transform: translateY(-1px);
+        }
+
+        /* Search */
+        .search-container {
+            padding: 30px 0;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .search-box {
+            position: relative;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 16px;
+            background: var(--background);
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 20px;
+        }
+
+        /* Status */
+        .status {
+            padding: 20px 0;
+            text-align: center;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .status.loading {
+            color: var(--secondary-color);
+        }
+
+        .status.error {
+            color: #e74c3c;
+        }
+
+        .status.success {
+            color: #27ae60;
+        }
+
+        /* Articles Grid */
+        .articles-section {
+            padding: 40px 0;
+            min-height: 60vh;
+        }
+
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .article-card {
+            background: var(--surface);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid var(--border);
+        }
+
+        .article-card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        .article-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            color: white;
+            position: relative;
+        }
+
+        .article-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .article-content {
+            padding: 20px;
+        }
+
+        .article-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            line-height: 1.4;
+            color: var(--text-primary);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .article-excerpt {
+            color: var(--text-secondary);
+            font-size: 0.95em;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .article-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            color: var(--text-secondary);
+            font-size: 0.85em;
+        }
+
+        .article-domain {
+            font-weight: 500;
+        }
+
+        .article-date {
+            opacity: 0.8;
+        }
+
+        .article-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 0.8em;
+        }
+
+        /* Reader View */
+        .reader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            display: none;
+            overflow-y: auto;
+        }
+
+        .reader-overlay.active {
+            display: block;
+        }
+
+        .reader-container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: var(--surface);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+        }
+
+        .reader-header {
+            padding: 30px;
+            border-bottom: 1px solid var(--border);
+            background: var(--background);
+        }
+
+        .reader-title {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            line-height: 1.3;
+        }
+
+        .reader-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .reader-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .reader-content {
+            padding: 40px;
+            font-size: 1.1em;
+            line-height: 1.8;
+        }
+
+        .reader-content h1, .reader-content h2, .reader-content h3 {
+            margin: 30px 0 15px;
+            color: var(--text-primary);
+        }
+
+        .reader-content p {
+            margin-bottom: 20px;
+        }
+
+        .reader-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .reader-content blockquote {
+            border-left: 4px solid var(--primary-color);
+            margin: 20px 0;
+            padding: 15px 20px;
+            background: var(--background);
+            font-style: italic;
+        }
+
+        .close-reader {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        /* Loading Animation */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .articles-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .reader-container {
+                margin: 20px;
+                border-radius: 8px;
+            }
+
+            .reader-header, .reader-content {
+                padding: 20px;
+            }
+
+            .reader-title {
+                font-size: 1.5em;
+            }
+
+            .search-input {
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+        }
+
+        /* Connection Status */
+        .connection-status {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .connection-status.connected {
+            border-color: #27ae60;
+            background: #d4edda;
+        }
+
+        .connection-status.disconnected {
+            border-color: #e74c3c;
+            background: #f8d7da;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    📚 MyPocket Web Reader
+                </div>
+                <div class="header-actions">
+                    <button id="connectBtn" class="btn btn-primary">
+                        <span id="connectIcon">☁️</span>
+                        <span id="connectText">Connect OneDrive</span>
+                    </button>
+                    <button id="refreshBtn" class="btn btn-secondary" style="display: none;">
+                        <span>🔄</span> Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Search -->
+    <section class="search-container">
+        <div class="container">
+            <div class="search-box">
+                <input type="text" id="searchInput" class="search-input" 
+                       placeholder="Search your saved articles...">
+                <span class="search-icon">🔍</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Status -->
+    <div class="status" id="status">
+        Connect to OneDrive to view your saved articles
+    </div>
+
+    <!-- Articles -->
+    <section class="articles-section">
+        <div class="container">
+            <div id="articlesContainer">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📖</div>
+                    <h3>Welcome to MyPocket Web Reader</h3>
+                    <p>Connect to OneDrive to access your saved articles from anywhere!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Reader Overlay -->
+    <div class="reader-overlay" id="readerOverlay">
+        <div class="reader-container">
+            <button class="close-reader" id="closeReader">✕</button>
+            <div class="reader-header">
+                <h1 class="reader-title" id="readerTitle">Article Title</h1>
+                <div class="reader-meta" id="readerMeta">
+                    <span>📅 <span id="readerDate">Date</span></span>
+                    <span>🌐 <span id="readerDomain">Domain</span></span>
+                    <span>⏱️ <span id="readerTime">5 min read</span></span>
+                </div>
+                <div class="reader-actions">
+                    <button class="btn btn-secondary" id="openOriginal">
+                        🔗 Open Original
+                    </button>
+                </div>
+            </div>
+            <div class="reader-content" id="readerContent">
+                Article content will appear here...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class MyPocketWebReader {
+            constructor() {
+                this.clientId = '436e8796-8c40-47c3-9ad5-b8882f3ef7f7'; // Your Azure app client ID
+                this.redirectUri = window.location.origin + window.location.pathname;
+                this.accessToken = null;
+                this.articles = [];
+                this.currentArticle = null;
+
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.checkAuthFromURL();
+                this.loadStoredToken();
+            }
+
+            setupEventListeners() {
+                document.getElementById('connectBtn').addEventListener('click', () => this.authenticate());
+                document.getElementById('refreshBtn').addEventListener('click', () => this.loadArticles());
+                document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
+                document.getElementById('closeReader').addEventListener('click', () => this.closeReader());
+                document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
+            }
+
+            // Check if we're returning from OAuth
+            checkAuthFromURL() {
+                const hash = window.location.hash.substring(1);
+                if (hash && hash.includes('access_token=')) {
+                    const params = new URLSearchParams(hash);
+                    const accessToken = params.get('access_token');
+                    const error = params.get('error');
+
+                    if (error) {
+                        this.updateStatus(`Authentication error: ${error}`, 'error');
+                        return;
+                    }
+
+                    if (accessToken) {
+                        this.accessToken = accessToken;
+                        this.saveToken(accessToken);
+                        this.updateConnectionStatus(true);
+                        this.loadArticles();
+                        
+                        // Clean up URL
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
+                }
+            }
+
+            // Load stored token
+            loadStoredToken() {
+                this.accessToken = localStorage.getItem('mypocket_access_token');
+                if (this.accessToken) {
+                    this.updateConnectionStatus(true);
+                    this.loadArticles();
+                }
+            }
+
+            // Save token to localStorage
+            saveToken(token) {
+                localStorage.setItem('mypocket_access_token', token);
+            }
+
+            // Clear stored token
+            clearToken() {
+                localStorage.removeItem('mypocket_access_token');
+                this.accessToken = null;
+            }
+
+            // Authenticate with OneDrive
+            authenticate() {
+                const authUrl = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?` +
+                    `client_id=${this.clientId}&` +
+                    `response_type=token&` +
+                    `redirect_uri=${encodeURIComponent(this.redirectUri)}&` +
+                    `scope=${encodeURIComponent('Files.ReadWrite User.Read')}&` +
+                    `response_mode=fragment`;
+
+                window.location.href = authUrl;
+            }
+
+            // Update connection status
+            updateConnectionStatus(connected) {
+                const connectBtn = document.getElementById('connectBtn');
+                const connectIcon = document.getElementById('connectIcon');
+                const connectText = document.getElementById('connectText');
+                const refreshBtn = document.getElementById('refreshBtn');
+
+                if (connected) {
+                    connectIcon.textContent = '✅';
+                    connectText.textContent = 'Connected';
+                    connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
+                    refreshBtn.style.display = 'inline-flex';
+                } else {
+                    connectIcon.textContent = '☁️';
+                    connectText.textContent = 'Connect OneDrive';
+                    connectBtn.style.background = 'rgba(255,255,255,0.2)';
+                    refreshBtn.style.display = 'none';
+                }
+            }
+
+            // Update status message
+            updateStatus(message, type = '') {
+                const status = document.getElementById('status');
+                status.textContent = message;
+                status.className = `status ${type}`;
+            }
+
+            // Load articles from OneDrive
+            async loadArticles() {
+                if (!this.accessToken) {
+                    this.updateStatus('Not connected to OneDrive', 'error');
+                    return;
+                }
+
+                try {
+                    this.updateStatus('Loading articles... ⏳', 'loading');
+
+                    // List files in MyPocket folder
+                    const listResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children', {
+                        headers: {
+                            'Authorization': `Bearer ${this.accessToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!listResponse.ok) {
+                        if (listResponse.status === 401) {
+                            this.clearToken();
+                            this.updateConnectionStatus(false);
+                            this.updateStatus('Session expired. Please reconnect.', 'error');
+                            return;
+                        }
+                        throw new Error(`Failed to list files: ${listResponse.status}`);
+                    }
+
+                    const fileList = await listResponse.json();
+                    const backupFiles = fileList.value.filter(file =>
+                        file.name.startsWith('mypocket-backup-') && file.name.endsWith('.json')
+                    );
+
+                    if (backupFiles.length === 0) {
+                        this.updateStatus('No backup files found. Save some articles with the browser extension first.', 'error');
+                        this.displayEmptyState();
+                        return;
+                    }
+
+                    // Get the most recent backup
+                    const latestFile = backupFiles.sort((a, b) =>
+                        new Date(b.lastModifiedDateTime) - new Date(a.lastModifiedDateTime)
+                    )[0];
+
+                    // Download the backup file
+                    const downloadResponse = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${latestFile.id}/content`, {
+                        headers: {
+                            'Authorization': `Bearer ${this.accessToken}`
+                        }
+                    });
+
+                    if (!downloadResponse.ok) {
+                        throw new Error(`Failed to download backup: ${downloadResponse.status}`);
+                    }
+
+                    const backupContent = await downloadResponse.text();
+                    const backup = JSON.parse(backupContent);
+
+                    this.articles = backup.articles || [];
+                    this.displayArticles(this.articles);
+                    
+                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name}`, 'success');
+
+                } catch (error) {
+                    console.error('Error loading articles:', error);
+                    this.updateStatus(`Error loading articles: ${error.message}`, 'error');
+                }
+            }
+
+            // Display articles
+            displayArticles(articles) {
+                const container = document.getElementById('articlesContainer');
+                
+                if (articles.length === 0) {
+                    this.displayEmptyState();
+                    return;
+                }
+
+                const articlesHTML = articles.map((article, index) => `
+                    <div class="article-card" onclick="webReader.openReader(${index})">
+                        <div class="article-image">
+                            ${article.images && article.images.length > 0 
+                                ? `<img src="${article.images[0].src}" alt="Article image" onerror="this.style.display='none'">` 
+                                : '📄'
+                            }
+                        </div>
+                        <div class="article-content">
+                            <h2 class="article-title">${this.escapeHtml(article.title)}</h2>
+                            <p class="article-excerpt">${this.escapeHtml(article.excerpt)}</p>
+                            <div class="article-meta">
+                                <span class="article-domain">🌐 ${this.getDomain(article.url)}</span>
+                                <span class="article-date">📅 ${this.formatDate(article.dateAdded)}</span>
+                            </div>
+                            <div class="article-stats">
+                                <span>⏱️ ${article.readTime || 1} min read</span>
+                                <span>📝 ${article.wordCount || 0} words</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
+            }
+
+            // Display empty state
+            displayEmptyState() {
+                const container = document.getElementById('articlesContainer');
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📖</div>
+                        <h3>No articles found</h3>
+                        <p>Use the MyPocket browser extension to save articles, then refresh this page.</p>
+                    </div>`;
+            }
+
+            // Search articles
+            searchArticles(query) {
+                if (!query) {
+                    this.displayArticles(this.articles);
+                    return;
+                }
+
+                const filtered = this.articles.filter(article =>
+                    article.title.toLowerCase().includes(query.toLowerCase()) ||
+                    article.textContent.toLowerCase().includes(query.toLowerCase()) ||
+                    article.author.toLowerCase().includes(query.toLowerCase()) ||
+                    this.getDomain(article.url).toLowerCase().includes(query.toLowerCase())
+                );
+
+                this.displayArticles(filtered);
+                this.updateStatus(`Found ${filtered.length} articles matching "${query}"`, filtered.length > 0 ? 'success' : 'error');
+            }
+
+            // Open article reader
+            openReader(index) {
+                this.currentArticle = this.articles[index];
+                const overlay = document.getElementById('readerOverlay');
+                
+                document.getElementById('readerTitle').textContent = this.currentArticle.title;
+                document.getElementById('readerDate').textContent = this.formatDate(this.currentArticle.dateAdded);
+                document.getElementById('readerDomain').textContent = this.getDomain(this.currentArticle.url);
+                document.getElementById('readerTime').textContent = `${this.currentArticle.readTime || 1} min read`;
+                document.getElementById('readerContent').innerHTML = this.currentArticle.content;
+                
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+
+            // Close reader
+            closeReader() {
+                const overlay = document.getElementById('readerOverlay');
+                overlay.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+
+            // Open original article
+            openOriginal() {
+                if (this.currentArticle) {
+                    window.open(this.currentArticle.url, '_blank');
+                }
+            }
+
+            // Utility functions
+            getDomain(url) {
+                try {
+                    return new URL(url).hostname.replace('www.', '');
+                } catch (e) {
+                    return url;
+                }
+            }
+
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                const now = new Date();
+                const diffTime = Math.abs(now - date);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays === 1) return 'Today';
+                if (diffDays === 2) return 'Yesterday';
+                if (diffDays <= 7) return `${diffDays - 1} days ago`;
+                if (diffDays <= 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
+                
+                return date.toLocaleDateString();
+            }
+
+            escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        }
+
+        // Initialize the web reader
+        let webReader;
+        document.addEventListener('DOMContentLoaded', () => {
+            webReader = new MyPocketWebReader();
+        });
+    </script>
+</body>
+</html>
