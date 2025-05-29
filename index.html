@@ -270,34 +270,35 @@
 
         .article-actions {
             position: absolute;
-            top: 15px; /* Moved down slightly */
-            right: 15px; /* Moved in slightly */
+            top: 15px;
+            right: 15px;
             display: flex;
-            gap: 8px; /* Increased gap */
-            opacity: 0; /* Completely invisible by default */
-            transition: opacity 0.3s ease;
-            z-index: 10; /* Ensure it's above other elements */
+            gap: 8px;
+            opacity: 0 !important; /* Force invisible by default */
+            visibility: hidden; /* Double invisibility method */
+            transition: all 0.3s ease;
+            z-index: 10;
         }
 
         .action-btn {
-            background: rgba(255, 255, 255, 0.95); /* More opaque */
-            border: 2px solid var(--border); /* Thicker border */
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid var(--border);
             border-radius: 8px;
-            padding: 10px; /* Larger padding */
+            padding: 10px;
             cursor: pointer;
             font-size: 16px;
             transition: all 0.2s ease;
             backdrop-filter: blur(10px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Stronger shadow */
-            min-width: 40px; /* Larger buttons */
-            height: 40px; /* Larger buttons */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            min-width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .action-btn:hover {
-            transform: translateY(-3px) scale(1.1); /* More dramatic hover */
+            transform: translateY(-3px) scale(1.1);
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
         }
 
@@ -321,19 +322,26 @@
             color: #d32f2f;
         }
 
-        /* Force visibility on any hover */
-        .article-card:hover .article-actions,
-        .article-actions:hover {
+        /* ONLY show on hover - override any other rules */
+        .article-card:hover .article-actions {
             opacity: 1 !important;
+            visibility: visible !important;
         }
 
         /* Test mode - always show buttons */
         body.test-mode .article-actions {
             opacity: 1 !important;
-            background: rgba(255, 255, 0, 0.1); /* Yellow background for testing */
+            visibility: visible !important;
+            background: rgba(255, 255, 0, 0.1);
             border: 2px dashed #ff9800;
             border-radius: 8px;
             padding: 5px;
+        }
+
+        /* Make sure no other hover states interfere */
+        .article-actions:hover {
+            opacity: 1 !important;
+            visibility: visible !important;
         }
 
         /* Reader View */
