@@ -179,11 +179,13 @@
         .article-card {
             background: var(--surface);
             border-radius: 12px;
-            overflow: visible; /* Changed from hidden to visible */
+            overflow: visible;
+            /* Changed from hidden to visible */
             box-shadow: var(--shadow);
             transition: all 0.3s ease;
             border: 1px solid var(--border);
-            position: relative; /* Ensure positioning context */
+            position: relative;
+            /* Ensure positioning context */
             display: flex;
             flex-direction: column;
         }
@@ -194,7 +196,8 @@
         }
 
         .article-card:hover .article-actions {
-            opacity: 1 !important; /* Force visibility on hover */
+            opacity: 1 !important;
+            /* Force visibility on hover */
         }
 
         .article-image {
@@ -274,8 +277,10 @@
             right: 15px;
             display: flex;
             gap: 8px;
-            opacity: 0 !important; /* Force invisible by default */
-            visibility: hidden; /* Double invisibility method */
+            opacity: 0 !important;
+            /* Force invisible by default */
+            visibility: hidden;
+            /* Double invisibility method */
             transition: all 0.3s ease;
             z-index: 10;
         }
@@ -641,11 +646,11 @@
         class MyPocketWebReader {
             constructor() {
                 this.clientId = '436e8796-8c40-47c3-9ad5-b8882f3ef7f7'; // Your Azure app client ID
-                
+
                 // Fix redirect URI construction
                 this.redirectUri = this.getRedirectUri();
                 console.log('🔵 Redirect URI:', this.redirectUri);
-                
+
                 this.accessToken = null;
                 this.articles = [];
                 this.currentArticle = null;
@@ -657,10 +662,10 @@
             getRedirectUri() {
                 // Get current page URL
                 const currentUrl = window.location.href;
-                
+
                 // Remove any hash fragments
                 const baseUrl = currentUrl.split('#')[0];
-                
+
                 // Ensure it's absolute
                 if (baseUrl.startsWith('http://') || baseUrl.startsWith('https://')) {
                     return baseUrl;
@@ -751,7 +756,7 @@
                 console.log('🔵 Encoded Redirect URI:', encodeURIComponent(this.redirectUri));
 
                 this.updateStatus('🔄 Redirecting to Microsoft login...', 'loading');
-                
+
                 // Add a small delay to show the status message
                 setTimeout(() => {
                     window.location.href = authUrl;
@@ -1128,14 +1133,14 @@
             downloadFile(content, filename, mimeType) {
                 const blob = new Blob([content], { type: mimeType });
                 const url = URL.createObjectURL(blob);
-                
+
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = filename;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-                
+
                 URL.revokeObjectURL(url);
             }
 
@@ -1148,18 +1153,53 @@
                 }
             }
 
+            // FIXED: Date formatting function with correct logic
             formatDate(dateString) {
-                const date = new Date(dateString);
-                const now = new Date();
-                const diffTime = Math.abs(now - date);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                try {
+                    const date = new Date(dateString);
+                    
+                    // Validate the date
+                    if (isNaN(date.getTime())) {
+                        console.error('Invalid date:', dateString);
+                        return 'invalid date';
+                    }
+                    
+                    const now = new Date();
+                    
+                    // Get start of day for both dates to compare calendar days, not time
+                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                    
+                    // Calculate difference in milliseconds, then convert to days
+                    const diffMs = today.getTime() - targetDate.getTime();
+                    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-                if (diffDays === 1) return 'Today';
-                if (diffDays === 2) return 'Yesterday';
-                if (diffDays <= 7) return `${diffDays - 1} days ago`;
-                if (diffDays <= 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
-
-                return date.toLocaleDateString();
+                    // Handle future dates (shouldn't happen, but just in case)
+                    if (diffDays < 0) {
+                        return date.toLocaleDateString();
+                    }
+                    
+                    // Return appropriate relative date
+                    if (diffDays === 0) {
+                        return 'today';
+                    } else if (diffDays === 1) {
+                        return 'yesterday';
+                    } else if (diffDays <= 7) {
+                        return `${diffDays} days ago`;
+                    } else if (diffDays <= 30) {
+                        const weeks = Math.floor(diffDays / 7);
+                        return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`;
+                    } else if (diffDays <= 365) {
+                        const months = Math.floor(diffDays / 30);
+                        return months === 1 ? '1 month ago' : `${months} months ago`;
+                    } else {
+                        const years = Math.floor(diffDays / 365);
+                        return years === 1 ? '1 year ago' : `${years} years ago`;
+                    }
+                } catch (error) {
+                    console.error('Date formatting error:', error, 'Input:', dateString);
+                    return 'date error';
+                }
             }
 
             escapeHtml(text) {
@@ -1211,7 +1251,7 @@ Button Issues:
 - Check browser console for JavaScript errors
 - Inspect element to see if buttons are in DOM
                 `;
-                
+
                 alert(info);
                 console.log('🔧 Debug Info:', {
                     currentUrl: window.location.href,
@@ -1227,18 +1267,18 @@ Button Issues:
             toggleTestMode() {
                 document.body.classList.toggle('test-mode');
                 const isTestMode = document.body.classList.contains('test-mode');
-                
+
                 const testBtn = document.getElementById('testBtn');
                 if (testBtn) {
-                    testBtn.innerHTML = isTestMode 
-                        ? '<span>👁️</span> Hide Buttons' 
+                    testBtn.innerHTML = isTestMode
+                        ? '<span>👁️</span> Hide Buttons'
                         : '<span>👁️</span> Show Buttons';
                 }
-                
+
                 this.updateStatus(
-                    isTestMode 
-                        ? '🔍 Test mode ON - Action buttons always visible' 
-                        : '👁️ Test mode OFF - Action buttons show on hover', 
+                    isTestMode
+                        ? '🔍 Test mode ON - Action buttons always visible'
+                        : '👁️ Test mode OFF - Action buttons show on hover',
                     'success'
                 );
             }
