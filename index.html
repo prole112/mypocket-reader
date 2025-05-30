@@ -1367,7 +1367,6 @@
                 const connectIcon = document.getElementById('connectIcon');
                 const connectText = document.getElementById('connectText');
                 const refreshBtn = document.getElementById('refreshBtn');
-                const disconnectBtn = document.getElementById('disconnectBtn');
 
                 if (connected) {
                     const isEnhanced = localStorage.getItem('mypocket_enhanced');
@@ -1377,7 +1376,6 @@
                     connectText.textContent = isEnhanced && hasRefreshToken ? 'Connected (Enhanced)' : 'Connected';
                     connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
                     refreshBtn.style.display = 'inline-flex';
-                    if (disconnectBtn) disconnectBtn.style.display = 'inline-flex';
 
                     // Show token expiry info in button title
                     if (this.tokenExpiry) {
@@ -1389,21 +1387,7 @@
                     connectText.textContent = 'Connect OneDrive';
                     connectBtn.style.background = 'rgba(255,255,255,0.2)';
                     refreshBtn.style.display = 'none';
-                    if (disconnectBtn) disconnectBtn.style.display = 'none';
                     connectBtn.title = 'Connect to OneDrive with enhanced authentication';
-                }
-            }
-
-            disconnect() {
-                if (confirm('Disconnect from OneDrive?\n\nThis will clear all stored tokens and you\'ll need to reconnect to access your articles.')) {
-                    this.clearTokens();
-                    this.updateConnectionStatus(false);
-                    this.updateStatus('Disconnected from OneDrive', 'success');
-                    
-                    // Clear articles display
-                    this.displayEmptyState();
-                    
-                    console.log('🔵 Manually disconnected from OneDrive');
                 }
             }
 
