@@ -492,6 +492,8 @@
             to {
                 transform: rotate(360deg);
             }
+
+            setupMobileOptimizations() {
         }
 
         /* Mobile: Add subtle hint that buttons are available */
@@ -499,22 +501,31 @@
             .article-card::after {
                 content: '⋯';
                 position: absolute;
-                top: 15px;
-                right: 15px;
+                top: 20px;
+                right: 20px;
                 color: var(--text-secondary);
-                font-size: 18px;
+                font-size: 20px;
                 font-weight: bold;
-                opacity: 0.3;
+                opacity: 0.4;
                 pointer-events: none;
                 transition: opacity 0.3s ease;
+                background: rgba(255, 255, 255, 0.8);
+                border-radius: 50%;
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(5px);
             }
 
             .article-card.show-actions::after {
                 opacity: 0;
             }
 
-            .article-card:hover::after {
-                opacity: 0.6;
+            .article-card:active::after {
+                opacity: 0.7;
+                transform: scale(1.1);
             }
         }
             .container {
@@ -821,6 +832,9 @@
                     <button id="testBtn" class="btn btn-secondary" onclick="webReader.toggleTestMode()">
                         <span>👁️</span> <span>Test</span>
                     </button>
+                    <button id="disconnectBtn" class="btn btn-secondary" onclick="webReader.disconnect()" style="display: none;">
+                        <span>🔌</span> <span>Disconnect</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -882,9 +896,12 @@
             constructor() {
                 this.clientId = '436e8796-8c40-47c3-9ad5-b8882f3ef7f7';
                 this.redirectUri = this.getRedirectUri();
-                console.log('🔵 Redirect URI:', this.redirectUri);
+                console.log('🔵 Enhanced Web Reader Redirect URI:', this.redirectUri);
 
                 this.accessToken = null;
+                this.refreshToken = null;
+                this.tokenExpiry = null;
+                this.refreshTimer = null;
                 this.articles = [];
                 this.currentArticle = null;
 
@@ -905,11 +922,134 @@
             init() {
                 this.setupEventListeners();
                 this.checkAuthFromURL();
-                this.loadStoredToken();
+                this.loadStoredTokens();
                 this.setupMobileOptimizations();
+                this.initializeTokenManagement();
             }
 
-            setupMobileOptimizations() {
+            // Automatic token refresh - prevents connection loss
+            async refreshAccessToken() {
+                if (!this.refreshToken) {
+                    console.log('🔴 No refresh token available');
+                    this.updateStatus('❌ Session expired. Please reconnect to OneDrive.', 'error');
+                    this.clearTokens();
+                    this.updateConnectionStatus(false);
+                    return;
+                }
+
+                try {
+                    console.log('🔄 Refreshing access token...');
+                    this.updateStatus('🔄 Refreshing connection...', 'loading');
+
+                    const tokenUrl = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token';
+                    
+                    const params = new URLSearchParams({
+                        client_id: this.clientId,
+                        scope: 'Files.ReadWrite User.Read offline_access',
+                        refresh_token: this.refreshToken,
+                        grant_type: 'refresh_token'
+                    });
+
+                    const response = await fetch(tokenUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: params
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        
+                        if (errorData.error === 'invalid_grant' || errorData.error === 'invalid_request') {
+                            console.log('🔴 Refresh token expired');
+                            this.clearTokens();
+                            this.updateConnectionStatus(false);
+                            this.updateStatus('❌ Session expired. Please reconnect to OneDrive.', 'error');
+                            return;
+                        }
+                        
+                        throw new Error(`Token refresh failed: ${errorData.error_description || response.statusText}`);
+                    }
+
+                    const tokens = await response.json();
+                    
+                    // Update stored tokens
+                    this.accessToken = tokens.access_token;
+                    if (tokens.refresh_token) {
+                        this.refreshToken = tokens.refresh_token;
+                    }
+                    this.tokenExpiry = Date.now() + (tokens.expires_in * 1000);
+                    
+                    this.saveTokens(tokens);
+                    this.scheduleTokenRefresh(tokens.expires_in);
+                    
+                    console.log('🟢 Access token refreshed successfully');
+                    this.updateStatus('✅ Connection refreshed automatically', 'success');
+                    
+                    return tokens.access_token;
+
+                } catch (error) {
+                    console.error('🔴 Token refresh failed:', error);
+                    this.updateStatus(`❌ Refresh failed: ${error.message}`, 'error');
+                    throw error;
+                }
+            }
+
+            // Schedule automatic token refresh
+            scheduleTokenRefresh(expiresIn) {
+                if (this.refreshTimer) {
+                    clearTimeout(this.refreshTimer);
+                }
+                
+                // Schedule refresh 5 minutes before expiration
+                const refreshIn = Math.max((expiresIn - 300) * 1000, 60000); // At least 1 minute
+                
+                this.refreshTimer = setTimeout(async () => {
+                    try {
+                        console.log('🔄 Scheduled token refresh triggered');
+                        await this.refreshAccessToken();
+                    } catch (error) {
+                        console.error('🔴 Scheduled token refresh failed:', error);
+                    }
+                }, refreshIn);
+                
+                const refreshInMinutes = Math.round(refreshIn / 60000);
+                console.log(`🔵 Token refresh scheduled in ${refreshInMinutes} minutes`);
+            }
+
+            // Initialize token management
+            initializeTokenManagement() {
+                // Check token validity every 10 minutes
+                setInterval(() => {
+                    if (this.accessToken && this.tokenExpiry) {
+                        const timeToExpiry = this.tokenExpiry - Date.now();
+                        
+                        if (timeToExpiry < 600000 && this.refreshToken) { // Less than 10 minutes
+                            console.log('🔄 Token expiring soon, refreshing...');
+                            this.refreshAccessToken();
+                        }
+                    }
+                }, 10 * 60 * 1000); // 10 minutes
+            }
+
+            // Get valid access token (auto-refresh if needed)
+            async getValidAccessToken() {
+                // Check if token is expired or expiring soon
+                if (!this.accessToken || (this.tokenExpiry && Date.now() > (this.tokenExpiry - 300000))) {
+                    if (this.refreshToken) {
+                        try {
+                            return await this.refreshAccessToken();
+                        } catch (error) {
+                            throw new Error('Authentication expired. Please reconnect to OneDrive.');
+                        }
+                    } else {
+                        throw new Error('Not authenticated with OneDrive. Please connect first.');
+                    }
+                }
+
+                return this.accessToken;
+            }
                 // Prevent zoom on iOS when focusing inputs
                 if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
                     const inputs = document.querySelectorAll('input[type="text"], input[type="search"]');
@@ -942,8 +1082,13 @@
             }
 
             setupMobileCardInteraction() {
-                // On mobile, tap article card to toggle action buttons
-                document.addEventListener('click', (e) => {
+                // Remove existing listener if any
+                if (this.mobileClickHandler) {
+                    document.removeEventListener('click', this.mobileClickHandler);
+                }
+
+                // Create the click handler
+                this.mobileClickHandler = (e) => {
                     const articleCard = e.target.closest('.article-card');
                     
                     if (articleCard) {
@@ -979,7 +1124,10 @@
                             });
                         }
                     }
-                });
+                };
+
+                // Add the event listener
+                document.addEventListener('click', this.mobileClickHandler);
             }
 
             setupEventListeners() {
@@ -991,20 +1139,31 @@
             }
 
             checkAuthFromURL() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const authCode = urlParams.get('code');
+                const error = urlParams.get('error');
+
+                if (error) {
+                    this.updateStatus(`Authentication error: ${error}`, 'error');
+                    return;
+                }
+
+                if (authCode) {
+                    console.log('🔵 Authorization code received, exchanging for tokens...');
+                    this.exchangeCodeForTokens(authCode);
+                    return;
+                }
+
+                // Fallback: check for old implicit flow tokens in hash
                 const hash = window.location.hash.substring(1);
                 if (hash && hash.includes('access_token=')) {
+                    console.log('🟡 Legacy token detected, upgrading to enhanced auth recommended');
                     const params = new URLSearchParams(hash);
                     const accessToken = params.get('access_token');
-                    const error = params.get('error');
-
-                    if (error) {
-                        this.updateStatus(`Authentication error: ${error}`, 'error');
-                        return;
-                    }
 
                     if (accessToken) {
                         this.accessToken = accessToken;
-                        this.saveToken(accessToken);
+                        this.saveTokens({ access_token: accessToken, token_type: 'Bearer' });
                         this.updateConnectionStatus(true);
                         this.loadArticles();
                         window.history.replaceState({}, document.title, window.location.pathname);
@@ -1012,23 +1171,142 @@
                 }
             }
 
-            loadStoredToken() {
-                this.accessToken = localStorage.getItem('mypocket_access_token');
-                if (this.accessToken) {
+            // Exchange authorization code for tokens with refresh capability
+            async exchangeCodeForTokens(authCode) {
+                const codeVerifier = localStorage.getItem('mypocket_code_verifier');
+                if (!codeVerifier) {
+                    this.updateStatus('❌ Code verifier not found. Please try authenticating again.', 'error');
+                    return;
+                }
+
+                try {
+                    this.updateStatus('🔄 Exchanging code for tokens...', 'loading');
+
+                    const tokenUrl = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token';
+                    
+                    const params = new URLSearchParams({
+                        client_id: this.clientId,
+                        scope: 'Files.ReadWrite User.Read offline_access',
+                        code: authCode,
+                        redirect_uri: this.redirectUri,
+                        grant_type: 'authorization_code',
+                        code_verifier: codeVerifier
+                    });
+
+                    const response = await fetch(tokenUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: params
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`Token exchange failed: ${errorData.error_description || response.statusText}`);
+                    }
+
+                    const tokens = await response.json();
+                    
+                    console.log('🟢 Tokens received successfully');
+                    
+                    // Store tokens
+                    this.accessToken = tokens.access_token;
+                    this.refreshToken = tokens.refresh_token;
+                    this.tokenExpiry = Date.now() + (tokens.expires_in * 1000);
+                    
+                    this.saveTokens(tokens);
+                    this.scheduleTokenRefresh(tokens.expires_in);
                     this.updateConnectionStatus(true);
+                    
+                    // Clean up
+                    localStorage.removeItem('mypocket_code_verifier');
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    
                     this.loadArticles();
+                    
+                    this.updateStatus('✅ Connected to OneDrive with auto-refresh!', 'success');
+
+                } catch (error) {
+                    console.error('🔴 Token exchange failed:', error);
+                    this.updateStatus(`❌ Authentication failed: ${error.message}`, 'error');
+                    localStorage.removeItem('mypocket_code_verifier');
                 }
             }
 
-            saveToken(token) {
-                localStorage.setItem('mypocket_access_token', token);
+            loadStoredTokens() {
+                const storedData = {
+                    accessToken: localStorage.getItem('mypocket_access_token'),
+                    refreshToken: localStorage.getItem('mypocket_refresh_token'),
+                    tokenExpiry: localStorage.getItem('mypocket_token_expiry'),
+                    tokenType: localStorage.getItem('mypocket_token_type')
+                };
+
+                if (storedData.accessToken) {
+                    this.accessToken = storedData.accessToken;
+                    this.refreshToken = storedData.refreshToken;
+                    this.tokenExpiry = storedData.tokenExpiry ? parseInt(storedData.tokenExpiry) : null;
+                    
+                    console.log('🔵 Stored tokens loaded');
+                    
+                    // Check if token is expired or expiring soon
+                    if (this.tokenExpiry && Date.now() > (this.tokenExpiry - 300000)) { // 5 min buffer
+                        console.log('🔄 Token expired or expiring soon, attempting refresh...');
+                        if (this.refreshToken) {
+                            this.refreshAccessToken();
+                        } else {
+                            console.log('🔴 No refresh token available, re-authentication required');
+                            this.clearTokens();
+                        }
+                    } else {
+                        this.updateConnectionStatus(true);
+                        this.loadArticles();
+                        
+                        // Schedule refresh if token is valid
+                        if (this.tokenExpiry) {
+                            const timeToExpiry = this.tokenExpiry - Date.now();
+                            this.scheduleTokenRefresh(timeToExpiry / 1000);
+                        }
+                    }
+                }
             }
 
-            clearToken() {
+            saveTokens(tokens) {
+                localStorage.setItem('mypocket_access_token', tokens.access_token);
+                if (tokens.refresh_token) {
+                    localStorage.setItem('mypocket_refresh_token', tokens.refresh_token);
+                }
+                localStorage.setItem('mypocket_token_type', tokens.token_type || 'Bearer');
+                if (tokens.expires_in) {
+                    const expiry = Date.now() + (tokens.expires_in * 1000);
+                    localStorage.setItem('mypocket_token_expiry', expiry.toString());
+                }
+                localStorage.setItem('mypocket_enhanced', 'true');
+                
+                console.log('🔵 Enhanced tokens saved');
+            }
+
+            clearTokens() {
                 localStorage.removeItem('mypocket_access_token');
+                localStorage.removeItem('mypocket_refresh_token');
+                localStorage.removeItem('mypocket_token_type');
+                localStorage.removeItem('mypocket_token_expiry');
+                localStorage.removeItem('mypocket_enhanced');
+                localStorage.removeItem('mypocket_code_verifier');
+                
                 this.accessToken = null;
+                this.refreshToken = null;
+                this.tokenExpiry = null;
+                
+                if (this.refreshTimer) {
+                    clearTimeout(this.refreshTimer);
+                    this.refreshTimer = null;
+                }
+                
+                console.log('🔵 All tokens cleared');
             }
 
+            // Enhanced authentication with authorization code flow
             authenticate() {
                 if (!this.redirectUri || (!this.redirectUri.startsWith('http://') && !this.redirectUri.startsWith('https://'))) {
                     this.updateStatus('❌ Invalid redirect URI. Please open this page via HTTP/HTTPS.', 'error');
@@ -1037,20 +1315,51 @@
                     return;
                 }
 
-                const authUrl = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?` +
-                    `client_id=${this.clientId}&` +
-                    `response_type=token&` +
-                    `redirect_uri=${encodeURIComponent(this.redirectUri)}&` +
-                    `scope=${encodeURIComponent('Files.ReadWrite User.Read')}&` +
-                    `response_mode=fragment&` +
-                    `nonce=${Date.now()}`;
+                // Generate PKCE parameters
+                this.generatePKCEParams().then(({ codeVerifier, codeChallenge }) => {
+                    // Store code verifier for token exchange
+                    localStorage.setItem('mypocket_code_verifier', codeVerifier);
 
-                console.log('🔵 Auth URL:', authUrl);
-                this.updateStatus('🔄 Redirecting to Microsoft login...', 'loading');
+                    // Build authorization code URL
+                    const authUrl = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?` +
+                        `client_id=${this.clientId}&` +
+                        `response_type=code&` +
+                        `redirect_uri=${encodeURIComponent(this.redirectUri)}&` +
+                        `scope=${encodeURIComponent('Files.ReadWrite User.Read offline_access')}&` +
+                        `response_mode=query&` +
+                        `code_challenge=${encodeURIComponent(codeChallenge)}&` +
+                        `code_challenge_method=S256&` +
+                        `state=${Date.now()}`;
 
-                setTimeout(() => {
-                    window.location.href = authUrl;
-                }, 1000);
+                    console.log('🔵 Enhanced Auth URL:', authUrl);
+                    this.updateStatus('🔄 Redirecting to Microsoft login (Enhanced)...', 'loading');
+
+                    setTimeout(() => {
+                        window.location.href = authUrl;
+                    }, 1000);
+                });
+            }
+
+            // Generate PKCE parameters for secure authentication
+            async generatePKCEParams() {
+                // Generate code verifier
+                const array = new Uint8Array(32);
+                crypto.getRandomValues(array);
+                const codeVerifier = btoa(String.fromCharCode.apply(null, array))
+                    .replace(/\+/g, '-')
+                    .replace(/\//g, '_')
+                    .replace(/=/g, '');
+
+                // Generate code challenge
+                const encoder = new TextEncoder();
+                const data = encoder.encode(codeVerifier);
+                const digest = await crypto.subtle.digest('SHA-256', data);
+                const codeChallenge = btoa(String.fromCharCode.apply(null, new Uint8Array(digest)))
+                    .replace(/\+/g, '-')
+                    .replace(/\//g, '_')
+                    .replace(/=/g, '');
+
+                return { codeVerifier, codeChallenge };
             }
 
             updateConnectionStatus(connected) {
@@ -1058,17 +1367,43 @@
                 const connectIcon = document.getElementById('connectIcon');
                 const connectText = document.getElementById('connectText');
                 const refreshBtn = document.getElementById('refreshBtn');
+                const disconnectBtn = document.getElementById('disconnectBtn');
 
                 if (connected) {
+                    const isEnhanced = localStorage.getItem('mypocket_enhanced');
+                    const hasRefreshToken = !!this.refreshToken;
+                    
                     connectIcon.textContent = '✅';
-                    connectText.textContent = 'Connected';
+                    connectText.textContent = isEnhanced && hasRefreshToken ? 'Connected (Enhanced)' : 'Connected';
                     connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
                     refreshBtn.style.display = 'inline-flex';
+                    if (disconnectBtn) disconnectBtn.style.display = 'inline-flex';
+
+                    // Show token expiry info in button title
+                    if (this.tokenExpiry) {
+                        const timeLeft = Math.round((this.tokenExpiry - Date.now()) / (1000 * 60));
+                        connectBtn.title = `Token expires in ${timeLeft} minutes${hasRefreshToken ? ' (auto-refresh enabled)' : ''}`;
+                    }
                 } else {
                     connectIcon.textContent = '☁️';
                     connectText.textContent = 'Connect OneDrive';
                     connectBtn.style.background = 'rgba(255,255,255,0.2)';
                     refreshBtn.style.display = 'none';
+                    if (disconnectBtn) disconnectBtn.style.display = 'none';
+                    connectBtn.title = 'Connect to OneDrive with enhanced authentication';
+                }
+            }
+
+            disconnect() {
+                if (confirm('Disconnect from OneDrive?\n\nThis will clear all stored tokens and you\'ll need to reconnect to access your articles.')) {
+                    this.clearTokens();
+                    this.updateConnectionStatus(false);
+                    this.updateStatus('Disconnected from OneDrive', 'success');
+                    
+                    // Clear articles display
+                    this.displayEmptyState();
+                    
+                    console.log('🔵 Manually disconnected from OneDrive');
                 }
             }
 
@@ -1079,27 +1414,39 @@
             }
 
             async loadArticles() {
-                if (!this.accessToken) {
-                    this.updateStatus('Not connected to OneDrive', 'error');
-                    return;
-                }
-
                 try {
                     this.updateStatus('Loading articles... ⏳', 'loading');
 
+                    // Get valid token (will auto-refresh if needed)
+                    const accessToken = await this.getValidAccessToken();
+
                     const listResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children', {
                         headers: {
-                            'Authorization': `Bearer ${this.accessToken}`,
+                            'Authorization': `Bearer ${accessToken}`,
                             'Content-Type': 'application/json'
                         }
                     });
 
                     if (!listResponse.ok) {
                         if (listResponse.status === 401) {
-                            this.clearToken();
-                            this.updateConnectionStatus(false);
-                            this.updateStatus('Session expired. Please reconnect.', 'error');
-                            return;
+                            console.log('🔴 Token invalid, attempting refresh...');
+                            if (this.refreshToken) {
+                                try {
+                                    await this.refreshAccessToken();
+                                    // Retry with new token
+                                    return this.loadArticles();
+                                } catch (refreshError) {
+                                    this.clearTokens();
+                                    this.updateConnectionStatus(false);
+                                    this.updateStatus('Session expired. Please reconnect.', 'error');
+                                    return;
+                                }
+                            } else {
+                                this.clearTokens();
+                                this.updateConnectionStatus(false);
+                                this.updateStatus('Session expired. Please reconnect.', 'error');
+                                return;
+                            }
                         }
                         throw new Error(`Failed to list files: ${listResponse.status}`);
                     }
@@ -1121,7 +1468,7 @@
 
                     const downloadResponse = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${latestFile.id}/content`, {
                         headers: {
-                            'Authorization': `Bearer ${this.accessToken}`
+                            'Authorization': `Bearer ${accessToken}`
                         }
                     });
 
@@ -1135,7 +1482,9 @@
                     this.articles = backup.articles || [];
                     this.displayArticles(this.articles);
 
-                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name}`, 'success');
+                    // Enhanced status message
+                    const enhancedIndicator = localStorage.getItem('mypocket_enhanced') ? ' (Enhanced)' : '';
+                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name}${enhancedIndicator}`, 'success');
 
                 } catch (error) {
                     console.error('Error loading articles:', error);
