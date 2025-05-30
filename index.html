@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>MyPocket - Web Reader</title>
+    <title>MyPocket - Web Reader (Fixed)</title>
     <style>
         * {
             margin: 0;
@@ -114,6 +114,27 @@
             transform: translateY(-1px);
         }
 
+        /* Status */
+        .status {
+            padding: 20px 0;
+            text-align: center;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            width: 100%;
+        }
+
+        .status.loading {
+            color: var(--secondary-color);
+        }
+
+        .status.error {
+            color: #e74c3c;
+        }
+
+        .status.success {
+            color: #27ae60;
+        }
+
         /* Search */
         .search-container {
             padding: 30px 0;
@@ -152,27 +173,6 @@
             transform: translateY(-50%);
             color: var(--text-secondary);
             font-size: 20px;
-        }
-
-        /* Status */
-        .status {
-            padding: 20px 0;
-            text-align: center;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            width: 100%;
-        }
-
-        .status.loading {
-            color: var(--secondary-color);
-        }
-
-        .status.error {
-            color: #e74c3c;
-        }
-
-        .status.success {
-            color: #27ae60;
         }
 
         /* Articles Grid */
@@ -279,7 +279,7 @@
             font-size: 0.8em;
         }
 
-        /* Action buttons: hidden by default, show on interaction */
+        /* Action buttons */
         .article-actions {
             position: absolute;
             top: 15px;
@@ -292,14 +292,7 @@
             z-index: 10;
         }
 
-        /* Desktop: show on hover */
         .article-card:hover .article-actions {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        /* Mobile: show when card is tapped/active */
-        .article-card.show-actions .article-actions {
             opacity: 1;
             visibility: visible;
         }
@@ -326,10 +319,6 @@
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
         }
 
-        .action-btn:active {
-            transform: scale(0.95);
-        }
-
         .read-btn:hover {
             background: #e3f2fd;
             border-color: #2196f3;
@@ -348,111 +337,6 @@
             background: #ffebee;
             border-color: #f44336;
             color: #d32f2f;
-        }
-
-        /* Reader View */
-        .reader-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            display: none;
-            overflow-y: auto;
-        }
-
-        .reader-overlay.active {
-            display: block;
-        }
-
-        .reader-container {
-            max-width: 800px;
-            margin: 40px auto;
-            background: var(--surface);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
-            width: 100%;
-        }
-
-        .reader-header {
-            padding: 30px;
-            border-bottom: 1px solid var(--border);
-            background: var(--background);
-        }
-
-        .reader-title {
-            font-size: 2em;
-            font-weight: bold;
-            margin-bottom: 15px;
-            line-height: 1.3;
-        }
-
-        .reader-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            color: var(--text-secondary);
-            font-size: 0.9em;
-        }
-
-        .reader-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-
-        .reader-content {
-            padding: 40px;
-            font-size: 1.1em;
-            line-height: 1.8;
-            max-width: none;
-        }
-
-        .reader-content h1,
-        .reader-content h2,
-        .reader-content h3 {
-            margin: 30px 0 15px;
-            color: var(--text-primary);
-        }
-
-        .reader-content p {
-            margin-bottom: 20px;
-        }
-
-        .reader-content img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-
-        .reader-content blockquote {
-            border-left: 4px solid var(--primary-color);
-            margin: 20px 0;
-            padding: 15px 20px;
-            background: var(--background);
-            font-style: italic;
-        }
-
-        .close-reader {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            cursor: pointer;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
         /* Empty State */
@@ -474,31 +358,28 @@
             color: var(--text-primary);
         }
 
-        /* Loading Animation */
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--border);
-            border-radius: 50%;
-            border-top-color: var(--primary-color);
-            animation: spin 1s ease-in-out infinite;
+        /* Debug section */
+        .debug-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
         }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+        .debug-info {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow-x: auto;
         }
 
-        /* Mobile: Add subtle hint that buttons are available */
+        /* Mobile responsiveness */
         @media (max-width: 768px) {
             .container {
                 padding: 0 15px;
-            }
-
-            .header {
-                padding: 15px 0;
             }
 
             .header-content {
@@ -507,294 +388,14 @@
                 gap: 15px;
             }
 
-            .logo {
-                font-size: 1.5em;
-            }
-
-            .header-actions {
-                justify-content: center;
-                gap: 10px;
-            }
-
-            .btn {
-                padding: 12px 16px;
-                font-size: 14px;
-                min-height: 44px;
-            }
-
-            .search-container {
-                padding: 20px 0;
-            }
-
-            .search-input {
-                padding: 12px 45px 12px 15px;
-                font-size: 16px;
-            }
-
             .articles-grid {
                 grid-template-columns: 1fr;
                 gap: 20px;
-                margin-top: 15px;
             }
 
-            .article-card {
-                margin: 0 auto;
-                max-width: 100%;
-            }
-
-            .article-card::after {
-                content: '⋯';
-                position: absolute;
-                top: 20px;
-                right: 20px;
-                color: var(--text-secondary);
-                font-size: 20px;
-                font-weight: bold;
-                opacity: 0.4;
-                pointer-events: none;
-                transition: opacity 0.3s ease;
-                background: rgba(255, 255, 255, 0.8);
-                border-radius: 50%;
-                width: 32px;
-                height: 32px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                backdrop-filter: blur(5px);
-            }
-
-            .article-card.show-actions::after {
-                opacity: 0;
-            }
-
-            .article-card:active::after {
-                opacity: 0.7;
-                transform: scale(1.1);
-            }
-
-            .article-image {
-                height: 180px;
-                font-size: 2.5em;
-            }
-
-            .article-content {
-                padding: 15px;
-            }
-
-            .article-title {
-                font-size: 1.1em;
-                margin-bottom: 8px;
-            }
-
-            .article-excerpt {
-                font-size: 0.9em;
-                margin-bottom: 12px;
-                -webkit-line-clamp: 2;
-            }
-
-            .article-meta {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-                font-size: 0.8em;
-            }
-
-            .article-stats {
-                gap: 12px;
-            }
-
-            .action-btn {
-                min-width: 48px;
-                height: 48px;
-                font-size: 18px;
-                margin: 0 4px;
-            }
-
-            .reader-container {
-                margin: 10px;
-                border-radius: 8px;
-                max-width: calc(100% - 20px);
-            }
-
-            .reader-header,
-            .reader-content {
-                padding: 20px;
-            }
-
-            .reader-title {
-                font-size: 1.6em;
-                line-height: 1.2;
-            }
-
-            .reader-meta {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .reader-actions {
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .reader-content {
-                font-size: 1.05em;
-                line-height: 1.7;
-            }
-
-            .close-reader {
-                top: 15px;
-                right: 15px;
-                width: 40px;
-                height: 40px;
-                font-size: 16px;
-            }
-
-            .status {
-                padding: 15px;
-                font-size: 14px;
-            }
-
-            .articles-section {
-                padding: 20px 0;
-            }
-
-            .empty-state {
-                padding: 60px 15px;
-            }
-
-            .empty-state-icon {
-                font-size: 3em;
-            }
-        }
-
-        /* Extra small mobile devices */
-        @media (max-width: 480px) {
-            .header-content {
-                gap: 10px;
-            }
-
-            .logo {
-                font-size: 1.3em;
-            }
-
-            .btn {
-                padding: 10px 12px;
-                font-size: 13px;
-                gap: 6px;
-            }
-
-            .search-input {
-                padding: 10px 40px 10px 12px;
-                font-size: 16px;
-            }
-
-            .article-content {
-                padding: 12px;
-            }
-
-            .article-title {
-                font-size: 1em;
-            }
-
-            .article-excerpt {
-                font-size: 0.85em;
-                -webkit-line-clamp: 2;
-            }
-
-            .action-btn {
-                min-width: 44px;
-                height: 44px;
-                font-size: 16px;
-            }
-
-            .reader-header,
-            .reader-content {
-                padding: 15px;
-            }
-
-            .reader-title {
-                font-size: 1.4em;
-            }
-        }
-
-        /* Landscape mobile orientation */
-        @media (max-width: 768px) and (orientation: landscape) {
-            .header {
-                padding: 10px 0;
-            }
-
-            .header-content {
-                flex-direction: row;
-                justify-content: space-between;
-            }
-
-            .logo {
-                font-size: 1.3em;
-            }
-
-            .btn {
-                padding: 8px 12px;
-                font-size: 12px;
-            }
-
-            .articles-grid {
-                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            }
-        }
-
-        /* Connection Status */
-        .connection-status {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 15px;
-            margin: 20px 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .connection-status.connected {
-            border-color: #27ae60;
-            background: #d4edda;
-        }
-
-        .connection-status.disconnected {
-            border-color: #e74c3c;
-            background: #f8d7da;
-        }
-
-        /* Prevent text selection on touch devices */
-        @media (max-width: 768px) {
-            .article-card {
-                -webkit-touch-callout: none;
-                -webkit-user-select: none;
-                -khtml-user-select: none;
-                -moz-user-select: none;
-                -ms-user-select: none;
-                user-select: none;
-            }
-
-            .article-content {
-                -webkit-touch-callout: default;
-                -webkit-user-select: text;
-                -khtml-user-select: text;
-                -moz-user-select: text;
-                -ms-user-select: text;
-                user-select: text;
-            }
-        }
-
-        /* Ensure proper touch targets on all interactive elements */
-        button, .btn, .action-btn, input[type="button"], input[type="submit"] {
-            min-height: 44px;
-            min-width: 44px;
-        }
-
-        @media (max-width: 768px) {
-            button, .btn, .action-btn, input[type="button"], input[type="submit"] {
-                min-height: 48px;
-                min-width: 48px;
+            .article-card:hover .article-actions {
+                opacity: 1;
+                visibility: visible;
             }
         }
     </style>
@@ -806,7 +407,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    📚 MyPocket Web Reader
+                    📚 MyPocket Web Reader (Fixed)
                 </div>
                 <div class="header-actions">
                     <button id="connectBtn" class="btn btn-primary">
@@ -814,16 +415,13 @@
                         <span id="connectText">Connect OneDrive</span>
                     </button>
                     <button id="refreshBtn" class="btn btn-secondary" style="display: none;">
-                        <span>🔄</span> <span>Refresh</span>
+                        <span>🔄</span> Refresh
                     </button>
                     <button id="debugBtn" class="btn btn-secondary" onclick="webReader.showDebugInfo()">
-                        <span>🔧</span> <span>Debug</span>
+                        <span>🔧</span> Debug
                     </button>
-                    <button id="testBtn" class="btn btn-secondary" onclick="webReader.toggleTestMode()">
-                        <span>👁️</span> <span>Test</span>
-                    </button>
-                    <button id="disconnectBtn" class="btn btn-secondary" onclick="webReader.disconnect()" style="display: none;">
-                        <span>🔌</span> <span>Disconnect</span>
+                    <button id="clearBtn" class="btn btn-secondary" onclick="webReader.clearTokens()">
+                        <span>🗑️</span> Clear
                     </button>
                 </div>
             </div>
@@ -845,6 +443,15 @@
         Connect to OneDrive to view your saved articles
     </div>
 
+    <!-- Debug Section -->
+    <div class="container">
+        <div class="debug-section" id="debugSection" style="display: none;">
+            <h3>🔧 Debug Information</h3>
+            <div id="debugInfo" class="debug-info"></div>
+            <button class="btn" onclick="webReader.testDirectAuth()">🧪 Test Auth</button>
+        </div>
+    </div>
+
     <!-- Articles -->
     <section class="articles-section">
         <div class="container">
@@ -858,169 +465,65 @@
         </div>
     </section>
 
-    <!-- Reader Overlay -->
-    <div class="reader-overlay" id="readerOverlay">
-        <div class="reader-container">
-            <button class="close-reader" id="closeReader">✕</button>
-            <div class="reader-header">
-                <h1 class="reader-title" id="readerTitle">Article Title</h1>
-                <div class="reader-meta" id="readerMeta">
-                    <span>📅 <span id="readerDate">Date</span></span>
-                    <span>🌐 <span id="readerDomain">Domain</span></span>
-                    <span>⏱️ <span id="readerTime">5 min read</span></span>
-                </div>
-                <div class="reader-actions">
-                    <button class="btn btn-secondary" id="openOriginal">
-                        🔗 Open Original
-                    </button>
-                </div>
-            </div>
-            <div class="reader-content" id="readerContent">
-                Article content will appear here...
-            </div>
-        </div>
-    </div>
-
     <script>
         class MyPocketWebReader {
             constructor() {
                 this.clientId = '436e8796-8c40-47c3-9ad5-b8882f3ef7f7';
-                this.redirectUri = this.getRedirectUri();
-                console.log('🔵 Enhanced Web Reader Redirect URI:', this.redirectUri);
+                
+                // FIXED: Consistent redirect URI handling
+                this.redirectUri = this.getCanonicalRedirectUri();
+                console.log('🔵 FIXED: Canonical Redirect URI:', this.redirectUri);
 
                 this.accessToken = null;
                 this.refreshToken = null;
                 this.tokenExpiry = null;
-                this.refreshTimer = null;
                 this.articles = [];
                 this.currentArticle = null;
 
                 this.init();
             }
 
-            getRedirectUri() {
-                const currentUrl = window.location.href;
-                const baseUrl = currentUrl.split('#')[0];
+            // FIXED: Consistent redirect URI calculation
+            getCanonicalRedirectUri() {
+                // Always use the same logic for redirect URI
+                const url = new URL(window.location.href);
                 
-                if (baseUrl.startsWith('http://') || baseUrl.startsWith('https://')) {
-                    return baseUrl;
-                } else {
-                    return window.location.origin + window.location.pathname;
-                }
+                // Remove any query parameters and hash
+                const cleanUrl = `${url.protocol}//${url.host}${url.pathname}`;
+                
+                // Store this for consistent use
+                localStorage.setItem('mypocket_redirect_uri', cleanUrl);
+                
+                return cleanUrl;
             }
 
             init() {
                 this.setupEventListeners();
                 this.checkAuthFromURL();
                 this.loadStoredTokens();
-                this.setupMobileOptimizations();
-                this.initializeTokenManagement();
-            }
-
-            setupMobileOptimizations() {
-                // Prevent zoom on iOS when focusing inputs
-                if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-                    const inputs = document.querySelectorAll('input[type="text"], input[type="search"]');
-                    inputs.forEach(input => {
-                        input.style.fontSize = '16px';
-                    });
-                }
-
-                // Add touch event handling
-                this.setupTouchEvents();
-            }
-
-            setupTouchEvents() {
-                // Add touch feedback for buttons
-                const buttons = document.querySelectorAll('.action-btn, .btn');
-                buttons.forEach(button => {
-                    button.addEventListener('touchstart', () => {
-                        button.style.transform = 'scale(0.95)';
-                    });
-                    
-                    button.addEventListener('touchend', () => {
-                        setTimeout(() => {
-                            button.style.transform = '';
-                        }, 100);
-                    });
-                });
-
-                // Add tap-to-show-actions for mobile
-                this.setupMobileCardInteraction();
-            }
-
-            setupMobileCardInteraction() {
-                // Remove existing listener if any
-                if (this.mobileClickHandler) {
-                    document.removeEventListener('click', this.mobileClickHandler);
-                }
-
-                // Create the click handler
-                this.mobileClickHandler = (e) => {
-                    const articleCard = e.target.closest('.article-card');
-                    
-                    if (articleCard) {
-                        // If clicking on action buttons, don't toggle
-                        if (e.target.closest('.article-actions')) {
-                            return;
-                        }
-
-                        // If clicking on article content to read, don't toggle buttons
-                        if (e.target.closest('.article-content') && !e.target.closest('.article-actions')) {
-                            return;
-                        }
-
-                        // Toggle buttons visibility on mobile
-                        if (window.innerWidth <= 768) {
-                            e.preventDefault();
-                            
-                            // Hide all other cards' buttons first
-                            document.querySelectorAll('.article-card').forEach(card => {
-                                if (card !== articleCard) {
-                                    card.classList.remove('show-actions');
-                                }
-                            });
-
-                            // Toggle this card's buttons
-                            articleCard.classList.toggle('show-actions');
-                        }
-                    } else {
-                        // Clicked outside any card, hide all buttons
-                        if (window.innerWidth <= 768) {
-                            document.querySelectorAll('.article-card').forEach(card => {
-                                card.classList.remove('show-actions');
-                            });
-                        }
-                    }
-                };
-
-                // Add the event listener
-                document.addEventListener('click', this.mobileClickHandler);
             }
 
             setupEventListeners() {
                 document.getElementById('connectBtn').addEventListener('click', () => this.authenticate());
                 document.getElementById('refreshBtn').addEventListener('click', () => this.loadArticles());
                 document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
-                document.getElementById('closeReader').addEventListener('click', () => this.closeReader());
-                document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
             }
 
-            // Enhanced authentication with authorization code flow
+            // FIXED: Store redirect URI with auth request
             authenticate() {
-                if (!this.redirectUri || (!this.redirectUri.startsWith('http://') && !this.redirectUri.startsWith('https://'))) {
-                    this.updateStatus('❌ Invalid redirect URI. Please open this page via HTTP/HTTPS.', 'error');
-                    console.error('🔴 Invalid redirect URI:', this.redirectUri);
-                    alert(`Redirect URI Error:\n\nCurrent URI: ${this.redirectUri}\n\nPlease:\n1. Open this page via HTTP/HTTPS (not file://)\n2. Register this exact URI in Azure AD\n3. Use a web server to serve this file`);
-                    return;
-                }
+                console.log('🔵 Starting FIXED authentication...');
+                
+                // Ensure we have a clean redirect URI
+                this.redirectUri = this.getCanonicalRedirectUri();
+                
+                // Store the redirect URI we're using for this auth session
+                localStorage.setItem('mypocket_auth_redirect_uri', this.redirectUri);
+                
+                console.log('🔵 Using redirect URI:', this.redirectUri);
 
-                // Generate PKCE parameters
                 this.generatePKCEParams().then(({ codeVerifier, codeChallenge }) => {
-                    // Store code verifier for token exchange
                     localStorage.setItem('mypocket_code_verifier', codeVerifier);
 
-                    // Build authorization code URL
                     const authUrl = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?` +
                         `client_id=${this.clientId}&` +
                         `response_type=code&` +
@@ -1029,10 +532,10 @@
                         `response_mode=query&` +
                         `code_challenge=${encodeURIComponent(codeChallenge)}&` +
                         `code_challenge_method=S256&` +
-                        `state=${Date.now()}`;
+                        `state=auth_${Date.now()}`;
 
-                    console.log('🔵 Enhanced Auth URL:', authUrl);
-                    this.updateStatus('🔄 Redirecting to Microsoft login (Enhanced)...', 'loading');
+                    console.log('🔵 FIXED Auth URL:', authUrl);
+                    this.updateStatus('🔄 Redirecting to Microsoft login (FIXED version)...', 'loading');
 
                     setTimeout(() => {
                         window.location.href = authUrl;
@@ -1040,9 +543,7 @@
                 });
             }
 
-            // Generate PKCE parameters for secure authentication
             async generatePKCEParams() {
-                // Generate code verifier
                 const array = new Uint8Array(32);
                 crypto.getRandomValues(array);
                 const codeVerifier = btoa(String.fromCharCode.apply(null, array))
@@ -1050,7 +551,6 @@
                     .replace(/\//g, '_')
                     .replace(/=/g, '');
 
-                // Generate code challenge
                 const encoder = new TextEncoder();
                 const data = encoder.encode(codeVerifier);
                 const digest = await crypto.subtle.digest('SHA-256', data);
@@ -1066,45 +566,38 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const authCode = urlParams.get('code');
                 const error = urlParams.get('error');
+                const errorDescription = urlParams.get('error_description');
 
                 if (error) {
-                    this.updateStatus(`Authentication error: ${error}`, 'error');
+                    this.updateStatus(`❌ Authentication error: ${error} - ${errorDescription}`, 'error');
+                    this.showDebugInfo();
                     return;
                 }
 
                 if (authCode) {
-                    console.log('🔵 Authorization code received, exchanging for tokens...');
+                    console.log('🔵 Authorization code received, starting FIXED token exchange...');
                     this.exchangeCodeForTokens(authCode);
                     return;
                 }
-
-                // Fallback: check for old implicit flow tokens in hash
-                const hash = window.location.hash.substring(1);
-                if (hash && hash.includes('access_token=')) {
-                    console.log('🟡 Legacy token detected, upgrading to enhanced auth recommended');
-                    const params = new URLSearchParams(hash);
-                    const accessToken = params.get('access_token');
-
-                    if (accessToken) {
-                        this.accessToken = accessToken;
-                        this.saveTokens({ access_token: accessToken, token_type: 'Bearer' });
-                        this.updateConnectionStatus(true);
-                        this.loadArticles();
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    }
-                }
             }
 
-            // Exchange authorization code for tokens with refresh capability
+            // FIXED: Use the same redirect URI that was used for auth
             async exchangeCodeForTokens(authCode) {
                 const codeVerifier = localStorage.getItem('mypocket_code_verifier');
+                
+                // FIXED: Use the exact same redirect URI that was used for auth
+                const authRedirectUri = localStorage.getItem('mypocket_auth_redirect_uri');
+                const redirectUriToUse = authRedirectUri || this.redirectUri;
+                
+                console.log('🔵 FIXED: Using redirect URI for token exchange:', redirectUriToUse);
+
                 if (!codeVerifier) {
                     this.updateStatus('❌ Code verifier not found. Please try authenticating again.', 'error');
                     return;
                 }
 
                 try {
-                    this.updateStatus('🔄 Exchanging code for tokens...', 'loading');
+                    this.updateStatus('🔄 Exchanging code for tokens (FIXED)...', 'loading');
 
                     const tokenUrl = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token';
                     
@@ -1112,9 +605,16 @@
                         client_id: this.clientId,
                         scope: 'Files.ReadWrite User.Read offline_access',
                         code: authCode,
-                        redirect_uri: this.redirectUri,
+                        redirect_uri: redirectUriToUse, // FIXED: Use consistent URI
                         grant_type: 'authorization_code',
                         code_verifier: codeVerifier
+                    });
+
+                    console.log('🔵 FIXED: Token exchange parameters:', {
+                        client_id: this.clientId,
+                        redirect_uri: redirectUriToUse,
+                        grant_type: 'authorization_code',
+                        code: authCode.substring(0, 10) + '...'
                     });
 
                     const response = await fetch(tokenUrl, {
@@ -1125,36 +625,52 @@
                         body: params
                     });
 
+                    const responseText = await response.text();
+                    console.log('🔵 Token exchange response status:', response.status);
+                    console.log('🔵 Token exchange response:', responseText);
+
                     if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(`Token exchange failed: ${errorData.error_description || response.statusText}`);
+                        let errorData;
+                        try {
+                            errorData = JSON.parse(responseText);
+                        } catch (e) {
+                            errorData = { error: 'parse_error', error_description: responseText };
+                        }
+                        
+                        console.error('🔴 FIXED: Token exchange failed:', errorData);
+                        
+                        // Show detailed error info
+                        this.updateStatus(`❌ Token exchange failed: ${errorData.error_description || errorData.error}`, 'error');
+                        this.showDebugInfo(errorData);
+                        
+                        throw new Error(`Token exchange failed: ${errorData.error_description || errorData.error}`);
                     }
 
-                    const tokens = await response.json();
+                    const tokens = JSON.parse(responseText);
                     
-                    console.log('🟢 Tokens received successfully');
+                    console.log('🟢 FIXED: Tokens received successfully');
                     
-                    // Store tokens
                     this.accessToken = tokens.access_token;
                     this.refreshToken = tokens.refresh_token;
                     this.tokenExpiry = Date.now() + (tokens.expires_in * 1000);
                     
                     this.saveTokens(tokens);
-                    this.scheduleTokenRefresh(tokens.expires_in);
                     this.updateConnectionStatus(true);
                     
                     // Clean up
                     localStorage.removeItem('mypocket_code_verifier');
+                    localStorage.removeItem('mypocket_auth_redirect_uri');
+                    
+                    // Clean URL
                     window.history.replaceState({}, document.title, window.location.pathname);
                     
                     this.loadArticles();
-                    
-                    this.updateStatus('✅ Connected to OneDrive with auto-refresh!', 'success');
+                    this.updateStatus('✅ Connected to OneDrive successfully (FIXED)!', 'success');
 
                 } catch (error) {
-                    console.error('🔴 Token exchange failed:', error);
+                    console.error('🔴 FIXED: Token exchange failed:', error);
                     this.updateStatus(`❌ Authentication failed: ${error.message}`, 'error');
-                    localStorage.removeItem('mypocket_code_verifier');
+                    this.showDebugInfo({ error: error.message });
                 }
             }
 
@@ -1162,8 +678,7 @@
                 const storedData = {
                     accessToken: localStorage.getItem('mypocket_access_token'),
                     refreshToken: localStorage.getItem('mypocket_refresh_token'),
-                    tokenExpiry: localStorage.getItem('mypocket_token_expiry'),
-                    tokenType: localStorage.getItem('mypocket_token_type')
+                    tokenExpiry: localStorage.getItem('mypocket_token_expiry')
                 };
 
                 if (storedData.accessToken) {
@@ -1172,26 +687,8 @@
                     this.tokenExpiry = storedData.tokenExpiry ? parseInt(storedData.tokenExpiry) : null;
                     
                     console.log('🔵 Stored tokens loaded');
-                    
-                    // Check if token is expired or expiring soon
-                    if (this.tokenExpiry && Date.now() > (this.tokenExpiry - 300000)) { // 5 min buffer
-                        console.log('🔄 Token expired or expiring soon, attempting refresh...');
-                        if (this.refreshToken) {
-                            this.refreshAccessToken();
-                        } else {
-                            console.log('🔴 No refresh token available, re-authentication required');
-                            this.clearTokens();
-                        }
-                    } else {
-                        this.updateConnectionStatus(true);
-                        this.loadArticles();
-                        
-                        // Schedule refresh if token is valid
-                        if (this.tokenExpiry) {
-                            const timeToExpiry = this.tokenExpiry - Date.now();
-                            this.scheduleTokenRefresh(timeToExpiry / 1000);
-                        }
-                    }
+                    this.updateConnectionStatus(true);
+                    this.loadArticles();
                 }
             }
 
@@ -1205,153 +702,19 @@
                     const expiry = Date.now() + (tokens.expires_in * 1000);
                     localStorage.setItem('mypocket_token_expiry', expiry.toString());
                 }
-                localStorage.setItem('mypocket_enhanced', 'true');
                 
-                console.log('🔵 Enhanced tokens saved');
+                console.log('🔵 FIXED tokens saved');
             }
 
             clearTokens() {
-                localStorage.removeItem('mypocket_access_token');
-                localStorage.removeItem('mypocket_refresh_token');
-                localStorage.removeItem('mypocket_token_type');
-                localStorage.removeItem('mypocket_token_expiry');
-                localStorage.removeItem('mypocket_enhanced');
-                localStorage.removeItem('mypocket_code_verifier');
-                
+                localStorage.clear();
                 this.accessToken = null;
                 this.refreshToken = null;
                 this.tokenExpiry = null;
-                
-                if (this.refreshTimer) {
-                    clearTimeout(this.refreshTimer);
-                    this.refreshTimer = null;
-                }
-                
+                this.updateConnectionStatus(false);
+                this.updateStatus('🗑️ All tokens cleared. Ready to reconnect.', 'success');
+                this.displayEmptyState();
                 console.log('🔵 All tokens cleared');
-            }
-
-            // Automatic token refresh - prevents connection loss
-            async refreshAccessToken() {
-                if (!this.refreshToken) {
-                    console.log('🔴 No refresh token available');
-                    this.updateStatus('❌ Session expired. Please reconnect to OneDrive.', 'error');
-                    this.clearTokens();
-                    this.updateConnectionStatus(false);
-                    return;
-                }
-
-                try {
-                    console.log('🔄 Refreshing access token...');
-                    this.updateStatus('🔄 Refreshing connection...', 'loading');
-
-                    const tokenUrl = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token';
-                    
-                    const params = new URLSearchParams({
-                        client_id: this.clientId,
-                        scope: 'Files.ReadWrite User.Read offline_access',
-                        refresh_token: this.refreshToken,
-                        grant_type: 'refresh_token'
-                    });
-
-                    const response = await fetch(tokenUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: params
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        
-                        if (errorData.error === 'invalid_grant' || errorData.error === 'invalid_request') {
-                            console.log('🔴 Refresh token expired');
-                            this.clearTokens();
-                            this.updateConnectionStatus(false);
-                            this.updateStatus('❌ Session expired. Please reconnect to OneDrive.', 'error');
-                            return;
-                        }
-                        
-                        throw new Error(`Token refresh failed: ${errorData.error_description || response.statusText}`);
-                    }
-
-                    const tokens = await response.json();
-                    
-                    // Update stored tokens
-                    this.accessToken = tokens.access_token;
-                    if (tokens.refresh_token) {
-                        this.refreshToken = tokens.refresh_token;
-                    }
-                    this.tokenExpiry = Date.now() + (tokens.expires_in * 1000);
-                    
-                    this.saveTokens(tokens);
-                    this.scheduleTokenRefresh(tokens.expires_in);
-                    
-                    console.log('🟢 Access token refreshed successfully');
-                    this.updateStatus('✅ Connection refreshed automatically', 'success');
-                    
-                    return tokens.access_token;
-
-                } catch (error) {
-                    console.error('🔴 Token refresh failed:', error);
-                    this.updateStatus(`❌ Refresh failed: ${error.message}`, 'error');
-                    throw error;
-                }
-            }
-
-            // Schedule automatic token refresh
-            scheduleTokenRefresh(expiresIn) {
-                if (this.refreshTimer) {
-                    clearTimeout(this.refreshTimer);
-                }
-                
-                // Schedule refresh 5 minutes before expiration
-                const refreshIn = Math.max((expiresIn - 300) * 1000, 60000); // At least 1 minute
-                
-                this.refreshTimer = setTimeout(async () => {
-                    try {
-                        console.log('🔄 Scheduled token refresh triggered');
-                        await this.refreshAccessToken();
-                    } catch (error) {
-                        console.error('🔴 Scheduled token refresh failed:', error);
-                    }
-                }, refreshIn);
-                
-                const refreshInMinutes = Math.round(refreshIn / 60000);
-                console.log(`🔵 Token refresh scheduled in ${refreshInMinutes} minutes`);
-            }
-
-            // Initialize token management
-            initializeTokenManagement() {
-                // Check token validity every 10 minutes
-                setInterval(() => {
-                    if (this.accessToken && this.tokenExpiry) {
-                        const timeToExpiry = this.tokenExpiry - Date.now();
-                        
-                        if (timeToExpiry < 600000 && this.refreshToken) { // Less than 10 minutes
-                            console.log('🔄 Token expiring soon, refreshing...');
-                            this.refreshAccessToken();
-                        }
-                    }
-                }, 10 * 60 * 1000); // 10 minutes
-            }
-
-            // Get valid access token (auto-refresh if needed)
-            async getValidAccessToken() {
-                // Check if token is expired or expiring soon
-                if (!this.accessToken || (this.tokenExpiry && Date.now() > (this.tokenExpiry - 300000))) {
-                    if (this.refreshToken) {
-                        try {
-                            return await this.refreshAccessToken();
-                        } catch (error) {
-                            throw new Error('Authentication expired. Please reconnect to OneDrive.');
-                        }
-                    } else {
-                        throw new Error('Not authenticated with OneDrive. Please connect first.');
-                    }
-                }
-
-                return this.accessToken;
             }
 
             updateConnectionStatus(connected) {
@@ -1359,43 +722,17 @@
                 const connectIcon = document.getElementById('connectIcon');
                 const connectText = document.getElementById('connectText');
                 const refreshBtn = document.getElementById('refreshBtn');
-                const disconnectBtn = document.getElementById('disconnectBtn');
 
                 if (connected) {
-                    const isEnhanced = localStorage.getItem('mypocket_enhanced');
-                    const hasRefreshToken = !!this.refreshToken;
-                    
                     connectIcon.textContent = '✅';
-                    connectText.textContent = isEnhanced && hasRefreshToken ? 'Connected (Enhanced)' : 'Connected';
+                    connectText.textContent = 'Connected (FIXED)';
                     connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
                     refreshBtn.style.display = 'inline-flex';
-                    if (disconnectBtn) disconnectBtn.style.display = 'inline-flex';
-
-                    // Show token expiry info in button title
-                    if (this.tokenExpiry) {
-                        const timeLeft = Math.round((this.tokenExpiry - Date.now()) / (1000 * 60));
-                        connectBtn.title = `Token expires in ${timeLeft} minutes${hasRefreshToken ? ' (auto-refresh enabled)' : ''}`;
-                    }
                 } else {
                     connectIcon.textContent = '☁️';
                     connectText.textContent = 'Connect OneDrive';
                     connectBtn.style.background = 'rgba(255,255,255,0.2)';
                     refreshBtn.style.display = 'none';
-                    if (disconnectBtn) disconnectBtn.style.display = 'none';
-                    connectBtn.title = 'Connect to OneDrive with enhanced authentication';
-                }
-            }
-
-            disconnect() {
-                if (confirm('Disconnect from OneDrive?\n\nThis will clear all stored tokens and you\'ll need to reconnect to access your articles.')) {
-                    this.clearTokens();
-                    this.updateConnectionStatus(false);
-                    this.updateStatus('Disconnected from OneDrive', 'success');
-                    
-                    // Clear articles display
-                    this.displayEmptyState();
-                    
-                    console.log('🔵 Manually disconnected from OneDrive');
                 }
             }
 
@@ -1406,39 +743,26 @@
             }
 
             async loadArticles() {
+                if (!this.accessToken) {
+                    this.updateStatus('Not connected to OneDrive', 'error');
+                    return;
+                }
+
                 try {
                     this.updateStatus('Loading articles... ⏳', 'loading');
 
-                    // Get valid token (will auto-refresh if needed)
-                    const accessToken = await this.getValidAccessToken();
-
                     const listResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children', {
                         headers: {
-                            'Authorization': `Bearer ${accessToken}`,
+                            'Authorization': `Bearer ${this.accessToken}`,
                             'Content-Type': 'application/json'
                         }
                     });
 
                     if (!listResponse.ok) {
                         if (listResponse.status === 401) {
-                            console.log('🔴 Token invalid, attempting refresh...');
-                            if (this.refreshToken) {
-                                try {
-                                    await this.refreshAccessToken();
-                                    // Retry with new token
-                                    return this.loadArticles();
-                                } catch (refreshError) {
-                                    this.clearTokens();
-                                    this.updateConnectionStatus(false);
-                                    this.updateStatus('Session expired. Please reconnect.', 'error');
-                                    return;
-                                }
-                            } else {
-                                this.clearTokens();
-                                this.updateConnectionStatus(false);
-                                this.updateStatus('Session expired. Please reconnect.', 'error');
-                                return;
-                            }
+                            this.clearTokens();
+                            this.updateStatus('Session expired. Please reconnect.', 'error');
+                            return;
                         }
                         throw new Error(`Failed to list files: ${listResponse.status}`);
                     }
@@ -1460,7 +784,7 @@
 
                     const downloadResponse = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${latestFile.id}/content`, {
                         headers: {
-                            'Authorization': `Bearer ${accessToken}`
+                            'Authorization': `Bearer ${this.accessToken}`
                         }
                     });
 
@@ -1474,9 +798,7 @@
                     this.articles = backup.articles || [];
                     this.displayArticles(this.articles);
 
-                    // Enhanced status message
-                    const enhancedIndicator = localStorage.getItem('mypocket_enhanced') ? ' (Enhanced)' : '';
-                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name}${enhancedIndicator}`, 'success');
+                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name} (FIXED)`, 'success');
 
                 } catch (error) {
                     console.error('Error loading articles:', error);
@@ -1557,44 +879,9 @@
             }
 
             openReader(index) {
-                this.currentArticle = this.articles[index];
-                const overlay = document.getElementById('readerOverlay');
-
-                document.getElementById('readerTitle').textContent = this.currentArticle.title;
-                document.getElementById('readerDate').textContent = this.formatDate(this.currentArticle.dateAdded);
-                document.getElementById('readerDomain').textContent = this.getDomain(this.currentArticle.url);
-                document.getElementById('readerTime').textContent = `${this.currentArticle.readTime || 1} min read`;
-                document.getElementById('readerContent').innerHTML = this.currentArticle.content;
-
-                overlay.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            }
-
-            closeReader() {
-                const overlay = document.getElementById('readerOverlay');
-                overlay.classList.remove('active');
-                document.body.style.overflow = 'auto';
-            }
-
-            openOriginal() {
-                if (this.currentArticle) {
-                    window.open(this.currentArticle.url, '_blank');
-                }
-            }
-
-            deleteArticle(index) {
                 const article = this.articles[index];
-                if (!article) return;
-
-                if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your OneDrive backup.`)) {
-                    try {
-                        this.articles.splice(index, 1);
-                        this.displayArticles(this.articles);
-                        this.updateStatus(`✅ Article deleted. ${this.articles.length} articles remaining.`, 'success');
-                    } catch (error) {
-                        console.error('Error deleting article:', error);
-                        this.updateStatus(`❌ Failed to delete article: ${error.message}`, 'error');
-                    }
+                if (article) {
+                    window.open(article.url, '_blank');
                 }
             }
 
@@ -1606,10 +893,21 @@
                     const html = this.createArticleHTML(article);
                     const filename = `${this.sanitizeFilename(article.title)}.html`;
                     this.downloadFile(html, filename, 'text/html');
-                    this.updateStatus(`📤 Article "${article.title}" exported successfully!`, 'success');
+                    this.updateStatus(`📤 Article "${article.title}" exported!`, 'success');
                 } catch (error) {
                     console.error('Error exporting article:', error);
-                    this.updateStatus(`❌ Failed to export article: ${error.message}`, 'error');
+                    this.updateStatus(`❌ Failed to export: ${error.message}`, 'error');
+                }
+            }
+
+            deleteArticle(index) {
+                const article = this.articles[index];
+                if (!article) return;
+
+                if (confirm(`Delete "${article.title}"?`)) {
+                    this.articles.splice(index, 1);
+                    this.displayArticles(this.articles);
+                    this.updateStatus(`✅ Article deleted. ${this.articles.length} remaining.`, 'success');
                 }
             }
 
@@ -1621,75 +919,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${this.escapeHtml(article.title)}</title>
     <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            max-width: 800px; 
-            margin: 0 auto; 
-            padding: 40px 20px; 
-            line-height: 1.7; 
-            color: #333;
-        }
-        .header { 
-            border-bottom: 3px solid #ee5a24; 
-            margin-bottom: 32px; 
-            padding-bottom: 24px; 
-        }
-        .title { 
-            font-size: 2.4em; 
-            font-weight: bold; 
-            margin-bottom: 16px; 
-            color: #2c3e50; 
-            line-height: 1.2; 
-        }
-        .meta { 
-            color: #7f8c8d; 
-            font-size: 0.95em; 
-            margin-bottom: 24px; 
-        }
-        .content { 
-            font-size: 1.15em; 
-            line-height: 1.8; 
-        }
-        .content img { 
-            max-width: 100%; 
-            height: auto; 
-            margin: 24px 0; 
-            border-radius: 8px; 
-        }
-        .content p { 
-            margin-bottom: 1.4em; 
-        }
-        .footer { 
-            margin-top: 48px; 
-            padding-top: 24px; 
-            border-top: 2px solid #f0f0f0; 
-            color: #666; 
-            font-size: 0.9em; 
-        }
-        @media (max-width: 768px) {
-            body { padding: 20px 15px; }
-            .title { font-size: 1.8em; }
-            .content { font-size: 1.1em; }
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px 20px; line-height: 1.7; color: #333; }
+        .header { border-bottom: 3px solid #ee5a24; margin-bottom: 32px; padding-bottom: 24px; }
+        .title { font-size: 2.4em; font-weight: bold; margin-bottom: 16px; color: #2c3e50; line-height: 1.2; }
+        .meta { color: #7f8c8d; font-size: 0.95em; margin-bottom: 24px; }
+        .content { font-size: 1.15em; line-height: 1.8; }
+        .content img { max-width: 100%; height: auto; margin: 24px 0; border-radius: 8px; }
+        .content p { margin-bottom: 1.4em; }
+        .footer { margin-top: 48px; padding-top: 24px; border-top: 2px solid #f0f0f0; color: #666; font-size: 0.9em; }
     </style>
 </head>
 <body>
     <div class="header">
         <h1 class="title">${this.escapeHtml(article.title)}</h1>
         <div class="meta">
-            <div style="margin-bottom: 8px;">🌐 From: <a href="${article.url}" style="color: #ee5a24;">${this.getDomain(article.url)}</a></div>
-            ${article.author ? `<div style="margin-bottom: 8px;">✍️ By: ${this.escapeHtml(article.author)}</div>` : ''}
-            <div style="margin-bottom: 8px;">📅 Saved: ${this.formatDate(article.dateAdded)}</div>
-            <div>⏱️ Reading time: ${article.readTime || 1} minutes</div>
+            <div>🌐 From: <a href="${article.url}">${this.getDomain(article.url)}</a></div>
+            <div>📅 Saved: ${this.formatDate(article.dateAdded)}</div>
+            <div>⏱️ ${article.readTime || 1} min read</div>
         </div>
     </div>
-    <div class="content">
-        ${article.content}
-    </div>
+    <div class="content">${article.content}</div>
     <div class="footer">
-        <p><strong>✨ Exported from MyPocket Web Reader</strong></p>
-        <p>Original URL: <a href="${article.url}" style="color: #ee5a24;">${article.url}</a></p>
-        <p>Export Date: ${new Date().toLocaleDateString()}</p>
+        <p><strong>✨ Exported from MyPocket (FIXED)</strong></p>
+        <p>Original: <a href="${article.url}">${article.url}</a></p>
     </div>
 </body>
 </html>`;
@@ -1698,17 +950,59 @@
             downloadFile(content, filename, mimeType) {
                 const blob = new Blob([content], { type: mimeType });
                 const url = URL.createObjectURL(blob);
-
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = filename;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-
                 URL.revokeObjectURL(url);
             }
 
+            // Debug functions
+            showDebugInfo(errorData = null) {
+                const debugSection = document.getElementById('debugSection');
+                const debugInfo = document.getElementById('debugInfo');
+                
+                debugSection.style.display = 'block';
+                
+                const info = {
+                    'Current URL': window.location.href,
+                    'Redirect URI (Current)': this.redirectUri,
+                    'Redirect URI (Stored)': localStorage.getItem('mypocket_redirect_uri'),
+                    'Auth Redirect URI': localStorage.getItem('mypocket_auth_redirect_uri'),
+                    'Client ID': this.clientId,
+                    'Protocol': window.location.protocol,
+                    'Host': window.location.host,
+                    'Pathname': window.location.pathname,
+                    'Has Access Token': !!this.accessToken,
+                    'Has Refresh Token': !!this.refreshToken,
+                    'Code Verifier Stored': !!localStorage.getItem('mypocket_code_verifier')
+                };
+
+                if (errorData) {
+                    info['Last Error'] = JSON.stringify(errorData, null, 2);
+                }
+
+                debugInfo.innerHTML = Object.entries(info)
+                    .map(([key, value]) => `<div><strong>${key}:</strong> ${value}</div>`)
+                    .join('');
+            }
+
+            testDirectAuth() {
+                const testUrl = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?` +
+                    `client_id=${this.clientId}&` +
+                    `response_type=code&` +
+                    `redirect_uri=${encodeURIComponent(this.redirectUri)}&` +
+                    `scope=${encodeURIComponent('Files.ReadWrite User.Read offline_access')}&` +
+                    `response_mode=query&` +
+                    `state=test_${Date.now()}`;
+
+                console.log('🧪 Direct test URL:', testUrl);
+                window.open(testUrl, '_blank');
+            }
+
+            // Utility functions
             getDomain(url) {
                 try {
                     return new URL(url).hostname.replace('www.', '');
@@ -1720,9 +1014,7 @@
             formatDate(dateString) {
                 try {
                     const date = new Date(dateString);
-                    if (isNaN(date.getTime())) {
-                        return 'invalid date';
-                    }
+                    if (isNaN(date.getTime())) return 'invalid date';
 
                     const now = new Date();
                     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -1730,28 +1022,21 @@
                     const diffMs = today.getTime() - targetDate.getTime();
                     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-                    if (diffDays < 0) {
-                        return date.toLocaleDateString();
-                    }
-
-                    if (diffDays === 0) {
-                        return 'today';
-                    } else if (diffDays === 1) {
-                        return 'yesterday';
-                    } else if (diffDays <= 7) {
-                        return `${diffDays} days ago`;
-                    } else if (diffDays <= 30) {
+                    if (diffDays < 0) return date.toLocaleDateString();
+                    if (diffDays === 0) return 'today';
+                    if (diffDays === 1) return 'yesterday';
+                    if (diffDays <= 7) return `${diffDays} days ago`;
+                    if (diffDays <= 30) {
                         const weeks = Math.floor(diffDays / 7);
                         return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`;
-                    } else if (diffDays <= 365) {
+                    }
+                    if (diffDays <= 365) {
                         const months = Math.floor(diffDays / 30);
                         return months === 1 ? '1 month ago' : `${months} months ago`;
-                    } else {
-                        const years = Math.floor(diffDays / 365);
-                        return years === 1 ? '1 year ago' : `${years} years ago`;
                     }
+                    const years = Math.floor(diffDays / 365);
+                    return years === 1 ? '1 year ago' : `${years} years ago`;
                 } catch (error) {
-                    console.error('Date formatting error:', error);
                     return 'date error';
                 }
             }
@@ -1767,84 +1052,9 @@
                 if (!filename) return 'article';
                 return filename.replace(/[^a-z0-9\s]/gi, '_').toLowerCase().substring(0, 50);
             }
-
-            showDebugInfo() {
-                const isEnhanced = localStorage.getItem('mypocket_enhanced');
-                const timeToExpiry = this.tokenExpiry ? Math.round((this.tokenExpiry - Date.now()) / (1000 * 60)) : 'N/A';
-                
-                const info = `
-MyPocket Web Reader Debug Info (Enhanced):
-=====================================
-
-Current URL: ${window.location.href}
-Redirect URI: ${this.redirectUri}
-Client ID: ${this.clientId}
-Protocol: ${window.location.protocol}
-Host: ${window.location.host}
-Has Access Token: ${!!this.accessToken}
-Has Refresh Token: ${!!this.refreshToken}
-Enhanced Auth: ${!!isEnhanced}
-Token Expires In: ${timeToExpiry} minutes
-Auto-Refresh Scheduled: ${!!this.refreshTimer}
-Articles Loaded: ${this.articles.length}
-
-AZURE AD SETUP CHECKLIST:
-❓ Authorization code flow enabled?
-❓ Redirect URI registered: ${this.redirectUri}
-❓ offline_access scope added?
-❓ Refresh tokens enabled?
-
-TROUBLESHOOTING:
-1. Check Azure Portal → App registrations
-2. Find app: ${this.clientId}
-3. Authentication → Enable "Authorization code flow"
-4. Authentication → Enable "Refresh tokens"
-5. Authentication → Add redirect URI: ${this.redirectUri}
-6. API permissions → Add "offline_access"
-7. Grant admin consent
-
-If still failing:
-- Open browser dev tools (F12)
-- Check Console tab for error messages
-- Click Connect and watch network requests
-                `;
-
-                alert(info);
-                console.log('🔧 Enhanced Debug Info:', {
-                    currentUrl: window.location.href,
-                    redirectUri: this.redirectUri,
-                    clientId: this.clientId,
-                    protocol: window.location.protocol,
-                    hasToken: !!this.accessToken,
-                    hasRefreshToken: !!this.refreshToken,
-                    enhanced: !!isEnhanced,
-                    tokenExpiresIn: timeToExpiry + ' minutes',
-                    autoRefreshScheduled: !!this.refreshTimer,
-                    articlesCount: this.articles.length
-                });
-            }
-
-            toggleTestMode() {
-                document.body.classList.toggle('test-mode');
-                const isTestMode = document.body.classList.contains('test-mode');
-
-                const testBtn = document.getElementById('testBtn');
-                if (testBtn) {
-                    testBtn.innerHTML = isTestMode
-                        ? '<span>👁️</span> <span>Hide</span>'
-                        : '<span>👁️</span> <span>Test</span>';
-                }
-
-                this.updateStatus(
-                    isTestMode
-                        ? '🔍 Test mode ON - All elements highlighted'
-                        : '👁️ Test mode OFF - Buttons hidden on mobile',
-                    'success'
-                );
-            }
         }
 
-        // Initialize the web reader
+        // Initialize
         let webReader;
         document.addEventListener('DOMContentLoaded', () => {
             webReader = new MyPocketWebReader();
