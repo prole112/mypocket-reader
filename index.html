@@ -281,31 +281,29 @@
             font-size: 0.8em;
         }
 
-        /* FIXED: Mobile-friendly action buttons */
+        /* Action buttons: hidden by default, show on interaction */
         .article-actions {
             position: absolute;
             top: 15px;
             right: 15px;
             display: flex;
             gap: 8px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
             z-index: 10;
-            /* Always visible on mobile, hover on desktop */
+        }
+
+        /* Desktop: show on hover */
+        .article-card:hover .article-actions {
             opacity: 1;
             visibility: visible;
         }
 
-        /* Desktop: show only on hover */
-        @media (min-width: 769px) {
-            .article-actions {
-                opacity: 0;
-                visibility: hidden;
-                transition: all 0.3s ease;
-            }
-
-            .article-card:hover .article-actions {
-                opacity: 1 !important;
-                visibility: visible !important;
-            }
+        /* Mobile: show when card is tapped/active */
+        .article-card.show-actions .article-actions {
+            opacity: 1;
+            visibility: visible;
         }
 
         .action-btn {
@@ -496,8 +494,29 @@
             }
         }
 
-        /* ENHANCED MOBILE RESPONSIVENESS */
+        /* Mobile: Add subtle hint that buttons are available */
         @media (max-width: 768px) {
+            .article-card::after {
+                content: '⋯';
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                color: var(--text-secondary);
+                font-size: 18px;
+                font-weight: bold;
+                opacity: 0.3;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+            }
+
+            .article-card.show-actions::after {
+                opacity: 0;
+            }
+
+            .article-card:hover::after {
+                opacity: 0.6;
+            }
+        }
             .container {
                 padding: 0 15px;
             }
@@ -578,17 +597,9 @@
                 gap: 12px;
             }
 
-            /* Mobile: Always show action buttons in a mobile-friendly way */
+            /* Mobile: Keep buttons hidden by default, show when card is tapped */
             .article-actions {
-                position: static;
-                opacity: 1;
-                visibility: visible;
-                justify-content: center;
-                margin: 15px 15px 0 15px;
-                padding: 10px;
-                background: var(--background);
-                border-radius: 8px;
-                border-top: 1px solid var(--border);
+                /* Buttons remain hidden unless card is tapped */
             }
 
             .action-btn {
@@ -924,6 +935,50 @@
                             button.style.transform = '';
                         }, 100);
                     });
+                });
+
+                // Add tap-to-show-actions for mobile
+                this.setupMobileCardInteraction();
+            }
+
+            setupMobileCardInteraction() {
+                // On mobile, tap article card to toggle action buttons
+                document.addEventListener('click', (e) => {
+                    const articleCard = e.target.closest('.article-card');
+                    
+                    if (articleCard) {
+                        // If clicking on action buttons, don't toggle
+                        if (e.target.closest('.article-actions')) {
+                            return;
+                        }
+
+                        // If clicking on article content to read, don't toggle buttons
+                        if (e.target.closest('.article-content') && !e.target.closest('.article-actions')) {
+                            return;
+                        }
+
+                        // Toggle buttons visibility on mobile
+                        if (window.innerWidth <= 768) {
+                            e.preventDefault();
+                            
+                            // Hide all other cards' buttons first
+                            document.querySelectorAll('.article-card').forEach(card => {
+                                if (card !== articleCard) {
+                                    card.classList.remove('show-actions');
+                                }
+                            });
+
+                            // Toggle this card's buttons
+                            articleCard.classList.toggle('show-actions');
+                        }
+                    } else {
+                        // Clicked outside any card, hide all buttons
+                        if (window.innerWidth <= 768) {
+                            document.querySelectorAll('.article-card').forEach(card => {
+                                card.classList.remove('show-actions');
+                            });
+                        }
+                    }
                 });
             }
 
@@ -1390,11 +1445,19 @@ Viewport Size: ${window.innerWidth}x${window.innerHeight}
 Touch Support: ${'ontouchstart' in window}
 
 Mobile Optimizations Applied:
-- Touch-friendly button sizes (44px minimum)
-- Always visible action buttons on mobile
+- Action buttons hidden by default on mobile
+- Tap article card background to show/hide buttons
+- Three-dot indicator shows buttons are available
+- Touch-friendly button sizes when visible
 - Responsive grid layout
 - Mobile-optimized typography
 - Improved touch event handling
+
+Mobile Interaction:
+- Desktop: Hover over article to see action buttons
+- Mobile: Tap article background to reveal buttons
+- Tap outside article or another article to hide buttons
+- Tap article title/content to read article
 
 Next Steps:
 1. Check if buttons are visible and touchable
@@ -1431,8 +1494,8 @@ Next Steps:
 
                 this.updateStatus(
                     isTestMode
-                        ? '🔍 Test mode ON - All UI elements highlighted'
-                        : '👁️ Test mode OFF - Normal display',
+                        ? '🔍 Test mode ON - All elements highlighted'
+                        : '👁️ Test mode OFF - Buttons hidden on mobile',
                     'success'
                 );
             }
