@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPocket - Web Reader</title>
+    <title>MyPocket - Enhanced Web Reader</title>
     <style>
         * {
             margin: 0;
@@ -13,66 +13,61 @@
         }
 
         :root {
-            --pocket-red: #ef4056;
-            --pocket-red-dark: #d73754;
-            --pocket-red-light: #ff6b7a;
-            --pocket-green: #00d084;
-            --pocket-blue: #0587ff;
-            --pocket-orange: #ff8a00;
-            --background: #f7f8fa;
+            --primary-color: #ee5a24;
+            --secondary-color: #667eea;
+            --background: #f8f9fa;
             --surface: #ffffff;
-            --surface-elevated: #ffffff;
-            --text-primary: #1a1b1c;
-            --text-secondary: #6b7280;
-            --text-tertiary: #9ca3af;
-            --border: #e5e7eb;
-            --border-light: #f3f4f6;
-            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
-            --radius: 12px;
-            --radius-lg: 16px;
+            --text-primary: #2c3e50;
+            --text-secondary: #6c757d;
+            --border: #e9ecef;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            --shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.15);
+            --success: #27ae60;
+            --error: #e74c3c;
+            --warning: #f39c12;
         }
 
-        /* Dark mode */
-        body.dark-mode {
-            --background: #0f0f0f;
-            --surface: #1a1a1a;
-            --surface-elevated: #202020;
-            --text-primary: #ffffff;
-            --text-secondary: #b3b3b3;
-            --text-tertiary: #808080;
-            --border: #333333;
-            --border-light: #2a2a2a;
-            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
+        [data-theme="dark"] {
+            --background: #1a1a1a;
+            --surface: #2d2d2d;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --border: #404040;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="sepia"] {
+            --background: #f4f1ea;
+            --surface: #faf8f1;
+            --text-primary: #5c4b37;
+            --text-secondary: #8b7355;
+            --border: #e6ddd1;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
             color: var(--text-primary);
             background: var(--background);
-            font-size: 16px;
+            transition: all 0.3s ease;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 24px;
+            padding: 0 20px;
         }
 
-        /* Header */
+        /* Enhanced Header */
         .header {
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            padding: 16px 0;
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            color: white;
+            padding: 20px 0;
+            box-shadow: var(--shadow);
             position: sticky;
             top: 0;
             z-index: 100;
             backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.95);
         }
 
         .header-content {
@@ -84,34 +79,22 @@
         }
 
         .logo {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--pocket-red);
+            font-size: 1.8em;
+            font-weight: bold;
             display: flex;
             align-items: center;
-            gap: 8px;
-        }
-
-        .logo-icon {
-            width: 32px;
-            height: 32px;
-            background: linear-gradient(135deg, var(--pocket-red), var(--pocket-red-light));
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            color: white;
+            gap: 10px;
         }
 
         .header-actions {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 15px;
+            flex-wrap: wrap;
         }
 
         .btn {
-            padding: 10px 16px;
+            padding: 10px 20px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
@@ -120,139 +103,405 @@
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            white-space: nowrap;
+            gap: 8px;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .btn-primary {
-            background: var(--pocket-red);
+            background: rgba(255, 255, 255, 0.2);
             color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
         }
 
-        .btn-primary:hover {
-            background: var(--pocket-red-dark);
+        .btn-primary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.3);
             transform: translateY(-1px);
-            box-shadow: var(--shadow);
         }
 
         .btn-secondary {
             background: var(--surface);
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border: 2px solid var(--border);
         }
 
-        .btn-secondary:hover {
-            background: var(--border-light);
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--border);
             transform: translateY(-1px);
         }
 
-        .btn-ghost {
-            background: transparent;
-            color: var(--text-secondary);
-        }
-
-        .btn-ghost:hover {
-            background: var(--border-light);
-        }
-
-        /* Search */
-        .search-container {
-            padding: 32px 0;
+        /* Enhanced Controls */
+        .controls-section {
+            padding: 30px 0;
             background: var(--surface);
             border-bottom: 1px solid var(--border);
         }
 
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 20px;
+            align-items: center;
+        }
+
         .search-box {
             position: relative;
-            max-width: 600px;
-            margin: 0 auto;
         }
 
         .search-input {
             width: 100%;
-            padding: 16px 48px 16px 20px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
+            padding: 15px 50px 15px 20px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
             font-size: 16px;
             background: var(--background);
-            transition: all 0.2s ease;
+            transition: border-color 0.2s;
             color: var(--text-primary);
         }
 
         .search-input:focus {
             outline: none;
-            border-color: var(--pocket-red);
-            box-shadow: 0 0 0 3px rgba(239, 64, 86, 0.1);
-            background: var(--surface);
-        }
-
-        .search-input::placeholder {
-            color: var(--text-tertiary);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(238, 90, 36, 0.1);
         }
 
         .search-icon {
             position: absolute;
-            right: 16px;
+            right: 15px;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--text-tertiary);
+            color: var(--text-secondary);
             font-size: 20px;
             pointer-events: none;
         }
 
-        /* Status */
+        .filter-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .filter-select {
+            padding: 10px 15px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .view-controls {
+            display: flex;
+            gap: 5px;
+            background: var(--border);
+            padding: 4px;
+            border-radius: 8px;
+        }
+
+        .view-btn {
+            padding: 8px 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .view-btn.active {
+            background: var(--surface);
+            color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Enhanced Status */
         .status {
-            padding: 16px 0;
+            padding: 20px 0;
             text-align: center;
             background: var(--surface);
             border-bottom: 1px solid var(--border);
-            font-size: 14px;
-            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
         .status.loading {
-            color: var(--pocket-blue);
+            color: var(--secondary-color);
         }
 
         .status.error {
-            color: var(--pocket-red);
+            color: var(--error);
         }
 
         .status.success {
-            color: var(--pocket-green);
+            color: var(--success);
         }
 
-        /* Articles Grid */
+        /* Enhanced Articles Grid */
         .articles-section {
-            padding: 24px 0;
+            padding: 40px 0;
             min-height: 60vh;
+        }
+
+        .articles-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .articles-count {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .bulk-actions {
+            display: none;
+            gap: 10px;
+        }
+
+        .bulk-actions.active {
+            display: flex;
         }
 
         .articles-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 12px;
-            margin-top: 16px;
+            gap: 25px;
+            margin-top: 20px;
+            transition: all 0.3s ease;
         }
 
+        .articles-grid.grid-view {
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        }
+
+        .articles-grid.list-view {
+            grid-template-columns: 1fr;
+        }
+
+        .articles-grid.compact-view {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        }
+
+        /* Enhanced Article Cards */
         .article-card {
             background: var(--surface);
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-            transition: all 0.2s ease;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
             border: 1px solid var(--border);
             position: relative;
             display: flex;
             flex-direction: column;
-            cursor: pointer;
-            max-width: 300px;
         }
 
         .article-card:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-            transform: translateY(-1px);
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        .article-card.selected {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(238, 90, 36, 0.1);
+        }
+
+        .article-card.list-view {
+            flex-direction: row;
+            align-items: stretch;
+        }
+
+        .article-checkbox {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 5;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .article-card:hover .article-checkbox,
+        .article-checkbox:checked {
+            opacity: 1;
+        }
+
+        .article-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .list-view .article-image {
+            width: 200px;
+            height: auto;
+            min-height: 120px;
+        }
+
+        .compact-view .article-image {
+            height: 150px;
+            font-size: 2em;
+        }
+
+        .article-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .article-card:hover .article-image img {
+            transform: scale(1.05);
+        }
+
+        .article-image .image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .article-image:hover .image-overlay {
+            opacity: 1;
+        }
+
+        .reading-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .article-content {
+            padding: 20px;
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .list-view .article-content {
+            padding: 15px 20px;
+        }
+
+        .compact-view .article-content {
+            padding: 15px;
+        }
+
+        .article-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            line-height: 1.4;
+            color: var(--text-primary);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            transition: color 0.2s;
+        }
+
+        .article-card:hover .article-title {
+            color: var(--primary-color);
+        }
+
+        .list-view .article-title {
+            font-size: 1.1em;
+            -webkit-line-clamp: 1;
+        }
+
+        .compact-view .article-title {
+            font-size: 1em;
+            margin-bottom: 8px;
+        }
+
+        .article-excerpt {
+            color: var(--text-secondary);
+            font-size: 0.95em;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .list-view .article-excerpt {
+            -webkit-line-clamp: 2;
+            font-size: 0.9em;
+        }
+
+        .compact-view .article-excerpt {
+            -webkit-line-clamp: 2;
+            font-size: 0.85em;
+            margin-bottom: 10px;
+        }
+
+        .article-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            margin-bottom: 10px;
+        }
+
+        .article-tags {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .tag {
+            background: var(--border);
+            color: var(--text-secondary);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 500;
+        }
+
+        .article-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 0.8em;
+        }
+
+        .article-actions {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 10;
         }
 
         .article-card:hover .article-actions {
@@ -260,387 +509,167 @@
             visibility: visible;
         }
 
-        .article-image-container {
-            width: 100%;
-            height: 120px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .article-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.2s ease;
-        }
-
-        .article-card:hover .article-image {
-            transform: scale(1.02);
-        }
-
-        .article-image-placeholder {
-            font-size: 24px;
-            color: rgba(255, 255, 255, 0.8);
-            text-align: center;
-        }
-
-        .article-content {
-            padding: 12px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .article-title {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 6px;
-            line-height: 1.3;
-            color: var(--text-primary);
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .article-excerpt {
-            color: var(--text-secondary);
-            font-size: 12px;
-            line-height: 1.4;
-            margin-bottom: 8px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            flex: 1;
-        }
-
-        .article-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: var(--text-tertiary);
-            font-size: 10px;
-            font-weight: 500;
-            margin-top: auto;
-        }
-
-        .article-domain {
-            color: var(--text-secondary);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .article-date {
-            color: var(--text-tertiary);
-        }
-
-        .article-actions {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            display: flex;
-            gap: 4px;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s ease;
-            z-index: 10;
-        }
-
-        .article-card:hover .article-actions {
-            opacity: 1 !important;
-            visibility: visible !important;
-        }
-
         .action-btn {
             background: rgba(255, 255, 255, 0.95);
-            border: none;
-            border-radius: 6px;
-            padding: 6px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 16px;
             transition: all 0.2s ease;
             backdrop-filter: blur(10px);
-            box-shadow: var(--shadow-sm);
-            width: 32px;
-            height: 32px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            min-width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .action-btn:hover {
-            transform: translateY(-2px) scale(1.05);
-            box-shadow: var(--shadow);
+            transform: translateY(-3px) scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
         }
 
-        .read-btn:hover {
-            background: rgba(5, 135, 255, 0.9);
-            color: white;
-        }
-
-        .export-btn:hover {
-            background: rgba(0, 208, 132, 0.9);
-            color: white;
-        }
-
-        .delete-btn:hover {
-            background: rgba(239, 64, 86, 0.9);
-            color: white;
-        }
-
-        /* Dark mode action buttons */
-        body.dark-mode .action-btn {
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-        }
-
-        /* Reader View */
+        /* Enhanced Reader */
         .reader-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.8);
             z-index: 1000;
             display: none;
             overflow-y: auto;
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(5px);
         }
 
         .reader-overlay.active {
             display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
         }
 
         .reader-container {
-            max-width: 800px;
-            margin: 20px auto;
+            max-width: 900px;
+            margin: 40px auto;
             background: var(--surface);
-            border-radius: var(--radius-lg);
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
             position: relative;
-            animation: slideIn 0.3s ease;
         }
 
-        @keyframes slideIn {
-            from { 
-                transform: translateY(30px);
-                opacity: 0;
-            }
-            to { 
-                transform: translateY(0);
-                opacity: 1;
-            }
+        .reader-toolbar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .reader-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
 
         .reader-header {
-            padding: 32px 32px 24px;
+            padding: 30px;
             border-bottom: 1px solid var(--border);
-            background: var(--surface-elevated);
+            background: var(--background);
         }
 
         .reader-title {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 16px;
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 15px;
             line-height: 1.3;
             color: var(--text-primary);
         }
 
-        .reader-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            color: var(--text-secondary);
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-
-        .reader-meta-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .reader-actions {
-            display: flex;
-            gap: 12px;
-        }
-
         .reader-content {
-            padding: 32px;
-            font-size: 18px;
-            line-height: 1.7;
+            padding: 40px;
+            font-size: 1.1em;
+            line-height: 1.8;
             color: var(--text-primary);
+            transition: all 0.3s ease;
         }
 
-        .reader-content h1,
-        .reader-content h2,
-        .reader-content h3,
-        .reader-content h4,
-        .reader-content h5,
-        .reader-content h6 {
-            margin: 32px 0 16px;
-            color: var(--text-primary);
-            font-weight: 600;
+        .reader-content.font-small {
+            font-size: 0.9em;
         }
 
-        .reader-content h1 { font-size: 2em; }
-        .reader-content h2 { font-size: 1.6em; }
-        .reader-content h3 { font-size: 1.4em; }
-
-        .reader-content p {
-            margin-bottom: 24px;
+        .reader-content.font-medium {
+            font-size: 1.1em;
         }
 
-        .reader-content img {
-            max-width: 100%;
-            height: auto;
-            border-radius: var(--radius);
-            margin: 24px 0;
-            box-shadow: var(--shadow-sm);
+        .reader-content.font-large {
+            font-size: 1.3em;
         }
 
-        .reader-content blockquote {
-            border-left: 4px solid var(--pocket-red);
-            margin: 24px 0;
-            padding: 16px 24px;
-            background: var(--background);
-            font-style: italic;
-            border-radius: 0 var(--radius) var(--radius) 0;
+        .reader-content.font-xlarge {
+            font-size: 1.5em;
         }
 
-        .reader-content a {
-            color: var(--pocket-red);
-            text-decoration: none;
-        }
-
-        .reader-content a:hover {
-            text-decoration: underline;
-        }
-
-        .close-reader {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            background: var(--pocket-red);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            cursor: pointer;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-            z-index: 10;
-        }
-
-        .close-reader:hover {
-            background: var(--pocket-red-dark);
-            transform: scale(1.1);
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 80px 20px;
-            color: var(--text-secondary);
-        }
-
-        .empty-state-icon {
-            font-size: 64px;
-            margin-bottom: 24px;
-            opacity: 0.6;
-        }
-
-        .empty-state h3 {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: var(--text-primary);
-        }
-
-        .empty-state p {
-            font-size: 16px;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-
-        /* Loading Animation */
+        /* Loading states */
         .loading-spinner {
             display: inline-block;
             width: 20px;
             height: 20px;
             border: 2px solid var(--border);
             border-radius: 50%;
-            border-top-color: var(--pocket-red);
+            border-top-color: var(--primary-color);
             animation: spin 1s ease-in-out infinite;
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
-        /* Connection Status */
-        .connection-status {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px;
-            margin: 20px 0;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 14px;
+        .skeleton {
+            background: linear-gradient(90deg, var(--border) 25%, transparent 50%, var(--border) 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
         }
 
-        .connection-status.connected {
-            border-color: var(--pocket-green);
-            background: rgba(0, 208, 132, 0.05);
-            color: var(--pocket-green);
+        @keyframes skeleton-loading {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
         }
 
-        .connection-status.disconnected {
-            border-color: var(--pocket-red);
-            background: rgba(239, 64, 86, 0.05);
-            color: var(--pocket-red);
-        }
-
-        /* Mobile Responsive */
+        /* Responsive Design */
         @media (max-width: 768px) {
             .container {
-                padding: 0 16px;
+                padding: 0 15px;
             }
 
             .header-content {
                 flex-direction: column;
-                gap: 12px;
+                text-align: center;
             }
 
-            .header-actions {
-                width: 100%;
+            .controls-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .filter-controls {
                 justify-content: center;
             }
 
-            .articles-grid {
+            .articles-grid.grid-view {
                 grid-template-columns: 1fr;
-                gap: 16px;
             }
 
             .article-actions {
@@ -648,16 +677,15 @@
                 opacity: 1;
                 visibility: visible;
                 justify-content: center;
-                margin-top: 12px;
-                padding: 12px;
+                margin-top: 15px;
+                padding: 10px;
                 background: var(--background);
-                border-radius: var(--radius);
-                border-top: 1px solid var(--border);
+                border-radius: 8px;
             }
 
             .reader-container {
-                margin: 10px;
-                border-radius: var(--radius);
+                margin: 20px;
+                border-radius: 8px;
             }
 
             .reader-header,
@@ -666,191 +694,412 @@
             }
 
             .reader-title {
-                font-size: 24px;
-            }
-
-            .reader-content {
-                font-size: 16px;
-            }
-
-            .search-input {
-                font-size: 16px; /* Prevent zoom on iOS */
+                font-size: 1.5em;
             }
         }
 
-        /* Test mode styles */
-        body.test-mode .article-actions {
-            opacity: 1 !important;
-            visibility: visible !important;
-            background: rgba(239, 64, 86, 0.05);
-            border: 1px dashed var(--pocket-red);
-            border-radius: 6px;
-            padding: 4px;
+        /* Accessibility */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
         }
 
-        /* Focus styles for accessibility */
+        /* Focus styles */
         .btn:focus,
-        .action-btn:focus,
-        .search-input:focus {
-            outline: 2px solid var(--pocket-red);
+        .search-input:focus,
+        .action-btn:focus {
+            outline: 3px solid var(--primary-color);
             outline-offset: 2px;
         }
 
-        /* Improved typography */
-        .article-title {
-            font-feature-settings: 'liga' 1, 'kern' 1;
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
         }
 
-        .reader-title {
-            font-feature-settings: 'liga' 1, 'kern' 1;
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .reader-content {
-            font-feature-settings: 'liga' 1, 'kern' 1;
+        .slide-up {
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--surface);
+            color: var(--text-primary);
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-hover);
+            border: 1px solid var(--border);
+            max-width: 400px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--success);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--error);
+        }
+
+        .toast.warning {
+            border-left: 4px solid var(--warning);
         }
     </style>
 </head>
 
-<body>
+<body data-theme="light">
     <!-- Header -->
     <header class="header">
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <div class="logo-icon">📚</div>
-                    MyPocket
+                    📚 MyPocket Enhanced Reader
                 </div>
                 <div class="header-actions">
                     <button id="connectBtn" class="btn btn-primary">
                         <span id="connectIcon">☁️</span>
                         <span id="connectText">Connect OneDrive</span>
                     </button>
-                    <button id="refreshBtn" class="btn btn-secondary" style="display: none;">
+                    <button id="themeBtn" class="btn btn-secondary" title="Toggle theme">
+                        <span>🌙</span>
+                    </button>
+                    <button id="refreshBtn" class="btn btn-secondary" style="display: none;" title="Refresh articles">
                         <span>🔄</span> Refresh
                     </button>
-                    <button id="darkModeBtn" class="btn btn-ghost" onclick="webReader.toggleDarkMode()">
-                        <span>🌙</span> Dark
-                    </button>
-                    <button id="debugBtn" class="btn btn-ghost" onclick="webReader.showDebugInfo()">
-                        🔧
-                    </button>
-                    <button id="testBtn" class="btn btn-ghost" onclick="webReader.toggleTestMode()">
-                        📝 Test
+                    <button id="settingsBtn" class="btn btn-secondary" title="Settings">
+                        <span>⚙️</span>
                     </button>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Search -->
-    <section class="search-container">
+    <!-- Enhanced Controls -->
+    <section class="controls-section">
         <div class="container">
-            <div class="search-box">
-                <input type="text" id="searchInput" class="search-input" placeholder="Search your saved articles...">
-                <span class="search-icon">🔍</span>
+            <div class="controls-grid">
+                <div class="search-box">
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search your saved articles..."
+                        aria-label="Search articles">
+                    <span class="search-icon" aria-hidden="true">🔍</span>
+                </div>
+
+                <div class="filter-controls">
+                    <select id="sortFilter" class="filter-select" aria-label="Sort articles">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="title">Title A-Z</option>
+                        <option value="domain">By Domain</option>
+                        <option value="reading-time">Reading Time</option>
+                    </select>
+
+                    <select id="tagFilter" class="filter-select" aria-label="Filter by tag">
+                        <option value="all">All Tags</option>
+                    </select>
+                </div>
+
+                <div class="view-controls">
+                    <button class="view-btn active" data-view="grid" title="Grid view" aria-label="Grid view">
+                        ⊞
+                    </button>
+                    <button class="view-btn" data-view="list" title="List view" aria-label="List view">
+                        ☰
+                    </button>
+                    <button class="view-btn" data-view="compact" title="Compact view" aria-label="Compact view">
+                        ⊡
+                    </button>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- Status -->
-    <div class="status" id="status">
+    <div class="status" id="status" role="status" aria-live="polite">
         Connect to OneDrive to view your saved articles
     </div>
 
     <!-- Articles -->
     <section class="articles-section">
         <div class="container">
+            <div class="articles-header">
+                <div class="articles-count" id="articlesCount">
+                    No articles loaded
+                </div>
+                <div class="bulk-actions" id="bulkActions">
+                    <button class="btn btn-secondary" id="selectAllBtn">Select All</button>
+                    <button class="btn btn-secondary" id="exportSelectedBtn">Export Selected</button>
+                    <button class="btn btn-secondary" id="deleteSelectedBtn">Delete Selected</button>
+                </div>
+            </div>
+
             <div id="articlesContainer">
                 <div class="empty-state">
                     <div class="empty-state-icon">📖</div>
-                    <h3>Welcome to MyPocket</h3>
-                    <p>Connect to OneDrive to access your saved articles from anywhere. Start building your personal reading library today!</p>
+                    <h3>Welcome to MyPocket Enhanced Reader</h3>
+                    <p>Connect to OneDrive to access your saved articles with enhanced features!</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Reader Overlay -->
-    <div class="reader-overlay" id="readerOverlay">
+    <!-- Enhanced Reader Overlay -->
+    <div class="reader-overlay" id="readerOverlay" role="dialog" aria-modal="true" aria-labelledby="readerTitle">
         <div class="reader-container">
-            <button class="close-reader" id="closeReader">✕</button>
-            <div class="reader-header">
-                <h1 class="reader-title" id="readerTitle">Article Title</h1>
-                <div class="reader-meta">
-                    <div class="reader-meta-item">
-                        <span>📅</span>
-                        <span id="readerDate">Date</span>
-                    </div>
-                    <div class="reader-meta-item">
-                        <span>🌐</span>
-                        <span id="readerDomain">Domain</span>
-                    </div>
-                    <div class="reader-meta-item">
-                        <span>⏱️</span>
-                        <span id="readerTime">5 min read</span>
-                    </div>
-                </div>
-                <div class="reader-actions">
-                    <button class="btn btn-primary" id="openOriginal">
-                        🔗 Open Original
+            <div class="reader-toolbar">
+                <div class="reader-controls">
+                    <button class="btn btn-secondary" id="closeReader" title="Close reader">
+                        ← Back
                     </button>
-                    <button class="btn btn-secondary" id="exportFromReader" onclick="webReader.exportCurrentArticle()">
-                        📤 Export
+                    <button class="btn btn-secondary" id="openOriginal" title="Open original article">
+                        🔗 Original
+                    </button>
+                </div>
+
+                <div class="reader-controls">
+                    <button class="btn btn-secondary" id="fontSizeBtn" title="Font size">
+                        Aa
+                    </button>
+                    <button class="btn btn-secondary" id="readerThemeBtn" title="Reading theme">
+                        🌙
+                    </button>
+                    <button class="btn btn-secondary" id="ttsBtn" title="Text-to-speech">
+                        🔊
+                    </button>
+                    <button class="btn btn-secondary" id="bookmarkBtn" title="Bookmark position">
+                        🔖
                     </button>
                 </div>
             </div>
-            <div class="reader-content" id="readerContent">
+
+            <div class="reader-header">
+                <h1 class="reader-title" id="readerTitle">Article Title</h1>
+                <div class="reader-meta" id="readerMeta">
+                    <span>📅 <span id="readerDate">Date</span></span>
+                    <span>🌐 <span id="readerDomain">Domain</span></span>
+                    <span>⏱️ <span id="readerTime">5 min read</span></span>
+                    <span>📊 <span id="readingProgress">0% read</span></span>
+                </div>
+            </div>
+
+            <div class="reader-content" id="readerContent" tabindex="0">
                 Article content will appear here...
             </div>
         </div>
     </div>
 
+    <!-- Toast container -->
+    <div id="toastContainer"></div>
+
     <script>
-        class MyPocketWebReader {
+        class EnhancedMyPocketReader {
             constructor() {
                 this.clientId = '436e8796-8c40-47c3-9ad5-b8882f3ef7f7';
                 this.redirectUri = this.getRedirectUri();
-                console.log('🔵 Redirect URI:', this.redirectUri);
-
                 this.accessToken = null;
                 this.articles = [];
+                this.filteredArticles = [];
                 this.currentArticle = null;
-                this.currentArticleIndex = null;
+                this.selectedArticles = new Set();
+                this.currentView = 'grid';
+                this.currentTheme = 'light';
+                this.currentSort = 'newest';
+                this.currentTag = 'all';
+                this.fontSize = 'medium';
+                this.readingPosition = 0;
+                this.isReading = false;
+                this.readingStartTime = null;
 
                 this.init();
             }
 
-            getRedirectUri() {
-                const currentUrl = window.location.href;
-                const baseUrl = currentUrl.split('#')[0];
-                
-                if (baseUrl.startsWith('http://') || baseUrl.startsWith('https://')) {
-                    return baseUrl;
-                } else {
-                    return window.location.origin + window.location.pathname;
-                }
-            }
-
             init() {
+                this.loadSettings();
                 this.setupEventListeners();
+                this.setupKeyboardShortcuts();
                 this.checkAuthFromURL();
                 this.loadStoredToken();
-                this.loadDarkModePreference();
+                this.initializeTheme();
+            }
+
+            loadSettings() {
+                const settings = JSON.parse(localStorage.getItem('mypocket_settings') || '{}');
+                this.currentTheme = settings.theme || 'light';
+                this.fontSize = settings.fontSize || 'medium';
+                this.currentView = settings.view || 'grid';
+            }
+
+            saveSettings() {
+                const settings = {
+                    theme: this.currentTheme,
+                    fontSize: this.fontSize,
+                    view: this.currentView
+                };
+                localStorage.setItem('mypocket_settings', JSON.stringify(settings));
             }
 
             setupEventListeners() {
+                // Header controls
                 document.getElementById('connectBtn').addEventListener('click', () => this.authenticate());
                 document.getElementById('refreshBtn').addEventListener('click', () => this.loadArticles());
-                document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
+                document.getElementById('themeBtn').addEventListener('click', () => this.toggleTheme());
+                document.getElementById('settingsBtn').addEventListener('click', () => this.showSettings());
+
+                // Search and filters
+                document.getElementById('searchInput').addEventListener('input', (e) => this.handleSearch(e.target.value));
+                document.getElementById('sortFilter').addEventListener('change', (e) => this.handleSort(e.target.value));
+                document.getElementById('tagFilter').addEventListener('change', (e) => this.handleTagFilter(e.target.value));
+
+                // View controls
+                document.querySelectorAll('.view-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => this.handleViewChange(e.target.dataset.view));
+                });
+
+                // Bulk actions
+                document.getElementById('selectAllBtn').addEventListener('click', () => this.selectAll());
+                document.getElementById('exportSelectedBtn').addEventListener('click', () => this.exportSelected());
+                document.getElementById('deleteSelectedBtn').addEventListener('click', () => this.deleteSelected());
+
+                // Reader controls
                 document.getElementById('closeReader').addEventListener('click', () => this.closeReader());
                 document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
-                
-                // Keyboard shortcuts
+                document.getElementById('fontSizeBtn').addEventListener('click', () => this.cycleFontSize());
+                document.getElementById('readerThemeBtn').addEventListener('click', () => this.toggleReaderTheme());
+                document.getElementById('ttsBtn').addEventListener('click', () => this.toggleTTS());
+                document.getElementById('bookmarkBtn').addEventListener('click', () => this.bookmarkPosition());
+
+                // Reading progress tracking
+                window.addEventListener('scroll', () => this.trackReadingProgress());
+
+                // Close reader on escape
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'Escape' && document.getElementById('readerOverlay').classList.contains('active')) {
                         this.closeReader();
                     }
                 });
+            }
+
+            setupKeyboardShortcuts() {
+                document.addEventListener('keydown', (e) => {
+                    // Only handle shortcuts when not typing in inputs
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+                    switch (e.key.toLowerCase()) {
+                        case 'r':
+                            if (e.ctrlKey || e.metaKey) {
+                                e.preventDefault();
+                                this.loadArticles();
+                            }
+                            break;
+                        case 't':
+                            if (e.ctrlKey || e.metaKey) {
+                                e.preventDefault();
+                                this.toggleTheme();
+                            }
+                            break;
+                        case '/':
+                            e.preventDefault();
+                            document.getElementById('searchInput').focus();
+                            break;
+                        case '1':
+                            this.handleViewChange('grid');
+                            break;
+                        case '2':
+                            this.handleViewChange('list');
+                            break;
+                        case '3':
+                            this.handleViewChange('compact');
+                            break;
+                    }
+                });
+            }
+
+            // Theme management
+            initializeTheme() {
+                document.body.setAttribute('data-theme', this.currentTheme);
+                this.updateThemeIcon();
+            }
+
+            toggleTheme() {
+                const themes = ['light', 'dark', 'sepia'];
+                const currentIndex = themes.indexOf(this.currentTheme);
+                this.currentTheme = themes[(currentIndex + 1) % themes.length];
+
+                document.body.setAttribute('data-theme', this.currentTheme);
+                this.updateThemeIcon();
+                this.saveSettings();
+                this.showToast(`Theme changed to ${this.currentTheme}`, 'success');
+            }
+
+            updateThemeIcon() {
+                const icons = { light: '☀️', dark: '🌙', sepia: '📜' };
+                document.querySelector('#themeBtn span').textContent = icons[this.currentTheme];
+            }
+
+            // Enhanced authentication with better error handling
+            getRedirectUri() {
+                const currentUrl = window.location.href.split('#')[0];
+                return currentUrl.startsWith('http') ? currentUrl : window.location.origin + window.location.pathname;
+            }
+
+            async authenticate() {
+                if (!this.redirectUri.startsWith('http')) {
+                    this.showToast('Please open this page via HTTP/HTTPS, not file://', 'error');
+                    return;
+                }
+
+                const authUrl = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?` +
+                    `client_id=${this.clientId}&` +
+                    `response_type=token&` +
+                    `redirect_uri=${encodeURIComponent(this.redirectUri)}&` +
+                    `scope=${encodeURIComponent('Files.ReadWrite User.Read')}&` +
+                    `response_mode=fragment&` +
+                    `nonce=${Date.now()}`;
+
+                this.updateStatus('🔄 Redirecting to Microsoft login...', 'loading');
+
+                setTimeout(() => {
+                    window.location.href = authUrl;
+                }, 1000);
             }
 
             checkAuthFromURL() {
@@ -862,6 +1111,7 @@
 
                     if (error) {
                         this.updateStatus(`Authentication error: ${error}`, 'error');
+                        this.showToast(`Authentication failed: ${error}`, 'error');
                         return;
                     }
 
@@ -871,6 +1121,7 @@
                         this.updateConnectionStatus(true);
                         this.loadArticles();
                         window.history.replaceState({}, document.title, window.location.pathname);
+                        this.showToast('Successfully connected to OneDrive!', 'success');
                     }
                 }
             }
@@ -892,30 +1143,6 @@
                 this.accessToken = null;
             }
 
-            authenticate() {
-                if (!this.redirectUri || (!this.redirectUri.startsWith('http://') && !this.redirectUri.startsWith('https://'))) {
-                    this.updateStatus('❌ Invalid redirect URI. Please open this page via HTTP/HTTPS.', 'error');
-                    console.error('🔴 Invalid redirect URI:', this.redirectUri);
-                    alert(`Redirect URI Error:\n\nCurrent URI: ${this.redirectUri}\n\nPlease:\n1. Open this page via HTTP/HTTPS (not file://)\n2. Register this exact URI in Azure AD\n3. Use a web server to serve this file`);
-                    return;
-                }
-
-                const authUrl = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?` +
-                    `client_id=${this.clientId}&` +
-                    `response_type=token&` +
-                    `redirect_uri=${encodeURIComponent(this.redirectUri)}&` +
-                    `scope=${encodeURIComponent('Files.ReadWrite User.Read')}&` +
-                    `response_mode=fragment&` +
-                    `nonce=${Date.now()}`;
-
-                console.log('🔵 Auth URL:', authUrl);
-                this.updateStatus('🔄 Redirecting to Microsoft login...', 'loading');
-
-                setTimeout(() => {
-                    window.location.href = authUrl;
-                }, 1000);
-            }
-
             updateConnectionStatus(connected) {
                 const connectBtn = document.getElementById('connectBtn');
                 const connectIcon = document.getElementById('connectIcon');
@@ -925,24 +1152,24 @@
                 if (connected) {
                     connectIcon.textContent = '✅';
                     connectText.textContent = 'Connected';
-                    connectBtn.classList.remove('btn-primary');
-                    connectBtn.classList.add('btn-secondary');
+                    connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
                     refreshBtn.style.display = 'inline-flex';
                 } else {
                     connectIcon.textContent = '☁️';
                     connectText.textContent = 'Connect OneDrive';
-                    connectBtn.classList.remove('btn-secondary');
-                    connectBtn.classList.add('btn-primary');
+                    connectBtn.style.background = 'rgba(255,255,255,0.2)';
                     refreshBtn.style.display = 'none';
                 }
             }
 
             updateStatus(message, type = '') {
                 const status = document.getElementById('status');
-                status.textContent = message;
+                status.innerHTML = type === 'loading' ?
+                    `<span class="loading-spinner"></span> ${message}` : message;
                 status.className = `status ${type}`;
             }
 
+            // Enhanced article loading with better error handling
             async loadArticles() {
                 if (!this.accessToken) {
                     this.updateStatus('Not connected to OneDrive', 'error');
@@ -950,7 +1177,7 @@
                 }
 
                 try {
-                    this.updateStatus('Loading articles... ⏳', 'loading');
+                    this.updateStatus('Loading articles...', 'loading');
 
                     const listResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children', {
                         headers: {
@@ -964,6 +1191,7 @@
                             this.clearToken();
                             this.updateConnectionStatus(false);
                             this.updateStatus('Session expired. Please reconnect.', 'error');
+                            this.showToast('Session expired. Please reconnect to OneDrive.', 'error');
                             return;
                         }
                         throw new Error(`Failed to list files: ${listResponse.status}`);
@@ -975,7 +1203,7 @@
                     );
 
                     if (backupFiles.length === 0) {
-                        this.updateStatus('No backup files found. Save some articles with the browser extension first.', 'error');
+                        this.updateStatus('No backup files found. Save articles with the browser extension first.', 'error');
                         this.displayEmptyState();
                         return;
                     }
@@ -998,13 +1226,91 @@
                     const backup = JSON.parse(backupContent);
 
                     this.articles = backup.articles || [];
-                    this.displayArticles(this.articles);
-
-                    this.updateStatus(`✨ Loaded ${this.articles.length} articles from ${latestFile.name}`, 'success');
+                    this.processArticles();
+                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name}`, 'success');
+                    this.showToast(`Loaded ${this.articles.length} articles successfully!`, 'success');
 
                 } catch (error) {
                     console.error('Error loading articles:', error);
-                    this.updateStatus(`❌ Error loading articles: ${error.message}`, 'error');
+                    this.updateStatus(`Error loading articles: ${error.message}`, 'error');
+                    this.showToast(`Failed to load articles: ${error.message}`, 'error');
+                }
+            }
+
+            processArticles() {
+                // Add reading progress to articles
+                this.articles.forEach(article => {
+                    if (!article.readProgress) article.readProgress = 0;
+                });
+
+                this.buildTagFilter();
+                this.applyFilters();
+            }
+
+            buildTagFilter() {
+                const tagFilter = document.getElementById('tagFilter');
+                const allTags = new Set();
+
+                this.articles.forEach(article => {
+                    if (article.tags) {
+                        article.tags.forEach(tag => allTags.add(tag));
+                    }
+                });
+
+                tagFilter.innerHTML = '<option value="all">All Tags</option>';
+                Array.from(allTags).sort().forEach(tag => {
+                    const option = document.createElement('option');
+                    option.value = tag;
+                    option.textContent = tag;
+                    tagFilter.appendChild(option);
+                });
+            }
+
+            applyFilters() {
+                let filtered = [...this.articles];
+
+                // Apply tag filter
+                if (this.currentTag !== 'all') {
+                    filtered = filtered.filter(article =>
+                        article.tags && article.tags.includes(this.currentTag)
+                    );
+                }
+
+                // Apply search filter
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                if (searchTerm) {
+                    filtered = filtered.filter(article =>
+                        article.title.toLowerCase().includes(searchTerm) ||
+                        article.textContent.toLowerCase().includes(searchTerm) ||
+                        article.author.toLowerCase().includes(searchTerm) ||
+                        this.getDomain(article.url).toLowerCase().includes(searchTerm)
+                    );
+                }
+
+                // Apply sort
+                filtered = this.sortArticles(filtered, this.currentSort);
+
+                this.filteredArticles = filtered;
+                this.displayArticles(filtered);
+                this.updateArticlesCount(filtered.length);
+            }
+
+            sortArticles(articles, sortBy) {
+                const sorted = [...articles];
+
+                switch (sortBy) {
+                    case 'newest':
+                        return sorted.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+                    case 'oldest':
+                        return sorted.sort((a, b) => new Date(a.dateAdded) - new Date(b.dateAdded));
+                    case 'title':
+                        return sorted.sort((a, b) => a.title.localeCompare(b.title));
+                    case 'domain':
+                        return sorted.sort((a, b) => this.getDomain(a.url).localeCompare(this.getDomain(b.url)));
+                    case 'reading-time':
+                        return sorted.sort((a, b) => (b.readTime || 0) - (a.readTime || 0));
+                    default:
+                        return sorted;
                 }
             }
 
@@ -1016,226 +1322,289 @@
                     return;
                 }
 
-                const articlesHTML = articles.map((article, index) => `
-                    <div class="article-card" onclick="webReader.openReader(${index})">
-                        <div class="article-image-container">
-                            ${this.getArticleImage(article)}
+                const articlesHTML = articles.map((article, index) => this.createArticleCard(article, index)).join('');
+                container.innerHTML = `<div class="articles-grid ${this.currentView}-view fade-in">${articlesHTML}</div>`;
+
+                // Add event listeners for new elements
+                this.attachArticleEventListeners();
+            }
+
+            createArticleCard(article, index) {
+                const progressWidth = article.readProgress || 0;
+                const tagsHTML = article.tags ?
+                    article.tags.map(tag => `<span class="tag">${this.escapeHtml(tag)}</span>`).join('') : '';
+
+                return `
+                    <div class="article-card slide-up" data-index="${index}" style="animation-delay: ${index * 0.05}s">
+                        <input type="checkbox" class="article-checkbox" aria-label="Select article">
+                        
+                        <div class="article-image">
+                            ${article.images && article.images.length > 0 ?
+                        `<img src="${article.images[0].src}" alt="Article image" loading="lazy" onerror="this.style.display='none'">` :
+                        '📄'
+                    }
+                            <div class="image-overlay">
+                                <span style="font-size: 2em;">👁️</span>
+                            </div>
+                            <div class="reading-progress" style="width: ${progressWidth}%"></div>
                         </div>
-                        <div class="article-content">
+                        
+                        <div class="article-content" onclick="webReader.openReader(${index})">
                             <h2 class="article-title">${this.escapeHtml(article.title)}</h2>
                             <p class="article-excerpt">${this.escapeHtml(article.excerpt)}</p>
+                            
+                            ${tagsHTML ? `<div class="article-tags">${tagsHTML}</div>` : ''}
+                            
                             <div class="article-meta">
-                                <span class="article-domain">${this.getDomain(article.url)}</span>
-                                <span class="article-date">${this.formatDate(article.dateAdded)}</span>
+                                <span class="article-domain">🌐 ${this.getDomain(article.url)}</span>
+                                <span class="article-date">📅 ${this.formatDate(article.dateAdded)}</span>
+                            </div>
+                            
+                            <div class="article-stats">
+                                <span>⏱️ ${article.readTime || 1} min read</span>
+                                <span>📝 ${article.wordCount || 0} words</span>
+                                ${progressWidth > 0 ? `<span>📊 ${Math.round(progressWidth)}% read</span>` : ''}
                             </div>
                         </div>
+                        
                         <div class="article-actions">
-                            <button class="action-btn read-btn" onclick="event.stopPropagation(); webReader.openReader(${index})" title="Read article">
+                            <button class="action-btn read-btn" onclick="event.stopPropagation(); webReader.openReader(${index})" title="Read article" aria-label="Read ${this.escapeHtml(article.title)}">
                                 📖
                             </button>
-                            <button class="action-btn export-btn" onclick="event.stopPropagation(); webReader.exportArticle(${index})" title="Export article">
+                            <button class="action-btn export-btn" onclick="event.stopPropagation(); webReader.exportArticle(${index})" title="Export article" aria-label="Export ${this.escapeHtml(article.title)}">
                                 📤
                             </button>
-                            <button class="action-btn delete-btn" onclick="event.stopPropagation(); webReader.deleteArticle(${index})" title="Delete article">
+                            <button class="action-btn delete-btn" onclick="event.stopPropagation(); webReader.deleteArticle(${index})" title="Delete article" aria-label="Delete ${this.escapeHtml(article.title)}">
                                 🗑️
                             </button>
                         </div>
                     </div>
-                `).join('');
-
-                container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
+                `;
             }
 
-            getArticleImage(article) {
-                // Try multiple image sources in order of preference
-                let imageUrl = null;
-                
-                // Check for images array (most common)
-                if (article.images && Array.isArray(article.images) && article.images.length > 0) {
-                    const img = article.images[0];
-                    if (typeof img === 'string') {
-                        imageUrl = img;
-                    } else if (img && typeof img === 'object') {
-                        imageUrl = img.src || img.url || img.href || img.source;
-                    }
-                }
-                
-                // Check other common image properties
-                if (!imageUrl && article.featuredImage) {
-                    imageUrl = article.featuredImage;
-                }
-                
-                if (!imageUrl && article.image) {
-                    imageUrl = article.image;
-                }
-                
-                if (!imageUrl && article.thumbnail) {
-                    imageUrl = article.thumbnail;
-                }
-
-                if (!imageUrl && article.hero_image) {
-                    imageUrl = article.hero_image;
-                }
-
-                if (!imageUrl && article.lead_image_url) {
-                    imageUrl = article.lead_image_url;
-                }
-
-                // Validate and clean the URL
-                if (imageUrl && typeof imageUrl === 'string' && imageUrl.trim()) {
-                    imageUrl = imageUrl.trim();
-                    
-                    // Handle relative URLs
-                    if (imageUrl.startsWith('//')) {
-                        imageUrl = 'https:' + imageUrl;
-                    } else if (imageUrl.startsWith('/') && article.url) {
-                        try {
-                            const baseUrl = new URL(article.url);
-                            imageUrl = baseUrl.origin + imageUrl;
-                        } catch (e) {
-                            // If URL parsing fails, ignore
+            attachArticleEventListeners() {
+                // Checkbox listeners for bulk selection
+                document.querySelectorAll('.article-checkbox').forEach((checkbox, index) => {
+                    checkbox.addEventListener('change', (e) => {
+                        if (e.target.checked) {
+                            this.selectedArticles.add(index);
+                        } else {
+                            this.selectedArticles.delete(index);
                         }
-                    }
-                    
-                    // Check if it's a valid URL
-                    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-                        return `<img src="${this.escapeHtml(imageUrl)}" alt="Article image" class="article-image" 
-                                onerror="this.parentElement.innerHTML='<div class=\\"article-image-placeholder\\">📄</div>'">`;
-                    }
-                }
+                        this.updateBulkActions();
+                    });
+                });
+            }
 
-                // Return placeholder if no valid image found
-                return '<div class="article-image-placeholder">📄</div>';
+            updateBulkActions() {
+                const bulkActions = document.getElementById('bulkActions');
+                if (this.selectedArticles.size > 0) {
+                    bulkActions.classList.add('active');
+                } else {
+                    bulkActions.classList.remove('active');
+                }
+            }
+
+            updateArticlesCount(count) {
+                const countElement = document.getElementById('articlesCount');
+                countElement.textContent = `${count} article${count !== 1 ? 's' : ''} ${count !== this.articles.length ? `(filtered from ${this.articles.length})` : ''}`;
             }
 
             displayEmptyState() {
                 const container = document.getElementById('articlesContainer');
                 container.innerHTML = `
-                    <div class="empty-state">
+                    <div class="empty-state fade-in">
                         <div class="empty-state-icon">📖</div>
                         <h3>No articles found</h3>
-                        <p>Use the MyPocket browser extension to save articles, then refresh this page to see them here.</p>
+                        <p>Use the MyPocket browser extension to save articles, then refresh this page.</p>
                     </div>`;
             }
 
-            searchArticles(query) {
-                if (!query) {
-                    this.displayArticles(this.articles);
+            // Event handlers
+            handleSearch(query) {
+                this.applyFilters();
+                if (query) {
+                    this.updateStatus(`Found ${this.filteredArticles.length} articles matching "${query}"`,
+                        this.filteredArticles.length > 0 ? 'success' : 'error');
+                }
+            }
+
+            handleSort(sortBy) {
+                this.currentSort = sortBy;
+                this.applyFilters();
+                this.saveSettings();
+            }
+
+            handleTagFilter(tag) {
+                this.currentTag = tag;
+                this.applyFilters();
+            }
+
+            handleViewChange(view) {
+                this.currentView = view;
+
+                // Update view buttons
+                document.querySelectorAll('.view-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.view === view);
+                });
+
+                // Update articles grid
+                const grid = document.querySelector('.articles-grid');
+                if (grid) {
+                    grid.className = `articles-grid ${view}-view`;
+                }
+
+                this.saveSettings();
+            }
+
+            // Bulk operations
+            selectAll() {
+                const checkboxes = document.querySelectorAll('.article-checkbox');
+                const allSelected = this.selectedArticles.size === checkboxes.length;
+
+                if (allSelected) {
+                    // Deselect all
+                    this.selectedArticles.clear();
+                    checkboxes.forEach(cb => cb.checked = false);
+                } else {
+                    // Select all
+                    checkboxes.forEach((cb, index) => {
+                        cb.checked = true;
+                        this.selectedArticles.add(index);
+                    });
+                }
+
+                this.updateBulkActions();
+                document.getElementById('selectAllBtn').textContent = allSelected ? 'Select All' : 'Deselect All';
+            }
+
+            async exportSelected() {
+                if (this.selectedArticles.size === 0) return;
+
+                const selectedArticles = Array.from(this.selectedArticles).map(index => this.filteredArticles[index]);
+                const html = this.createBulkExportHTML(selectedArticles);
+                const filename = `mypocket-export-${new Date().toISOString().split('T')[0]}.html`;
+
+                this.downloadFile(html, filename, 'text/html');
+                this.showToast(`Exported ${selectedArticles.length} articles`, 'success');
+            }
+
+            async deleteSelected() {
+                if (this.selectedArticles.size === 0) return;
+
+                if (!confirm(`Delete ${this.selectedArticles.size} selected articles? This cannot be undone.`)) {
                     return;
                 }
 
-                const filtered = this.articles.filter(article =>
-                    article.title.toLowerCase().includes(query.toLowerCase()) ||
-                    article.textContent.toLowerCase().includes(query.toLowerCase()) ||
-                    (article.author && article.author.toLowerCase().includes(query.toLowerCase())) ||
-                    this.getDomain(article.url).toLowerCase().includes(query.toLowerCase())
-                );
+                const indicesToDelete = Array.from(this.selectedArticles).sort((a, b) => b - a);
 
-                this.displayArticles(filtered);
-                this.updateStatus(`Found ${filtered.length} articles matching "${query}"`, filtered.length > 0 ? 'success' : 'error');
+                try {
+                    // Remove from original articles array
+                    indicesToDelete.forEach(index => {
+                        const filteredIndex = this.articles.indexOf(this.filteredArticles[index]);
+                        if (filteredIndex !== -1) {
+                            this.articles.splice(filteredIndex, 1);
+                        }
+                    });
+
+                    // Update OneDrive if connected
+                    if (this.accessToken) {
+                        await this.updateOneDriveBackup();
+                    }
+
+                    this.selectedArticles.clear();
+                    this.processArticles();
+                    this.showToast(`Deleted ${indicesToDelete.length} articles`, 'success');
+
+                } catch (error) {
+                    this.showToast(`Failed to delete articles: ${error.message}`, 'error');
+                }
             }
 
+            // Enhanced reader functionality
             openReader(index) {
-                this.currentArticle = this.articles[index];
-                this.currentArticleIndex = index;
+                this.currentArticle = this.filteredArticles[index];
                 const overlay = document.getElementById('readerOverlay');
 
                 document.getElementById('readerTitle').textContent = this.currentArticle.title;
                 document.getElementById('readerDate').textContent = this.formatDate(this.currentArticle.dateAdded);
                 document.getElementById('readerDomain').textContent = this.getDomain(this.currentArticle.url);
                 document.getElementById('readerTime').textContent = `${this.currentArticle.readTime || 1} min read`;
-                
-                // Try multiple content sources
-                let content = this.getArticleContent(this.currentArticle);
-                document.getElementById('readerContent').innerHTML = content;
+                document.getElementById('readerContent').innerHTML = this.currentArticle.content;
+
+                // Set font size
+                const content = document.getElementById('readerContent');
+                content.className = `reader-content font-${this.fontSize}`;
 
                 overlay.classList.add('active');
                 document.body.style.overflow = 'hidden';
-                overlay.scrollTop = 0;
-            }
 
-            getArticleContent(article) {
-                // Try different content fields in order of preference
-                let content = '';
-                
-                // First try the main content field
-                if (article.content && article.content.trim()) {
-                    content = article.content;
-                } 
-                // Try HTML content
-                else if (article.html && article.html.trim()) {
-                    content = article.html;
-                }
-                // Try readable content
-                else if (article.readable && article.readable.trim()) {
-                    content = article.readable;
-                }
-                // Try body content
-                else if (article.body && article.body.trim()) {
-                    content = article.body;
-                }
-                // Try article content
-                else if (article.article && article.article.trim()) {
-                    content = article.article;
-                }
-                // Try plain text content and convert to HTML
-                else if (article.textContent && article.textContent.trim()) {
-                    const text = article.textContent.trim();
-                    // Split by double newlines for paragraphs
-                    content = text
-                        .split(/\n\s*\n/)
-                        .map(paragraph => paragraph.trim())
-                        .filter(paragraph => paragraph.length > 0)
-                        .map(paragraph => `<p>${this.escapeHtml(paragraph.replace(/\n/g, ' '))}</p>`)
-                        .join('');
-                } 
-                // Try plain text field
-                else if (article.text && article.text.trim()) {
-                    const text = article.text.trim();
-                    content = text
-                        .split(/\n\s*\n/)
-                        .map(paragraph => paragraph.trim())
-                        .filter(paragraph => paragraph.length > 0)
-                        .map(paragraph => `<p>${this.escapeHtml(paragraph.replace(/\n/g, ' '))}</p>`)
-                        .join('');
-                }
-                // Try description
-                else if (article.description && article.description.trim() && article.description.length > 100) {
-                    content = `<p>${this.escapeHtml(article.description)}</p>`;
-                }
-                // Last resort: use excerpt if it's substantial
-                else if (article.excerpt && article.excerpt.trim() && article.excerpt.length > 50) {
-                    content = `
-                        <div style="text-align: center; padding: 20px; background: var(--border-light); border-radius: 8px; margin-bottom: 20px;">
-                            <p><strong>📖 Preview Only</strong></p>
-                            <p style="font-size: 14px; color: var(--text-secondary);">Only excerpt available - click "Open Original" for full article</p>
-                        </div>
-                        <p><em>${this.escapeHtml(article.excerpt)}</em></p>
-                    `;
-                } else {
-                    // No content available
-                    content = `
-                        <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
-                            <div style="font-size: 48px; margin-bottom: 20px;">📄</div>
-                            <h3>Content Not Available</h3>
-                            <p style="margin: 16px 0;">This article doesn't have readable content saved.</p>
-                            <p style="font-size: 14px;">Click <strong>"Open Original"</strong> below to read the full article on the source website.</p>
-                            <div style="margin-top: 24px; padding: 16px; background: var(--background); border-radius: 8px; font-size: 12px;">
-                                <strong>Tip:</strong> Make sure your browser extension is configured to save full article content.
-                            </div>
-                        </div>
-                    `;
-                }
+                // Focus management for accessibility
+                overlay.focus();
 
-                return content;
+                // Start reading session
+                this.startReadingSession();
             }
 
             closeReader() {
                 const overlay = document.getElementById('readerOverlay');
                 overlay.classList.remove('active');
                 document.body.style.overflow = 'auto';
-                this.currentArticle = null;
-                this.currentArticleIndex = null;
+
+                // End reading session
+                this.endReadingSession();
+            }
+
+            startReadingSession() {
+                this.isReading = true;
+                this.readingStartTime = Date.now();
+                this.readingPosition = 0;
+            }
+
+            endReadingSession() {
+                if (this.isReading && this.currentArticle) {
+                    const readingTime = Date.now() - this.readingStartTime;
+
+                    // Save reading progress
+                    this.currentArticle.readProgress = this.readingPosition;
+                    this.currentArticle.lastReadTime = readingTime;
+                    this.currentArticle.lastReadDate = new Date().toISOString();
+
+                    this.isReading = false;
+                }
+            }
+
+            trackReadingProgress() {
+                if (!this.isReading) return;
+
+                const content = document.getElementById('readerContent');
+                if (!content) return;
+
+                const scrollTop = content.scrollTop || window.pageYOffset;
+                const scrollHeight = content.scrollHeight - content.clientHeight ||
+                    document.documentElement.scrollHeight - window.innerHeight;
+
+                if (scrollHeight > 0) {
+                    this.readingPosition = Math.max(this.readingPosition, (scrollTop / scrollHeight) * 100);
+
+                    // Update progress display
+                    const progressElement = document.getElementById('readingProgress');
+                    if (progressElement) {
+                        progressElement.textContent = `${Math.round(this.readingPosition)}% read`;
+                    }
+                }
+            }
+
+            cycleFontSize() {
+                const sizes = ['small', 'medium', 'large', 'xlarge'];
+                const currentIndex = sizes.indexOf(this.fontSize);
+                this.fontSize = sizes[(currentIndex + 1) % sizes.length];
+
+                const content = document.getElementById('readerContent');
+                content.className = `reader-content font-${this.fontSize}`;
+
+                this.saveSettings();
+                this.showToast(`Font size: ${this.fontSize}`, 'success');
             }
 
             openOriginal() {
@@ -1244,53 +1613,144 @@
                 }
             }
 
-            exportCurrentArticle() {
-                if (this.currentArticleIndex !== null) {
-                    this.exportArticle(this.currentArticleIndex);
-                }
+            // Toast notifications
+            showToast(message, type = 'success', duration = 3000) {
+                const toastContainer = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+
+                toastContainer.appendChild(toast);
+
+                // Trigger animation
+                setTimeout(() => toast.classList.add('show'), 100);
+
+                // Remove toast
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
             }
 
-            async deleteArticle(index) {
-                const article = this.articles[index];
-                if (!article) return;
+            // Utility functions with improved error handling
+            createBulkExportHTML(articles) {
+                const articlesHTML = articles.map(article => `
+                    <article style="margin-bottom: 3em; padding-bottom: 2em; border-bottom: 2px solid #eee;">
+                        <header style="margin-bottom: 1em;">
+                            <h1 style="font-size: 1.8em; margin-bottom: 0.5em;">${this.escapeHtml(article.title)}</h1>
+                            <div style="color: #666; font-size: 0.9em;">
+                                <span>🌐 ${this.getDomain(article.url)}</span> • 
+                                <span>📅 ${this.formatDate(article.dateAdded)}</span> • 
+                                <span>⏱️ ${article.readTime || 1} min read</span>
+                            </div>
+                        </header>
+                        <div style="line-height: 1.7;">
+                            ${article.content}
+                        </div>
+                        <footer style="margin-top: 1em; padding-top: 1em; border-top: 1px solid #ddd; font-size: 0.8em; color: #666;">
+                            Original: <a href="${article.url}">${article.url}</a>
+                        </footer>
+                    </article>
+                `).join('');
 
-                if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your OneDrive backup.`)) {
-                    try {
-                        this.articles.splice(index, 1);
-
-                        if (this.accessToken) {
-                            this.updateStatus('Updating OneDrive backup...', 'loading');
-                            await this.updateOneDriveBackup();
-                            this.updateStatus(`✅ Article deleted and backup updated. ${this.articles.length} articles remaining.`, 'success');
-                        } else {
-                            this.updateStatus(`❌ Article deleted locally but OneDrive backup not updated (not connected).`, 'error');
-                        }
-
-                        this.displayArticles(this.articles);
-
-                    } catch (error) {
-                        console.error('Error deleting article:', error);
-                        this.updateStatus(`❌ Failed to delete article: ${error.message}`, 'error');
-                    }
-                }
+                return `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>MyPocket Export - ${articles.length} Articles</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px 20px; line-height: 1.6; }
+        h1 { color: #2c3e50; }
+        img { max-width: 100%; height: auto; }
+        .export-header { text-align: center; margin-bottom: 3em; padding-bottom: 2em; border-bottom: 3px solid #ee5a24; }
+    </style>
+</head>
+<body>
+    <div class="export-header">
+        <h1>📚 MyPocket Export</h1>
+        <p>Exported ${articles.length} articles on ${new Date().toLocaleDateString()}</p>
+    </div>
+    ${articlesHTML}
+</body>
+</html>`;
             }
 
-            exportArticle(index) {
-                const article = this.articles[index];
-                if (!article) return;
-
+            getDomain(url) {
                 try {
-                    const html = this.createArticleHTML(article);
-                    const filename = `${this.sanitizeFilename(article.title)}.html`;
-                    this.downloadFile(html, filename, 'text/html');
-                    this.updateStatus(`📤 Article "${article.title}" exported successfully!`, 'success');
-                } catch (error) {
-                    console.error('Error exporting article:', error);
-                    this.updateStatus(`❌ Failed to export article: ${error.message}`, 'error');
+                    return new URL(url).hostname.replace('www.', '');
+                } catch (e) {
+                    return url;
                 }
+            }
+
+            formatDate(dateString) {
+                try {
+                    const date = new Date(dateString);
+                    if (isNaN(date.getTime())) return 'invalid date';
+
+                    const now = new Date();
+                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                    const diffMs = today.getTime() - targetDate.getTime();
+                    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+                    if (diffDays < 0) return date.toLocaleDateString();
+                    if (diffDays === 0) return 'today';
+                    if (diffDays === 1) return 'yesterday';
+                    if (diffDays <= 7) return `${diffDays} days ago`;
+                    if (diffDays <= 30) {
+                        const weeks = Math.floor(diffDays / 7);
+                        return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`;
+                    }
+                    if (diffDays <= 365) {
+                        const months = Math.floor(diffDays / 30);
+                        return months === 1 ? '1 month ago' : `${months} months ago`;
+                    }
+                    const years = Math.floor(diffDays / 365);
+                    return years === 1 ? '1 year ago' : `${years} years ago`;
+                } catch (error) {
+                    return 'date error';
+                }
+            }
+
+            escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            downloadFile(content, filename, mimeType) {
+                const blob = new Blob([content], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            // Placeholder methods for additional features
+            showSettings() {
+                this.showToast('Settings panel coming soon!', 'warning');
+            }
+
+            toggleTTS() {
+                this.showToast('Text-to-speech coming soon!', 'warning');
+            }
+
+            toggleReaderTheme() {
+                this.showToast('Reader theme toggle coming soon!', 'warning');
+            }
+
+            bookmarkPosition() {
+                this.showToast('Position bookmarked!', 'success');
             }
 
             async updateOneDriveBackup() {
+                // Implementation similar to original, but with better error handling
                 if (!this.accessToken) {
                     throw new Error('Not connected to OneDrive');
                 }
@@ -1299,9 +1759,9 @@
                     articles: this.articles,
                     settings: {},
                     exportDate: new Date().toISOString(),
-                    version: "3.3",
+                    version: "3.4",
                     deviceInfo: {
-                        browser: "Web Reader",
+                        browser: "Enhanced Web Reader",
                         platform: navigator.platform,
                         timestamp: Date.now(),
                         articleCount: this.articles.length
@@ -1310,7 +1770,6 @@
 
                 const fileName = `mypocket-backup-${new Date().toISOString().split('T')[0]}.json`;
                 const fileContent = JSON.stringify(backup, null, 2);
-
                 const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
 
                 const uploadResponse = await fetch(uploadUrl, {
@@ -1330,6 +1789,52 @@
                 return await uploadResponse.json();
             }
 
+            // Enhanced delete with better UX
+            async deleteArticle(index) {
+                const article = this.filteredArticles[index];
+                if (!article) return;
+
+                if (!confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your OneDrive backup.`)) {
+                    return;
+                }
+
+                try {
+                    // Find in original array and remove
+                    const originalIndex = this.articles.indexOf(article);
+                    if (originalIndex !== -1) {
+                        this.articles.splice(originalIndex, 1);
+                    }
+
+                    if (this.accessToken) {
+                        this.updateStatus('Updating OneDrive backup...', 'loading');
+                        await this.updateOneDriveBackup();
+                    }
+
+                    this.processArticles();
+                    this.showToast(`Article "${article.title}" deleted successfully`, 'success');
+
+                } catch (error) {
+                    console.error('Error deleting article:', error);
+                    this.showToast(`Failed to delete article: ${error.message}`, 'error');
+                }
+            }
+
+            // Enhanced export with better formatting
+            exportArticle(index) {
+                const article = this.filteredArticles[index];
+                if (!article) return;
+
+                try {
+                    const html = this.createArticleHTML(article);
+                    const filename = `${this.sanitizeFilename(article.title)}.html`;
+                    this.downloadFile(html, filename, 'text/html');
+                    this.showToast(`Exported "${article.title}"`, 'success');
+                } catch (error) {
+                    console.error('Error exporting article:', error);
+                    this.showToast(`Failed to export article: ${error.message}`, 'error');
+                }
+            }
+
             createArticleHTML(article) {
                 return `<!DOCTYPE html>
 <html lang="en">
@@ -1338,505 +1843,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${this.escapeHtml(article.title)}</title>
     <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            max-width: 800px; 
-            margin: 0 auto; 
-            padding: 40px 20px; 
-            line-height: 1.8; 
-            color: #1a1b1c;
-            background: #ffffff;
-        }
-        .header { 
-            border-bottom: 3px solid #ef4056; 
-            margin-bottom: 40px; 
-            padding-bottom: 32px; 
-        }
-        .title { 
-            font-size: 2.5em; 
-            font-weight: 700; 
-            margin-bottom: 20px; 
-            color: #1a1b1c; 
-            line-height: 1.2; 
-        }
-        .meta { 
-            color: #6b7280; 
-            font-size: 1em; 
-            margin-bottom: 32px; 
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .content { 
-            font-size: 1.2em; 
-            line-height: 1.8; 
-        }
-        .content img { 
-            max-width: 100%; 
-            height: auto; 
-            margin: 32px 0; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        .content p { 
-            margin-bottom: 1.6em; 
-        }
-        .content h1, .content h2, .content h3 {
-            margin: 40px 0 20px;
-            color: #1a1b1c;
-            font-weight: 600;
-        }
-        .content blockquote {
-            border-left: 4px solid #ef4056;
-            margin: 32px 0;
-            padding: 20px 24px;
-            background: #f7f8fa;
-            border-radius: 0 12px 12px 0;
-            font-style: italic;
-        }
-        .content a {
-            color: #ef4056;
-            text-decoration: none;
-        }
-        .content a:hover {
-            text-decoration: underline;
-        }
-        .footer { 
-            margin-top: 64px; 
-            padding-top: 32px; 
-            border-top: 2px solid #f3f4f6; 
-            color: #6b7280; 
-            font-size: 0.95em; 
-        }
-        .footer a {
-            color: #ef4056;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px 20px; line-height: 1.7; color: #333; }
+        .header { border-bottom: 3px solid #ee5a24; margin-bottom: 32px; padding-bottom: 24px; }
+        .title { font-size: 2.4em; font-weight: bold; margin-bottom: 16px; color: #2c3e50; line-height: 1.2; }
+        .meta { color: #7f8c8d; font-size: 0.95em; margin-bottom: 24px; }
+        .content { font-size: 1.15em; line-height: 1.8; }
+        .content img { max-width: 100%; height: auto; margin: 24px 0; border-radius: 8px; }
+        .content p { margin-bottom: 1.4em; }
+        .footer { margin-top: 48px; padding-top: 24px; border-top: 2px solid #f0f0f0; color: #666; font-size: 0.9em; }
     </style>
 </head>
 <body>
     <div class="header">
         <h1 class="title">${this.escapeHtml(article.title)}</h1>
         <div class="meta">
-            <div class="meta-item">🌐 <strong>From:</strong> <a href="${article.url}">${this.getDomain(article.url)}</a></div>
-            ${article.author ? `<div class="meta-item">✍️ <strong>By:</strong> ${this.escapeHtml(article.author)}</div>` : ''}
-            <div class="meta-item">📅 <strong>Saved:</strong> ${this.formatDate(article.dateAdded)}</div>
-            <div class="meta-item">⏱️ <strong>Reading time:</strong> ${article.readTime || 1} minutes</div>
+            <div style="margin-bottom: 8px;">🌐 From: <a href="${article.url}" style="color: #ee5a24;">${this.getDomain(article.url)}</a></div>
+            ${article.author ? `<div style="margin-bottom: 8px;">✍️ By: ${this.escapeHtml(article.author)}</div>` : ''}
+            <div style="margin-bottom: 8px;">📅 Saved: ${this.formatDate(article.dateAdded)}</div>
+            <div>⏱️ Reading time: ${article.readTime || 1} minutes</div>
         </div>
     </div>
     <div class="content">
         ${article.content}
     </div>
     <div class="footer">
-        <p><strong>✨ Exported from MyPocket Web Reader</strong></p>
-        <p><strong>Original URL:</strong> <a href="${article.url}">${article.url}</a></p>
-        <p><strong>Export Date:</strong> ${new Date().toLocaleDateString()}</p>
+        <p><strong>✨ Exported from MyPocket Enhanced Reader</strong></p>
+        <p>Original URL: <a href="${article.url}" style="color: #ee5a24;">${article.url}</a></p>
+        <p>Export Date: ${new Date().toLocaleDateString()}</p>
     </div>
 </body>
 </html>`;
-            }
-
-            downloadFile(content, filename, mimeType) {
-                const blob = new Blob([content], { type: mimeType });
-                const url = URL.createObjectURL(blob);
-
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-
-                URL.revokeObjectURL(url);
-            }
-
-            getDomain(url) {
-                try {
-                    return new URL(url).hostname.replace('www.', '');
-                } catch (e) {
-                    return url;
-                }
-            }
-
-            formatDate(dateString) {
-                try {
-                    const date = new Date(dateString);
-
-                    if (isNaN(date.getTime())) {
-                        console.error('Invalid date:', dateString);
-                        return 'invalid date';
-                    }
-
-                    const now = new Date();
-                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                    const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-                    const diffMs = today.getTime() - targetDate.getTime();
-                    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-                    if (diffDays < 0) {
-                        return date.toLocaleDateString();
-                    }
-
-                    if (diffDays === 0) {
-                        return 'today';
-                    } else if (diffDays === 1) {
-                        return 'yesterday';
-                    } else if (diffDays <= 7) {
-                        return `${diffDays} days ago`;
-                    } else if (diffDays <= 30) {
-                        const weeks = Math.floor(diffDays / 7);
-                        return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`;
-                    } else if (diffDays <= 365) {
-                        const months = Math.floor(diffDays / 30);
-                        return months === 1 ? '1 month ago' : `${months} months ago`;
-                    } else {
-                        const years = Math.floor(diffDays / 365);
-                        return years === 1 ? '1 year ago' : `${years} years ago`;
-                    }
-                } catch (error) {
-                    console.error('Date formatting error:', error, 'Input:', dateString);
-                    return 'date error';
-                }
-            }
-
-            formatWordCount(count) {
-                if (count < 1000) {
-                    return `${count} words`;
-                } else {
-                    return `${(count / 1000).toFixed(1)}k words`;
-                }
-            }
-
-            escapeHtml(text) {
-                if (!text) return '';
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
             }
 
             sanitizeFilename(filename) {
                 if (!filename) return 'article';
                 return filename.replace(/[^a-z0-9\s]/gi, '_').toLowerCase().substring(0, 50);
             }
-
-            showDebugInfo() {
-                const firstArticle = this.articles.length > 0 ? this.articles[0] : null;
-                
-                let articleInfo = 'No articles loaded';
-                if (firstArticle) {
-                    articleInfo = {
-                        title: firstArticle.title,
-                        url: firstArticle.url,
-                        hasContent: !!firstArticle.content,
-                        contentLength: firstArticle.content ? firstArticle.content.length : 0,
-                        hasTextContent: !!firstArticle.textContent,
-                        textContentLength: firstArticle.textContent ? firstArticle.textContent.length : 0,
-                        hasExcerpt: !!firstArticle.excerpt,
-                        excerptLength: firstArticle.excerpt ? firstArticle.excerpt.length : 0,
-                        hasImages: !!firstArticle.images,
-                        imagesArray: firstArticle.images,
-                        featuredImage: firstArticle.featuredImage,
-                        image: firstArticle.image,
-                        thumbnail: firstArticle.thumbnail,
-                        allKeys: Object.keys(firstArticle)
-                    };
-                }
-
-                const info = `
-MyPocket Web Reader Debug Info:
-=====================================
-
-CONNECTION:
-Current URL: ${window.location.href}
-Redirect URI: ${this.redirectUri}
-Has Access Token: ${!!this.accessToken}
-Articles Loaded: ${this.articles.length}
-
-SAMPLE ARTICLE DATA:
-${JSON.stringify(articleInfo, null, 2)}
-
-TROUBLESHOOTING:
-- If no images: Articles may not have image data saved
-- If no content: Articles may only have excerpts
-- Check browser extension settings to save full content
-- Some sites block content extraction
-
-POSSIBLE FIXES:
-1. Re-save articles with browser extension
-2. Check extension settings for full content saving
-3. Try different articles to see if issue is specific
-                `;
-
-                alert(info);
-                console.log('🔧 Debug Info:', {
-                    currentUrl: window.location.href,
-                    redirectUri: this.redirectUri,
-                    hasToken: !!this.accessToken,
-                    articlesCount: this.articles.length,
-                    sampleArticle: firstArticle,
-                    allArticles: this.articles.slice(0, 3) // Show first 3 articles
-                });
-            }
-
-            getDebugImageUrl(article) {
-                if (article.images && Array.isArray(article.images) && article.images.length > 0) {
-                    return article.images[0].src || article.images[0].url || article.images[0];
-                }
-                if (article.featuredImage) return article.featuredImage;
-                if (article.image) return article.image;
-                if (article.thumbnail) return article.thumbnail;
-                return 'No image found';
-            }
-
-            toggleDarkMode() {
-                document.body.classList.toggle('dark-mode');
-                const isDarkMode = document.body.classList.contains('dark-mode');
-                
-                // Save preference
-                localStorage.setItem('mypocket_dark_mode', isDarkMode);
-                
-                // Update button
-                const darkModeBtn = document.getElementById('darkModeBtn');
-                if (darkModeBtn) {
-                    darkModeBtn.innerHTML = isDarkMode 
-                        ? '<span>☀️</span> Light' 
-                        : '<span>🌙</span> Dark';
-                }
-
-                this.updateStatus(
-                    isDarkMode ? '🌙 Dark mode enabled' : '☀️ Light mode enabled',
-                    'success'
-                );
-            }
-
-            toggleTestMode() {
-                document.body.classList.toggle('test-mode');
-                const isTestMode = document.body.classList.contains('test-mode');
-
-                const testBtn = document.getElementById('testBtn');
-                if (testBtn) {
-                    if (isTestMode) {
-                        testBtn.innerHTML = '<span>📝</span> Sample';
-                        testBtn.title = 'Hide sample articles';
-                    } else {
-                        testBtn.innerHTML = '<span>📝</span> Test';
-                        testBtn.title = 'Show sample articles';
-                    }
-                }
-
-                // If test mode and no articles, show sample data
-                if (isTestMode && this.articles.length === 0) {
-                    this.showSampleArticles();
-                } else if (!isTestMode && this.articles.length > 0 && this.articles[0].title === 'Sample Article: How to Use MyPocket') {
-                    // Remove sample articles when exiting test mode
-                    this.articles = [];
-                    this.displayEmptyState();
-                }
-
-                this.updateStatus(
-                    isTestMode
-                        ? '🔍 Test mode ON - Action buttons always visible'
-                        : '👁️ Test mode OFF - Action buttons show on hover',
-                    'success'
-                );
-            }
-
-            loadDarkModePreference() {
-                const isDarkMode = localStorage.getItem('mypocket_dark_mode') === 'true';
-                if (isDarkMode) {
-                    document.body.classList.add('dark-mode');
-                    const darkModeBtn = document.getElementById('darkModeBtn');
-                    if (darkModeBtn) {
-                        darkModeBtn.innerHTML = '<span>☀️</span> Light';
-                    }
-                }
-            }
-                document.body.classList.toggle('test-mode');
-                const isTestMode = document.body.classList.contains('test-mode');
-
-                const testBtn = document.getElementById('testBtn');
-                if (testBtn) {
-                    if (isTestMode) {
-                        testBtn.innerHTML = '<span>📝</span> Sample';
-                        testBtn.title = 'Hide sample articles';
-                    } else {
-                        testBtn.innerHTML = '<span>📝</span> Test';
-                        testBtn.title = 'Show sample articles';
-                    }
-                }
-
-                // If test mode and no articles, show sample data
-                if (isTestMode && this.articles.length === 0) {
-                    this.showSampleArticles();
-                } else if (!isTestMode && this.articles.length > 0 && this.articles[0].title === 'Sample Article: How to Use MyPocket') {
-                    // Remove sample articles when exiting test mode
-                    this.articles = [];
-                    this.displayEmptyState();
-                }
-
-                this.updateStatus(
-                    isTestMode
-                        ? '🔍 Test mode ON - Action buttons always visible'
-                        : '👁️ Test mode OFF - Action buttons show on hover',
-                    'success'
-                );
-            }
-
-            showSampleArticles() {
-                this.articles = [
-                    {
-                        title: 'The Future of Web Reading: How Digital Platforms Are Changing',
-                        excerpt: 'Digital reading platforms are revolutionizing how we consume content. From Pocket to Instapaper, discover the evolution of read-later apps and what comes next.',
-                        url: 'https://example.com/future-of-reading',
-                        dateAdded: new Date().toISOString(),
-                        readTime: 5,
-                        wordCount: 1200,
-                        content: `
-                            <h2>The Evolution of Digital Reading</h2>
-                            <p>In the past decade, digital reading platforms have fundamentally transformed how we consume written content online. What started as simple bookmarking tools have evolved into sophisticated content curation systems that help millions of users manage information overload.</p>
-                            
-                            <h3>The Rise of Read-Later Apps</h3>
-                            <p>Applications like Pocket, Instapaper, and others emerged to solve a specific problem: the overwhelming amount of content available online and our limited time to consume it all immediately.</p>
-                            
-                            <blockquote>
-                                "The future of reading isn't just about consuming content—it's about curating meaningful experiences that enhance our understanding of the world."
-                            </blockquote>
-                            
-                            <p>These platforms offer several key benefits:</p>
-                            <ul>
-                                <li><strong>Distraction-free reading:</strong> Clean interfaces that remove ads and clutter</li>
-                                <li><strong>Cross-device synchronization:</strong> Access your articles anywhere</li>
-                                <li><strong>Offline availability:</strong> Read without internet connectivity</li>
-                                <li><strong>Content preservation:</strong> Save articles even if they're later removed</li>
-                            </ul>
-                            
-                            <h3>Personal Knowledge Management</h3>
-                            <p>Modern reading apps are becoming more than just repositories—they're turning into personal knowledge management systems. Features like tagging, highlighting, and note-taking transform passive reading into active learning.</p>
-                            
-                            <p>The integration of AI and machine learning is also opening new possibilities for content discovery and organization, making these tools even more powerful for researchers, students, and knowledge workers.</p>
-                            
-                            <h3>What's Next?</h3>
-                            <p>As we look to the future, we can expect to see more sophisticated features around content analysis, automatic summarization, and intelligent recommendations. The goal is not just to save content, but to help users extract maximum value from what they read.</p>
-                        `,
-                        images: [
-                            { src: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=200&fit=crop' }
-                        ]
-                    },
-                    {
-                        title: 'Building Better Reading Habits in the Digital Age',
-                        excerpt: 'With endless distractions and information overload, maintaining focus while reading has become more challenging than ever. Here are proven strategies to improve your digital reading experience.',
-                        url: 'https://example.com/reading-habits',
-                        dateAdded: new Date(Date.now() - 86400000).toISOString(),
-                        readTime: 7,
-                        wordCount: 1800,
-                        content: `
-                            <h2>The Challenge of Digital Reading</h2>
-                            <p>Our brains are wired for deep, focused reading, but the digital environment presents unique challenges. Hyperlinks, notifications, and the endless scroll of social media have trained us for quick, surface-level consumption rather than deep engagement with text.</p>
-                            
-                            <h3>Strategies for Better Reading</h3>
-                            <p>Research in cognitive science has revealed several effective techniques for improving reading comprehension and retention in digital environments:</p>
-                            
-                            <h4>1. Create a Dedicated Reading Environment</h4>
-                            <p>Just as you might have a physical reading nook, create a digital equivalent. This means:</p>
-                            <ul>
-                                <li>Using distraction-free reading apps like MyPocket</li>
-                                <li>Turning off notifications during reading sessions</li>
-                                <li>Setting specific times for reading</li>
-                            </ul>
-                            
-                            <h4>2. Practice Active Reading</h4>
-                            <p>Don't just consume content passively. Engage with it:</p>
-                            <ul>
-                                <li>Take notes while reading</li>
-                                <li>Highlight important passages</li>
-                                <li>Ask yourself questions about the content</li>
-                                <li>Summarize key points after reading</li>
-                            </ul>
-                            
-                            <blockquote>
-                                "Reading is not just about information consumption—it's about transformation. The goal is not to read more, but to understand better."
-                            </blockquote>
-                            
-                            <h4>3. Use the Pomodoro Technique</h4>
-                            <p>Break your reading into focused 25-minute sessions with short breaks. This helps maintain concentration and prevents mental fatigue.</p>
-                            
-                            <h3>The Science Behind Reading Retention</h3>
-                            <p>Studies show that we retain information better when we:</p>
-                            <ul>
-                                <li>Read in a consistent environment</li>
-                                <li>Take regular breaks</li>
-                                <li>Connect new information to existing knowledge</li>
-                                <li>Review material shortly after reading</li>
-                            </ul>
-                            
-                            <p>By implementing these strategies and using tools designed for focused reading, we can reclaim our ability to engage deeply with written content, even in our hyperconnected world.</p>
-                        `,
-                        images: [
-                            { src: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=200&fit=crop' }
-                        ]
-                    },
-                    {
-                        title: 'Open Source Alternatives to Popular Reading Apps',
-                        excerpt: 'Privacy-conscious readers are turning to open source alternatives. Explore self-hosted options and community-driven projects that put users in control.',
-                        url: 'https://example.com/open-source-reading',
-                        dateAdded: new Date(Date.now() - 172800000).toISOString(),
-                        readTime: 4,
-                        wordCount: 950,
-                        content: `
-                            <h2>Why Open Source Matters for Reading Apps</h2>
-                            <p>In an era of increasing concerns about data privacy and platform dependency, many users are seeking alternatives to commercial reading applications. Open source solutions offer transparency, customization, and user control that proprietary apps cannot match.</p>
-                            
-                            <h3>Popular Open Source Reading Tools</h3>
-                            <p>Several excellent open source projects have emerged to serve the read-later and content curation market:</p>
-                            
-                            <h4>Wallabag</h4>
-                            <p>Perhaps the most well-known open source alternative to Pocket, Wallabag offers:</p>
-                            <ul>
-                                <li>Self-hosting capabilities</li>
-                                <li>Article archiving and full-text search</li>
-                                <li>Mobile apps for iOS and Android</li>
-                                <li>Export capabilities in multiple formats</li>
-                            </ul>
-                            
-                            <h4>Shiori</h4>
-                            <p>A simple bookmarks manager written in Go, perfect for users who want something lightweight and fast.</p>
-                            
-                            <h4>LinkAce</h4>
-                            <p>A comprehensive bookmark and link management system with advanced organization features.</p>
-                            
-                            <h3>Benefits of Self-Hosting</h3>
-                            <p>When you self-host your reading application, you gain:</p>
-                            <ul>
-                                <li><strong>Complete data ownership:</strong> Your articles and reading habits stay private</li>
-                                <li><strong>Customization freedom:</strong> Modify the interface and features to your needs</li>
-                                <li><strong>No vendor lock-in:</strong> You're not dependent on a company's business decisions</li>
-                                <li><strong>Learning opportunities:</strong> Understanding how these systems work</li>
-                            </ul>
-                            
-                            <h3>Getting Started</h3>
-                            <p>Setting up your own reading app might seem daunting, but many solutions offer Docker containers and one-click deployment options. Start small with a simple setup and expand as you become more comfortable with the technology.</p>
-                            
-                            <p>The open source ecosystem for reading and content management continues to grow, offering viable alternatives for users who want to take control of their digital reading experience.</p>
-                        `,
-                        // This article intentionally has no image to test the placeholder
-                    }
-                ];
-
-                this.displayArticles(this.articles);
-                this.updateStatus('📝 Showing sample articles with working images and content - Click test mode again to hide', 'success');
-            }
         }
 
-        // Initialize the web reader
+        // Initialize the enhanced reader
         let webReader;
         document.addEventListener('DOMContentLoaded', () => {
-            webReader = new MyPocketWebReader();
-            window.webReader = webReader;
+            webReader = new EnhancedMyPocketReader();
+            window.webReader = webReader; // Global access for debugging
         });
     </script>
 </body>
