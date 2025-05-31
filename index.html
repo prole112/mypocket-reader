@@ -34,6 +34,21 @@
             --radius-lg: 16px;
         }
 
+        /* Dark mode */
+        body.dark-mode {
+            --background: #0f0f0f;
+            --surface: #1a1a1a;
+            --surface-elevated: #202020;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --text-tertiary: #808080;
+            --border: #333333;
+            --border-light: #2a2a2a;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
@@ -327,28 +342,33 @@
 
         .article-actions {
             position: absolute;
-            top: 12px;
-            right: 12px;
+            top: 8px;
+            right: 8px;
             display: flex;
-            gap: 6px;
+            gap: 4px;
             opacity: 0;
             visibility: hidden;
             transition: all 0.2s ease;
             z-index: 10;
         }
 
+        .article-card:hover .article-actions {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
         .action-btn {
             background: rgba(255, 255, 255, 0.95);
             border: none;
-            border-radius: 8px;
-            padding: 8px;
+            border-radius: 6px;
+            padding: 6px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
             transition: all 0.2s ease;
             backdrop-filter: blur(10px);
             box-shadow: var(--shadow-sm);
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -360,18 +380,24 @@
         }
 
         .read-btn:hover {
-            background: rgba(5, 135, 255, 0.1);
-            color: var(--pocket-blue);
+            background: rgba(5, 135, 255, 0.9);
+            color: white;
         }
 
         .export-btn:hover {
-            background: rgba(0, 208, 132, 0.1);
-            color: var(--pocket-green);
+            background: rgba(0, 208, 132, 0.9);
+            color: white;
         }
 
         .delete-btn:hover {
-            background: rgba(239, 64, 86, 0.1);
-            color: var(--pocket-red);
+            background: rgba(239, 64, 86, 0.9);
+            color: white;
+        }
+
+        /* Dark mode action buttons */
+        body.dark-mode .action-btn {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
         }
 
         /* Reader View */
@@ -652,14 +678,18 @@
             }
         }
 
-        /* Test mode styles */
+        /* Test mode styles - force visible on all devices */
         body.test-mode .article-actions {
             opacity: 1 !important;
             visibility: visible !important;
-            background: rgba(255, 255, 0, 0.1);
-            border: 2px dashed var(--pocket-orange);
-            border-radius: var(--radius);
-            padding: 8px;
+            background: rgba(239, 64, 86, 0.05) !important;
+            border: 1px dashed var(--pocket-red) !important;
+            border-radius: 6px !important;
+            padding: 4px !important;
+            position: absolute !important;
+            top: 8px !important;
+            right: 8px !important;
+            margin-top: 0 !important;
         }
 
         /* Focus styles for accessibility */
@@ -701,6 +731,9 @@
                     </button>
                     <button id="refreshBtn" class="btn btn-secondary" style="display: none;">
                         <span>🔄</span> Refresh
+                    </button>
+                    <button id="darkModeBtn" class="btn btn-ghost" onclick="webReader.toggleDarkMode()">
+                        <span>🌙</span> Dark
                     </button>
                     <button id="debugBtn" class="btn btn-ghost" onclick="webReader.showDebugInfo()">
                         🔧
@@ -806,6 +839,7 @@
                 this.setupEventListeners();
                 this.checkAuthFromURL();
                 this.loadStoredToken();
+                this.loadDarkModePreference();
             }
 
             setupEventListeners() {
@@ -1017,34 +1051,65 @@
             }
 
             getArticleImage(article) {
-                // Try multiple image sources
+                // Try multiple image sources in order of preference
                 let imageUrl = null;
                 
-                // Check for images array
+                // Check for images array (most common)
                 if (article.images && Array.isArray(article.images) && article.images.length > 0) {
-                    imageUrl = article.images[0].src || article.images[0].url || article.images[0];
+                    const img = article.images[0];
+                    if (typeof img === 'string') {
+                        imageUrl = img;
+                    } else if (img && typeof img === 'object') {
+                        imageUrl = img.src || img.url || img.href || img.source;
+                    }
                 }
                 
-                // Check for featured image
+                // Check other common image properties
                 if (!imageUrl && article.featuredImage) {
                     imageUrl = article.featuredImage;
                 }
                 
-                // Check for image property
                 if (!imageUrl && article.image) {
                     imageUrl = article.image;
                 }
                 
-                // Check for thumbnail
                 if (!imageUrl && article.thumbnail) {
                     imageUrl = article.thumbnail;
                 }
 
-                if (imageUrl && typeof imageUrl === 'string' && imageUrl.trim()) {
-                    return `<img src="${imageUrl}" alt="Article image" class="article-image" onerror="this.parentElement.innerHTML='<div class=\\"article-image-placeholder\\">📄</div>'">`;
-                } else {
-                    return '<div class="article-image-placeholder">📄</div>';
+                if (!imageUrl && article.hero_image) {
+                    imageUrl = article.hero_image;
                 }
+
+                if (!imageUrl && article.lead_image_url) {
+                    imageUrl = article.lead_image_url;
+                }
+
+                // Validate and clean the URL
+                if (imageUrl && typeof imageUrl === 'string' && imageUrl.trim()) {
+                    imageUrl = imageUrl.trim();
+                    
+                    // Handle relative URLs
+                    if (imageUrl.startsWith('//')) {
+                        imageUrl = 'https:' + imageUrl;
+                    } else if (imageUrl.startsWith('/') && article.url) {
+                        try {
+                            const baseUrl = new URL(article.url);
+                            imageUrl = baseUrl.origin + imageUrl;
+                        } catch (e) {
+                            // If URL parsing fails, ignore
+                        }
+                    }
+                    
+                    // Check if it's a valid URL
+                    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+                        return `<img src="${this.escapeHtml(imageUrl)}" alt="Article image" class="article-image" 
+                                onerror="this.parentElement.innerHTML='<div class=\\"article-image-placeholder\\">📄</div>'">`;
+                    }
+                }
+
+                // Return placeholder if no valid image found
+                return '<div class="article-image-placeholder">📄</div>';
             }
 
             displayEmptyState() {
@@ -1097,24 +1162,71 @@
                 // Try different content fields in order of preference
                 let content = '';
                 
+                // First try the main content field
                 if (article.content && article.content.trim()) {
                     content = article.content;
-                } else if (article.textContent && article.textContent.trim()) {
-                    // Convert plain text to basic HTML
-                    content = article.textContent
-                        .split('\n\n')
+                } 
+                // Try HTML content
+                else if (article.html && article.html.trim()) {
+                    content = article.html;
+                }
+                // Try readable content
+                else if (article.readable && article.readable.trim()) {
+                    content = article.readable;
+                }
+                // Try body content
+                else if (article.body && article.body.trim()) {
+                    content = article.body;
+                }
+                // Try article content
+                else if (article.article && article.article.trim()) {
+                    content = article.article;
+                }
+                // Try plain text content and convert to HTML
+                else if (article.textContent && article.textContent.trim()) {
+                    const text = article.textContent.trim();
+                    // Split by double newlines for paragraphs
+                    content = text
+                        .split(/\n\s*\n/)
                         .map(paragraph => paragraph.trim())
                         .filter(paragraph => paragraph.length > 0)
-                        .map(paragraph => `<p>${this.escapeHtml(paragraph)}</p>`)
+                        .map(paragraph => `<p>${this.escapeHtml(paragraph.replace(/\n/g, ' '))}</p>`)
                         .join('');
-                } else if (article.excerpt && article.excerpt.trim()) {
-                    content = `<p><em>Only excerpt available:</em></p><p>${this.escapeHtml(article.excerpt)}</p>`;
-                } else {
+                } 
+                // Try plain text field
+                else if (article.text && article.text.trim()) {
+                    const text = article.text.trim();
+                    content = text
+                        .split(/\n\s*\n/)
+                        .map(paragraph => paragraph.trim())
+                        .filter(paragraph => paragraph.length > 0)
+                        .map(paragraph => `<p>${this.escapeHtml(paragraph.replace(/\n/g, ' '))}</p>`)
+                        .join('');
+                }
+                // Try description
+                else if (article.description && article.description.trim() && article.description.length > 100) {
+                    content = `<p>${this.escapeHtml(article.description)}</p>`;
+                }
+                // Last resort: use excerpt if it's substantial
+                else if (article.excerpt && article.excerpt.trim() && article.excerpt.length > 50) {
                     content = `
-                        <div style="text-align: center; padding: 40px; color: #6b7280;">
-                            <p><strong>📄 Content not available</strong></p>
-                            <p>This article doesn't have readable content saved.</p>
-                            <p>Click "Open Original" to read the full article on the source website.</p>
+                        <div style="text-align: center; padding: 20px; background: var(--border-light); border-radius: 8px; margin-bottom: 20px;">
+                            <p><strong>📖 Preview Only</strong></p>
+                            <p style="font-size: 14px; color: var(--text-secondary);">Only excerpt available - click "Open Original" for full article</p>
+                        </div>
+                        <p><em>${this.escapeHtml(article.excerpt)}</em></p>
+                    `;
+                } else {
+                    // No content available
+                    content = `
+                        <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                            <div style="font-size: 48px; margin-bottom: 20px;">📄</div>
+                            <h3>Content Not Available</h3>
+                            <p style="margin: 16px 0;">This article doesn't have readable content saved.</p>
+                            <p style="font-size: 14px;">Click <strong>"Open Original"</strong> below to read the full article on the source website.</p>
+                            <div style="margin-top: 24px; padding: 16px; background: var(--background); border-radius: 8px; font-size: 12px;">
+                                <strong>Tip:</strong> Make sure your browser extension is configured to save full article content.
+                            </div>
                         </div>
                     `;
                 }
@@ -1485,7 +1597,69 @@ POSSIBLE FIXES:
                 return 'No image found';
             }
 
+            toggleDarkMode() {
+                document.body.classList.toggle('dark-mode');
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                
+                // Save preference
+                localStorage.setItem('mypocket_dark_mode', isDarkMode);
+                
+                // Update button
+                const darkModeBtn = document.getElementById('darkModeBtn');
+                if (darkModeBtn) {
+                    darkModeBtn.innerHTML = isDarkMode 
+                        ? '<span>☀️</span> Light' 
+                        : '<span>🌙</span> Dark';
+                }
+
+                this.updateStatus(
+                    isDarkMode ? '🌙 Dark mode enabled' : '☀️ Light mode enabled',
+                    'success'
+                );
+            }
+
             toggleTestMode() {
+                document.body.classList.toggle('test-mode');
+                const isTestMode = document.body.classList.contains('test-mode');
+
+                const testBtn = document.getElementById('testBtn');
+                if (testBtn) {
+                    if (isTestMode) {
+                        testBtn.innerHTML = '<span>📝</span> Sample';
+                        testBtn.title = 'Hide sample articles';
+                    } else {
+                        testBtn.innerHTML = '<span>📝</span> Test';
+                        testBtn.title = 'Show sample articles';
+                    }
+                }
+
+                // If test mode and no articles, show sample data
+                if (isTestMode && this.articles.length === 0) {
+                    this.showSampleArticles();
+                } else if (!isTestMode && this.articles.length > 0 && this.articles[0].title === 'Sample Article: How to Use MyPocket') {
+                    // Remove sample articles when exiting test mode
+                    this.articles = [];
+                    this.displayEmptyState();
+                }
+
+                this.updateStatus(
+                    isTestMode
+                        ? '🔍 Test mode ON - Action buttons always visible'
+                        : '👁️ Test mode OFF - Action buttons show on hover',
+                    'success'
+                );
+            }
+
+            loadDarkModePreference() {
+                const isDarkMode = localStorage.getItem('mypocket_dark_mode') === 'true';
+                if (isDarkMode) {
+                    document.body.classList.add('dark-mode');
+                    const darkModeBtn = document.getElementById('darkModeBtn');
+                    if (darkModeBtn) {
+                        darkModeBtn.innerHTML = '<span>☀️</span> Light';
+                    }
+                }
+            }
                 document.body.classList.toggle('test-mode');
                 const isTestMode = document.body.classList.contains('test-mode');
 
@@ -1520,89 +1694,145 @@ POSSIBLE FIXES:
             showSampleArticles() {
                 this.articles = [
                     {
-                        title: 'Sample Article: How to Use MyPocket',
-                        excerpt: 'This is a sample article to demonstrate how MyPocket works. Click to read the full content and test the reader interface.',
-                        url: 'https://example.com/sample-article',
+                        title: 'The Future of Web Reading: How Digital Platforms Are Changing',
+                        excerpt: 'Digital reading platforms are revolutionizing how we consume content. From Pocket to Instapaper, discover the evolution of read-later apps and what comes next.',
+                        url: 'https://example.com/future-of-reading',
                         dateAdded: new Date().toISOString(),
-                        readTime: 3,
-                        wordCount: 450,
-                        content: `
-                            <h2>Welcome to MyPocket!</h2>
-                            <p>This is a sample article that demonstrates how the MyPocket reader works. You can see how articles are displayed and how the reading experience feels.</p>
-                            
-                            <p>In the real app, you would:</p>
-                            <ul>
-                                <li>Save articles using the browser extension</li>
-                                <li>Sync them to OneDrive for backup</li>
-                                <li>Read them here in a clean, distraction-free interface</li>
-                            </ul>
-                            
-                            <h3>Features</h3>
-                            <p>MyPocket offers a clean reading experience similar to the original Pocket app, with features like:</p>
-                            <ul>
-                                <li>📖 Distraction-free reading</li>
-                                <li>☁️ OneDrive sync and backup</li>
-                                <li>📱 Responsive design for all devices</li>
-                                <li>🔍 Search through your saved articles</li>
-                                <li>📤 Export articles as HTML files</li>
-                            </ul>
-                            
-                            <p>This sample content shows how articles look when displayed in the reader. The actual articles you save will appear here with their full content preserved.</p>
-                        `,
-                        textContent: 'Welcome to MyPocket! This is a sample article that demonstrates how the MyPocket reader works...',
-                        images: [
-                            { src: 'https://via.placeholder.com/400x200/ef4056/ffffff?text=MyPocket+Sample' }
-                        ]
-                    },
-                    {
-                        title: 'Another Sample: The Future of Reading',
-                        excerpt: 'Digital reading is evolving rapidly. Here\'s what to expect in the coming years and how tools like MyPocket fit into the landscape.',
-                        url: 'https://example.com/future-reading',
-                        dateAdded: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
                         readTime: 5,
-                        wordCount: 720,
+                        wordCount: 1200,
                         content: `
                             <h2>The Evolution of Digital Reading</h2>
-                            <p>Reading has transformed dramatically in the digital age. From scrolls to books to screens, we continue to adapt how we consume written content.</p>
+                            <p>In the past decade, digital reading platforms have fundamentally transformed how we consume written content online. What started as simple bookmarking tools have evolved into sophisticated content curation systems that help millions of users manage information overload.</p>
+                            
+                            <h3>The Rise of Read-Later Apps</h3>
+                            <p>Applications like Pocket, Instapaper, and others emerged to solve a specific problem: the overwhelming amount of content available online and our limited time to consume it all immediately.</p>
                             
                             <blockquote>
-                                "The future of reading is not just about the medium, but about creating better experiences for readers."
+                                "The future of reading isn't just about consuming content—it's about curating meaningful experiences that enhance our understanding of the world."
                             </blockquote>
                             
-                            <p>Modern reading apps focus on:</p>
+                            <p>These platforms offer several key benefits:</p>
                             <ul>
-                                <li>Clean, distraction-free interfaces</li>
-                                <li>Cross-device synchronization</li>
-                                <li>Offline reading capabilities</li>
-                                <li>Customizable reading experiences</li>
+                                <li><strong>Distraction-free reading:</strong> Clean interfaces that remove ads and clutter</li>
+                                <li><strong>Cross-device synchronization:</strong> Access your articles anywhere</li>
+                                <li><strong>Offline availability:</strong> Read without internet connectivity</li>
+                                <li><strong>Content preservation:</strong> Save articles even if they're later removed</li>
                             </ul>
                             
-                            <p>This sample article demonstrates how saved content appears in MyPocket's reader interface.</p>
+                            <h3>Personal Knowledge Management</h3>
+                            <p>Modern reading apps are becoming more than just repositories—they're turning into personal knowledge management systems. Features like tagging, highlighting, and note-taking transform passive reading into active learning.</p>
+                            
+                            <p>The integration of AI and machine learning is also opening new possibilities for content discovery and organization, making these tools even more powerful for researchers, students, and knowledge workers.</p>
+                            
+                            <h3>What's Next?</h3>
+                            <p>As we look to the future, we can expect to see more sophisticated features around content analysis, automatic summarization, and intelligent recommendations. The goal is not just to save content, but to help users extract maximum value from what they read.</p>
                         `,
                         images: [
-                            { src: 'https://via.placeholder.com/400x200/667eea/ffffff?text=Future+of+Reading' }
+                            { src: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=200&fit=crop' }
                         ]
                     },
                     {
-                        title: 'Sample Tech Article: No Image',
-                        excerpt: 'This sample shows how articles without images are displayed. The layout adapts gracefully to show a placeholder icon instead.',
-                        url: 'https://example.com/no-image-sample',
-                        dateAdded: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-                        readTime: 2,
-                        wordCount: 300,
+                        title: 'Building Better Reading Habits in the Digital Age',
+                        excerpt: 'With endless distractions and information overload, maintaining focus while reading has become more challenging than ever. Here are proven strategies to improve your digital reading experience.',
+                        url: 'https://example.com/reading-habits',
+                        dateAdded: new Date(Date.now() - 86400000).toISOString(),
+                        readTime: 7,
+                        wordCount: 1800,
                         content: `
-                            <h2>Articles Without Images</h2>
-                            <p>Not all articles have images, and that's perfectly fine. MyPocket handles these gracefully with placeholder icons.</p>
+                            <h2>The Challenge of Digital Reading</h2>
+                            <p>Our brains are wired for deep, focused reading, but the digital environment presents unique challenges. Hyperlinks, notifications, and the endless scroll of social media have trained us for quick, surface-level consumption rather than deep engagement with text.</p>
                             
-                            <p>This demonstrates the fallback behavior when no image data is available for an article.</p>
+                            <h3>Strategies for Better Reading</h3>
+                            <p>Research in cognitive science has revealed several effective techniques for improving reading comprehension and retention in digital environments:</p>
                             
-                            <p>The reading experience remains clean and focused on the content itself.</p>
-                        `
+                            <h4>1. Create a Dedicated Reading Environment</h4>
+                            <p>Just as you might have a physical reading nook, create a digital equivalent. This means:</p>
+                            <ul>
+                                <li>Using distraction-free reading apps like MyPocket</li>
+                                <li>Turning off notifications during reading sessions</li>
+                                <li>Setting specific times for reading</li>
+                            </ul>
+                            
+                            <h4>2. Practice Active Reading</h4>
+                            <p>Don't just consume content passively. Engage with it:</p>
+                            <ul>
+                                <li>Take notes while reading</li>
+                                <li>Highlight important passages</li>
+                                <li>Ask yourself questions about the content</li>
+                                <li>Summarize key points after reading</li>
+                            </ul>
+                            
+                            <blockquote>
+                                "Reading is not just about information consumption—it's about transformation. The goal is not to read more, but to understand better."
+                            </blockquote>
+                            
+                            <h4>3. Use the Pomodoro Technique</h4>
+                            <p>Break your reading into focused 25-minute sessions with short breaks. This helps maintain concentration and prevents mental fatigue.</p>
+                            
+                            <h3>The Science Behind Reading Retention</h3>
+                            <p>Studies show that we retain information better when we:</p>
+                            <ul>
+                                <li>Read in a consistent environment</li>
+                                <li>Take regular breaks</li>
+                                <li>Connect new information to existing knowledge</li>
+                                <li>Review material shortly after reading</li>
+                            </ul>
+                            
+                            <p>By implementing these strategies and using tools designed for focused reading, we can reclaim our ability to engage deeply with written content, even in our hyperconnected world.</p>
+                        `,
+                        images: [
+                            { src: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=200&fit=crop' }
+                        ]
+                    },
+                    {
+                        title: 'Open Source Alternatives to Popular Reading Apps',
+                        excerpt: 'Privacy-conscious readers are turning to open source alternatives. Explore self-hosted options and community-driven projects that put users in control.',
+                        url: 'https://example.com/open-source-reading',
+                        dateAdded: new Date(Date.now() - 172800000).toISOString(),
+                        readTime: 4,
+                        wordCount: 950,
+                        content: `
+                            <h2>Why Open Source Matters for Reading Apps</h2>
+                            <p>In an era of increasing concerns about data privacy and platform dependency, many users are seeking alternatives to commercial reading applications. Open source solutions offer transparency, customization, and user control that proprietary apps cannot match.</p>
+                            
+                            <h3>Popular Open Source Reading Tools</h3>
+                            <p>Several excellent open source projects have emerged to serve the read-later and content curation market:</p>
+                            
+                            <h4>Wallabag</h4>
+                            <p>Perhaps the most well-known open source alternative to Pocket, Wallabag offers:</p>
+                            <ul>
+                                <li>Self-hosting capabilities</li>
+                                <li>Article archiving and full-text search</li>
+                                <li>Mobile apps for iOS and Android</li>
+                                <li>Export capabilities in multiple formats</li>
+                            </ul>
+                            
+                            <h4>Shiori</h4>
+                            <p>A simple bookmarks manager written in Go, perfect for users who want something lightweight and fast.</p>
+                            
+                            <h4>LinkAce</h4>
+                            <p>A comprehensive bookmark and link management system with advanced organization features.</p>
+                            
+                            <h3>Benefits of Self-Hosting</h3>
+                            <p>When you self-host your reading application, you gain:</p>
+                            <ul>
+                                <li><strong>Complete data ownership:</strong> Your articles and reading habits stay private</li>
+                                <li><strong>Customization freedom:</strong> Modify the interface and features to your needs</li>
+                                <li><strong>No vendor lock-in:</strong> You're not dependent on a company's business decisions</li>
+                                <li><strong>Learning opportunities:</strong> Understanding how these systems work</li>
+                            </ul>
+                            
+                            <h3>Getting Started</h3>
+                            <p>Setting up your own reading app might seem daunting, but many solutions offer Docker containers and one-click deployment options. Start small with a simple setup and expand as you become more comfortable with the technology.</p>
+                            
+                            <p>The open source ecosystem for reading and content management continues to grow, offering viable alternatives for users who want to take control of their digital reading experience.</p>
+                        `,
+                        // This article intentionally has no image to test the placeholder
                     }
                 ];
 
                 this.displayArticles(this.articles);
-                this.updateStatus('📝 Showing sample articles - Click test mode again to hide', 'success');
+                this.updateStatus('📝 Showing sample articles with working images and content - Click test mode again to hide', 'success');
             }
         }
 
