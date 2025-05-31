@@ -216,27 +216,28 @@
 
         .articles-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 12px;
             margin-top: 16px;
         }
 
         .article-card {
             background: var(--surface);
-            border-radius: var(--radius);
+            border-radius: 8px;
             overflow: hidden;
-            box-shadow: var(--shadow-sm);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            transition: all 0.2s ease;
             border: 1px solid var(--border);
             position: relative;
             display: flex;
             flex-direction: column;
             cursor: pointer;
+            max-width: 300px;
         }
 
         .article-card:hover {
-            box-shadow: var(--shadow);
-            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+            transform: translateY(-1px);
         }
 
         .article-card:hover .article-actions {
@@ -246,8 +247,8 @@
 
         .article-image-container {
             width: 100%;
-            height: 140px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 120px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -267,22 +268,22 @@
         }
 
         .article-image-placeholder {
-            font-size: 32px;
-            color: rgba(255, 255, 255, 0.7);
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.8);
             text-align: center;
         }
 
         .article-content {
-            padding: 16px;
+            padding: 12px;
             flex: 1;
             display: flex;
             flex-direction: column;
         }
 
         .article-title {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             line-height: 1.3;
             color: var(--text-primary);
             display: -webkit-box;
@@ -293,9 +294,9 @@
 
         .article-excerpt {
             color: var(--text-secondary);
-            font-size: 13px;
+            font-size: 12px;
             line-height: 1.4;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
@@ -308,8 +309,9 @@
             justify-content: space-between;
             align-items: center;
             color: var(--text-tertiary);
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 500;
+            margin-top: auto;
         }
 
         .article-domain {
@@ -319,10 +321,7 @@
             letter-spacing: 0.5px;
         }
 
-        .article-stats {
-            display: flex;
-            gap: 8px;
-            font-size: 11px;
+        .article-date {
             color: var(--text-tertiary);
         }
 
@@ -707,7 +706,7 @@
                         🔧
                     </button>
                     <button id="testBtn" class="btn btn-ghost" onclick="webReader.toggleTestMode()">
-                        👁️
+                        📝 Test
                     </button>
                 </div>
             </div>
@@ -1084,13 +1083,43 @@
                 document.getElementById('readerDate').textContent = this.formatDate(this.currentArticle.dateAdded);
                 document.getElementById('readerDomain').textContent = this.getDomain(this.currentArticle.url);
                 document.getElementById('readerTime').textContent = `${this.currentArticle.readTime || 1} min read`;
-                document.getElementById('readerContent').innerHTML = this.currentArticle.content;
+                
+                // Try multiple content sources
+                let content = this.getArticleContent(this.currentArticle);
+                document.getElementById('readerContent').innerHTML = content;
 
                 overlay.classList.add('active');
                 document.body.style.overflow = 'hidden';
-
-                // Scroll to top of reader
                 overlay.scrollTop = 0;
+            }
+
+            getArticleContent(article) {
+                // Try different content fields in order of preference
+                let content = '';
+                
+                if (article.content && article.content.trim()) {
+                    content = article.content;
+                } else if (article.textContent && article.textContent.trim()) {
+                    // Convert plain text to basic HTML
+                    content = article.textContent
+                        .split('\n\n')
+                        .map(paragraph => paragraph.trim())
+                        .filter(paragraph => paragraph.length > 0)
+                        .map(paragraph => `<p>${this.escapeHtml(paragraph)}</p>`)
+                        .join('');
+                } else if (article.excerpt && article.excerpt.trim()) {
+                    content = `<p><em>Only excerpt available:</em></p><p>${this.escapeHtml(article.excerpt)}</p>`;
+                } else {
+                    content = `
+                        <div style="text-align: center; padding: 40px; color: #6b7280;">
+                            <p><strong>📄 Content not available</strong></p>
+                            <p>This article doesn't have readable content saved.</p>
+                            <p>Click "Open Original" to read the full article on the source website.</p>
+                        </div>
+                    `;
+                }
+
+                return content;
             }
 
             closeReader() {
@@ -1389,64 +1418,60 @@
 
             showDebugInfo() {
                 const firstArticle = this.articles.length > 0 ? this.articles[0] : null;
-                const imageInfo = firstArticle ? {
-                    hasImages: !!firstArticle.images,
-                    imagesArray: firstArticle.images,
-                    featuredImage: firstArticle.featuredImage,
-                    image: firstArticle.image,
-                    thumbnail: firstArticle.thumbnail,
-                    sampleImageUrl: this.getDebugImageUrl(firstArticle)
-                } : 'No articles loaded';
+                
+                let articleInfo = 'No articles loaded';
+                if (firstArticle) {
+                    articleInfo = {
+                        title: firstArticle.title,
+                        url: firstArticle.url,
+                        hasContent: !!firstArticle.content,
+                        contentLength: firstArticle.content ? firstArticle.content.length : 0,
+                        hasTextContent: !!firstArticle.textContent,
+                        textContentLength: firstArticle.textContent ? firstArticle.textContent.length : 0,
+                        hasExcerpt: !!firstArticle.excerpt,
+                        excerptLength: firstArticle.excerpt ? firstArticle.excerpt.length : 0,
+                        hasImages: !!firstArticle.images,
+                        imagesArray: firstArticle.images,
+                        featuredImage: firstArticle.featuredImage,
+                        image: firstArticle.image,
+                        thumbnail: firstArticle.thumbnail,
+                        allKeys: Object.keys(firstArticle)
+                    };
+                }
 
                 const info = `
 MyPocket Web Reader Debug Info:
 =====================================
 
+CONNECTION:
 Current URL: ${window.location.href}
 Redirect URI: ${this.redirectUri}
-Client ID: ${this.clientId}
-Protocol: ${window.location.protocol}
-Host: ${window.location.host}
 Has Access Token: ${!!this.accessToken}
 Articles Loaded: ${this.articles.length}
 
-Sample Article Image Data:
-${JSON.stringify(imageInfo, null, 2)}
+SAMPLE ARTICLE DATA:
+${JSON.stringify(articleInfo, null, 2)}
 
-Azure AD Redirect URI Requirements:
-- Must be absolute URI (http:// or https://)
-- Must be registered in Azure AD App Registration
-- Must match exactly (including trailing slashes)
+TROUBLESHOOTING:
+- If no images: Articles may not have image data saved
+- If no content: Articles may only have excerpts
+- Check browser extension settings to save full content
+- Some sites block content extraction
 
-Common Issues:
-1. Using file:// protocol (not supported)
-2. Redirect URI not registered in Azure AD
-3. Mismatch between actual URI and registered URI
-4. Images not loading: Check if articles have image data
-
-Next Steps:
-1. Open Azure Portal → App registrations
-2. Find your app: ${this.clientId}
-3. Go to Authentication → Platform configurations
-4. Add Web platform with redirect URI: ${this.redirectUri}
-5. Make sure URI is exact match
-
-Image Troubleshooting:
-- Check if your saved articles include image data
-- Images may be blocked by CORS or ad blockers
-- Some sites prevent direct image linking
+POSSIBLE FIXES:
+1. Re-save articles with browser extension
+2. Check extension settings for full content saving
+3. Try different articles to see if issue is specific
                 `;
 
                 alert(info);
                 console.log('🔧 Debug Info:', {
                     currentUrl: window.location.href,
                     redirectUri: this.redirectUri,
-                    clientId: this.clientId,
-                    protocol: window.location.protocol,
                     hasToken: !!this.accessToken,
                     articlesCount: this.articles.length,
                     sampleArticle: firstArticle,
-                    imageInfo: imageInfo
+                    allArticles: this.articles.slice(0, 3) // Show first 3 articles
                 });
             }
 
@@ -1466,8 +1491,22 @@ Image Troubleshooting:
 
                 const testBtn = document.getElementById('testBtn');
                 if (testBtn) {
-                    testBtn.innerHTML = isTestMode ? '🙈' : '👁️';
-                    testBtn.title = isTestMode ? 'Hide action buttons' : 'Show action buttons';
+                    if (isTestMode) {
+                        testBtn.innerHTML = '<span>📝</span> Sample';
+                        testBtn.title = 'Hide sample articles';
+                    } else {
+                        testBtn.innerHTML = '<span>📝</span> Test';
+                        testBtn.title = 'Show sample articles';
+                    }
+                }
+
+                // If test mode and no articles, show sample data
+                if (isTestMode && this.articles.length === 0) {
+                    this.showSampleArticles();
+                } else if (!isTestMode && this.articles.length > 0 && this.articles[0].title === 'Sample Article: How to Use MyPocket') {
+                    // Remove sample articles when exiting test mode
+                    this.articles = [];
+                    this.displayEmptyState();
                 }
 
                 this.updateStatus(
@@ -1476,6 +1515,94 @@ Image Troubleshooting:
                         : '👁️ Test mode OFF - Action buttons show on hover',
                     'success'
                 );
+            }
+
+            showSampleArticles() {
+                this.articles = [
+                    {
+                        title: 'Sample Article: How to Use MyPocket',
+                        excerpt: 'This is a sample article to demonstrate how MyPocket works. Click to read the full content and test the reader interface.',
+                        url: 'https://example.com/sample-article',
+                        dateAdded: new Date().toISOString(),
+                        readTime: 3,
+                        wordCount: 450,
+                        content: `
+                            <h2>Welcome to MyPocket!</h2>
+                            <p>This is a sample article that demonstrates how the MyPocket reader works. You can see how articles are displayed and how the reading experience feels.</p>
+                            
+                            <p>In the real app, you would:</p>
+                            <ul>
+                                <li>Save articles using the browser extension</li>
+                                <li>Sync them to OneDrive for backup</li>
+                                <li>Read them here in a clean, distraction-free interface</li>
+                            </ul>
+                            
+                            <h3>Features</h3>
+                            <p>MyPocket offers a clean reading experience similar to the original Pocket app, with features like:</p>
+                            <ul>
+                                <li>📖 Distraction-free reading</li>
+                                <li>☁️ OneDrive sync and backup</li>
+                                <li>📱 Responsive design for all devices</li>
+                                <li>🔍 Search through your saved articles</li>
+                                <li>📤 Export articles as HTML files</li>
+                            </ul>
+                            
+                            <p>This sample content shows how articles look when displayed in the reader. The actual articles you save will appear here with their full content preserved.</p>
+                        `,
+                        textContent: 'Welcome to MyPocket! This is a sample article that demonstrates how the MyPocket reader works...',
+                        images: [
+                            { src: 'https://via.placeholder.com/400x200/ef4056/ffffff?text=MyPocket+Sample' }
+                        ]
+                    },
+                    {
+                        title: 'Another Sample: The Future of Reading',
+                        excerpt: 'Digital reading is evolving rapidly. Here\'s what to expect in the coming years and how tools like MyPocket fit into the landscape.',
+                        url: 'https://example.com/future-reading',
+                        dateAdded: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+                        readTime: 5,
+                        wordCount: 720,
+                        content: `
+                            <h2>The Evolution of Digital Reading</h2>
+                            <p>Reading has transformed dramatically in the digital age. From scrolls to books to screens, we continue to adapt how we consume written content.</p>
+                            
+                            <blockquote>
+                                "The future of reading is not just about the medium, but about creating better experiences for readers."
+                            </blockquote>
+                            
+                            <p>Modern reading apps focus on:</p>
+                            <ul>
+                                <li>Clean, distraction-free interfaces</li>
+                                <li>Cross-device synchronization</li>
+                                <li>Offline reading capabilities</li>
+                                <li>Customizable reading experiences</li>
+                            </ul>
+                            
+                            <p>This sample article demonstrates how saved content appears in MyPocket's reader interface.</p>
+                        `,
+                        images: [
+                            { src: 'https://via.placeholder.com/400x200/667eea/ffffff?text=Future+of+Reading' }
+                        ]
+                    },
+                    {
+                        title: 'Sample Tech Article: No Image',
+                        excerpt: 'This sample shows how articles without images are displayed. The layout adapts gracefully to show a placeholder icon instead.',
+                        url: 'https://example.com/no-image-sample',
+                        dateAdded: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+                        readTime: 2,
+                        wordCount: 300,
+                        content: `
+                            <h2>Articles Without Images</h2>
+                            <p>Not all articles have images, and that's perfectly fine. MyPocket handles these gracefully with placeholder icons.</p>
+                            
+                            <p>This demonstrates the fallback behavior when no image data is available for an article.</p>
+                            
+                            <p>The reading experience remains clean and focused on the content itself.</p>
+                        `
+                    }
+                ];
+
+                this.displayArticles(this.articles);
+                this.updateStatus('📝 Showing sample articles - Click test mode again to hide', 'success');
             }
         }
 
