@@ -944,7 +944,7 @@
                 document.getElementById('readerContent').innerHTML = `
                     <div style="text-align: center; padding: 40px;">
                         <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
-                        <p>Loading article content...</p>
+                        <p>Checking for article content...</p>
                     </div>
                 `;
 
@@ -952,10 +952,11 @@
                 document.body.style.overflow = 'hidden';
                 
                 // Try to get content, fetch if needed
-                this.loadArticleContent(this.currentArticle);
+                setTimeout(() => this.loadArticleContent(this.currentArticle), 100);
             }
 
             async loadArticleContent(article) {
+                console.log('🚀 NEW CONTENT LOADER STARTING - Version 2.0');
                 const contentElement = document.getElementById('readerContent');
                 
                 // First try to get saved content
@@ -1202,58 +1203,30 @@
                 `;
             }
 
-            // Get the best available content for reading - returns null if no content found
+            // Get the best available content for reading - simplified version
             getArticleContent(article) {
-                // Debug: Log the complete article structure
-                console.log('📖 Checking saved content...', Object.keys(article));
+                console.log('📖 Checking for saved content...');
                 
-                // Try multiple content sources in order of preference
-                let content = '';
+                // Try content fields in order
+                const contentFields = ['content', 'html', 'fullContent', 'textContent', 'body', 'readableContent', 'articleContent', 'savedContent'];
                 
-                // 1. Full HTML content
-                if (article.content && article.content.trim()) {
-                    console.log('✅ Using article.content');
-                    return article.content;
-                }
-                // 2. HTML body
-                else if (article.html && article.html.trim()) {
-                    console.log('✅ Using article.html');
-                    return article.html;
-                }
-                // 3. Full content
-                else if (article.fullContent && article.fullContent.trim()) {
-                    console.log('✅ Using article.fullContent');
-                    return article.fullContent;
-                }
-                // 4. Text content converted to HTML
-                else if (article.textContent && article.textContent.trim()) {
-                    console.log('✅ Using article.textContent');
-                    return article.textContent
-                        .split('\n\n')
-                        .filter(para => para.trim())
-                        .map(para => `<p>${para.trim()}</p>`)
-                        .join('\n');
-                }
-                // 5. Article body
-                else if (article.body && article.body.trim()) {
-                    console.log('✅ Using article.body');
-                    return article.body;
-                }
-                // 6. Try any property that contains substantial text content
-                else {
-                    console.log('🔍 Searching for any property with substantial content...');
-                    
-                    // Look for any string property with more than 100 characters
-                    for (const [key, value] of Object.entries(article)) {
-                        if (typeof value === 'string' && value.length > 100 && key !== 'excerpt' && key !== 'url') {
-                            console.log(`✅ Found content in article.${key} (${value.length} chars)`);
-                            return value;
-                        }
+                for (const field of contentFields) {
+                    if (article[field] && article[field].trim()) {
+                        console.log(`✅ Found content in ${field} (${article[field].length} chars)`);
+                        return article[field];
                     }
                 }
                 
-                console.log('❌ No saved content found, will need to fetch');
-                return null; // Return null instead of debug HTML
+                // Look for any substantial text content
+                for (const [key, value] of Object.entries(article)) {
+                    if (typeof value === 'string' && value.length > 200 && key !== 'excerpt' && key !== 'url') {
+                        console.log(`✅ Found substantial content in ${key} (${value.length} chars)`);
+                        return value;
+                    }
+                }
+                
+                console.log('❌ No saved content found');
+                return null;
             }
 
             closeReader() {
