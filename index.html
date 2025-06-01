@@ -950,9 +950,20 @@
 
             // Get the best available content for reading
             getArticleContent(article) {
-                // Debug: Log the article structure to console
-                console.log('📖 Article data structure:', article);
-                console.log('📖 Available properties:', Object.keys(article));
+                // Debug: Log the complete article structure
+                console.log('📖 Complete article object:', article);
+                
+                // Show all properties and their values
+                const allProps = {};
+                Object.keys(article).forEach(key => {
+                    const value = article[key];
+                    allProps[key] = {
+                        type: typeof value,
+                        value: value,
+                        length: typeof value === 'string' ? value.length : 'N/A'
+                    };
+                });
+                console.log('📖 All properties with values:', allProps);
                 
                 // Try multiple content sources in order of preference
                 let content = '';
@@ -975,7 +986,6 @@
                 // 4. Text content converted to HTML
                 else if (article.textContent && article.textContent.trim()) {
                     console.log('✅ Using article.textContent');
-                    // Convert plain text to HTML paragraphs
                     content = article.textContent
                         .split('\n\n')
                         .filter(para => para.trim())
@@ -997,57 +1007,89 @@
                     console.log('✅ Using article.articleContent');
                     content = article.articleContent;
                 }
-                // 8. Use excerpt as fallback
-                else if (article.excerpt && article.excerpt.trim()) {
-                    console.log('⚠️ Only excerpt available');
-                    content = `<p><em>Only excerpt available:</em></p><p>${article.excerpt}</p>`;
+                // 8. Try savedContent
+                else if (article.savedContent && article.savedContent.trim()) {
+                    console.log('✅ Using article.savedContent');
+                    content = article.savedContent;
                 }
-                // 9. Show detailed debugging info
+                // 9. Try any property that contains substantial text content
                 else {
-                    console.log('❌ No content found, showing debug info');
+                    console.log('🔍 Searching for any property with substantial content...');
                     
-                    // Show all string properties with their lengths
+                    // Look for any string property with more than 100 characters
+                    for (const [key, value] of Object.entries(article)) {
+                        if (typeof value === 'string' && value.length > 100 && key !== 'excerpt') {
+                            console.log(`✅ Found content in article.${key} (${value.length} chars)`);
+                            content = value;
+                            break;
+                        }
+                    }
+                }
+                
+                // If still no content, check if we need to fetch it
+                if (!content || content.trim() === '') {
+                    console.log('❌ No content found in any property');
+                    
+                    // Show comprehensive debugging info
                     const stringProps = {};
                     Object.keys(article).forEach(key => {
                         const value = article[key];
                         if (typeof value === 'string' && value.length > 0) {
                             stringProps[key] = {
                                 length: value.length,
-                                preview: value.substring(0, 100) + (value.length > 100 ? '...' : '')
+                                preview: value.substring(0, 200) + (value.length > 200 ? '...' : ''),
+                                isEmpty: value.trim() === ''
                             };
                         }
                     });
                     
                     content = `
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; font-family: monospace;">
-                            <h3>🔍 Debug: Article Content Analysis</h3>
-                            <p>No content found in expected properties. Here's what's available:</p>
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                            <h3>🔍 Content Analysis Results</h3>
+                            <p><strong>Status:</strong> Article was saved but content appears to be missing or empty.</p>
                             
-                            <h4>String Properties Found:</h4>
-                            <div style="background: #fff; padding: 15px; border-radius: 4px; margin: 10px 0;">
-                                ${Object.keys(stringProps).length > 0 ? 
-                                    Object.entries(stringProps).map(([key, info]) => 
-                                        `<div style="margin: 10px 0; padding: 10px; background: #f9f9f9; border-left: 3px solid #ee5a24;">
-                                            <strong>${key}</strong> (${info.length} chars)<br>
-                                            <span style="color: #666; font-size: 0.9em;">${info.preview}</span>
-                                        </div>`
-                                    ).join('') 
-                                    : '<p>No string properties found with content.</p>'
-                                }
+                            <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                                <h4>💡 Possible Solutions:</h4>
+                                <ol>
+                                    <li><strong>Re-save the article</strong> using the browser extension with full content extraction enabled</li>
+                                    <li><strong>Check extension settings</strong> to ensure it's capturing full article content</li>
+                                    <li><strong>Try a different article</strong> to see if this is a general issue</li>
+                                    <li><strong>Visit the original</strong> article link below</li>
+                                </ol>
                             </div>
                             
-                            <h4>All Properties:</h4>
-                            <div style="background: #fff; padding: 10px; border-radius: 4px; font-size: 12px; overflow-x: auto;">
-                                <pre>${JSON.stringify(Object.keys(article), null, 2)}</pre>
-                            </div>
+                            <details style="margin: 15px 0;">
+                                <summary style="cursor: pointer; font-weight: bold;">🔧 Technical Details (Click to expand)</summary>
+                                <div style="background: #fff; padding: 15px; border-radius: 4px; margin: 10px 0;">
+                                    <h4>String Properties Found:</h4>
+                                    ${Object.keys(stringProps).length > 0 ? 
+                                        Object.entries(stringProps).map(([key, info]) => 
+                                            `<div style="margin: 8px 0; padding: 8px; background: ${info.isEmpty ? '#ffebee' : '#f9f9f9'}; border-left: 3px solid ${info.isEmpty ? '#f44336' : '#ee5a24'};">
+                                                <strong>${key}</strong> (${info.length} chars) ${info.isEmpty ? '- EMPTY' : ''}
+                                                ${!info.isEmpty ? `<br><span style="color: #666; font-size: 0.9em; font-family: monospace;">${info.preview}</span>` : ''}
+                                            </div>`
+                                        ).join('') 
+                                        : '<p>No string properties found with content.</p>'
+                                    }
+                                </div>
+                            </details>
                             
-                            <p style="margin-top: 15px;">
-                                <a href="${article.url}" target="_blank" style="color: #ee5a24; text-decoration: none;">
-                                    🔗 Read original article
+                            <div style="text-align: center; margin: 20px 0;">
+                                <a href="${article.url}" target="_blank" style="display: inline-block; background: #ee5a24; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                                    🔗 Read Original Article
                                 </a>
-                            </p>
+                            </div>
                         </div>
                     `;
+                }
+
+                // Convert plain text to HTML if needed
+                if (content && content.trim() && !content.includes('<') && content.length > 50) {
+                    content = content
+                        .split('\n\n')
+                        .filter(para => para.trim())
+                        .map(para => `<p>${para.trim()}</p>`)
+                        .join('\n');
                 }
 
                 return content || '<p>No content available.</p>';
