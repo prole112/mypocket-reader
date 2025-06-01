@@ -940,12 +940,236 @@
                 document.getElementById('readerDomain').textContent = this.getDomain(this.currentArticle.url);
                 document.getElementById('readerTime').textContent = `${this.currentArticle.readTime || 1} min read`;
                 
-                // Get the best available content
-                const content = this.getArticleContent(this.currentArticle);
-                document.getElementById('readerContent').innerHTML = content;
+                // Show loading state first
+                document.getElementById('readerContent').innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+                        <p>Loading article content...</p>
+                    </div>
+                `;
 
                 overlay.classList.add('active');
                 document.body.style.overflow = 'hidden';
+                
+                // Try to get content, fetch if needed
+                this.loadArticleContent(this.currentArticle);
+            }
+
+            async loadArticleContent(article) {
+                const contentElement = document.getElementById('readerContent');
+                
+                // First try to get saved content
+                let content = this.getArticleContent(article);
+                
+                // If no saved content, try to fetch from original URL
+                if (!content || content.includes('No content found') || content.includes('Only excerpt available')) {
+                    console.log('🌐 Attempting to fetch content from original URL...');
+                    
+                    try {
+                        // Show fetching status
+                        contentElement.innerHTML = `
+                            <div style="text-align: center; padding: 40px;">
+                                <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+                                <p>Fetching article from original source...</p>
+                                <p style="font-size: 0.9em; color: var(--text-secondary);">${this.getDomain(article.url)}</p>
+                            </div>
+                        `;
+                        
+                        // Fetch content using a proxy service to avoid CORS issues
+                        const fetchedContent = await this.fetchArticleContent(article.url);
+                        
+                        if (fetchedContent && fetchedContent.trim()) {
+                            content = fetchedContent;
+                            console.log('✅ Successfully fetched article content');
+                        } else {
+                            throw new Error('No content extracted from fetched page');
+                        }
+                        
+                    } catch (error) {
+                        console.log('❌ Failed to fetch content:', error.message);
+                        content = this.getFallbackContent(article, error.message);
+                    }
+                }
+                
+                // Display the final content
+                contentElement.innerHTML = content;
+            }
+
+            async fetchArticleContent(url) {
+                try {
+                    // Try multiple approaches to fetch content
+                    
+                    // Method 1: Try direct fetch (will fail for most sites due to CORS)
+                    try {
+                        const response = await fetch(url, {
+                            mode: 'cors',
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader)'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const html = await response.text();
+                            return this.extractContentFromHTML(html, url);
+                        }
+                    } catch (corsError) {
+                        console.log('CORS blocked, trying alternative methods...');
+                    }
+                    
+                    // Method 2: Try using a public proxy service
+                    const proxyUrls = [
+                        `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+                        `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                    ];
+                    
+                    for (const proxyUrl of proxyUrls) {
+                        try {
+                            console.log(`Trying proxy: ${proxyUrl}`);
+                            const response = await fetch(proxyUrl);
+                            
+                            if (response.ok) {
+                                const data = await response.json();
+                                const html = data.contents || data;
+                                if (html && typeof html === 'string') {
+                                    const extractedContent = this.extractContentFromHTML(html, url);
+                                    if (extractedContent && extractedContent.length > 100) {
+                                        return extractedContent;
+                                    }
+                                }
+                            }
+                        } catch (proxyError) {
+                            console.log(`Proxy failed: ${proxyError.message}`);
+                            continue;
+                        }
+                    }
+                    
+                    throw new Error('All fetch methods failed');
+                    
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    throw error;
+                }
+            }
+
+            extractContentFromHTML(html, url) {
+                try {
+                    // Create a temporary DOM to parse the HTML
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Remove unwanted elements
+                    const unwantedSelectors = [
+                        'script', 'style', 'nav', 'header', 'footer', 
+                        '.sidebar', '.menu', '.navigation', '.comments',
+                        '.advertisement', '.ads', '.social-share',
+                        '[role="banner"]', '[role="navigation"]', '[role="complementary"]'
+                    ];
+                    
+                    unwantedSelectors.forEach(selector => {
+                        doc.querySelectorAll(selector).forEach(el => el.remove());
+                    });
+                    
+                    // Try to find the main content using common selectors
+                    const contentSelectors = [
+                        'article',
+                        '[role="main"]',
+                        '.post-content', '.entry-content', '.article-content',
+                        '.content', '.main-content', '.post-body',
+                        '.entry', '.post', '.article-body',
+                        'main', '#content', '#main'
+                    ];
+                    
+                    let contentElement = null;
+                    
+                    for (const selector of contentSelectors) {
+                        contentElement = doc.querySelector(selector);
+                        if (contentElement && contentElement.textContent.trim().length > 200) {
+                            break;
+                        }
+                    }
+                    
+                    // If no main content found, try to get paragraphs from body
+                    if (!contentElement || contentElement.textContent.trim().length < 200) {
+                        const paragraphs = Array.from(doc.querySelectorAll('p'))
+                            .filter(p => p.textContent.trim().length > 50)
+                            .slice(0, 20); // Take first 20 substantial paragraphs
+                        
+                        if (paragraphs.length > 0) {
+                            const div = doc.createElement('div');
+                            paragraphs.forEach(p => div.appendChild(p.cloneNode(true)));
+                            contentElement = div;
+                        }
+                    }
+                    
+                    if (contentElement) {
+                        // Clean up the content
+                        let content = contentElement.innerHTML;
+                        
+                        // Fix relative URLs to absolute
+                        const baseUrl = new URL(url).origin;
+                        content = content.replace(/src="\/([^"]+)"/g, `src="${baseUrl}/$1"`);
+                        content = content.replace(/href="\/([^"]+)"/g, `href="${baseUrl}/$1"`);
+                        
+                        // Add a note about the source
+                        content = `
+                            <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                                <p style="margin: 0; font-size: 0.9em;">
+                                    <strong>📡 Content fetched from original source</strong><br>
+                                    This article content was retrieved in real-time from <a href="${url}" target="_blank" style="color: #1976d2;">${this.getDomain(url)}</a>
+                                </p>
+                            </div>
+                            ${content}
+                        `;
+                        
+                        return content;
+                    }
+                    
+                    throw new Error('Could not extract readable content from page');
+                    
+                } catch (error) {
+                    console.error('Content extraction error:', error);
+                    throw error;
+                }
+            }
+
+            getFallbackContent(article, errorMessage) {
+                return `
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3>📄 Content Not Available</h3>
+                        <p>We couldn't load the full article content. This can happen because:</p>
+                        <ul style="margin: 15px 0;">
+                            <li>The website blocks automated content fetching</li>
+                            <li>CORS (Cross-Origin) restrictions prevent access</li>
+                            <li>The article content wasn't saved by the browser extension</li>
+                            <li>Network connectivity issues</li>
+                        </ul>
+                        
+                        <p><strong>What you can do:</strong></p>
+                        <ol style="margin: 15px 0;">
+                            <li><strong>Visit the original article</strong> using the button below</li>
+                            <li><strong>Re-save the article</strong> with your browser extension</li>
+                            <li><strong>Check extension settings</strong> for content extraction options</li>
+                        </ol>
+                        
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                            <p><strong>Available excerpt:</strong></p>
+                            <p style="font-style: italic;">${article.excerpt || 'No excerpt available'}</p>
+                        </div>
+                        
+                        <div style="text-align: center; margin: 20px 0;">
+                            <a href="${article.url}" target="_blank" style="display: inline-block; background: #ee5a24; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                                🔗 Read Full Article
+                            </a>
+                        </div>
+                        
+                        <details style="margin-top: 20px;">
+                            <summary style="cursor: pointer; color: #666;">Technical Details</summary>
+                            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
+                                Error: ${errorMessage}
+                            </p>
+                        </details>
+                    </div>
+                `;
             }
 
             // Get the best available content for reading
