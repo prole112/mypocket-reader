@@ -848,16 +848,16 @@
 
                 const articlesHTML = articles.map((article, index) => {
                     const articleImage = this.getBestArticleImage(article);
-
+                    
                     return `
                     <div class="article-card">
                         <div class="article-image">
-                            ${articleImage
-                            ? `<img src="${articleImage}" alt="Article image" 
+                            ${articleImage 
+                                ? `<img src="${articleImage}" alt="Article image" 
                                      onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='${this.getArticleIcon(article.url)}';"
                                      onload="this.style.opacity='1';" style="opacity:0; transition: opacity 0.3s ease;">`
-                            : this.getArticleIcon(article.url)
-                        }
+                                : this.getArticleIcon(article.url)
+                            }
                         </div>
                         <div class="article-content" onclick="webReader.openReader(${index})">
                             <h2 class="article-title">${this.escapeHtml(article.title)}</h2>
@@ -1116,7 +1116,7 @@
             getBestArticleImage(article) {
                 if (article.images && article.images.length > 0) {
                     let bestImage = article.images[0];
-
+                    
                     for (const img of article.images) {
                         if (img.width && img.height) {
                             if (img.width >= 300 && img.height >= 150) {
@@ -1125,32 +1125,32 @@
                             }
                         }
                     }
-
+                    
                     return bestImage.src || bestImage.url || bestImage;
                 }
-
+                
                 if (article.featuredImage) {
                     return article.featuredImage;
                 }
-
+                
                 if (article.image) {
                     return article.image;
                 }
-
+                
                 if (article.content) {
                     const imgMatch = article.content.match(/<img[^>]+src="([^"]+)"/i);
                     if (imgMatch && imgMatch[1]) {
                         return imgMatch[1];
                     }
                 }
-
+                
                 return null;
             }
 
             // Smart icon selection based on domain
             getArticleIcon(url) {
                 const domain = this.getDomain(url).toLowerCase();
-
+                
                 const siteIcons = {
                     'youtube.com': '📺',
                     'github.com': '🐙',
@@ -1174,13 +1174,13 @@
                     'wikipedia.org': '📖',
                     'arxiv.org': '🎓',
                 };
-
+                
                 for (const [siteDomain, icon] of Object.entries(siteIcons)) {
                     if (domain.includes(siteDomain)) {
                         return icon;
                     }
                 }
-
+                
                 if (domain.includes('blog') || domain.includes('medium')) return '📝';
                 if (domain.includes('news')) return '📰';
                 if (domain.includes('tech')) return '💻';
@@ -1191,7 +1191,7 @@
                 if (domain.includes('shop') || domain.includes('store')) return '🛒';
                 if (domain.includes('book') || domain.includes('read')) return '📚';
                 if (domain.includes('learn') || domain.includes('edu')) return '🎓';
-
+                
                 return '📄';
             }
 
