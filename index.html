@@ -45,7 +45,7 @@
 
         [data-theme="dark"] .article-card:hover {
             border-color: #484f58;
-            transform: translateY(-2px);
+            transform: translateY(-2px) scale(1.02);
         }
 
         [data-theme="dark"] .search-input {
@@ -254,7 +254,7 @@
             width: 100%;
             padding: 15px 50px 15px 20px;
             border: 2px solid var(--border);
-            border-radius: 12px;
+            border-radius: 25px;
             font-size: 16px;
             background: var(--background);
             transition: border-color 0.2s;
@@ -294,7 +294,7 @@
             color: #27ae60;
         }
 
-        /* Articles Grid - Made smaller like original Pocket */
+        /* Articles Grid - NEW ORGANIC SHAPES */
         .articles-section {
             padding: 40px 0;
             min-height: 60vh;
@@ -302,33 +302,62 @@
 
         .articles-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 24px;
             margin-top: 20px;
         }
 
+        /* ORGANIC SHAPED TILES - The main change! */
         .article-card {
             background: var(--surface);
-            border-radius: 12px;
+            /* Organic rounded shape - different for each nth-child */
+            border-radius: 32px 24px 32px 24px;
             overflow: visible;
             box-shadow: var(--shadow);
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             border: 1px solid var(--border);
             position: relative;
             display: flex;
             flex-direction: column;
+            transform-origin: center center;
+        }
+
+        /* Varying organic shapes for visual interest */
+        .article-card:nth-child(3n+1) {
+            border-radius: 28px 36px 28px 36px;
+        }
+
+        .article-card:nth-child(3n+2) {
+            border-radius: 35px 25px 35px 25px;
+        }
+
+        .article-card:nth-child(3n+3) {
+            border-radius: 30px 30px 40px 20px;
+        }
+
+        .article-card:nth-child(4n+1) {
+            border-radius: 40px 20px 30px 30px;
+        }
+
+        .article-card:nth-child(5n+1) {
+            border-radius: 25px 35px 25px 35px;
         }
 
         .article-card:hover {
             box-shadow: var(--shadow-hover);
-            transform: translateY(-2px);
+            transform: translateY(-8px) scale(1.02) rotate(1deg);
+            border-color: var(--primary-color);
+        }
+
+        .article-card:nth-child(even):hover {
+            transform: translateY(-8px) scale(1.02) rotate(-1deg);
         }
 
         .article-card:hover .article-actions {
             opacity: 1 !important;
         }
 
-        /* Smaller image area like Pocket */
+        /* Organic shaped image area */
         .article-image {
             width: 100%;
             height: 140px;
@@ -340,24 +369,29 @@
             color: white;
             position: relative;
             overflow: hidden;
+            /* Inherit the card's organic border radius for top corners */
+            border-radius: inherit;
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
         }
 
         .article-image img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.3s ease, opacity 0.3s ease;
+            transition: transform 0.4s ease, opacity 0.3s ease;
         }
 
         .article-image:hover img {
-            transform: scale(1.05);
+            transform: scale(1.08);
         }
 
-        /* Compact content area */
+        /* Compact content area with organic feel */
         .article-content {
-            padding: 16px;
+            padding: 20px;
             flex: 1;
             cursor: pointer;
+            border-radius: 0 0 inherit inherit;
         }
 
         .article-title {
@@ -409,6 +443,7 @@
             color: var(--text-secondary);
         }
 
+        /* Floating organic action buttons */
         .article-actions {
             position: absolute;
             top: 15px;
@@ -417,40 +452,43 @@
             gap: 8px;
             opacity: 0 !important;
             visibility: hidden;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             z-index: 10;
         }
 
         .action-btn {
             background: rgba(255, 255, 255, 0.95);
             border: 2px solid var(--border);
-            border-radius: 8px;
-            padding: 10px;
+            border-radius: 50%; /* Circular buttons for organic feel */
+            padding: 12px;
             cursor: pointer;
             font-size: 16px;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             backdrop-filter: blur(10px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            min-width: 40px;
-            height: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            min-width: 44px;
+            height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .action-btn:hover {
-            transform: translateY(-3px) scale(1.1);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+            transform: translateY(-4px) scale(1.15);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+            border-radius: 40% 60% 70% 30%;
         }
 
         .read-btn:hover {
             background: #e3f2fd;
             border-color: #2196f3;
+            border-radius: 60% 40% 30% 70%;
         }
 
         .export-btn:hover {
             background: #e8f5e8;
             border-color: #4caf50;
+            border-radius: 30% 70% 60% 40%;
         }
 
         .delete-btn {
@@ -461,6 +499,7 @@
             background: #ffebee;
             border-color: #f44336;
             color: #d32f2f;
+            border-radius: 70% 30% 40% 60%;
         }
 
         .article-card:hover .article-actions {
@@ -473,7 +512,7 @@
             visibility: visible !important;
             background: rgba(255, 255, 0, 0.1);
             border: 2px dashed #ff9800;
-            border-radius: 8px;
+            border-radius: 20px;
             padding: 5px;
         }
 
@@ -503,7 +542,7 @@
             max-width: 800px;
             margin: 40px auto;
             background: var(--surface);
-            border-radius: 12px;
+            border-radius: 24px;
             overflow: hidden;
             box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
         }
@@ -576,13 +615,19 @@
             color: white;
             border: none;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             cursor: pointer;
             font-size: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-reader:hover {
+            border-radius: 30% 70% 70% 30%;
+            transform: scale(1.1);
         }
 
         /* Empty State */
@@ -634,28 +679,44 @@
 
             .articles-grid {
                 grid-template-columns: 1fr;
-                gap: 16px;
+                gap: 20px;
+            }
+
+            .article-card {
+                /* Simpler border radius for mobile */
+                border-radius: 24px !important;
+            }
+
+            .article-card:hover {
+                transform: translateY(-4px) scale(1.01);
             }
 
             .article-actions {
                 position: static;
                 opacity: 1;
+                visibility: visible;
                 justify-content: center;
                 margin-top: 15px;
-                padding: 10px;
+                padding: 15px;
                 background: var(--background);
-                border-radius: 8px;
+                border-radius: 20px;
             }
 
             .action-btn {
-                min-width: 44px;
-                height: 44px;
+                min-width: 48px;
+                height: 48px;
                 font-size: 18px;
+                border-radius: 50%;
+            }
+
+            .action-btn:hover {
+                border-radius: 50%;
+                transform: scale(1.1);
             }
 
             .reader-container {
                 margin: 20px;
-                border-radius: 8px;
+                border-radius: 16px;
             }
 
             .reader-header,
@@ -676,7 +737,7 @@
         .connection-status {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 16px;
             padding: 15px;
             margin: 20px 0;
             display: flex;
@@ -692,6 +753,48 @@
         .connection-status.disconnected {
             border-color: #e74c3c;
             background: #f8d7da;
+        }
+
+        /* Additional organic elements */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .article-card:nth-child(7n+1) {
+            animation: float 6s ease-in-out infinite;
+            animation-delay: 0s;
+        }
+
+        .article-card:nth-child(7n+2) {
+            animation: float 6s ease-in-out infinite;
+            animation-delay: 0.5s;
+        }
+
+        .article-card:nth-child(7n+3) {
+            animation: float 6s ease-in-out infinite;
+            animation-delay: 1s;
+        }
+
+        /* Organic gradient backgrounds for images */
+        .article-image:nth-child(odd) {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .article-image:nth-child(3n+1) {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .article-image:nth-child(3n+2) {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .article-image:nth-child(3n+3) {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .article-image:nth-child(5n+1) {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
         }
     </style>
 </head>
