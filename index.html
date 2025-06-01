@@ -896,8 +896,6 @@
     <script>
         class MyPocketWebReader {
             constructor() {
-                console.log('🚀 MyPocketWebReader starting...');
-                
                 this.clientId = '436e8796-8c40-47c3-9ad5-b8882f3ef7f7';
                 this.redirectUri = this.getRedirectUri();
                 console.log('🔵 Redirect URI:', this.redirectUri);
@@ -906,9 +904,7 @@
                 this.articles = [];
                 this.currentArticle = null;
 
-                console.log('🔧 Initializing...');
                 this.init();
-                console.log('✅ MyPocketWebReader initialized');
             }
 
             getRedirectUri() {
@@ -930,49 +926,11 @@
             }
 
             setupEventListeners() {
-                console.log('🔧 Setting up event listeners...');
-                
-                const connectBtn = document.getElementById('connectBtn');
-                const refreshBtn = document.getElementById('refreshBtn');
-                const searchInput = document.getElementById('searchInput');
-                const closeReader = document.getElementById('closeReader');
-                const openOriginal = document.getElementById('openOriginal');
-                
-                if (connectBtn) {
-                    console.log('✅ Connect button found, adding event listener');
-                    connectBtn.addEventListener('click', () => {
-                        console.log('🔵 Connect button clicked');
-                        this.authenticate();
-                    });
-                } else {
-                    console.error('❌ Connect button not found!');
-                }
-                
-                if (refreshBtn) {
-                    refreshBtn.addEventListener('click', () => this.loadArticles());
-                } else {
-                    console.warn('⚠️ Refresh button not found');
-                }
-                
-                if (searchInput) {
-                    searchInput.addEventListener('input', (e) => this.searchArticles(e.target.value));
-                } else {
-                    console.warn('⚠️ Search input not found');
-                }
-                
-                if (closeReader) {
-                    closeReader.addEventListener('click', () => this.closeReader());
-                } else {
-                    console.warn('⚠️ Close reader button not found');
-                }
-                
-                if (openOriginal) {
-                    openOriginal.addEventListener('click', () => this.openOriginal());
-                } else {
-                    console.warn('⚠️ Open original button not found');
-                }
-                
-                console.log('🔧 Event listeners setup complete');
+                document.getElementById('connectBtn').addEventListener('click', () => this.authenticate());
+                document.getElementById('refreshBtn').addEventListener('click', () => this.loadArticles());
+                document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
+                document.getElementById('closeReader').addEventListener('click', () => this.closeReader());
+                document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
             }
 
             checkAuthFromURL() {
@@ -1015,9 +973,6 @@
             }
 
             authenticate() {
-                console.log('🔵 Starting authentication...');
-                console.log('🔵 Redirect URI:', this.redirectUri);
-                
                 if (!this.redirectUri || (!this.redirectUri.startsWith('http://') && !this.redirectUri.startsWith('https://'))) {
                     this.updateStatus('❌ Invalid redirect URI. Please open this page via HTTP/HTTPS.', 'error');
                     console.error('🔴 Invalid redirect URI:', this.redirectUri);
@@ -1039,7 +994,6 @@
                 this.updateStatus('🔄 Redirecting to Microsoft login...', 'loading');
 
                 setTimeout(() => {
-                    console.log('🔵 Redirecting to:', authUrl);
                     window.location.href = authUrl;
                 }, 1000);
             }
@@ -2429,20 +2383,7 @@ Button Issues:
                 );
             }
 
-            // Test function to check if authentication works
-            testAuthentication() {
-                console.log('🧪 Testing authentication...');
-                console.log('📋 Client ID:', this.clientId);
-                console.log('🌐 Redirect URI:', this.redirectUri);
-                console.log('🔑 Access Token:', this.accessToken ? 'Present' : 'Not present');
-                
-                try {
-                    this.authenticate();
-                    console.log('✅ Authentication function called successfully');
-                } catch (error) {
-                    console.error('❌ Authentication function failed:', error);
-                }
-            }
+            // Dark mode functionality
             toggleDarkMode() {
                 const currentTheme = document.documentElement.getAttribute('data-theme');
                 const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -2474,22 +2415,9 @@ Button Issues:
         }
 
         let webReader;
-        console.log('📄 Script loaded, waiting for DOM...');
-        
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🌟 DOM loaded, creating MyPocketWebReader...');
-            try {
-                webReader = new MyPocketWebReader();
-                window.webReader = webReader;
-                console.log('✅ webReader created and assigned to window');
-                
-                // Add test function to window for debugging
-                window.testAuth = () => webReader.testAuthentication();
-                console.log('🧪 Test function added: Call testAuth() in console to test');
-                
-            } catch (error) {
-                console.error('❌ Error creating webReader:', error);
-            }
+            webReader = new MyPocketWebReader();
+            window.webReader = webReader;
         });
     </script>
 </body>
