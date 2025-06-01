@@ -721,15 +721,6 @@
                     <button id="darkModeBtn" class="btn btn-secondary" onclick="webReader.toggleDarkMode()">
                         <span>🌙</span> Dark Mode
                     </button>
-                    <button id="imageDebugBtn" class="btn btn-secondary" onclick="webReader.toggleImageDebug()" title="Toggle image fetching debug">
-                        <span>🖼️</span> Debug Images
-                    </button>
-                    <button id="retryImagesBtn" class="btn btn-secondary" onclick="webReader.retryAllImages()" title="Retry fetching all images">
-                        <span>🔄</span> Retry Images
-                    </button>
-                    <button id="testProxyBtn" class="btn btn-secondary" onclick="webReader.testProxyServices()" title="Test if proxy services are working">
-                        <span>🌐</span> Test Proxy
-                    </button>
                 </div>
             </div>
         </div>
@@ -796,9 +787,6 @@
                 this.accessToken = null;
                 this.articles = [];
                 this.currentArticle = null;
-                this.debugImageFetching = true;
-                
-                console.log('🖼️ Image fetching initialized - ZERO BLOCKING, EVERY ARTICLE GETS ATTEMPTED');
 
                 this.init();
             }
@@ -819,16 +807,6 @@
                 this.checkAuthFromURL();
                 this.loadStoredToken();
                 this.loadThemePreference();
-                this.updateDebugButtonState();
-            }
-
-            updateDebugButtonState() {
-                const debugBtn = document.getElementById('imageDebugBtn');
-                if (debugBtn) {
-                    debugBtn.innerHTML = this.debugImageFetching 
-                        ? '<span>🔍</span> Debug ON'
-                        : '<span>🖼️</span> Debug OFF';
-                }
             }
 
             setupEventListeners() {
@@ -994,7 +972,7 @@
                 }
             }
 
-            // Enhanced displayArticles with smart rate limiting
+            // Enhanced displayArticles with real image fetching
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1002,9 +980,6 @@
                     this.displayEmptyState();
                     return;
                 }
-
-                console.log(`\n🚀 DISPLAYARTICLES: Starting image fetching for ${articles.length} articles`);
-                console.log(`⏱️ SMART RATE LIMITING: Will stagger requests to avoid overwhelming proxy`);
 
                 const articlesHTML = articles.map((article, index) => {
                     return `
@@ -1040,282 +1015,123 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
                 
-                // Start with just the first 10 articles to test if proxy works
-                console.log(`🧪 TESTING: Starting with first 10 articles only`);
-                
-                const testArticles = articles.slice(0, 10);
-                testArticles.forEach((article, index) => {
-                    setTimeout(() => {
-                        this.loadArticleImage(article, index);
-                    }, index * 1000); // 1 second between each request
-                });
-
-                // Add button to load more images
-                this.addLoadMoreImagesButton(articles);
-            }
-
-            // Add a button to load more images in batches - AT THE TOP
-            addLoadMoreImagesButton(articles) {
-                const container = document.getElementById('articlesContainer');
-                
-                const buttonHTML = `
-                    <div style="text-align: center; margin: 20px 0 30px 0; padding: 20px; background: var(--surface); border-radius: 12px; border: 1px solid var(--border);">
-                        <button id="loadMoreImages" class="btn btn-secondary" style="font-size: 16px; padding: 15px 30px; margin-bottom: 10px;">
-                            <span>🖼️</span> Load More Images (Next 20 Articles)
-                        </button>
-                        <p style="margin: 10px 0 0 0; color: var(--text-secondary); font-size: 0.9em;">
-                            📊 Testing image fetching for first 10 articles. ${this.getImageSuccessCount()}/10 images loaded. Click to try more!
-                        </p>
-                        <p style="margin: 5px 0 0 0; color: var(--text-secondary); font-size: 0.8em;">
-                            💡 Some sites block image fetching (normal). Major news sites work best.
-                        </p>
-                    </div>
-                `;
-                
-                // Add the button at the TOP, before the articles grid
-                const existingGrid = container.querySelector('.articles-grid');
-                if (existingGrid) {
-                    existingGrid.insertAdjacentHTML('beforebegin', buttonHTML);
-                } else {
-                    container.innerHTML = buttonHTML + container.innerHTML;
-                }
-                
-                document.getElementById('loadMoreImages').addEventListener('click', () => {
-                    this.loadMoreImages(articles);
+                // Now fetch images for each article
+                articles.forEach((article, index) => {
+                    this.loadArticleImage(article, index);
                 });
             }
 
-            // Count how many images have actually loaded
-            getImageSuccessCount() {
-                let count = 0;
-                for (let i = 0; i < 10; i++) {
-                    const imageElement = document.getElementById(`image-${i}`);
-                    if (imageElement && imageElement.querySelector('img')) {
-                        count++;
-                    }
-                }
-                return count;
-            }
-
-            // Load more images in batches
-            loadMoreImages(articles) {
-                const button = document.getElementById('loadMoreImages');
-                const currentlyLoaded = 10; // We started with 10
-                const batchSize = 20;
-                
-                button.innerHTML = '<span>⏳</span> Loading images...';
-                button.disabled = true;
-                
-                console.log(`📦 Loading next ${batchSize} images...`);
-                
-                const nextBatch = articles.slice(currentlyLoaded, currentlyLoaded + batchSize);
-                nextBatch.forEach((article, relativeIndex) => {
-                    const actualIndex = currentlyLoaded + relativeIndex;
-                    setTimeout(() => {
-                        this.loadArticleImage(article, actualIndex);
-                    }, relativeIndex * 500); // 500ms between requests
-                });
-                
-                setTimeout(() => {
-                    button.innerHTML = '<span>🖼️</span> Load More Images';
-                    button.disabled = false;
-                }, nextBatch.length * 500 + 1000);
-            }
-
-            // Test if the image fetching proxy is working
-            async testImageFetching() {
-                if (!this.debugImageFetching) return;
-                
-                try {
-                    console.log('🧪 Testing image fetching capability...');
-                    const testUrl = 'https://www.bbc.com/news'; // BBC usually has good Open Graph images
-                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(testUrl)}`;
-                    
-                    const response = await fetch(proxyUrl);
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.contents && data.contents.length > 1000) {
-                            console.log('✅ Image fetching proxy is working - images should load for compatible sites');
-                        } else {
-                            console.log('⚠️ Proxy responded but content seems limited');
-                        }
-                    } else {
-                        console.log(`❌ Proxy test failed: ${response.status}`);
-                    }
-                } catch (error) {
-                    console.log(`❌ Image fetching test failed: ${error.message}`);
-                }
-            }
-
-            // Load image for a specific article - NO SKIPPING VERSION
+            // Load image for a specific article
             async loadArticleImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
-                if (!imageElement) {
-                    console.log(`❌ No image element found for index ${index}`);
-                    return;
-                }
-
-                console.log(`\n=== STARTING IMAGE FETCH ${index + 1} ===`);
-                console.log(`📰 Article: ${this.truncateTitle(article.title)}`);
-                console.log(`🌐 Domain: ${this.getDomain(article.url)}`);
-                console.log(`🔗 URL: ${article.url}`);
+                if (!imageElement) return;
 
                 try {
                     // First try saved images
                     const savedImage = this.getBestArticleImage(article);
                     if (savedImage) {
-                        console.log(`✅ USING SAVED IMAGE: ${savedImage.substring(0, 80)}...`);
                         this.setArticleImage(imageElement, savedImage);
                         return;
                     }
 
-                    console.log(`🚀 NO SAVED IMAGE - ATTEMPTING FETCH FROM WEB`);
+                    // If no saved image, fetch from the article page
+                    console.log(`🖼️ Fetching image for: ${article.title}`);
                     
                     const fetchedImage = await this.fetchArticleImage(article.url);
-                    
                     if (fetchedImage) {
-                        console.log(`🎉 SUCCESS! Image loaded: ${fetchedImage.substring(0, 80)}...`);
                         this.setArticleImage(imageElement, fetchedImage);
+                        console.log(`✅ Image loaded for: ${article.title}`);
                     } else {
-                        console.log(`❌ NO IMAGE FOUND after full attempt`);
+                        // Keep the icon if no image found
+                        console.log(`📄 No image found for: ${article.title}, keeping icon`);
                     }
 
                 } catch (error) {
-                    console.log(`💥 ERROR during fetch: ${error.message}`);
+                    console.log(`❌ Failed to load image for ${article.title}:`, error.message);
+                    // Keep the original icon on error
                 }
-                
-                console.log(`=== COMPLETED IMAGE FETCH ${index + 1} ===\n`);
             }
 
-            // Multi-proxy fetch with fallbacks
+            // Fetch article image from the original page
             async fetchArticleImage(url) {
-                console.log(`  ▶️ FETCH STARTING: ${url}`);
-                
-                // Try multiple proxy services in order
-                const proxies = [
-                    {
-                        name: 'AllOrigins',
-                        url: (targetUrl) => `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`,
-                        parse: (data) => data.contents
-                    },
-                    {
-                        name: 'CORS Anywhere',
-                        url: (targetUrl) => `https://cors-anywhere.herokuapp.com/${targetUrl}`,
-                        parse: (data) => data
-                    },
-                    {
-                        name: 'ThingProxy',
-                        url: (targetUrl) => `https://thingproxy.freeboard.io/fetch/${targetUrl}`,
-                        parse: (data) => data
-                    }
-                ];
-
-                for (const proxy of proxies) {
-                    try {
-                        console.log(`  📡 Trying ${proxy.name}...`);
-                        
-                        const proxyUrl = proxy.url(url);
-                        const response = await fetch(proxyUrl, {
-                            signal: AbortSignal.timeout(10000) // 10 second timeout
-                        });
-                        
-                        console.log(`  📶 ${proxy.name} response: ${response.status} ${response.ok ? 'OK' : 'FAILED'}`);
-                        
-                        if (!response.ok) {
-                            console.log(`  ❌ ${proxy.name} failed with ${response.status}`);
-                            continue; // Try next proxy
-                        }
-                        
-                        let html;
-                        if (proxy.name === 'AllOrigins') {
-                            const data = await response.json();
-                            html = proxy.parse(data);
-                        } else {
-                            html = await response.text();
-                        }
-                        
-                        console.log(`  📄 Content length: ${html ? html.length : 0} characters`);
-                        
-                        if (!html || html.length < 500) {
-                            console.log(`  ❌ ${proxy.name} returned insufficient content`);
-                            continue; // Try next proxy
-                        }
-
-                        // Successfully got content, now try to extract image
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, 'text/html');
-                        console.log(`  🔍 Parsed HTML with ${proxy.name}, searching for images...`);
-                        
-                        // Try Open Graph first (most reliable)
-                        const ogImage = doc.querySelector('meta[property="og:image"]');
-                        if (ogImage) {
-                            const imageUrl = this.makeAbsoluteUrl(ogImage.getAttribute('content'), url);
-                            console.log(`  🎯 Found Open Graph image: ${imageUrl ? imageUrl.substring(0, 80) + '...' : 'null'}`);
-                            
-                            if (imageUrl) {
-                                console.log(`  ✅ SUCCESS with ${proxy.name}! Returning image`);
-                                return imageUrl;
-                            }
-                        } else {
-                            console.log(`  📄 No Open Graph image found with ${proxy.name}`);
-                        }
-                        
-                        // If no Open Graph, try Twitter card
-                        const twitterImage = doc.querySelector('meta[name="twitter:image"]');
-                        if (twitterImage) {
-                            const imageUrl = this.makeAbsoluteUrl(twitterImage.getAttribute('content'), url);
-                            if (imageUrl) {
-                                console.log(`  🐦 Found Twitter image with ${proxy.name}: ${imageUrl.substring(0, 80)}...`);
-                                return imageUrl;
-                            }
-                        }
-                        
-                        console.log(`  ❌ No suitable images found with ${proxy.name}`);
-                        
-                    } catch (error) {
-                        console.log(`  💥 ${proxy.name} ERROR: ${error.message}`);
-                        continue; // Try next proxy
-                    }
-                }
-                
-                console.log(`  ❌ ALL PROXIES FAILED for ${this.getDomain(url)}`);
-                return null;
-            }
-
-            // Simplified image validation - just check URL format
-            async validateImageUrl(imageUrl) {
-                if (!imageUrl) return false;
-                
                 try {
-                    const url = new URL(imageUrl);
-                    // Simple checks without network requests
-                    return url.protocol === 'http:' || url.protocol === 'https:';
-                } catch (error) {
-                    return false;
-                }
-            }
+                    // Try to fetch the page HTML to extract images
+                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                    const response = await fetch(proxyUrl);
+                    
+                    if (!response.ok) return null;
+                    
+                    const data = await response.json();
+                    const html = data.contents;
+                    
+                    if (!html) return null;
 
-            // Check if URL looks like an icon/logo
-            isIconOrLogo(src) {
-                if (!src) return true;
-                
-                const srcLower = src.toLowerCase();
-                const iconPatterns = [
-                    'icon', 'logo', 'avatar', 'favicon', 'sprite', 
-                    'button', 'badge', 'placeholder', 'default'
-                ];
-                
-                // Also check for very small dimensions in the URL
-                if (/\d+x\d+/.test(srcLower)) {
-                    const matches = srcLower.match(/(\d+)x(\d+)/);
-                    if (matches) {
-                        const width = parseInt(matches[1]);
-                        const height = parseInt(matches[2]);
-                        if (width < 200 || height < 100) return true;
+                    // Parse HTML to extract images
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Try to find the best image in this order:
+                    
+                    // 1. Open Graph image
+                    let ogImage = doc.querySelector('meta[property="og:image"]');
+                    if (ogImage) {
+                        const imageUrl = this.makeAbsoluteUrl(ogImage.getAttribute('content'), url);
+                        if (await this.validateImage(imageUrl)) {
+                            return imageUrl;
+                        }
                     }
+                    
+                    // 2. Twitter card image
+                    let twitterImage = doc.querySelector('meta[name="twitter:image"]');
+                    if (twitterImage) {
+                        const imageUrl = this.makeAbsoluteUrl(twitterImage.getAttribute('content'), url);
+                        if (await this.validateImage(imageUrl)) {
+                            return imageUrl;
+                        }
+                    }
+                    
+                    // 3. Featured image or hero image
+                    const heroSelectors = [
+                        '.featured-image img',
+                        '.hero-image img', 
+                        '.post-thumbnail img',
+                        '.article-image img',
+                        '.entry-image img',
+                        'article img:first-of-type',
+                        '.content img:first-of-type'
+                    ];
+                    
+                    for (const selector of heroSelectors) {
+                        const img = doc.querySelector(selector);
+                        if (img) {
+                            const src = img.getAttribute('src') || img.getAttribute('data-src');
+                            if (src) {
+                                const imageUrl = this.makeAbsoluteUrl(src, url);
+                                if (await this.validateImage(imageUrl)) {
+                                    return imageUrl;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 4. Any substantial image in the content
+                    const allImages = doc.querySelectorAll('img');
+                    for (const img of allImages) {
+                        const src = img.getAttribute('src') || img.getAttribute('data-src');
+                        if (src && !this.isIconOrLogo(src)) {
+                            const imageUrl = this.makeAbsoluteUrl(src, url);
+                            if (await this.validateImage(imageUrl)) {
+                                return imageUrl;
+                            }
+                        }
+                    }
+                    
+                    return null;
+                    
+                } catch (error) {
+                    console.error('Error fetching article image:', error);
+                    return null;
                 }
-                
-                return iconPatterns.some(pattern => srcLower.includes(pattern));
             }
 
             // Set the image in the article tile
@@ -1327,11 +1143,6 @@
                          onload="this.style.opacity='1';" 
                          onerror="this.style.display='none';">
                 `;
-            }
-
-            // Helper function to truncate long titles for cleaner logging
-            truncateTitle(title) {
-                return title && title.length > 50 ? title.substring(0, 50) + '...' : (title || 'Untitled');
             }
 
             // Convert relative URLs to absolute
@@ -1352,107 +1163,37 @@
                 }
             }
 
-            // Enable debug mode for image fetching
-            toggleImageDebug() {
-                this.debugImageFetching = !this.debugImageFetching;
-                console.log(`🖼️ Image fetching debug: ${this.debugImageFetching ? 'ON' : 'OFF'}`);
-                
-                // Update button text to show current state
-                const debugBtn = document.getElementById('imageDebugBtn');
-                if (debugBtn) {
-                    debugBtn.innerHTML = this.debugImageFetching 
-                        ? '<span>🔍</span> Debug ON'
-                        : '<span>🖼️</span> Debug OFF';
-                }
-                
-                this.updateStatus(
-                    this.debugImageFetching 
-                        ? '🔍 Image debug enabled - check console for details'
-                        : '🔇 Image debug disabled - quiet mode',
-                    'success'
-                );
-                
-                // If turning on debug, show status
-                if (this.debugImageFetching) {
-                    console.log('🔍 Debug mode enabled - detailed image fetching logs will appear');
-                }
-            }
-
-            // Simplified retry function
-            retryAllImages() {
-                if (!this.articles || this.articles.length === 0) {
-                    this.updateStatus('❌ No articles loaded to retry images for', 'error');
-                    return;
-                }
-
-                console.log('\n🔄 MANUAL RETRY: Attempting fresh image fetch for all articles');
-                this.updateStatus('🔄 Retrying image loading for all articles...', 'loading');
-
-                // Retry all articles
-                this.articles.forEach((article, index) => {
-                    this.loadArticleImage(article, index);
-                });
-
-                this.updateStatus('✅ Retry initiated - check console for detailed results', 'success');
-            }
-
-            // Test proxy services to see which ones work
-            async testProxyServices() {
-                console.log('\n🧪 TESTING PROXY SERVICES...');
-                this.updateStatus('🧪 Testing proxy services...', 'loading');
-                
-                const testUrl = 'https://httpbin.org/json'; // Simple test URL
-                const proxies = [
-                    {
-                        name: 'AllOrigins',
-                        url: `https://api.allorigins.win/get?url=${encodeURIComponent(testUrl)}`,
-                        parse: (data) => data.contents
-                    },
-                    {
-                        name: 'CORS Anywhere',
-                        url: `https://cors-anywhere.herokuapp.com/${testUrl}`,
-                        parse: (data) => data
-                    },
-                    {
-                        name: 'ThingProxy',
-                        url: `https://thingproxy.freeboard.io/fetch/${testUrl}`,
-                        parse: (data) => data
-                    }
+            // Check if image URL looks like an icon or logo (usually small/not useful)
+            isIconOrLogo(src) {
+                const iconPatterns = [
+                    'icon', 'logo', 'avatar', 'profile', 'favicon', 
+                    'sprite', 'button', 'badge', 'social'
                 ];
+                
+                const srcLower = src.toLowerCase();
+                return iconPatterns.some(pattern => srcLower.includes(pattern));
+            }
 
-                const results = [];
+            // Validate that an image URL actually works and is substantial
+            async validateImage(imageUrl) {
+                if (!imageUrl) return false;
                 
-                for (const proxy of proxies) {
-                    try {
-                        console.log(`🌐 Testing ${proxy.name}...`);
+                try {
+                    // Create a temporary image to check if it loads
+                    return new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            // Check if image is substantial (not tiny icons)
+                            resolve(img.width >= 200 && img.height >= 100);
+                        };
+                        img.onerror = () => resolve(false);
+                        img.src = imageUrl;
                         
-                        const response = await fetch(proxy.url, {
-                            signal: AbortSignal.timeout(5000)
-                        });
-                        
-                        if (response.ok) {
-                            console.log(`✅ ${proxy.name}: Working (${response.status})`);
-                            results.push(`✅ ${proxy.name}: Working`);
-                        } else {
-                            console.log(`❌ ${proxy.name}: Failed (${response.status})`);
-                            results.push(`❌ ${proxy.name}: Failed (${response.status})`);
-                        }
-                        
-                    } catch (error) {
-                        console.log(`💥 ${proxy.name}: Error - ${error.message}`);
-                        results.push(`💥 ${proxy.name}: ${error.message}`);
-                    }
-                }
-                
-                console.log('\n📊 PROXY TEST RESULTS:');
-                results.forEach(result => console.log(result));
-                
-                const workingProxies = results.filter(r => r.includes('✅')).length;
-                
-                if (workingProxies > 0) {
-                    this.updateStatus(`✅ ${workingProxies}/3 proxy services working - image fetching should work`, 'success');
-                } else {
-                    this.updateStatus('❌ All proxy services failed - image fetching won\'t work', 'error');
+                        // Timeout after 5 seconds
+                        setTimeout(() => resolve(false), 5000);
+                    });
+                } catch (error) {
+                    return false;
                 }
             }
 
