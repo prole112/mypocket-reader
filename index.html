@@ -972,7 +972,7 @@
                 }
             }
 
-            // Enhanced displayArticles with better image handling
+            // Enhanced displayArticles with real image fetching
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -982,17 +982,10 @@
                 }
 
                 const articlesHTML = articles.map((article, index) => {
-                    const articleImage = this.getBestArticleImage(article);
-                    
                     return `
-                    <div class="article-card">
-                        <div class="article-image">
-                            ${articleImage 
-                                ? `<img src="${articleImage}" alt="Article image" 
-                                     onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='${this.getArticleIcon(article.url)}';"
-                                     onload="this.style.opacity='1';" style="opacity:0; transition: opacity 0.3s ease;">`
-                                : this.getArticleIcon(article.url)
-                            }
+                    <div class="article-card" data-index="${index}">
+                        <div class="article-image" id="image-${index}">
+                            ${this.getArticleIcon(article.url)}
                         </div>
                         <div class="article-content" onclick="webReader.openReader(${index})">
                             <h2 class="article-title">${this.escapeHtml(article.title)}</h2>
@@ -1021,6 +1014,187 @@
                 `}).join('');
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
+                
+                // Now fetch images for each article
+                articles.forEach((article, index) => {
+                    this.loadArticleImage(article, index);
+                });
+            }
+
+            // Load image for a specific article
+            async loadArticleImage(article, index) {
+                const imageElement = document.getElementById(`image-${index}`);
+                if (!imageElement) return;
+
+                try {
+                    // First try saved images
+                    const savedImage = this.getBestArticleImage(article);
+                    if (savedImage) {
+                        this.setArticleImage(imageElement, savedImage);
+                        return;
+                    }
+
+                    // If no saved image, fetch from the article page
+                    console.log(`🖼️ Fetching image for: ${article.title}`);
+                    
+                    const fetchedImage = await this.fetchArticleImage(article.url);
+                    if (fetchedImage) {
+                        this.setArticleImage(imageElement, fetchedImage);
+                        console.log(`✅ Image loaded for: ${article.title}`);
+                    } else {
+                        // Keep the icon if no image found
+                        console.log(`📄 No image found for: ${article.title}, keeping icon`);
+                    }
+
+                } catch (error) {
+                    console.log(`❌ Failed to load image for ${article.title}:`, error.message);
+                    // Keep the original icon on error
+                }
+            }
+
+            // Fetch article image from the original page
+            async fetchArticleImage(url) {
+                try {
+                    // Try to fetch the page HTML to extract images
+                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                    const response = await fetch(proxyUrl);
+                    
+                    if (!response.ok) return null;
+                    
+                    const data = await response.json();
+                    const html = data.contents;
+                    
+                    if (!html) return null;
+
+                    // Parse HTML to extract images
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Try to find the best image in this order:
+                    
+                    // 1. Open Graph image
+                    let ogImage = doc.querySelector('meta[property="og:image"]');
+                    if (ogImage) {
+                        const imageUrl = this.makeAbsoluteUrl(ogImage.getAttribute('content'), url);
+                        if (await this.validateImage(imageUrl)) {
+                            return imageUrl;
+                        }
+                    }
+                    
+                    // 2. Twitter card image
+                    let twitterImage = doc.querySelector('meta[name="twitter:image"]');
+                    if (twitterImage) {
+                        const imageUrl = this.makeAbsoluteUrl(twitterImage.getAttribute('content'), url);
+                        if (await this.validateImage(imageUrl)) {
+                            return imageUrl;
+                        }
+                    }
+                    
+                    // 3. Featured image or hero image
+                    const heroSelectors = [
+                        '.featured-image img',
+                        '.hero-image img', 
+                        '.post-thumbnail img',
+                        '.article-image img',
+                        '.entry-image img',
+                        'article img:first-of-type',
+                        '.content img:first-of-type'
+                    ];
+                    
+                    for (const selector of heroSelectors) {
+                        const img = doc.querySelector(selector);
+                        if (img) {
+                            const src = img.getAttribute('src') || img.getAttribute('data-src');
+                            if (src) {
+                                const imageUrl = this.makeAbsoluteUrl(src, url);
+                                if (await this.validateImage(imageUrl)) {
+                                    return imageUrl;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 4. Any substantial image in the content
+                    const allImages = doc.querySelectorAll('img');
+                    for (const img of allImages) {
+                        const src = img.getAttribute('src') || img.getAttribute('data-src');
+                        if (src && !this.isIconOrLogo(src)) {
+                            const imageUrl = this.makeAbsoluteUrl(src, url);
+                            if (await this.validateImage(imageUrl)) {
+                                return imageUrl;
+                            }
+                        }
+                    }
+                    
+                    return null;
+                    
+                } catch (error) {
+                    console.error('Error fetching article image:', error);
+                    return null;
+                }
+            }
+
+            // Set the image in the article tile
+            setArticleImage(imageElement, imageUrl) {
+                imageElement.innerHTML = `
+                    <img src="${imageUrl}" 
+                         alt="Article image" 
+                         style="opacity: 0; transition: opacity 0.5s ease;"
+                         onload="this.style.opacity='1';" 
+                         onerror="this.style.display='none';">
+                `;
+            }
+
+            // Convert relative URLs to absolute
+            makeAbsoluteUrl(imageUrl, baseUrl) {
+                if (!imageUrl) return null;
+                
+                try {
+                    // If already absolute, return as-is
+                    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+                        return imageUrl;
+                    }
+                    
+                    // If relative, make it absolute
+                    const base = new URL(baseUrl);
+                    return new URL(imageUrl, base.origin).href;
+                } catch (error) {
+                    return null;
+                }
+            }
+
+            // Check if image URL looks like an icon or logo (usually small/not useful)
+            isIconOrLogo(src) {
+                const iconPatterns = [
+                    'icon', 'logo', 'avatar', 'profile', 'favicon', 
+                    'sprite', 'button', 'badge', 'social'
+                ];
+                
+                const srcLower = src.toLowerCase();
+                return iconPatterns.some(pattern => srcLower.includes(pattern));
+            }
+
+            // Validate that an image URL actually works and is substantial
+            async validateImage(imageUrl) {
+                if (!imageUrl) return false;
+                
+                try {
+                    // Create a temporary image to check if it loads
+                    return new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            // Check if image is substantial (not tiny icons)
+                            resolve(img.width >= 200 && img.height >= 100);
+                        };
+                        img.onerror = () => resolve(false);
+                        img.src = imageUrl;
+                        
+                        // Timeout after 5 seconds
+                        setTimeout(() => resolve(false), 5000);
+                    });
+                } catch (error) {
+                    return false;
+                }
             }
 
             displayEmptyState() {
