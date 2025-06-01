@@ -724,6 +724,9 @@
                     <button id="imageDebugBtn" class="btn btn-secondary" onclick="webReader.toggleImageDebug()" title="Toggle image fetching debug">
                         <span>🖼️</span> Debug Images
                     </button>
+                    <button id="retryImagesBtn" class="btn btn-secondary" onclick="webReader.retryAllImages()" title="Retry fetching all images">
+                        <span>🔄</span> Retry Images
+                    </button>
                 </div>
             </div>
         </div>
@@ -792,6 +795,8 @@
                 this.currentArticle = null;
                 this.debugImageFetching = true; // Start with debug mode ON to see what's happening
                 this.failedDomains = new Set(); // Track domains that failed
+                
+                console.log('🖼️ Image fetching initialized - debug mode ON');
 
                 this.init();
             }
@@ -996,6 +1001,10 @@
                     return;
                 }
 
+                // Clear failed domains to give fresh attempts
+                this.failedDomains.clear();
+                console.log('🔄 Cleared failed domains - fresh image fetching attempt');
+
                 const articlesHTML = articles.map((article, index) => {
                     return `
                     <div class="article-card" data-index="${index}">
@@ -1033,9 +1042,11 @@
                 // Test if image fetching is working
                 this.testImageFetching();
                 
-                // Now fetch images for each article
+                // Now fetch images for each article (with small delays to avoid overwhelming)
                 articles.forEach((article, index) => {
-                    this.loadArticleImage(article, index);
+                    setTimeout(() => {
+                        this.loadArticleImage(article, index);
+                    }, index * 200); // Stagger requests by 200ms each
                 });
             }
 
@@ -1291,6 +1302,11 @@
                 `;
             }
 
+            // Helper function to truncate long titles for cleaner logging
+            truncateTitle(title) {
+                return title && title.length > 50 ? title.substring(0, 50) + '...' : (title || 'Untitled');
+            }
+
             // Convert relative URLs to absolute
             makeAbsoluteUrl(imageUrl, baseUrl) {
                 if (!imageUrl) return null;
@@ -1333,6 +1349,32 @@
                 if (this.debugImageFetching) {
                     this.testImageFetching();
                 }
+            }
+
+            // Retry loading images for all articles
+            retryAllImages() {
+                if (!this.articles || this.articles.length === 0) {
+                    this.updateStatus('❌ No articles loaded to retry images for', 'error');
+                    return;
+                }
+
+                // Clear failed domains
+                this.failedDomains.clear();
+                console.log('🔄 Manual retry: Cleared failed domains');
+                
+                this.updateStatus('🔄 Retrying image loading for all articles...', 'loading');
+
+                // Retry loading images for all articles
+                this.articles.forEach((article, index) => {
+                    setTimeout(() => {
+                        this.loadArticleImage(article, index);
+                    }, index * 150); // Stagger requests
+                });
+
+                // Update status after a delay
+                setTimeout(() => {
+                    this.updateStatus('✅ Image retry completed - check console for results', 'success');
+                }, (this.articles.length * 150) + 2000);
             }
 
             displayEmptyState() {
