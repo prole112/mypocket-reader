@@ -793,9 +793,9 @@
                 this.accessToken = null;
                 this.articles = [];
                 this.currentArticle = null;
-                this.debugImageFetching = true; // Start with debug mode ON to see what's happening
+                this.debugImageFetching = true;
                 
-                console.log('🖼️ Image fetching initialized - debug mode ON, no domain blocking');
+                console.log('🖼️ Image fetching initialized - ZERO BLOCKING, EVERY ARTICLE GETS ATTEMPTED');
 
                 this.init();
             }
@@ -991,7 +991,7 @@
                 }
             }
 
-            // Enhanced displayArticles with real image fetching
+            // Enhanced displayArticles with guaranteed no skipping
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1000,7 +1000,8 @@
                     return;
                 }
 
-                console.log('🖼️ Starting fresh image fetching for all articles');
+                console.log(`\n🚀 DISPLAYARTICLES: Starting image fetching for ${articles.length} articles`);
+                console.log(`📋 NO DOMAIN BLOCKING - EVERY ARTICLE WILL BE ATTEMPTED`);
 
                 const articlesHTML = articles.map((article, index) => {
                     return `
@@ -1036,15 +1037,12 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
                 
-                // Test if image fetching is working
-                this.testImageFetching();
+                // Start fetching images immediately - NO DELAYS
+                console.log(`⚡ STARTING IMMEDIATE IMAGE FETCHING FOR ALL ${articles.length} ARTICLES`);
                 
-                // Now fetch images for each article (with small delays to avoid overwhelming)
-                console.log(`🚀 Starting image fetching for ${articles.length} articles...`);
                 articles.forEach((article, index) => {
-                    setTimeout(() => {
-                        this.loadArticleImage(article, index);
-                    }, index * 300); // Stagger requests by 300ms each
+                    // Start all immediately - no staggering for now to see what happens
+                    this.loadArticleImage(article, index);
                 });
             }
 
@@ -1073,202 +1071,92 @@
                 }
             }
 
-            // Load image for a specific article - simplified and less aggressive
+            // Load image for a specific article - NO SKIPPING VERSION
             async loadArticleImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
-                if (!imageElement) return;
+                if (!imageElement) {
+                    console.log(`❌ No image element found for index ${index}`);
+                    return;
+                }
+
+                console.log(`\n=== STARTING IMAGE FETCH ${index + 1} ===`);
+                console.log(`📰 Article: ${this.truncateTitle(article.title)}`);
+                console.log(`🌐 Domain: ${this.getDomain(article.url)}`);
+                console.log(`🔗 URL: ${article.url}`);
 
                 try {
                     // First try saved images
                     const savedImage = this.getBestArticleImage(article);
                     if (savedImage) {
+                        console.log(`✅ USING SAVED IMAGE: ${savedImage.substring(0, 80)}...`);
                         this.setArticleImage(imageElement, savedImage);
-                        if (this.debugImageFetching) {
-                            console.log(`✅ Using saved image for: ${this.truncateTitle(article.title)}`);
-                        }
                         return;
                     }
 
-                    // Always try to fetch from the article page (no domain skipping for now)
-                    if (this.debugImageFetching) {
-                        console.log(`🖼️ Attempting to fetch image for: ${this.truncateTitle(article.title)} from ${this.getDomain(article.url)}`);
-                    }
+                    console.log(`🚀 NO SAVED IMAGE - ATTEMPTING FETCH FROM WEB`);
                     
                     const fetchedImage = await this.fetchArticleImage(article.url);
                     
                     if (fetchedImage) {
+                        console.log(`🎉 SUCCESS! Image loaded: ${fetchedImage.substring(0, 80)}...`);
                         this.setArticleImage(imageElement, fetchedImage);
-                        console.log(`✅ SUCCESS: Image loaded for ${this.truncateTitle(article.title)} from ${fetchedImage.substring(0, 60)}...`);
                     } else {
-                        if (this.debugImageFetching) {
-                            console.log(`❌ No suitable image found for: ${this.truncateTitle(article.title)}`);
-                        }
+                        console.log(`❌ NO IMAGE FOUND after full attempt`);
                     }
 
                 } catch (error) {
-                    if (this.debugImageFetching) {
-                        console.log(`❌ FAILED: ${this.truncateTitle(article.title)} - ${error.message}`);
-                    }
+                    console.log(`💥 ERROR during fetch: ${error.message}`);
                 }
+                
+                console.log(`=== COMPLETED IMAGE FETCH ${index + 1} ===\n`);
             }
 
-            // Restored and improved article image fetching with detailed debugging
+            // Simplified fetch with clear logging
             async fetchArticleImage(url) {
+                console.log(`  ▶️ FETCH STARTING: ${url}`);
+                
                 try {
-                    if (this.debugImageFetching) {
-                        console.log(`  📡 Starting fetch for: ${url}`);
-                    }
-                    
-                    // Try AllOrigins proxy first
                     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                    console.log(`  📡 Proxy request: ${proxyUrl.substring(0, 100)}...`);
                     
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => {
-                        controller.abort();
-                        if (this.debugImageFetching) {
-                            console.log(`  ⏰ Timeout after 8 seconds for: ${this.getDomain(url)}`);
-                        }
-                    }, 8000);
-                    
-                    if (this.debugImageFetching) {
-                        console.log(`  🌐 Making proxy request...`);
-                    }
-                    
-                    const response = await fetch(proxyUrl, {
-                        signal: controller.signal
-                    });
-                    
-                    clearTimeout(timeoutId);
+                    const response = await fetch(proxyUrl);
+                    console.log(`  📶 Proxy response: ${response.status} ${response.ok ? 'OK' : 'FAILED'}`);
                     
                     if (!response.ok) {
                         throw new Error(`Proxy returned HTTP ${response.status}`);
                     }
                     
-                    if (this.debugImageFetching) {
-                        console.log(`  ✅ Proxy response OK, parsing content...`);
-                    }
-                    
                     const data = await response.json();
                     const html = data.contents;
+                    console.log(`  📄 Content length: ${html ? html.length : 0} characters`);
                     
                     if (!html || html.length < 500) {
                         throw new Error(`Insufficient content: ${html ? html.length : 0} chars`);
                     }
 
-                    if (this.debugImageFetching) {
-                        console.log(`  📄 Received ${html.length} chars of HTML, parsing...`);
-                    }
-
-                    // Parse HTML to extract images
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
+                    console.log(`  🔍 Parsed HTML, searching for images...`);
                     
-                    // Try multiple image sources in order of preference
-                    const imageSources = [
-                        // 1. Open Graph image (most reliable)
-                        () => {
-                            const ogImage = doc.querySelector('meta[property="og:image"]');
-                            const result = ogImage ? ogImage.getAttribute('content') : null;
-                            if (this.debugImageFetching && result) {
-                                console.log(`  🎯 Found Open Graph image: ${result.substring(0, 80)}...`);
-                            }
-                            return result;
-                        },
-                        
-                        // 2. Twitter card image
-                        () => {
-                            const twitterImage = doc.querySelector('meta[name="twitter:image"]');
-                            const result = twitterImage ? twitterImage.getAttribute('content') : null;
-                            if (this.debugImageFetching && result) {
-                                console.log(`  🐦 Found Twitter card image: ${result.substring(0, 80)}...`);
-                            }
-                            return result;
-                        },
-                        
-                        // 3. Schema.org image
-                        () => {
-                            const schemaImage = doc.querySelector('meta[itemprop="image"]');
-                            const result = schemaImage ? schemaImage.getAttribute('content') : null;
-                            if (this.debugImageFetching && result) {
-                                console.log(`  📋 Found Schema.org image: ${result.substring(0, 80)}...`);
-                            }
-                            return result;
-                        },
-                        
-                        // 4. Featured image selectors
-                        () => {
-                            const selectors = [
-                                '.featured-image img',
-                                '.hero-image img',
-                                '.post-thumbnail img',
-                                '.article-image img',
-                                '.entry-image img',
-                                '.wp-post-image'
-                            ];
-                            
-                            for (const selector of selectors) {
-                                const img = doc.querySelector(selector);
-                                if (img) {
-                                    const result = img.getAttribute('src') || img.getAttribute('data-src');
-                                    if (this.debugImageFetching && result) {
-                                        console.log(`  🎨 Found featured image via ${selector}: ${result.substring(0, 80)}...`);
-                                    }
-                                    return result;
-                                }
-                            }
-                            return null;
-                        },
-                        
-                        // 5. First substantial image in content
-                        () => {
-                            const contentImages = doc.querySelectorAll('article img, .content img, .post img, .entry img');
-                            for (const img of contentImages) {
-                                const src = img.getAttribute('src') || img.getAttribute('data-src');
-                                if (src && !this.isIconOrLogo(src)) {
-                                    if (this.debugImageFetching) {
-                                        console.log(`  📖 Found content image: ${src.substring(0, 80)}...`);
-                                    }
-                                    return src;
-                                }
-                            }
-                            return null;
+                    // Try Open Graph first
+                    const ogImage = doc.querySelector('meta[property="og:image"]');
+                    if (ogImage) {
+                        const imageUrl = this.makeAbsoluteUrl(ogImage.getAttribute('content'), url);
+                        console.log(`  🎯 Found Open Graph image: ${imageUrl}`);
+                        if (imageUrl && await this.validateImageUrl(imageUrl)) {
+                            console.log(`  ✅ VALIDATED! Returning image`);
+                            return imageUrl;
                         }
-                    ];
-                    
-                    // Try each source until we find a valid image
-                    for (let i = 0; i < imageSources.length; i++) {
-                        const getImageSrc = imageSources[i];
-                        const imageSrc = getImageSrc();
-                        if (imageSrc) {
-                            const absoluteUrl = this.makeAbsoluteUrl(imageSrc, url);
-                            if (absoluteUrl) {
-                                if (this.debugImageFetching) {
-                                    console.log(`  🔍 Validating image: ${absoluteUrl.substring(0, 80)}...`);
-                                }
-                                if (await this.validateImageUrl(absoluteUrl)) {
-                                    if (this.debugImageFetching) {
-                                        console.log(`  ✅ Image validated successfully!`);
-                                    }
-                                    return absoluteUrl;
-                                } else {
-                                    if (this.debugImageFetching) {
-                                        console.log(`  ❌ Image validation failed`);
-                                    }
-                                }
-                            }
-                        }
+                        console.log(`  ❌ Validation failed`);
+                    } else {
+                        console.log(`  📄 No Open Graph image found`);
                     }
                     
-                    if (this.debugImageFetching) {
-                        console.log(`  📄 No suitable images found in any source`);
-                    }
-                    
+                    console.log(`  ❌ No suitable images found`);
                     return null;
                     
                 } catch (error) {
-                    if (this.debugImageFetching) {
-                        console.log(`  💥 Fetch error: ${error.message}`);
-                    }
+                    console.log(`  💥 FETCH ERROR: ${error.message}`);
                     throw error;
                 }
             }
@@ -1387,34 +1275,28 @@
                     'success'
                 );
                 
-                // If turning on debug, test the image fetching
+                // If turning on debug, show status
                 if (this.debugImageFetching) {
-                    this.testImageFetching();
+                    console.log('🔍 Debug mode enabled - detailed image fetching logs will appear');
                 }
             }
 
-            // Retry loading images for all articles
+            // Simplified retry function
             retryAllImages() {
                 if (!this.articles || this.articles.length === 0) {
                     this.updateStatus('❌ No articles loaded to retry images for', 'error');
                     return;
                 }
 
-                console.log('🔄 Manual retry: Attempting to fetch images for all articles');
-                
+                console.log('\n🔄 MANUAL RETRY: Attempting fresh image fetch for all articles');
                 this.updateStatus('🔄 Retrying image loading for all articles...', 'loading');
 
-                // Retry loading images for all articles
+                // Retry all articles
                 this.articles.forEach((article, index) => {
-                    setTimeout(() => {
-                        this.loadArticleImage(article, index);
-                    }, index * 150); // Stagger requests
+                    this.loadArticleImage(article, index);
                 });
 
-                // Update status after a delay
-                setTimeout(() => {
-                    this.updateStatus('✅ Image retry completed - check console for results', 'success');
-                }, (this.articles.length * 150) + 2000);
+                this.updateStatus('✅ Retry initiated - check console for detailed results', 'success');
             }
 
             displayEmptyState() {
