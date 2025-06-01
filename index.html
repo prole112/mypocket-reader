@@ -1231,19 +1231,13 @@
 
                     console.log(`🔍 Searching Unsplash for: ${query}`);
                     
-                    // Try multiple image sources
-                    const imageSources = [
-                        `https://source.unsplash.com/400x250/?${encodeURIComponent(query)}`,
-                        `https://picsum.photos/400/250?random=${Math.floor(Math.random() * 1000)}`,
-                        `https://via.placeholder.com/400x250/667eea/ffffff?text=${encodeURIComponent(query.slice(0, 20))}`
-                    ];
+                    // Use Unsplash Source API (no API key required for basic usage)
+                    const unsplashUrl = `https://source.unsplash.com/400x250/?${encodeURIComponent(query)}`;
                     
-                    for (const imageUrl of imageSources) {
-                        const isValid = await this.validateImage(imageUrl);
-                        if (isValid) {
-                            console.log(`✅ Found working image source: ${imageUrl}`);
-                            return imageUrl;
-                        }
+                    // Test if the image loads
+                    const isValid = await this.validateImage(unsplashUrl);
+                    if (isValid) {
+                        return unsplashUrl;
                     }
                     
                     // Try with simpler domain-based keywords
