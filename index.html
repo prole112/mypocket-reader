@@ -721,6 +721,9 @@
                     <button id="darkModeBtn" class="btn btn-secondary" onclick="webReader.toggleDarkMode()">
                         <span>🌙</span> Dark Mode
                     </button>
+                    <button id="imageDebugBtn" class="btn btn-secondary" onclick="webReader.toggleImageDebug()" title="Toggle image fetching debug">
+                        <span>🖼️</span> Debug Images
+                    </button>
                 </div>
             </div>
         </div>
@@ -787,6 +790,8 @@
                 this.accessToken = null;
                 this.articles = [];
                 this.currentArticle = null;
+                this.debugImageFetching = false; // Start with quiet mode
+                this.failedDomains = new Set(); // Track domains that failed
 
                 this.init();
             }
@@ -1021,7 +1026,7 @@
                 });
             }
 
-            // Load image for a specific article
+            // Load image for a specific article - with better error handling
             async loadArticleImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
                 if (!imageElement) return;
@@ -1034,104 +1039,118 @@
                         return;
                     }
 
-                    // If no saved image, fetch from the article page
-                    console.log(`🖼️ Fetching image for: ${article.title}`);
+                    // Check if we should try fetching (avoid repeated failures)
+                    const domain = this.getDomain(article.url);
+                    if (this.failedDomains && this.failedDomains.has(domain)) {
+                        // Skip fetching for domains that have failed before
+                        return;
+                    }
+
+                    // Try to fetch from the article page (with timeout and better error handling)
+                    const fetchedImage = await Promise.race([
+                        this.fetchArticleImage(article.url),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
+                    ]);
                     
-                    const fetchedImage = await this.fetchArticleImage(article.url);
                     if (fetchedImage) {
                         this.setArticleImage(imageElement, fetchedImage);
-                        console.log(`✅ Image loaded for: ${article.title}`);
-                    } else {
-                        // Keep the icon if no image found
-                        console.log(`📄 No image found for: ${article.title}, keeping icon`);
+                        console.log(`✅ Image loaded for: ${this.truncateTitle(article.title)}`);
                     }
 
                 } catch (error) {
-                    console.log(`❌ Failed to load image for ${article.title}:`, error.message);
-                    // Keep the original icon on error
+                    // Track failed domains to avoid repeated attempts
+                    if (!this.failedDomains) this.failedDomains = new Set();
+                    this.failedDomains.add(this.getDomain(article.url));
+                    
+                    // Only log errors for debugging, not for each failure
+                    if (this.debugImageFetching) {
+                        console.log(`⚠️ Image fetch failed for ${this.truncateTitle(article.title)}: ${error.message}`);
+                    }
                 }
             }
 
-            // Fetch article image from the original page
+            // Fetch article image from the original page - simplified and more robust
             async fetchArticleImage(url) {
                 try {
-                    // Try to fetch the page HTML to extract images
+                    // Only try AllOrigins as it's the most reliable proxy
                     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-                    const response = await fetch(proxyUrl);
+                    const response = await fetch(proxyUrl, {
+                        signal: AbortSignal.timeout(5000) // 5 second timeout
+                    });
                     
-                    if (!response.ok) return null;
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
                     
                     const data = await response.json();
                     const html = data.contents;
                     
-                    if (!html) return null;
+                    if (!html || html.length < 1000) {
+                        throw new Error('Insufficient content');
+                    }
 
                     // Parse HTML to extract images
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
                     
-                    // Try to find the best image in this order:
-                    
-                    // 1. Open Graph image
-                    let ogImage = doc.querySelector('meta[property="og:image"]');
+                    // Try Open Graph image first (most reliable)
+                    const ogImage = doc.querySelector('meta[property="og:image"]');
                     if (ogImage) {
                         const imageUrl = this.makeAbsoluteUrl(ogImage.getAttribute('content'), url);
-                        if (await this.validateImage(imageUrl)) {
+                        if (imageUrl && await this.quickValidateImage(imageUrl)) {
                             return imageUrl;
                         }
                     }
                     
-                    // 2. Twitter card image
-                    let twitterImage = doc.querySelector('meta[name="twitter:image"]');
+                    // Try Twitter card image
+                    const twitterImage = doc.querySelector('meta[name="twitter:image"]');
                     if (twitterImage) {
                         const imageUrl = this.makeAbsoluteUrl(twitterImage.getAttribute('content'), url);
-                        if (await this.validateImage(imageUrl)) {
+                        if (imageUrl && await this.quickValidateImage(imageUrl)) {
                             return imageUrl;
-                        }
-                    }
-                    
-                    // 3. Featured image or hero image
-                    const heroSelectors = [
-                        '.featured-image img',
-                        '.hero-image img', 
-                        '.post-thumbnail img',
-                        '.article-image img',
-                        '.entry-image img',
-                        'article img:first-of-type',
-                        '.content img:first-of-type'
-                    ];
-                    
-                    for (const selector of heroSelectors) {
-                        const img = doc.querySelector(selector);
-                        if (img) {
-                            const src = img.getAttribute('src') || img.getAttribute('data-src');
-                            if (src) {
-                                const imageUrl = this.makeAbsoluteUrl(src, url);
-                                if (await this.validateImage(imageUrl)) {
-                                    return imageUrl;
-                                }
-                            }
-                        }
-                    }
-                    
-                    // 4. Any substantial image in the content
-                    const allImages = doc.querySelectorAll('img');
-                    for (const img of allImages) {
-                        const src = img.getAttribute('src') || img.getAttribute('data-src');
-                        if (src && !this.isIconOrLogo(src)) {
-                            const imageUrl = this.makeAbsoluteUrl(src, url);
-                            if (await this.validateImage(imageUrl)) {
-                                return imageUrl;
-                            }
                         }
                     }
                     
                     return null;
                     
                 } catch (error) {
-                    console.error('Error fetching article image:', error);
-                    return null;
+                    throw new Error('Network or parsing error');
                 }
+            }
+
+            // Quick image validation - faster and less resource intensive
+            async quickValidateImage(imageUrl) {
+                if (!imageUrl) return false;
+                
+                try {
+                    // Just check if the URL format looks reasonable
+                    const url = new URL(imageUrl);
+                    const extension = url.pathname.toLowerCase();
+                    
+                    // Check for image file extensions
+                    if (extension.includes('.jpg') || extension.includes('.jpeg') || 
+                        extension.includes('.png') || extension.includes('.webp') || 
+                        extension.includes('.gif')) {
+                        return true;
+                    }
+                    
+                    // For URLs without extensions, do a quick HEAD request
+                    const response = await fetch(imageUrl, { 
+                        method: 'HEAD',
+                        signal: AbortSignal.timeout(2000)
+                    });
+                    
+                    const contentType = response.headers.get('content-type');
+                    return contentType && contentType.startsWith('image/');
+                    
+                } catch (error) {
+                    return false;
+                }
+            }
+
+            // Helper function to truncate long titles for cleaner logging
+            truncateTitle(title) {
+                return title.length > 50 ? title.substring(0, 50) + '...' : title;
             }
 
             // Set the image in the article tile
@@ -1163,38 +1182,16 @@
                 }
             }
 
-            // Check if image URL looks like an icon or logo (usually small/not useful)
-            isIconOrLogo(src) {
-                const iconPatterns = [
-                    'icon', 'logo', 'avatar', 'profile', 'favicon', 
-                    'sprite', 'button', 'badge', 'social'
-                ];
-                
-                const srcLower = src.toLowerCase();
-                return iconPatterns.some(pattern => srcLower.includes(pattern));
-            }
-
-            // Validate that an image URL actually works and is substantial
-            async validateImage(imageUrl) {
-                if (!imageUrl) return false;
-                
-                try {
-                    // Create a temporary image to check if it loads
-                    return new Promise((resolve) => {
-                        const img = new Image();
-                        img.onload = () => {
-                            // Check if image is substantial (not tiny icons)
-                            resolve(img.width >= 200 && img.height >= 100);
-                        };
-                        img.onerror = () => resolve(false);
-                        img.src = imageUrl;
-                        
-                        // Timeout after 5 seconds
-                        setTimeout(() => resolve(false), 5000);
-                    });
-                } catch (error) {
-                    return false;
-                }
+            // Enable debug mode for image fetching
+            toggleImageDebug() {
+                this.debugImageFetching = !this.debugImageFetching;
+                console.log(`🖼️ Image fetching debug: ${this.debugImageFetching ? 'ON' : 'OFF'}`);
+                this.updateStatus(
+                    this.debugImageFetching 
+                        ? '🖼️ Image debug enabled - check console for details'
+                        : '🖼️ Image debug disabled - quiet mode',
+                    'success'
+                );
             }
 
             displayEmptyState() {
