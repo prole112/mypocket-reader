@@ -950,23 +950,31 @@
 
             // Get the best available content for reading
             getArticleContent(article) {
+                // Debug: Log the article structure to console
+                console.log('📖 Article data structure:', article);
+                console.log('📖 Available properties:', Object.keys(article));
+                
                 // Try multiple content sources in order of preference
                 let content = '';
                 
                 // 1. Full HTML content
                 if (article.content && article.content.trim()) {
+                    console.log('✅ Using article.content');
                     content = article.content;
                 }
                 // 2. HTML body
                 else if (article.html && article.html.trim()) {
+                    console.log('✅ Using article.html');
                     content = article.html;
                 }
                 // 3. Full content
                 else if (article.fullContent && article.fullContent.trim()) {
+                    console.log('✅ Using article.fullContent');
                     content = article.fullContent;
                 }
                 // 4. Text content converted to HTML
                 else if (article.textContent && article.textContent.trim()) {
+                    console.log('✅ Using article.textContent');
                     // Convert plain text to HTML paragraphs
                     content = article.textContent
                         .split('\n\n')
@@ -976,34 +984,63 @@
                 }
                 // 5. Article body
                 else if (article.body && article.body.trim()) {
+                    console.log('✅ Using article.body');
                     content = article.body;
                 }
-                // 6. Use excerpt as fallback
+                // 6. Try readableContent or cleanedContent
+                else if (article.readableContent && article.readableContent.trim()) {
+                    console.log('✅ Using article.readableContent');
+                    content = article.readableContent;
+                }
+                // 7. Try articleContent
+                else if (article.articleContent && article.articleContent.trim()) {
+                    console.log('✅ Using article.articleContent');
+                    content = article.articleContent;
+                }
+                // 8. Use excerpt as fallback
                 else if (article.excerpt && article.excerpt.trim()) {
+                    console.log('⚠️ Only excerpt available');
                     content = `<p><em>Only excerpt available:</em></p><p>${article.excerpt}</p>`;
                 }
-                // 7. Last resort - show available data for debugging
+                // 9. Show detailed debugging info
                 else {
+                    console.log('❌ No content found, showing debug info');
+                    
+                    // Show all string properties with their lengths
+                    const stringProps = {};
+                    Object.keys(article).forEach(key => {
+                        const value = article[key];
+                        if (typeof value === 'string' && value.length > 0) {
+                            stringProps[key] = {
+                                length: value.length,
+                                preview: value.substring(0, 100) + (value.length > 100 ? '...' : '')
+                            };
+                        }
+                    });
+                    
                     content = `
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                            <h3>No content available</h3>
-                            <p>The article content could not be found. This might happen if:</p>
-                            <ul>
-                                <li>The article was saved without full content</li>
-                                <li>The content is stored in a different format</li>
-                                <li>There was an issue with the content extraction</li>
-                            </ul>
-                            <p><strong>Available data:</strong></p>
-                            <pre style="background: #fff; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px;">
-${JSON.stringify({
-    title: article.title,
-    excerpt: article.excerpt,
-    url: article.url,
-    availableProperties: Object.keys(article).filter(key => 
-        typeof article[key] === 'string' && article[key].length > 10
-    )
-}, null, 2)}
-                            </pre>
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; font-family: monospace;">
+                            <h3>🔍 Debug: Article Content Analysis</h3>
+                            <p>No content found in expected properties. Here's what's available:</p>
+                            
+                            <h4>String Properties Found:</h4>
+                            <div style="background: #fff; padding: 15px; border-radius: 4px; margin: 10px 0;">
+                                ${Object.keys(stringProps).length > 0 ? 
+                                    Object.entries(stringProps).map(([key, info]) => 
+                                        `<div style="margin: 10px 0; padding: 10px; background: #f9f9f9; border-left: 3px solid #ee5a24;">
+                                            <strong>${key}</strong> (${info.length} chars)<br>
+                                            <span style="color: #666; font-size: 0.9em;">${info.preview}</span>
+                                        </div>`
+                                    ).join('') 
+                                    : '<p>No string properties found with content.</p>'
+                                }
+                            </div>
+                            
+                            <h4>All Properties:</h4>
+                            <div style="background: #fff; padding: 10px; border-radius: 4px; font-size: 12px; overflow-x: auto;">
+                                <pre>${JSON.stringify(Object.keys(article), null, 2)}</pre>
+                            </div>
+                            
                             <p style="margin-top: 15px;">
                                 <a href="${article.url}" target="_blank" style="color: #ee5a24; text-decoration: none;">
                                     🔗 Read original article
@@ -1011,16 +1048,6 @@ ${JSON.stringify({
                             </p>
                         </div>
                     `;
-                }
-
-                // Ensure content has proper styling and is readable
-                if (content && !content.includes('<p>') && !content.includes('<div>') && !content.includes('<article>')) {
-                    // If content doesn't have HTML structure, wrap it in paragraphs
-                    content = content
-                        .split('\n\n')
-                        .filter(para => para.trim())
-                        .map(para => `<p>${para.trim()}</p>`)
-                        .join('\n');
                 }
 
                 return content || '<p>No content available.</p>';
