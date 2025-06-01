@@ -790,7 +790,7 @@
                 this.accessToken = null;
                 this.articles = [];
                 this.currentArticle = null;
-                this.debugImageFetching = false; // Start with quiet mode
+                this.debugImageFetching = true; // Start with debug mode ON to see what's happening
                 this.failedDomains = new Set(); // Track domains that failed
 
                 this.init();
@@ -812,6 +812,16 @@
                 this.checkAuthFromURL();
                 this.loadStoredToken();
                 this.loadThemePreference();
+                this.updateDebugButtonState();
+            }
+
+            updateDebugButtonState() {
+                const debugBtn = document.getElementById('imageDebugBtn');
+                if (debugBtn) {
+                    debugBtn.innerHTML = this.debugImageFetching 
+                        ? '<span>🔍</span> Debug ON'
+                        : '<span>🖼️</span> Debug OFF';
+                }
             }
 
             setupEventListeners() {
@@ -1020,13 +1030,41 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
                 
+                // Test if image fetching is working
+                this.testImageFetching();
+                
                 // Now fetch images for each article
                 articles.forEach((article, index) => {
                     this.loadArticleImage(article, index);
                 });
             }
 
-            // Load image for a specific article - with better error handling
+            // Test if the image fetching proxy is working
+            async testImageFetching() {
+                if (!this.debugImageFetching) return;
+                
+                try {
+                    console.log('🧪 Testing image fetching capability...');
+                    const testUrl = 'https://www.bbc.com/news'; // BBC usually has good Open Graph images
+                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(testUrl)}`;
+                    
+                    const response = await fetch(proxyUrl);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.contents && data.contents.length > 1000) {
+                            console.log('✅ Image fetching proxy is working - images should load for compatible sites');
+                        } else {
+                            console.log('⚠️ Proxy responded but content seems limited');
+                        }
+                    } else {
+                        console.log(`❌ Proxy test failed: ${response.status}`);
+                    }
+                } catch (error) {
+                    console.log(`❌ Image fetching test failed: ${error.message}`);
+                }
+            }
+
+            // Load image for a specific article - restored functionality
             async loadArticleImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
                 if (!imageElement) return;
@@ -1036,25 +1074,35 @@
                     const savedImage = this.getBestArticleImage(article);
                     if (savedImage) {
                         this.setArticleImage(imageElement, savedImage);
+                        if (this.debugImageFetching) {
+                            console.log(`✅ Using saved image for: ${this.truncateTitle(article.title)}`);
+                        }
                         return;
                     }
 
                     // Check if we should try fetching (avoid repeated failures)
                     const domain = this.getDomain(article.url);
                     if (this.failedDomains && this.failedDomains.has(domain)) {
-                        // Skip fetching for domains that have failed before
+                        if (this.debugImageFetching) {
+                            console.log(`⏭️ Skipping ${domain} (previously failed)`);
+                        }
                         return;
                     }
 
-                    // Try to fetch from the article page (with timeout and better error handling)
-                    const fetchedImage = await Promise.race([
-                        this.fetchArticleImage(article.url),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
-                    ]);
+                    // Try to fetch from the article page
+                    if (this.debugImageFetching) {
+                        console.log(`🖼️ Fetching image for: ${this.truncateTitle(article.title)}`);
+                    }
+                    
+                    const fetchedImage = await this.fetchArticleImage(article.url);
                     
                     if (fetchedImage) {
                         this.setArticleImage(imageElement, fetchedImage);
                         console.log(`✅ Image loaded for: ${this.truncateTitle(article.title)}`);
+                    } else {
+                        if (this.debugImageFetching) {
+                            console.log(`📄 No suitable image found for: ${this.truncateTitle(article.title)}`);
+                        }
                     }
 
                 } catch (error) {
@@ -1062,95 +1110,174 @@
                     if (!this.failedDomains) this.failedDomains = new Set();
                     this.failedDomains.add(this.getDomain(article.url));
                     
-                    // Only log errors for debugging, not for each failure
                     if (this.debugImageFetching) {
-                        console.log(`⚠️ Image fetch failed for ${this.truncateTitle(article.title)}: ${error.message}`);
+                        console.log(`❌ Image fetch failed for ${this.truncateTitle(article.title)}: ${error.message}`);
                     }
                 }
             }
 
-            // Fetch article image from the original page - simplified and more robust
+            // Restored and improved article image fetching
             async fetchArticleImage(url) {
                 try {
-                    // Only try AllOrigins as it's the most reliable proxy
+                    // Try AllOrigins proxy first
                     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                    
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+                    
                     const response = await fetch(proxyUrl, {
-                        signal: AbortSignal.timeout(5000) // 5 second timeout
+                        signal: controller.signal
                     });
                     
+                    clearTimeout(timeoutId);
+                    
                     if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
+                        throw new Error(`Proxy returned ${response.status}`);
                     }
                     
                     const data = await response.json();
                     const html = data.contents;
                     
-                    if (!html || html.length < 1000) {
-                        throw new Error('Insufficient content');
+                    if (!html || html.length < 500) {
+                        throw new Error('No substantial content received');
                     }
 
                     // Parse HTML to extract images
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
                     
-                    // Try Open Graph image first (most reliable)
-                    const ogImage = doc.querySelector('meta[property="og:image"]');
-                    if (ogImage) {
-                        const imageUrl = this.makeAbsoluteUrl(ogImage.getAttribute('content'), url);
-                        if (imageUrl && await this.quickValidateImage(imageUrl)) {
-                            return imageUrl;
+                    // Try multiple image sources in order of preference
+                    const imageSources = [
+                        // 1. Open Graph image (most reliable)
+                        () => {
+                            const ogImage = doc.querySelector('meta[property="og:image"]');
+                            return ogImage ? ogImage.getAttribute('content') : null;
+                        },
+                        
+                        // 2. Twitter card image
+                        () => {
+                            const twitterImage = doc.querySelector('meta[name="twitter:image"]');
+                            return twitterImage ? twitterImage.getAttribute('content') : null;
+                        },
+                        
+                        // 3. Schema.org image
+                        () => {
+                            const schemaImage = doc.querySelector('meta[itemprop="image"]');
+                            return schemaImage ? schemaImage.getAttribute('content') : null;
+                        },
+                        
+                        // 4. Featured image selectors
+                        () => {
+                            const selectors = [
+                                '.featured-image img',
+                                '.hero-image img',
+                                '.post-thumbnail img',
+                                '.article-image img',
+                                '.entry-image img',
+                                '.wp-post-image'
+                            ];
+                            
+                            for (const selector of selectors) {
+                                const img = doc.querySelector(selector);
+                                if (img) {
+                                    return img.getAttribute('src') || img.getAttribute('data-src');
+                                }
+                            }
+                            return null;
+                        },
+                        
+                        // 5. First substantial image in content
+                        () => {
+                            const contentImages = doc.querySelectorAll('article img, .content img, .post img, .entry img');
+                            for (const img of contentImages) {
+                                const src = img.getAttribute('src') || img.getAttribute('data-src');
+                                if (src && !this.isIconOrLogo(src)) {
+                                    return src;
+                                }
+                            }
+                            return null;
                         }
-                    }
+                    ];
                     
-                    // Try Twitter card image
-                    const twitterImage = doc.querySelector('meta[name="twitter:image"]');
-                    if (twitterImage) {
-                        const imageUrl = this.makeAbsoluteUrl(twitterImage.getAttribute('content'), url);
-                        if (imageUrl && await this.quickValidateImage(imageUrl)) {
-                            return imageUrl;
+                    // Try each source until we find a valid image
+                    for (const getImageSrc of imageSources) {
+                        const imageSrc = getImageSrc();
+                        if (imageSrc) {
+                            const absoluteUrl = this.makeAbsoluteUrl(imageSrc, url);
+                            if (absoluteUrl && await this.validateImageUrl(absoluteUrl)) {
+                                return absoluteUrl;
+                            }
                         }
                     }
                     
                     return null;
                     
                 } catch (error) {
-                    throw new Error('Network or parsing error');
+                    if (this.debugImageFetching) {
+                        console.log(`Fetch error: ${error.message}`);
+                    }
+                    throw error;
                 }
             }
 
-            // Quick image validation - faster and less resource intensive
-            async quickValidateImage(imageUrl) {
-                if (!imageUrl) return false;
-                
+            // Improved image validation - actually test the image
+            async validateImageUrl(imageUrl) {
                 try {
-                    // Just check if the URL format looks reasonable
-                    const url = new URL(imageUrl);
-                    const extension = url.pathname.toLowerCase();
+                    // Quick format check first
+                    if (!imageUrl || imageUrl.length > 500) return false;
                     
-                    // Check for image file extensions
-                    if (extension.includes('.jpg') || extension.includes('.jpeg') || 
-                        extension.includes('.png') || extension.includes('.webp') || 
-                        extension.includes('.gif')) {
-                        return true;
+                    // Check if it looks like an image URL
+                    const url = new URL(imageUrl);
+                    const path = url.pathname.toLowerCase();
+                    const hasImageExtension = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(path);
+                    
+                    if (hasImageExtension) {
+                        return true; // If it has an image extension, likely good
                     }
                     
-                    // For URLs without extensions, do a quick HEAD request
-                    const response = await fetch(imageUrl, { 
+                    // For URLs without clear extensions, do a quick HEAD request
+                    const controller = new AbortController();
+                    setTimeout(() => controller.abort(), 3000);
+                    
+                    const response = await fetch(imageUrl, {
                         method: 'HEAD',
-                        signal: AbortSignal.timeout(2000)
+                        signal: controller.signal
                     });
                     
-                    const contentType = response.headers.get('content-type');
-                    return contentType && contentType.startsWith('image/');
+                    if (response.ok) {
+                        const contentType = response.headers.get('content-type');
+                        return contentType && contentType.startsWith('image/');
+                    }
+                    
+                    return false;
                     
                 } catch (error) {
-                    return false;
+                    // If HEAD request fails, still try the image (might work in img tag)
+                    return true;
                 }
             }
 
-            // Helper function to truncate long titles for cleaner logging
-            truncateTitle(title) {
-                return title.length > 50 ? title.substring(0, 50) + '...' : title;
+            // Check if URL looks like an icon/logo
+            isIconOrLogo(src) {
+                if (!src) return true;
+                
+                const srcLower = src.toLowerCase();
+                const iconPatterns = [
+                    'icon', 'logo', 'avatar', 'favicon', 'sprite', 
+                    'button', 'badge', 'placeholder', 'default'
+                ];
+                
+                // Also check for very small dimensions in the URL
+                if (/\d+x\d+/.test(srcLower)) {
+                    const matches = srcLower.match(/(\d+)x(\d+)/);
+                    if (matches) {
+                        const width = parseInt(matches[1]);
+                        const height = parseInt(matches[2]);
+                        if (width < 200 || height < 100) return true;
+                    }
+                }
+                
+                return iconPatterns.some(pattern => srcLower.includes(pattern));
             }
 
             // Set the image in the article tile
@@ -1186,12 +1313,26 @@
             toggleImageDebug() {
                 this.debugImageFetching = !this.debugImageFetching;
                 console.log(`🖼️ Image fetching debug: ${this.debugImageFetching ? 'ON' : 'OFF'}`);
+                
+                // Update button text to show current state
+                const debugBtn = document.getElementById('imageDebugBtn');
+                if (debugBtn) {
+                    debugBtn.innerHTML = this.debugImageFetching 
+                        ? '<span>🔍</span> Debug ON'
+                        : '<span>🖼️</span> Debug OFF';
+                }
+                
                 this.updateStatus(
                     this.debugImageFetching 
-                        ? '🖼️ Image debug enabled - check console for details'
-                        : '🖼️ Image debug disabled - quiet mode',
+                        ? '🔍 Image debug enabled - check console for details'
+                        : '🔇 Image debug disabled - quiet mode',
                     'success'
                 );
+                
+                // If turning on debug, test the image fetching
+                if (this.debugImageFetching) {
+                    this.testImageFetching();
+                }
             }
 
             displayEmptyState() {
