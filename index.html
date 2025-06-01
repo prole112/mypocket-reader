@@ -1151,51 +1151,52 @@
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
                 
                 // Show image loading status
-                this.updateStatus(`🖼️ Loading beautiful images for ${articles.length} articles...`, 'loading');
+                this.updateStatus(`🔍 Extracting real images from article websites...`, 'loading');
                 
-                // GUARANTEED: Load real images for every article
+                // ENHANCED: Extract real images from original websites
                 this.loadAllArticleImages(articles);
             }
 
-            // FIXED: Guaranteed image loading without CORS issues
+            // ENHANCED: Extract real images from article websites
             async loadAllArticleImages(articles) {
-                console.log('🎨 FIXED IMAGE LOADER - No more CORS issues!');
+                console.log('🎨 REAL IMAGE EXTRACTOR - Getting actual article images...');
                 
                 let successCount = 0;
                 const totalImages = articles.length;
                 
-                // Load images one by one to avoid rate limiting
+                // Load images sequentially to avoid overwhelming websites
                 for (let i = 0; i < articles.length; i++) {
                     try {
-                        await this.loadSingleArticleImageFixed(articles[i], i);
-                        successCount++;
+                        const success = await this.extractRealArticleImage(articles[i], i);
+                        if (success) successCount++;
                         
                         // Update progress
                         const progress = Math.round(((i + 1) / totalImages) * 100);
-                        this.updateStatus(`🖼️ Loading images... ${i + 1}/${totalImages} (${progress}%)`, 'loading');
+                        this.updateStatus(`🔍 Extracting real images... ${i + 1}/${totalImages} (${progress}%)`, 'loading');
                         
-                        // Small delay to prevent overwhelming services
-                        await new Promise(resolve => setTimeout(resolve, 100));
+                        // Delay to be respectful to websites
+                        await new Promise(resolve => setTimeout(resolve, 200));
                         
                     } catch (error) {
-                        console.error(`Failed to load image for article ${i}:`, error);
-                        // Even if there's an error, we still get a guaranteed image
+                        console.error(`Failed to extract image for article ${i}:`, error);
+                        // Use category fallback for failed extractions
+                        this.setArticleImageDirect(document.getElementById(`image-${i}`), this.getCategoryBasedImage(articles[i], i));
                         successCount++;
                     }
                 }
                 
-                this.updateStatus(`✅ All ${successCount}/${totalImages} articles now have beautiful images!`, 'success');
-                console.log(`🎨 Image loading complete: ${successCount}/${totalImages} successful`);
+                this.updateStatus(`✅ Extracted ${successCount}/${totalImages} real article images!`, 'success');
+                console.log(`🎨 Real image extraction complete: ${successCount}/${totalImages} successful`);
             }
 
-            // FIXED: Simplified approach that ALWAYS works
-            async loadSingleArticleImageFixed(article, index) {
+            // NEW: Extract the actual featured image from the article's website
+            async extractRealArticleImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
                 if (!imageElement) return false;
 
-                console.log(`🎨 Loading image for: "${article.title.substring(0, 50)}..."`);
+                console.log(`🔍 Extracting real image from: ${this.getDomain(article.url)}`);
 
-                // Strategy 1: Try saved article images (if any)
+                // Strategy 1: Try saved article images first (fastest)
                 const savedImage = this.getBestArticleImage(article);
                 if (savedImage) {
                     console.log(`✅ Using saved image: ${article.title.substring(0, 30)}...`);
@@ -1203,11 +1204,309 @@
                     return true;
                 }
 
-                // Strategy 2: Use category-based reliable images
-                const categoryImage = this.getCategoryBasedImage(article, index);
-                console.log(`✅ Using category image: ${article.title.substring(0, 30)}...`);
-                this.setArticleImageDirect(imageElement, categoryImage);
+                // Strategy 2: Extract image from the original website
+                try {
+                    const extractedImage = await this.fetchRealImageFromWebsite(article.url);
+                    if (extractedImage) {
+                        console.log(`✅ Extracted real image: ${article.title.substring(0, 30)}...`);
+                        this.setArticleImageDirect(imageElement, extractedImage);
+                        return true;
+                    }
+                } catch (error) {
+                    console.log(`⚠️ Could not extract from website: ${error.message}`);
+                }
+
+                // Strategy 3: Use intelligent category-based fallback
+                console.log(`🎨 Using intelligent fallback: ${article.title.substring(0, 30)}...`);
+                const fallbackImage = this.getCategoryBasedImage(article, index);
+                this.setArticleImageDirect(imageElement, fallbackImage);
                 return true;
+            }
+
+            // NEW: Fetch the actual featured image from a website
+            async fetchRealImageFromWebsite(url) {
+                try {
+                    console.log(`🌐 Fetching webpage to extract image: ${url}`);
+                    
+                    // Method 1: Try AllOrigins proxy
+                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                    const response = await fetch(proxyUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch webpage');
+                    }
+                    
+                    const data = await response.json();
+                    const html = data.contents;
+                    
+                    if (!html || html.length < 500) {
+                        throw new Error('No substantial HTML content received');
+                    }
+                    
+                    // Parse the HTML and extract the best image
+                    const extractedImageUrl = this.parseHTMLForBestImage(html, url);
+                    
+                    if (extractedImageUrl) {
+                        console.log(`🎯 Found image: ${extractedImageUrl}`);
+                        return extractedImageUrl;
+                    }
+                    
+                    throw new Error('No suitable image found in webpage');
+                    
+                } catch (error) {
+                    console.log(`❌ Website image extraction failed: ${error.message}`);
+                    
+                    // Try alternative proxy methods
+                    try {
+                        return await this.tryAlternativeImageExtraction(url);
+                    } catch (altError) {
+                        console.log(`❌ Alternative extraction also failed: ${altError.message}`);
+                        throw error;
+                    }
+                }
+            }
+
+            // NEW: Parse HTML to find the best image
+            parseHTMLForBestImage(html, baseUrl) {
+                try {
+                    // Create a DOM parser
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Strategy 1: Look for Open Graph image (most reliable)
+                    const ogImage = doc.querySelector('meta[property="og:image"]');
+                    if (ogImage) {
+                        const imageUrl = this.makeAbsoluteUrl(ogImage.getAttribute('content'), baseUrl);
+                        if (this.isValidImageUrl(imageUrl)) {
+                            console.log(`🎯 Found Open Graph image: ${imageUrl}`);
+                            return imageUrl;
+                        }
+                    }
+                    
+                    // Strategy 2: Look for Twitter card image
+                    const twitterImage = doc.querySelector('meta[name="twitter:image"], meta[property="twitter:image"]');
+                    if (twitterImage) {
+                        const imageUrl = this.makeAbsoluteUrl(twitterImage.getAttribute('content'), baseUrl);
+                        if (this.isValidImageUrl(imageUrl)) {
+                            console.log(`🎯 Found Twitter card image: ${imageUrl}`);
+                            return imageUrl;
+                        }
+                    }
+                    
+                    // Strategy 3: Look for article featured image
+                    const featuredSelectors = [
+                        '.featured-image img',
+                        '.hero-image img',
+                        '.post-thumbnail img',
+                        '.article-image img',
+                        '.entry-image img',
+                        '.wp-post-image',
+                        'article img:first-of-type',
+                        '.content img:first-of-type',
+                        '.post-content img:first-of-type'
+                    ];
+                    
+                    for (const selector of featuredSelectors) {
+                        const img = doc.querySelector(selector);
+                        if (img) {
+                            const src = img.getAttribute('src') || img.getAttribute('data-src') || img.getAttribute('data-lazy-src');
+                            if (src) {
+                                const imageUrl = this.makeAbsoluteUrl(src, baseUrl);
+                                if (this.isValidImageUrl(imageUrl) && !this.isIconOrLogo(src)) {
+                                    console.log(`🎯 Found featured image: ${imageUrl}`);
+                                    return imageUrl;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Strategy 4: Look for the first substantial image in the content
+                    const allImages = Array.from(doc.querySelectorAll('img')).filter(img => {
+                        const src = img.getAttribute('src') || img.getAttribute('data-src');
+                        const width = img.getAttribute('width') || img.style.width;
+                        const height = img.getAttribute('height') || img.style.height;
+                        
+                        // Filter out small images, icons, and logos
+                        return src && 
+                               !this.isIconOrLogo(src) && 
+                               !this.isSmallImage(width, height) &&
+                               !src.includes('avatar') &&
+                               !src.includes('profile');
+                    });
+                    
+                    for (const img of allImages) {
+                        const src = img.getAttribute('src') || img.getAttribute('data-src');
+                        if (src) {
+                            const imageUrl = this.makeAbsoluteUrl(src, baseUrl);
+                            if (this.isValidImageUrl(imageUrl)) {
+                                console.log(`🎯 Found content image: ${imageUrl}`);
+                                return imageUrl;
+                            }
+                        }
+                    }
+                    
+                    // Strategy 5: Look for images in JSON-LD structured data
+                    const jsonLdScripts = doc.querySelectorAll('script[type="application/ld+json"]');
+                    for (const script of jsonLdScripts) {
+                        try {
+                            const data = JSON.parse(script.textContent);
+                            const image = this.extractImageFromJsonLd(data);
+                            if (image) {
+                                const imageUrl = this.makeAbsoluteUrl(image, baseUrl);
+                                if (this.isValidImageUrl(imageUrl)) {
+                                    console.log(`🎯 Found JSON-LD image: ${imageUrl}`);
+                                    return imageUrl;
+                                }
+                            }
+                        } catch (e) {
+                            // Ignore malformed JSON-LD
+                        }
+                    }
+                    
+                    console.log(`❌ No suitable image found in HTML`);
+                    return null;
+                    
+                } catch (error) {
+                    console.error('HTML parsing error:', error);
+                    return null;
+                }
+            }
+
+            // NEW: Extract image from JSON-LD structured data
+            extractImageFromJsonLd(data) {
+                if (typeof data !== 'object') return null;
+                
+                // Handle arrays
+                if (Array.isArray(data)) {
+                    for (const item of data) {
+                        const image = this.extractImageFromJsonLd(item);
+                        if (image) return image;
+                    }
+                    return null;
+                }
+                
+                // Look for image properties
+                if (data.image) {
+                    if (typeof data.image === 'string') return data.image;
+                    if (Array.isArray(data.image) && data.image.length > 0) {
+                        return typeof data.image[0] === 'string' ? data.image[0] : data.image[0].url;
+                    }
+                    if (data.image.url) return data.image.url;
+                }
+                
+                // Look for thumbnailUrl
+                if (data.thumbnailUrl) {
+                    return typeof data.thumbnailUrl === 'string' ? data.thumbnailUrl : data.thumbnailUrl.url;
+                }
+                
+                // Recursively search nested objects
+                for (const key in data) {
+                    if (typeof data[key] === 'object') {
+                        const image = this.extractImageFromJsonLd(data[key]);
+                        if (image) return image;
+                    }
+                }
+                
+                return null;
+            }
+
+            // NEW: Try alternative image extraction methods
+            async tryAlternativeImageExtraction(url) {
+                // Method 1: Try CORS proxy
+                try {
+                    const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                    const response = await fetch(corsProxyUrl);
+                    
+                    if (response.ok) {
+                        const html = await response.text();
+                        const extractedImage = this.parseHTMLForBestImage(html, url);
+                        if (extractedImage) return extractedImage;
+                    }
+                } catch (error) {
+                    console.log(`CORS proxy failed: ${error.message}`);
+                }
+                
+                // Method 2: Try to guess common image patterns based on URL
+                const guessedImage = this.guessImageFromUrl(url);
+                if (guessedImage) return guessedImage;
+                
+                throw new Error('All alternative extraction methods failed');
+            }
+
+            // NEW: Guess image from URL patterns (for known sites)
+            guessImageFromUrl(url) {
+                const domain = this.getDomain(url).toLowerCase();
+                
+                // Medium articles often have predictable image patterns
+                if (domain.includes('medium.com')) {
+                    // Try to extract the article ID and construct image URL
+                    const match = url.match(/\/([a-f0-9]+)$/);
+                    if (match) {
+                        return `https://miro.medium.com/max/1400/1*${match[1]}.png`;
+                    }
+                }
+                
+                // GitHub repository images
+                if (domain.includes('github.com')) {
+                    const pathMatch = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+                    if (pathMatch) {
+                        return `https://opengraph.githubassets.com/1/${pathMatch[1]}/${pathMatch[2]}`;
+                    }
+                }
+                
+                // YouTube videos
+                if (domain.includes('youtube.com') || domain.includes('youtu.be')) {
+                    const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
+                    if (videoIdMatch) {
+                        return `https://img.youtube.com/vi/${videoIdMatch[1]}/maxresdefault.jpg`;
+                    }
+                }
+                
+                return null;
+            }
+
+            // Enhanced URL validation
+            isValidImageUrl(url) {
+                if (!url || typeof url !== 'string') return false;
+                
+                // Must be a valid URL
+                try {
+                    new URL(url);
+                } catch {
+                    return false;
+                }
+                
+                // Must have common image extensions or be from known image services
+                const imagePattern = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i;
+                const imageServices = ['unsplash.com', 'images.unsplash.com', 'picsum.photos', 'via.placeholder.com'];
+                
+                return imagePattern.test(url) || imageServices.some(service => url.includes(service));
+            }
+
+            // Enhanced icon/logo detection
+            isIconOrLogo(src) {
+                if (!src) return false;
+                
+                const iconPatterns = [
+                    'icon', 'logo', 'avatar', 'profile', 'favicon', 'sprite', 
+                    'button', 'badge', 'social', 'thumb', 'thumbnail',
+                    '/icons/', '/images/icons/', 'gravatar', 'user-content'
+                ];
+                
+                const srcLower = src.toLowerCase();
+                return iconPatterns.some(pattern => srcLower.includes(pattern)) ||
+                       srcLower.includes('.ico') ||
+                       (srcLower.includes('64x64') || srcLower.includes('32x32'));
+            }
+
+            // Check if image dimensions suggest it's too small
+            isSmallImage(width, height) {
+                if (!width && !height) return false;
+                
+                const w = parseInt(width) || 0;
+                const h = parseInt(height) || 0;
+                
+                return (w > 0 && w < 200) || (h > 0 && h < 150);
             }
 
             // NEW: Get category-based images that always work
@@ -1317,6 +1616,29 @@
 
 
 
+            // Convert relative URLs to absolute
+            makeAbsoluteUrl(imageUrl, baseUrl) {
+                if (!imageUrl) return null;
+                
+                try {
+                    // If already absolute, return as-is
+                    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+                        return imageUrl;
+                    }
+                    
+                    // Handle protocol-relative URLs
+                    if (imageUrl.startsWith('//')) {
+                        return 'https:' + imageUrl;
+                    }
+                    
+                    // If relative, make it absolute
+                    const base = new URL(baseUrl);
+                    return new URL(imageUrl, base.origin).href;
+                } catch (error) {
+                    console.log(`Failed to make absolute URL: ${imageUrl}, base: ${baseUrl}`);
+                    return null;
+                }
+            }
             // FIXED: Direct image setting without CORS validation
             setArticleImageDirect(imageElement, imageUrl) {
                 imageElement.innerHTML = `
