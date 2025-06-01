@@ -961,34 +961,44 @@
                 // First try to get saved content
                 let content = this.getArticleContent(article);
                 
-                // If no saved content, try to fetch from original URL
-                if (!content || content.includes('No content found') || content.includes('Only excerpt available')) {
-                    console.log('🌐 Attempting to fetch content from original URL...');
+                // If no saved content found, try to fetch from original URL
+                if (!content) {
+                    console.log('🌐 No saved content found. Attempting to fetch from original URL...');
                     
                     try {
                         // Show fetching status
                         contentElement.innerHTML = `
                             <div style="text-align: center; padding: 40px;">
                                 <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
-                                <p>Fetching article from original source...</p>
-                                <p style="font-size: 0.9em; color: var(--text-secondary);">${this.getDomain(article.url)}</p>
+                                <p><strong>🌐 Fetching article content...</strong></p>
+                                <p style="font-size: 0.9em; color: var(--text-secondary);">
+                                    Loading from ${this.getDomain(article.url)}
+                                </p>
+                                <p style="font-size: 0.8em; color: var(--text-secondary);">
+                                    This may take a few seconds...
+                                </p>
                             </div>
                         `;
                         
-                        // Fetch content using a proxy service to avoid CORS issues
+                        // Fetch content using proxy services
                         const fetchedContent = await this.fetchArticleContent(article.url);
                         
                         if (fetchedContent && fetchedContent.trim()) {
                             content = fetchedContent;
                             console.log('✅ Successfully fetched article content');
+                            this.updateStatus('✅ Article content loaded successfully!', 'success');
                         } else {
                             throw new Error('No content extracted from fetched page');
                         }
                         
                     } catch (error) {
                         console.log('❌ Failed to fetch content:', error.message);
+                        this.updateStatus('❌ Could not fetch article content. Using fallback.', 'error');
                         content = this.getFallbackContent(article, error.message);
                     }
+                } else {
+                    console.log('✅ Using saved content');
+                    this.updateStatus('✅ Article loaded from saved content', 'success');
                 }
                 
                 // Display the final content
@@ -997,10 +1007,56 @@
 
             async fetchArticleContent(url) {
                 try {
-                    // Try multiple approaches to fetch content
+                    console.log(`🌐 Starting fetch for: ${url}`);
                     
-                    // Method 1: Try direct fetch (will fail for most sites due to CORS)
+                    // Method 1: Try using AllOrigins proxy (most reliable)
                     try {
+                        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                        console.log(`Trying AllOrigins proxy...`);
+                        
+                        const response = await fetch(proxyUrl);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            const html = data.contents;
+                            
+                            if (html && html.length > 1000) { // Ensure we got substantial content
+                                console.log(`✅ AllOrigins success: ${html.length} chars`);
+                                const extractedContent = this.extractContentFromHTML(html, url);
+                                if (extractedContent && extractedContent.length > 500) {
+                                    return extractedContent;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`AllOrigins failed: ${error.message}`);
+                    }
+                    
+                    // Method 2: Try CORS proxy
+                    try {
+                        const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                        console.log(`Trying CORS proxy...`);
+                        
+                        const response = await fetch(corsProxyUrl);
+                        
+                        if (response.ok) {
+                            const html = await response.text();
+                            
+                            if (html && html.length > 1000) {
+                                console.log(`✅ CORS proxy success: ${html.length} chars`);
+                                const extractedContent = this.extractContentFromHTML(html, url);
+                                if (extractedContent && extractedContent.length > 500) {
+                                    return extractedContent;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`CORS proxy failed: ${error.message}`);
+                    }
+                    
+                    // Method 3: Try direct fetch (will likely fail due to CORS, but worth trying)
+                    try {
+                        console.log(`Trying direct fetch...`);
                         const response = await fetch(url, {
                             mode: 'cors',
                             headers: {
@@ -1010,43 +1066,17 @@
                         
                         if (response.ok) {
                             const html = await response.text();
+                            console.log(`✅ Direct fetch success: ${html.length} chars`);
                             return this.extractContentFromHTML(html, url);
                         }
-                    } catch (corsError) {
-                        console.log('CORS blocked, trying alternative methods...');
+                    } catch (error) {
+                        console.log(`Direct fetch failed (expected): ${error.message}`);
                     }
                     
-                    // Method 2: Try using a public proxy service
-                    const proxyUrls = [
-                        `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-                        `https://corsproxy.io/?${encodeURIComponent(url)}`,
-                    ];
-                    
-                    for (const proxyUrl of proxyUrls) {
-                        try {
-                            console.log(`Trying proxy: ${proxyUrl}`);
-                            const response = await fetch(proxyUrl);
-                            
-                            if (response.ok) {
-                                const data = await response.json();
-                                const html = data.contents || data;
-                                if (html && typeof html === 'string') {
-                                    const extractedContent = this.extractContentFromHTML(html, url);
-                                    if (extractedContent && extractedContent.length > 100) {
-                                        return extractedContent;
-                                    }
-                                }
-                            }
-                        } catch (proxyError) {
-                            console.log(`Proxy failed: ${proxyError.message}`);
-                            continue;
-                        }
-                    }
-                    
-                    throw new Error('All fetch methods failed');
+                    throw new Error('All proxy methods failed to fetch content');
                     
                 } catch (error) {
-                    console.error('Fetch error:', error);
+                    console.error('❌ All fetch methods failed:', error);
                     throw error;
                 }
             }
@@ -1172,22 +1202,10 @@
                 `;
             }
 
-            // Get the best available content for reading
+            // Get the best available content for reading - returns null if no content found
             getArticleContent(article) {
                 // Debug: Log the complete article structure
-                console.log('📖 Complete article object:', article);
-                
-                // Show all properties and their values
-                const allProps = {};
-                Object.keys(article).forEach(key => {
-                    const value = article[key];
-                    allProps[key] = {
-                        type: typeof value,
-                        value: value,
-                        length: typeof value === 'string' ? value.length : 'N/A'
-                    };
-                });
-                console.log('📖 All properties with values:', allProps);
+                console.log('📖 Checking saved content...', Object.keys(article));
                 
                 // Try multiple content sources in order of preference
                 let content = '';
@@ -1195,22 +1213,22 @@
                 // 1. Full HTML content
                 if (article.content && article.content.trim()) {
                     console.log('✅ Using article.content');
-                    content = article.content;
+                    return article.content;
                 }
                 // 2. HTML body
                 else if (article.html && article.html.trim()) {
                     console.log('✅ Using article.html');
-                    content = article.html;
+                    return article.html;
                 }
                 // 3. Full content
                 else if (article.fullContent && article.fullContent.trim()) {
                     console.log('✅ Using article.fullContent');
-                    content = article.fullContent;
+                    return article.fullContent;
                 }
                 // 4. Text content converted to HTML
                 else if (article.textContent && article.textContent.trim()) {
                     console.log('✅ Using article.textContent');
-                    content = article.textContent
+                    return article.textContent
                         .split('\n\n')
                         .filter(para => para.trim())
                         .map(para => `<p>${para.trim()}</p>`)
@@ -1219,104 +1237,23 @@
                 // 5. Article body
                 else if (article.body && article.body.trim()) {
                     console.log('✅ Using article.body');
-                    content = article.body;
+                    return article.body;
                 }
-                // 6. Try readableContent or cleanedContent
-                else if (article.readableContent && article.readableContent.trim()) {
-                    console.log('✅ Using article.readableContent');
-                    content = article.readableContent;
-                }
-                // 7. Try articleContent
-                else if (article.articleContent && article.articleContent.trim()) {
-                    console.log('✅ Using article.articleContent');
-                    content = article.articleContent;
-                }
-                // 8. Try savedContent
-                else if (article.savedContent && article.savedContent.trim()) {
-                    console.log('✅ Using article.savedContent');
-                    content = article.savedContent;
-                }
-                // 9. Try any property that contains substantial text content
+                // 6. Try any property that contains substantial text content
                 else {
                     console.log('🔍 Searching for any property with substantial content...');
                     
                     // Look for any string property with more than 100 characters
                     for (const [key, value] of Object.entries(article)) {
-                        if (typeof value === 'string' && value.length > 100 && key !== 'excerpt') {
+                        if (typeof value === 'string' && value.length > 100 && key !== 'excerpt' && key !== 'url') {
                             console.log(`✅ Found content in article.${key} (${value.length} chars)`);
-                            content = value;
-                            break;
+                            return value;
                         }
                     }
                 }
                 
-                // If still no content, check if we need to fetch it
-                if (!content || content.trim() === '') {
-                    console.log('❌ No content found in any property');
-                    
-                    // Show comprehensive debugging info
-                    const stringProps = {};
-                    Object.keys(article).forEach(key => {
-                        const value = article[key];
-                        if (typeof value === 'string' && value.length > 0) {
-                            stringProps[key] = {
-                                length: value.length,
-                                preview: value.substring(0, 200) + (value.length > 200 ? '...' : ''),
-                                isEmpty: value.trim() === ''
-                            };
-                        }
-                    });
-                    
-                    content = `
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                            <h3>🔍 Content Analysis Results</h3>
-                            <p><strong>Status:</strong> Article was saved but content appears to be missing or empty.</p>
-                            
-                            <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                                <h4>💡 Possible Solutions:</h4>
-                                <ol>
-                                    <li><strong>Re-save the article</strong> using the browser extension with full content extraction enabled</li>
-                                    <li><strong>Check extension settings</strong> to ensure it's capturing full article content</li>
-                                    <li><strong>Try a different article</strong> to see if this is a general issue</li>
-                                    <li><strong>Visit the original</strong> article link below</li>
-                                </ol>
-                            </div>
-                            
-                            <details style="margin: 15px 0;">
-                                <summary style="cursor: pointer; font-weight: bold;">🔧 Technical Details (Click to expand)</summary>
-                                <div style="background: #fff; padding: 15px; border-radius: 4px; margin: 10px 0;">
-                                    <h4>String Properties Found:</h4>
-                                    ${Object.keys(stringProps).length > 0 ? 
-                                        Object.entries(stringProps).map(([key, info]) => 
-                                            `<div style="margin: 8px 0; padding: 8px; background: ${info.isEmpty ? '#ffebee' : '#f9f9f9'}; border-left: 3px solid ${info.isEmpty ? '#f44336' : '#ee5a24'};">
-                                                <strong>${key}</strong> (${info.length} chars) ${info.isEmpty ? '- EMPTY' : ''}
-                                                ${!info.isEmpty ? `<br><span style="color: #666; font-size: 0.9em; font-family: monospace;">${info.preview}</span>` : ''}
-                                            </div>`
-                                        ).join('') 
-                                        : '<p>No string properties found with content.</p>'
-                                    }
-                                </div>
-                            </details>
-                            
-                            <div style="text-align: center; margin: 20px 0;">
-                                <a href="${article.url}" target="_blank" style="display: inline-block; background: #ee5a24; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
-                                    🔗 Read Original Article
-                                </a>
-                            </div>
-                        </div>
-                    `;
-                }
-
-                // Convert plain text to HTML if needed
-                if (content && content.trim() && !content.includes('<') && content.length > 50) {
-                    content = content
-                        .split('\n\n')
-                        .filter(para => para.trim())
-                        .map(para => `<p>${para.trim()}</p>`)
-                        .join('\n');
-                }
-
-                return content || '<p>No content available.</p>';
+                console.log('❌ No saved content found, will need to fetch');
+                return null; // Return null instead of debug HTML
             }
 
             closeReader() {
