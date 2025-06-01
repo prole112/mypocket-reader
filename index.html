@@ -39,12 +39,13 @@
 
         /* Dark mode specific improvements */
         [data-theme="dark"] .article-card {
+            background: var(--surface);
             border: 1px solid var(--border);
         }
 
         [data-theme="dark"] .article-card:hover {
             border-color: #484f58;
-            transform: translateY(-4px) rotate(0deg);
+            transform: translateY(-2px);
         }
 
         [data-theme="dark"] .search-input {
@@ -293,7 +294,7 @@
             color: #27ae60;
         }
 
-        /* Articles Grid - Enhanced with colorful organic shapes */
+        /* Articles Grid - Made smaller like original Pocket */
         .articles-section {
             padding: 40px 0;
             min-height: 60vh;
@@ -301,54 +302,37 @@
 
         .articles-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
             margin-top: 20px;
         }
 
-        /* Colorful organic-shaped article cards */
         .article-card {
             background: var(--surface);
-            border-radius: 25px 10px 25px 10px;
+            border-radius: 12px;
             overflow: visible;
             box-shadow: var(--shadow);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.3s ease;
             border: 1px solid var(--border);
             position: relative;
             display: flex;
             flex-direction: column;
-            transform: rotate(-1deg);
-        }
-
-        .article-card:nth-child(even) {
-            transform: rotate(1deg);
-            border-radius: 10px 25px 10px 25px;
-        }
-
-        .article-card:nth-child(3n) {
-            transform: rotate(0deg);
-            border-radius: 20px 20px 5px 20px;
-        }
-
-        .article-card:nth-child(4n) {
-            transform: rotate(-0.5deg);
-            border-radius: 5px 20px 20px 20px;
         }
 
         .article-card:hover {
             box-shadow: var(--shadow-hover);
-            transform: translateY(-8px) rotate(0deg) scale(1.02);
-            z-index: 10;
+            transform: translateY(-2px);
         }
 
         .article-card:hover .article-actions {
             opacity: 1 !important;
         }
 
-        /* Colorful gradient backgrounds for image areas */
+        /* Smaller image area like Pocket */
         .article-image {
             width: 100%;
             height: 140px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -356,59 +340,6 @@
             color: white;
             position: relative;
             overflow: hidden;
-            border-radius: inherit;
-            border-bottom-left-radius: 0;
-            border-bottom-right-radius: 0;
-        }
-
-        /* Different color schemes */
-        .article-card:nth-child(6n+1) .article-image {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .article-card:nth-child(6n+2) .article-image {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-
-        .article-card:nth-child(6n+3) .article-image {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-
-        .article-card:nth-child(6n+4) .article-image {
-            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-        }
-
-        .article-card:nth-child(6n+5) .article-image {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        }
-
-        .article-card:nth-child(6n+6) .article-image {
-            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-        }
-
-        /* Additional special patterns for more variety */
-        .article-card:nth-child(7n+1) .article-image {
-            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
-        }
-
-        .article-card:nth-child(8n+1) .article-image {
-            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
-        }
-
-        .article-card:nth-child(9n+1) .article-image {
-            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-        }
-
-        .article-card:nth-child(10n+1) .article-image {
-            background: linear-gradient(135deg, #ff8a80 0%, #ea80fc 100%);
-        }
-
-        .article-card:nth-child(11n+1) .article-image {
-            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
-        }
-
-        .article-card:nth-child(12n+1) .article-image {
-            background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%);
         }
 
         .article-image img {
@@ -416,21 +347,17 @@
             height: 100%;
             object-fit: cover;
             transition: transform 0.3s ease, opacity 0.3s ease;
-            border-radius: inherit;
         }
 
         .article-image:hover img {
             transform: scale(1.05);
         }
 
-        /* Content area with organic feel */
+        /* Compact content area */
         .article-content {
-            padding: 18px;
+            padding: 16px;
             flex: 1;
             cursor: pointer;
-            border-radius: inherit;
-            border-top-left-radius: 0;
-            border-top-right-radius: 0;
         }
 
         .article-title {
@@ -482,7 +409,6 @@
             color: var(--text-secondary);
         }
 
-        /* Enhanced floating action buttons */
         .article-actions {
             position: absolute;
             top: 15px;
@@ -497,36 +423,34 @@
 
         .action-btn {
             background: rgba(255, 255, 255, 0.95);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
             cursor: pointer;
             font-size: 16px;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            backdrop-filter: blur(15px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            min-width: 44px;
-            height: 44px;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            min-width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .action-btn:hover {
-            transform: translateY(-3px) scale(1.15);
-            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+            transform: translateY(-3px) scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
         }
 
         .read-btn:hover {
             background: #e3f2fd;
             border-color: #2196f3;
-            color: #1976d2;
         }
 
         .export-btn:hover {
             background: #e8f5e8;
             border-color: #4caf50;
-            color: #2e7d32;
         }
 
         .delete-btn {
@@ -697,32 +621,6 @@
             }
         }
 
-        /* Fun animation for tiles appearing */
-        .article-card {
-            animation: tileAppear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            opacity: 0;
-            transform: translateY(30px) rotate(-5deg) scale(0.9);
-        }
-
-        @keyframes tileAppear {
-            to {
-                opacity: 1;
-                transform: translateY(0) rotate(-1deg) scale(1);
-            }
-        }
-
-        .article-card:nth-child(even) {
-            animation-delay: 0.1s;
-        }
-
-        .article-card:nth-child(3n) {
-            animation-delay: 0.2s;
-        }
-
-        .article-card:nth-child(4n) {
-            animation-delay: 0.3s;
-        }
-
         /* Responsive */
         @media (max-width: 768px) {
             .container {
@@ -736,12 +634,7 @@
 
             .articles-grid {
                 grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .article-card {
-                transform: rotate(0deg) !important;
-                border-radius: 20px !important;
+                gap: 16px;
             }
 
             .article-actions {
@@ -751,7 +644,7 @@
                 margin-top: 15px;
                 padding: 10px;
                 background: var(--background);
-                border-radius: 15px;
+                border-radius: 8px;
             }
 
             .action-btn {
@@ -799,24 +692,6 @@
         .connection-status.disconnected {
             border-color: #e74c3c;
             background: #f8d7da;
-        }
-
-        /* Hover effect for the entire tile */
-        .article-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transform: translateX(-100%);
-            transition: transform 0.6s;
-            border-radius: inherit;
-        }
-
-        .article-card:hover::before {
-            transform: translateX(100%);
         }
     </style>
 </head>
@@ -932,7 +807,6 @@
                 this.checkAuthFromURL();
                 this.loadStoredToken();
                 this.loadThemePreference();
-                this.showDemoArticles(); // Show demo articles for visual testing
             }
 
             setupEventListeners() {
@@ -941,88 +815,6 @@
                 document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
                 document.getElementById('closeReader').addEventListener('click', () => this.closeReader());
                 document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
-            }
-
-            showDemoArticles() {
-                // Create demo articles to showcase the new colorful design
-                const demoArticles = [
-                    {
-                        title: "The Future of Web Development: What's Coming in 2025",
-                        excerpt: "Explore the latest trends and technologies that will shape web development in the coming year, from AI-powered tools to advanced frameworks.",
-                        url: "https://example.com/web-dev-2025",
-                        dateAdded: "2024-12-15T10:30:00Z",
-                        readTime: 5,
-                        wordCount: 1200,
-                        content: "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit...</p>"
-                    },
-                    {
-                        title: "Mastering CSS Grid: A Complete Guide",
-                        excerpt: "Learn how to create complex layouts with CSS Grid. This comprehensive guide covers everything from basic concepts to advanced techniques.",
-                        url: "https://example.com/css-grid-guide",
-                        dateAdded: "2024-12-14T15:45:00Z",
-                        readTime: 8,
-                        wordCount: 2100,
-                        content: "<p>CSS Grid is a powerful layout system...</p>"
-                    },
-                    {
-                        title: "JavaScript Performance Optimization Tips",
-                        excerpt: "Discover practical techniques to make your JavaScript applications faster and more efficient. From memory management to code splitting.",
-                        url: "https://example.com/js-performance",
-                        dateAdded: "2024-12-13T09:20:00Z",
-                        readTime: 6,
-                        wordCount: 1600,
-                        content: "<p>Performance optimization is crucial...</p>"
-                    },
-                    {
-                        title: "Building Accessible Web Applications",
-                        excerpt: "A practical guide to making your web applications accessible to all users, including those with disabilities. Learn ARIA, semantic HTML, and more.",
-                        url: "https://example.com/accessibility-guide",
-                        dateAdded: "2024-12-12T14:10:00Z",
-                        readTime: 7,
-                        wordCount: 1800,
-                        content: "<p>Web accessibility is not optional...</p>"
-                    },
-                    {
-                        title: "The Rise of Edge Computing",
-                        excerpt: "Understanding how edge computing is transforming the way we build and deploy applications, bringing processing closer to users.",
-                        url: "https://example.com/edge-computing",
-                        dateAdded: "2024-12-11T11:30:00Z",
-                        readTime: 4,
-                        wordCount: 950,
-                        content: "<p>Edge computing represents a paradigm shift...</p>"
-                    },
-                    {
-                        title: "React vs Vue vs Angular: 2025 Comparison",
-                        excerpt: "An in-depth comparison of the three major frontend frameworks, helping you choose the right one for your next project.",
-                        url: "https://example.com/framework-comparison",
-                        dateAdded: "2024-12-10T16:45:00Z",
-                        readTime: 9,
-                        wordCount: 2400,
-                        content: "<p>Choosing the right framework is crucial...</p>"
-                    },
-                    {
-                        title: "Serverless Architecture Best Practices",
-                        excerpt: "Learn how to design and implement effective serverless applications with AWS Lambda, Azure Functions, and Google Cloud Functions.",
-                        url: "https://example.com/serverless-practices",
-                        dateAdded: "2024-12-09T08:15:00Z",
-                        readTime: 10,
-                        wordCount: 2700,
-                        content: "<p>Serverless computing has revolutionized...</p>"
-                    },
-                    {
-                        title: "GraphQL vs REST: Making the Right Choice",
-                        excerpt: "Compare GraphQL and REST APIs to understand when to use each approach. Includes real-world examples and performance considerations.",
-                        url: "https://example.com/graphql-vs-rest",
-                        dateAdded: "2024-12-08T13:20:00Z",
-                        readTime: 6,
-                        wordCount: 1500,
-                        content: "<p>API design decisions impact your entire application...</p>"
-                    }
-                ];
-
-                this.articles = demoArticles;
-                this.displayArticles(this.articles);
-                this.updateStatus(`✨ Showing ${this.articles.length} demo articles to showcase the new colorful design!`, 'success');
             }
 
             checkAuthFromURL() {
@@ -1051,7 +843,7 @@
                 this.accessToken = localStorage.getItem('mypocket_access_token');
                 if (this.accessToken) {
                     this.updateConnectionStatus(true);
-                    // Don't auto-load articles, keep demo articles for showcase
+                    this.loadArticles();
                 }
             }
 
@@ -1180,7 +972,7 @@
                 }
             }
 
-            // Enhanced displayArticles with colorful tiles
+            // Enhanced displayArticles with real image fetching
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1423,8 +1215,8 @@
 
                 const filtered = this.articles.filter(article =>
                     article.title.toLowerCase().includes(query.toLowerCase()) ||
-                    article.textContent?.toLowerCase().includes(query.toLowerCase()) ||
-                    article.author?.toLowerCase().includes(query.toLowerCase()) ||
+                    article.textContent.toLowerCase().includes(query.toLowerCase()) ||
+                    article.author.toLowerCase().includes(query.toLowerCase()) ||
                     this.getDomain(article.url).toLowerCase().includes(query.toLowerCase())
                 );
 
@@ -1442,12 +1234,293 @@
                 document.getElementById('readerDomain').textContent = this.getDomain(this.currentArticle.url);
                 document.getElementById('readerTime').textContent = `${this.currentArticle.readTime || 1} min read`;
                 
-                // Show content
-                document.getElementById('readerContent').innerHTML = this.currentArticle.content || 
-                    `<p>${this.currentArticle.excerpt}</p><p>This is a demo article. The full content would be loaded from your OneDrive backup in a real scenario.</p>`;
+                // Show loading state first
+                document.getElementById('readerContent').innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+                        <p>Checking for article content...</p>
+                    </div>
+                `;
 
                 overlay.classList.add('active');
                 document.body.style.overflow = 'hidden';
+                
+                // Try to get content, fetch if needed
+                setTimeout(() => this.loadArticleContent(this.currentArticle), 100);
+            }
+
+            async loadArticleContent(article) {
+                console.log('🚀 NEW CONTENT LOADER STARTING - Version 2.0');
+                const contentElement = document.getElementById('readerContent');
+                
+                // First try to get saved content
+                let content = this.getArticleContent(article);
+                
+                // If no saved content found, try to fetch from original URL
+                if (!content) {
+                    console.log('🌐 No saved content found. Attempting to fetch from original URL...');
+                    
+                    try {
+                        // Show fetching status
+                        contentElement.innerHTML = `
+                            <div style="text-align: center; padding: 40px;">
+                                <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+                                <p><strong>🌐 Fetching article content...</strong></p>
+                                <p style="font-size: 0.9em; color: var(--text-secondary);">
+                                    Loading from ${this.getDomain(article.url)}
+                                </p>
+                                <p style="font-size: 0.8em; color: var(--text-secondary);">
+                                    This may take a few seconds...
+                                </p>
+                            </div>
+                        `;
+                        
+                        // Fetch content using proxy services
+                        const fetchedContent = await this.fetchArticleContent(article.url);
+                        
+                        if (fetchedContent && fetchedContent.trim()) {
+                            content = fetchedContent;
+                            console.log('✅ Successfully fetched article content');
+                            this.updateStatus('✅ Article content loaded successfully!', 'success');
+                        } else {
+                            throw new Error('No content extracted from fetched page');
+                        }
+                        
+                    } catch (error) {
+                        console.log('❌ Failed to fetch content:', error.message);
+                        this.updateStatus('❌ Could not fetch article content. Using fallback.', 'error');
+                        content = this.getFallbackContent(article, error.message);
+                    }
+                } else {
+                    console.log('✅ Using saved content');
+                    this.updateStatus('✅ Article loaded from saved content', 'success');
+                }
+                
+                // Display the final content
+                contentElement.innerHTML = content;
+            }
+
+            async fetchArticleContent(url) {
+                try {
+                    console.log(`🌐 Starting fetch for: ${url}`);
+                    
+                    // Method 1: Try using AllOrigins proxy (most reliable)
+                    try {
+                        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                        console.log(`Trying AllOrigins proxy...`);
+                        
+                        const response = await fetch(proxyUrl);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            const html = data.contents;
+                            
+                            if (html && html.length > 1000) { // Ensure we got substantial content
+                                console.log(`✅ AllOrigins success: ${html.length} chars`);
+                                const extractedContent = this.extractContentFromHTML(html, url);
+                                if (extractedContent && extractedContent.length > 500) {
+                                    return extractedContent;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`AllOrigins failed: ${error.message}`);
+                    }
+                    
+                    // Method 2: Try CORS proxy
+                    try {
+                        const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                        console.log(`Trying CORS proxy...`);
+                        
+                        const response = await fetch(corsProxyUrl);
+                        
+                        if (response.ok) {
+                            const html = await response.text();
+                            
+                            if (html && html.length > 1000) {
+                                console.log(`✅ CORS proxy success: ${html.length} chars`);
+                                const extractedContent = this.extractContentFromHTML(html, url);
+                                if (extractedContent && extractedContent.length > 500) {
+                                    return extractedContent;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`CORS proxy failed: ${error.message}`);
+                    }
+                    
+                    // Method 3: Try direct fetch (will likely fail due to CORS, but worth trying)
+                    try {
+                        console.log(`Trying direct fetch...`);
+                        const response = await fetch(url, {
+                            mode: 'cors',
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader)'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const html = await response.text();
+                            console.log(`✅ Direct fetch success: ${html.length} chars`);
+                            return this.extractContentFromHTML(html, url);
+                        }
+                    } catch (error) {
+                        console.log(`Direct fetch failed (expected): ${error.message}`);
+                    }
+                    
+                    throw new Error('All proxy methods failed to fetch content');
+                    
+                } catch (error) {
+                    console.error('❌ All fetch methods failed:', error);
+                    throw error;
+                }
+            }
+
+            extractContentFromHTML(html, url) {
+                try {
+                    // Create a temporary DOM to parse the HTML
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Remove unwanted elements
+                    const unwantedSelectors = [
+                        'script', 'style', 'nav', 'header', 'footer', 
+                        '.sidebar', '.menu', '.navigation', '.comments',
+                        '.advertisement', '.ads', '.social-share',
+                        '[role="banner"]', '[role="navigation"]', '[role="complementary"]'
+                    ];
+                    
+                    unwantedSelectors.forEach(selector => {
+                        doc.querySelectorAll(selector).forEach(el => el.remove());
+                    });
+                    
+                    // Try to find the main content using common selectors
+                    const contentSelectors = [
+                        'article',
+                        '[role="main"]',
+                        '.post-content', '.entry-content', '.article-content',
+                        '.content', '.main-content', '.post-body',
+                        '.entry', '.post', '.article-body',
+                        'main', '#content', '#main'
+                    ];
+                    
+                    let contentElement = null;
+                    
+                    for (const selector of contentSelectors) {
+                        contentElement = doc.querySelector(selector);
+                        if (contentElement && contentElement.textContent.trim().length > 200) {
+                            break;
+                        }
+                    }
+                    
+                    // If no main content found, try to get paragraphs from body
+                    if (!contentElement || contentElement.textContent.trim().length < 200) {
+                        const paragraphs = Array.from(doc.querySelectorAll('p'))
+                            .filter(p => p.textContent.trim().length > 50)
+                            .slice(0, 20); // Take first 20 substantial paragraphs
+                        
+                        if (paragraphs.length > 0) {
+                            const div = doc.createElement('div');
+                            paragraphs.forEach(p => div.appendChild(p.cloneNode(true)));
+                            contentElement = div;
+                        }
+                    }
+                    
+                    if (contentElement) {
+                        // Clean up the content
+                        let content = contentElement.innerHTML;
+                        
+                        // Fix relative URLs to absolute
+                        const baseUrl = new URL(url).origin;
+                        content = content.replace(/src="\/([^"]+)"/g, `src="${baseUrl}/$1"`);
+                        content = content.replace(/href="\/([^"]+)"/g, `href="${baseUrl}/$1"`);
+                        
+                        // Add a note about the source
+                        content = `
+                            <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                                <p style="margin: 0; font-size: 0.9em;">
+                                    <strong>📡 Content fetched from original source</strong><br>
+                                    This article content was retrieved in real-time from <a href="${url}" target="_blank" style="color: #1976d2;">${this.getDomain(url)}</a>
+                                </p>
+                            </div>
+                            ${content}
+                        `;
+                        
+                        return content;
+                    }
+                    
+                    throw new Error('Could not extract readable content from page');
+                    
+                } catch (error) {
+                    console.error('Content extraction error:', error);
+                    throw error;
+                }
+            }
+
+            getFallbackContent(article, errorMessage) {
+                return `
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3>📄 Content Not Available</h3>
+                        <p>We couldn't load the full article content. This can happen because:</p>
+                        <ul style="margin: 15px 0;">
+                            <li>The website blocks automated content fetching</li>
+                            <li>CORS (Cross-Origin) restrictions prevent access</li>
+                            <li>The article content wasn't saved by the browser extension</li>
+                            <li>Network connectivity issues</li>
+                        </ul>
+                        
+                        <p><strong>What you can do:</strong></p>
+                        <ol style="margin: 15px 0;">
+                            <li><strong>Visit the original article</strong> using the button below</li>
+                            <li><strong>Re-save the article</strong> with your browser extension</li>
+                            <li><strong>Check extension settings</strong> for content extraction options</li>
+                        </ol>
+                        
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                            <p><strong>Available excerpt:</strong></p>
+                            <p style="font-style: italic;">${article.excerpt || 'No excerpt available'}</p>
+                        </div>
+                        
+                        <div style="text-align: center; margin: 20px 0;">
+                            <a href="${article.url}" target="_blank" style="display: inline-block; background: #ee5a24; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                                🔗 Read Full Article
+                            </a>
+                        </div>
+                        
+                        <details style="margin-top: 20px;">
+                            <summary style="cursor: pointer; color: #666;">Technical Details</summary>
+                            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
+                                Error: ${errorMessage}
+                            </p>
+                        </details>
+                    </div>
+                `;
+            }
+
+            // Get the best available content for reading - simplified version
+            getArticleContent(article) {
+                console.log('📖 Checking for saved content...');
+                
+                // Try content fields in order
+                const contentFields = ['content', 'html', 'fullContent', 'textContent', 'body', 'readableContent', 'articleContent', 'savedContent'];
+                
+                for (const field of contentFields) {
+                    if (article[field] && article[field].trim()) {
+                        console.log(`✅ Found content in ${field} (${article[field].length} chars)`);
+                        return article[field];
+                    }
+                }
+                
+                // Look for any substantial text content
+                for (const [key, value] of Object.entries(article)) {
+                    if (typeof value === 'string' && value.length > 200 && key !== 'excerpt' && key !== 'url') {
+                        console.log(`✅ Found substantial content in ${key} (${value.length} chars)`);
+                        return value;
+                    }
+                }
+                
+                console.log('❌ No saved content found');
+                return null;
             }
 
             closeReader() {
@@ -1466,10 +1539,24 @@
                 const article = this.articles[index];
                 if (!article) return;
 
-                if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your collection.`)) {
-                    this.articles.splice(index, 1);
-                    this.displayArticles(this.articles);
-                    this.updateStatus(`✅ Article deleted. ${this.articles.length} articles remaining.`, 'success');
+                if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your OneDrive backup.`)) {
+                    try {
+                        this.articles.splice(index, 1);
+
+                        if (this.accessToken) {
+                            this.updateStatus('Updating OneDrive backup...', 'loading');
+                            await this.updateOneDriveBackup();
+                            this.updateStatus(`✅ Article deleted and backup updated. ${this.articles.length} articles remaining.`, 'success');
+                        } else {
+                            this.updateStatus(`❌ Article deleted locally but OneDrive backup not updated (not connected).`, 'error');
+                        }
+
+                        this.displayArticles(this.articles);
+
+                    } catch (error) {
+                        console.error('Error deleting article:', error);
+                        this.updateStatus(`❌ Failed to delete article: ${error.message}`, 'error');
+                    }
                 }
             }
 
@@ -1486,6 +1573,46 @@
                     console.error('Error exporting article:', error);
                     this.updateStatus(`❌ Failed to export article: ${error.message}`, 'error');
                 }
+            }
+
+            async updateOneDriveBackup() {
+                if (!this.accessToken) {
+                    throw new Error('Not connected to OneDrive');
+                }
+
+                const backup = {
+                    articles: this.articles,
+                    settings: {},
+                    exportDate: new Date().toISOString(),
+                    version: "3.3",
+                    deviceInfo: {
+                        browser: "Web Reader",
+                        platform: navigator.platform,
+                        timestamp: Date.now(),
+                        articleCount: this.articles.length
+                    }
+                };
+
+                const fileName = `mypocket-backup-${new Date().toISOString().split('T')[0]}.json`;
+                const fileContent = JSON.stringify(backup, null, 2);
+
+                const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
+
+                const uploadResponse = await fetch(uploadUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${this.accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: fileContent
+                });
+
+                if (!uploadResponse.ok) {
+                    const errorText = await uploadResponse.text();
+                    throw new Error(`Failed to update OneDrive backup: ${uploadResponse.status} - ${errorText}`);
+                }
+
+                return await uploadResponse.json();
             }
 
             createArticleHTML(article) {
@@ -1554,7 +1681,7 @@
         </div>
     </div>
     <div class="content">
-        ${article.content || article.excerpt}
+        ${article.content}
     </div>
     <div class="footer">
         <p><strong>✨ Exported from MyPocket Web Reader</strong></p>
@@ -1737,14 +1864,27 @@ Host: ${window.location.host}
 Has Access Token: ${!!this.accessToken}
 Articles Loaded: ${this.articles.length}
 
-✨ New Features:
-- Colorful gradient backgrounds for each tile
-- Organic, non-rectangular shapes with rotation
-- Enhanced hover animations and transitions
-- Improved visual hierarchy and spacing
-- Demo articles showcasing the new design
+Azure AD Redirect URI Requirements:
+- Must be absolute URI (http:// or https://)
+- Must be registered in Azure AD App Registration
+- Must match exactly (including trailing slashes)
 
-The tiles now use 12 different color gradients that cycle through the articles, creating a vibrant and engaging reading experience!
+Common Issues:
+1. Using file:// protocol (not supported)
+2. Redirect URI not registered in Azure AD
+3. Mismatch between actual URI and registered URI
+
+Next Steps:
+1. Open Azure Portal → App registrations
+2. Find your app: ${this.clientId}
+3. Go to Authentication → Platform configurations
+4. Add Web platform with redirect URI: ${this.redirectUri}
+5. Make sure URI is exact match
+
+Button Issues:
+- Try clicking "Show Buttons" to test if buttons work
+- Check browser console for JavaScript errors
+- Inspect element to see if buttons are in DOM
                 `;
 
                 alert(info);
