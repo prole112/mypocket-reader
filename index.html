@@ -1155,200 +1155,282 @@
                 this.loadImagesWithCaching(articles);
             }
 
-            // NEW: Smart image caching system
+            // NEW: Smart image caching system - EXTRACT REAL IMAGES FROM WEBSITES
             async loadImagesWithCaching(articles) {
-                console.log('🎨 SMART IMAGE CACHING SYSTEM - Extract once, save forever!');
+                console.log('🎨 REAL IMAGE EXTRACTION + ONEDRIVE CACHING');
                 
                 // Step 1: Load saved images instantly
                 let savedImages = 0;
                 let needExtraction = [];
                 
                 articles.forEach((article, index) => {
-                    if (article.cachedImageUrl) {
-                        // Load saved image instantly
-                        this.setArticleImage(document.getElementById(`image-${index}`), article.cachedImageUrl);
+                    if (article.extractedImageUrl) {
+                        // Load saved REAL image instantly
+                        this.setArticleImage(document.getElementById(`image-${index}`), article.extractedImageUrl);
                         savedImages++;
-                        console.log(`⚡ Instant load: ${article.title.substring(0, 30)}...`);
+                        console.log(`⚡ Instant load REAL image: ${article.title.substring(0, 30)}...`);
                     } else {
-                        // Mark for extraction
+                        // Mark for REAL image extraction
                         needExtraction.push({article, index});
                     }
                 });
                 
                 if (savedImages > 0) {
-                    this.updateStatus(`⚡ Loaded ${savedImages} saved images instantly!`, 'success');
+                    this.updateStatus(`⚡ Loaded ${savedImages} real images instantly from OneDrive cache!`, 'success');
                 }
                 
-                // Step 2: Extract images for articles that don't have cached images
+                // Step 2: Extract REAL images from article websites
                 if (needExtraction.length > 0) {
-                    this.updateStatus(`🔍 Extracting ${needExtraction.length} new images (will save to OneDrive)...`, 'loading');
+                    this.updateStatus(`🔍 Extracting REAL images from ${needExtraction.length} article websites...`, 'loading');
                     
                     let extractedCount = 0;
                     for (let i = 0; i < needExtraction.length; i++) {
                         const {article, index} = needExtraction[i];
                         
                         try {
-                            // Extract image
-                            const imageUrl = await this.extractImageFromArticle(article);
+                            // Extract REAL image from the article's website
+                            const realImageUrl = await this.extractRealImageFromWebsite(article);
                             
-                            if (imageUrl) {
-                                // Save to article data
-                                article.cachedImageUrl = imageUrl;
-                                article.imageCachedDate = new Date().toISOString();
+                            if (realImageUrl) {
+                                // Save REAL image URL to article data for OneDrive backup
+                                article.extractedImageUrl = realImageUrl;
+                                article.imageExtractedDate = new Date().toISOString();
+                                article.imageSource = 'website-extracted';
                                 this.imageUpdated = true;
                                 
-                                // Display immediately
-                                this.setArticleImage(document.getElementById(`image-${index}`), imageUrl);
+                                // Display REAL image immediately
+                                this.setArticleImage(document.getElementById(`image-${index}`), realImageUrl);
                                 extractedCount++;
                                 
-                                console.log(`✅ Extracted and cached: ${article.title.substring(0, 30)}...`);
+                                console.log(`✅ REAL image extracted from ${this.getDomain(article.url)}: ${article.title.substring(0, 30)}...`);
                             } else {
-                                // Use fallback
-                                const fallbackUrl = this.generatePlaceholderImage(article, index);
-                                article.cachedImageUrl = fallbackUrl;
-                                article.imageCachedDate = new Date().toISOString();
-                                this.imageUpdated = true;
-                                
-                                this.setArticleImage(document.getElementById(`image-${index}`), fallbackUrl);
-                                extractedCount++;
+                                // No real image found, but don't use random - leave placeholder
+                                console.log(`❌ No real image found for: ${article.title.substring(0, 30)}...`);
+                                // Keep the loading placeholder - user will see actual title/content is more important
                             }
                             
                             // Update progress
                             const progress = Math.round(((i + 1) / needExtraction.length) * 100);
-                            this.updateStatus(`🔍 Extracting images... ${i + 1}/${needExtraction.length} (${progress}%)`, 'loading');
+                            this.updateStatus(`🔍 Extracting real images... ${i + 1}/${needExtraction.length} (${progress}%)`, 'loading');
                             
                             // Delay to be respectful to websites
-                            await new Promise(resolve => setTimeout(resolve, 300));
+                            await new Promise(resolve => setTimeout(resolve, 500));
                             
                         } catch (error) {
-                            console.error(`Failed to extract image for article ${index}:`, error);
-                            // Use fallback
-                            const fallbackUrl = this.generatePlaceholderImage(article, index);
-                            article.cachedImageUrl = fallbackUrl;
-                            article.imageCachedDate = new Date().toISOString();
-                            this.imageUpdated = true;
-                            
-                            this.setArticleImage(document.getElementById(`image-${index}`), fallbackUrl);
-                            extractedCount++;
+                            console.error(`Failed to extract real image for article ${index}:`, error);
+                            // Don't use fallback - better to show no image than wrong image
                         }
                     }
                     
-                    // Step 3: Save updated articles back to OneDrive
+                    // Step 3: Save extracted REAL image URLs back to OneDrive
                     if (this.imageUpdated && this.accessToken) {
                         try {
-                            this.updateStatus('💾 Saving cached images to OneDrive...', 'loading');
+                            this.updateStatus('💾 Saving extracted real image URLs to OneDrive...', 'loading');
                             await this.updateOneDriveBackup();
-                            this.updateStatus(`✅ Extracted ${extractedCount} images and saved to OneDrive! Next load will be instant.`, 'success');
+                            this.updateStatus(`✅ Extracted ${extractedCount} real images and saved to OneDrive! Next load will be instant.`, 'success');
                         } catch (error) {
                             console.error('Failed to save to OneDrive:', error);
-                            this.updateStatus(`✅ Extracted ${extractedCount} images (OneDrive save failed)`, 'error');
+                            this.updateStatus(`✅ Extracted ${extractedCount} real images (OneDrive save failed)`, 'error');
                         }
                     } else {
-                        this.updateStatus(`✅ Extracted ${extractedCount} new images!`, 'success');
+                        this.updateStatus(`✅ Extracted ${extractedCount} real images from websites!`, 'success');
                     }
+                    
+                    console.log(`🎨 Real image extraction complete: ${savedImages} cached, ${extractedCount} extracted`);
                 } else {
-                    this.updateStatus(`✅ All ${savedImages} images loaded from cache instantly!`, 'success');
+                    this.updateStatus(`✅ All ${savedImages} real images loaded from OneDrive cache instantly!`, 'success');
+                    console.log(`🎨 Real image extraction complete: ${savedImages} cached, 0 extracted`);
                 }
-                
-                console.log(`🎨 Smart caching complete: ${savedImages} cached, ${needExtraction.length} extracted`);
             }
 
-            // Extract image from a single article
-            async extractImageFromArticle(article) {
-                // Strategy 1: Try saved article images first
+            // Extract REAL image from article website (not random/category images)
+            async extractRealImageFromWebsite(article) {
+                console.log(`🌐 Extracting REAL image from: ${article.url}`);
+                
+                // Strategy 1: Try saved article images first (from browser extension)
                 const savedImage = this.getBestArticleImage(article);
                 if (savedImage) {
+                    console.log(`✅ Using extension-saved image`);
                     return savedImage;
                 }
 
-                // Strategy 2: Extract from website
+                // Strategy 2: Extract REAL image from the website HTML
                 try {
-                    const extractedImage = await this.fetchRealImageFromWebsite(article.url);
-                    if (extractedImage) {
-                        return extractedImage;
+                    const realImageUrl = await this.fetchRealImageFromWebsite(article.url);
+                    if (realImageUrl) {
+                        console.log(`✅ Found REAL website image: ${realImageUrl}`);
+                        return realImageUrl;
                     }
                 } catch (error) {
-                    console.log(`Website extraction failed for ${article.url}: ${error.message}`);
+                    console.log(`⚠️ Website extraction failed: ${error.message}`);
                 }
 
-                // Strategy 3: No real image found
+                // Strategy 3: Try special URL patterns for known sites
+                const specialImage = this.getSpecialSiteImage(article.url);
+                if (specialImage) {
+                    console.log(`✅ Found special site image: ${specialImage}`);
+                    return specialImage;
+                }
+
+                // No real image found
+                console.log(`❌ No real image found for: ${article.url}`);
                 return null;
             }
 
-            // Fetch real image from website
+            // Fetch REAL image from website HTML
             async fetchRealImageFromWebsite(url) {
                 try {
+                    console.log(`🌐 Fetching webpage HTML from: ${this.getDomain(url)}`);
+                    
+                    // Try AllOrigins proxy to get the actual webpage
                     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
                     const response = await fetch(proxyUrl);
                     
                     if (!response.ok) {
-                        throw new Error('Failed to fetch webpage');
+                        throw new Error(`Failed to fetch webpage: ${response.status}`);
                     }
                     
                     const data = await response.json();
                     const html = data.contents;
                     
                     if (!html || html.length < 500) {
-                        throw new Error('No substantial HTML content');
+                        throw new Error('No substantial HTML content received');
                     }
                     
-                    return this.parseHTMLForBestImage(html, url);
+                    // Parse HTML and extract the REAL featured image
+                    const realImageUrl = this.parseHTMLForRealImage(html, url);
+                    
+                    if (realImageUrl) {
+                        console.log(`🎯 Found REAL image in HTML: ${realImageUrl}`);
+                        return realImageUrl;
+                    }
+                    
+                    throw new Error('No real image found in webpage HTML');
                     
                 } catch (error) {
+                    console.log(`❌ HTML extraction failed: ${error.message}`);
                     throw error;
                 }
             }
 
-            // Parse HTML for best image
-            parseHTMLForBestImage(html, baseUrl) {
+            // Parse HTML to find the REAL featured image (not random)
+            parseHTMLForRealImage(html, baseUrl) {
                 try {
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
                     
-                    // Try Open Graph image
+                    console.log(`🔍 Parsing HTML for REAL image from: ${this.getDomain(baseUrl)}`);
+                    
+                    // 1. Try Open Graph image (most reliable for real article images)
                     const ogImage = doc.querySelector('meta[property="og:image"]');
                     if (ogImage) {
                         const imageUrl = this.makeAbsoluteUrl(ogImage.getAttribute('content'), baseUrl);
                         if (this.isValidImageUrl(imageUrl)) {
+                            console.log(`🎯 Found Open Graph image: ${imageUrl}`);
                             return imageUrl;
                         }
                     }
                     
-                    // Try Twitter card image
-                    const twitterImage = doc.querySelector('meta[name="twitter:image"]');
+                    // 2. Try Twitter card image
+                    const twitterImage = doc.querySelector('meta[name="twitter:image"], meta[property="twitter:image"]');
                     if (twitterImage) {
                         const imageUrl = this.makeAbsoluteUrl(twitterImage.getAttribute('content'), baseUrl);
                         if (this.isValidImageUrl(imageUrl)) {
+                            console.log(`🎯 Found Twitter card image: ${imageUrl}`);
                             return imageUrl;
                         }
                     }
                     
-                    // Try featured image selectors
-                    const selectors = [
+                    // 3. Try article featured image selectors (real article images)
+                    const featuredSelectors = [
                         '.featured-image img',
-                        '.hero-image img', 
+                        '.hero-image img',
                         '.post-thumbnail img',
-                        'article img:first-of-type'
+                        '.article-image img',
+                        '.entry-image img',
+                        '.wp-post-image',
+                        '.post-featured-image img',
+                        '.story-featured-image img',
+                        'article img:first-of-type',
+                        '.content img:first-of-type',
+                        '.post-content img:first-of-type',
+                        '.entry-content img:first-of-type'
                     ];
                     
-                    for (const selector of selectors) {
+                    for (const selector of featuredSelectors) {
                         const img = doc.querySelector(selector);
                         if (img) {
-                            const src = img.getAttribute('src') || img.getAttribute('data-src');
-                            if (src && !this.isIconOrLogo(src)) {
+                            const src = img.getAttribute('src') || img.getAttribute('data-src') || img.getAttribute('data-lazy-src');
+                            if (src && !this.isIconOrLogo(src) && this.isSubstantialImage(img)) {
                                 const imageUrl = this.makeAbsoluteUrl(src, baseUrl);
                                 if (this.isValidImageUrl(imageUrl)) {
+                                    console.log(`🎯 Found featured article image: ${imageUrl}`);
                                     return imageUrl;
                                 }
                             }
                         }
                     }
                     
+                    // 4. Try first substantial image in article content (real content images)
+                    const contentImages = doc.querySelectorAll('article img, .content img, .post-content img, .entry-content img');
+                    for (const img of contentImages) {
+                        const src = img.getAttribute('src') || img.getAttribute('data-src');
+                        if (src && !this.isIconOrLogo(src) && this.isSubstantialImage(img)) {
+                            const imageUrl = this.makeAbsoluteUrl(src, baseUrl);
+                            if (this.isValidImageUrl(imageUrl)) {
+                                console.log(`🎯 Found content image: ${imageUrl}`);
+                                return imageUrl;
+                            }
+                        }
+                    }
+                    
+                    console.log(`❌ No real featured image found in HTML`);
                     return null;
                     
                 } catch (error) {
+                    console.error('HTML parsing error:', error);
                     return null;
                 }
+            }
+
+            // Get special images for known sites (real images, not random)
+            getSpecialSiteImage(url) {
+                const domain = this.getDomain(url).toLowerCase();
+                
+                // YouTube video thumbnails (REAL thumbnails)
+                if (domain.includes('youtube.com') || domain.includes('youtu.be')) {
+                    const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
+                    if (videoIdMatch) {
+                        return `https://img.youtube.com/vi/${videoIdMatch[1]}/maxresdefault.jpg`;
+                    }
+                }
+                
+                // GitHub repository social cards (REAL repo images)
+                if (domain.includes('github.com')) {
+                    const pathMatch = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+                    if (pathMatch) {
+                        return `https://opengraph.githubassets.com/1/${pathMatch[1]}/${pathMatch[2]}`;
+                    }
+                }
+                
+                // No special site pattern found
+                return null;
+            }
+
+            // Check if image is substantial (not a small icon)
+            isSubstantialImage(imgElement) {
+                const width = imgElement.getAttribute('width') || imgElement.style.width;
+                const height = imgElement.getAttribute('height') || imgElement.style.height;
+                
+                // If we have dimensions, check they're substantial
+                if (width && height) {
+                    const w = parseInt(width);
+                    const h = parseInt(height);
+                    return w >= 200 && h >= 150;
+                }
+                
+                // If no dimensions, assume it might be substantial
+                return true;
             }
 
             // Helper functions
@@ -1386,32 +1468,7 @@
                 return iconPatterns.some(pattern => src.toLowerCase().includes(pattern));
             }
 
-            // Generate beautiful placeholder image
-            generatePlaceholderImage(article, index) {
-                const domain = this.getDomain(article.url).toLowerCase();
-                const title = article.title.toLowerCase();
-                
-                // Category-based Unsplash images
-                if (domain.includes('github') || title.includes('code') || title.includes('programming')) {
-                    return `https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=250&fit=crop&q=80`;
-                }
-                if (domain.includes('business') || title.includes('business') || title.includes('startup')) {
-                    return `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=250&fit=crop&q=80`;
-                }
-                if (domain.includes('news') || title.includes('news')) {
-                    return `https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=250&fit=crop&q=80`;
-                }
-                
-                // Default beautiful images
-                const defaults = [
-                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&q=80',
-                    'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=400&h=250&fit=crop&q=80',
-                    'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&h=250&fit=crop&q=80',
-                    'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=250&fit=crop&q=80'
-                ];
-                
-                return defaults[index % defaults.length];
-            }
+
 
             // Set article image
             setArticleImage(imageElement, imageUrl) {
