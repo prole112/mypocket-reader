@@ -24,6 +24,17 @@
             --shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.15);
         }
 
+        /* Dark mode variables */
+        [data-theme="dark"] {
+            --background: #1a1a1a;
+            --surface: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border: #404040;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+            --shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
@@ -587,6 +598,9 @@
                     <button id="testBtn" class="btn btn-secondary" onclick="webReader.toggleTestMode()">
                         <span>👁️</span> Show Buttons
                     </button>
+                    <button id="darkModeBtn" class="btn btn-secondary" onclick="webReader.toggleDarkMode()">
+                        <span>🌙</span> Dark Mode
+                    </button>
                 </div>
             </div>
         </div>
@@ -672,6 +686,7 @@
                 this.setupEventListeners();
                 this.checkAuthFromURL();
                 this.loadStoredToken();
+                this.loadThemePreference();
             }
 
             setupEventListeners() {
@@ -1321,6 +1336,36 @@ Button Issues:
                         : '👁️ Test mode OFF - Action buttons show on hover',
                     'success'
                 );
+            }
+
+            // Dark mode functionality
+            toggleDarkMode() {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                
+                this.updateDarkModeButton(newTheme);
+                this.updateStatus(
+                    newTheme === 'dark' ? '🌙 Dark mode enabled' : '☀️ Light mode enabled',
+                    'success'
+                );
+            }
+
+            loadThemePreference() {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                this.updateDarkModeButton(savedTheme);
+            }
+
+            updateDarkModeButton(theme) {
+                const darkModeBtn = document.getElementById('darkModeBtn');
+                if (darkModeBtn) {
+                    darkModeBtn.innerHTML = theme === 'dark' 
+                        ? '<span>☀️</span> Light Mode'
+                        : '<span>🌙</span> Dark Mode';
+                }
             }
         }
 
