@@ -934,14 +934,96 @@
                 this.currentArticle = this.articles[index];
                 const overlay = document.getElementById('readerOverlay');
 
+                // Set title and meta info
                 document.getElementById('readerTitle').textContent = this.currentArticle.title;
                 document.getElementById('readerDate').textContent = this.formatDate(this.currentArticle.dateAdded);
                 document.getElementById('readerDomain').textContent = this.getDomain(this.currentArticle.url);
                 document.getElementById('readerTime').textContent = `${this.currentArticle.readTime || 1} min read`;
-                document.getElementById('readerContent').innerHTML = this.currentArticle.content;
+                
+                // Get the best available content
+                const content = this.getArticleContent(this.currentArticle);
+                document.getElementById('readerContent').innerHTML = content;
 
                 overlay.classList.add('active');
                 document.body.style.overflow = 'hidden';
+            }
+
+            // Get the best available content for reading
+            getArticleContent(article) {
+                // Try multiple content sources in order of preference
+                let content = '';
+                
+                // 1. Full HTML content
+                if (article.content && article.content.trim()) {
+                    content = article.content;
+                }
+                // 2. HTML body
+                else if (article.html && article.html.trim()) {
+                    content = article.html;
+                }
+                // 3. Full content
+                else if (article.fullContent && article.fullContent.trim()) {
+                    content = article.fullContent;
+                }
+                // 4. Text content converted to HTML
+                else if (article.textContent && article.textContent.trim()) {
+                    // Convert plain text to HTML paragraphs
+                    content = article.textContent
+                        .split('\n\n')
+                        .filter(para => para.trim())
+                        .map(para => `<p>${para.trim()}</p>`)
+                        .join('\n');
+                }
+                // 5. Article body
+                else if (article.body && article.body.trim()) {
+                    content = article.body;
+                }
+                // 6. Use excerpt as fallback
+                else if (article.excerpt && article.excerpt.trim()) {
+                    content = `<p><em>Only excerpt available:</em></p><p>${article.excerpt}</p>`;
+                }
+                // 7. Last resort - show available data for debugging
+                else {
+                    content = `
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                            <h3>No content available</h3>
+                            <p>The article content could not be found. This might happen if:</p>
+                            <ul>
+                                <li>The article was saved without full content</li>
+                                <li>The content is stored in a different format</li>
+                                <li>There was an issue with the content extraction</li>
+                            </ul>
+                            <p><strong>Available data:</strong></p>
+                            <pre style="background: #fff; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px;">
+${JSON.stringify({
+    title: article.title,
+    excerpt: article.excerpt,
+    url: article.url,
+    availableProperties: Object.keys(article).filter(key => 
+        typeof article[key] === 'string' && article[key].length > 10
+    )
+}, null, 2)}
+                            </pre>
+                            <p style="margin-top: 15px;">
+                                <a href="${article.url}" target="_blank" style="color: #ee5a24; text-decoration: none;">
+                                    🔗 Read original article
+                                </a>
+                            </p>
+                        </div>
+                    `;
+                }
+
+                // Ensure content has proper styling and is readable
+                if (content && !content.includes('<p>') && !content.includes('<div>') && !content.includes('<article>')) {
+                    // If content doesn't have HTML structure, wrap it in paragraphs
+                    content = content
+                        .split('\n\n')
+                        .filter(para => para.trim())
+                        .map(para => `<p>${para.trim()}</p>`)
+                        .join('\n');
+                }
+
+                return content || '<p>No content available.</p>';
             }
 
             closeReader() {
