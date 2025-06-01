@@ -863,7 +863,7 @@
 
     <!-- Status -->
     <div class="status" id="status">
-        Connect to OneDrive to view your saved articles
+        🎨 Demo Mode: Showcasing colorful tiles - Deploy to real domain for OneDrive sync
     </div>
 
     <!-- Articles -->
@@ -917,13 +917,24 @@
             }
 
             getRedirectUri() {
-                const currentUrl = window.location.href;
-                const baseUrl = currentUrl.split('#')[0];
+                try {
+                    const currentUrl = window.location.href;
+                    const baseUrl = currentUrl.split('#')[0];
 
-                if (baseUrl.startsWith('http://') || baseUrl.startsWith('https://')) {
-                    return baseUrl;
-                } else {
-                    return window.location.origin + window.location.pathname;
+                    // Check for sandboxed environment
+                    if (currentUrl.includes('srcdoc') || currentUrl === 'null' || !currentUrl.startsWith('http')) {
+                        console.log('🔶 Running in sandboxed environment (like Claude artifacts)');
+                        return 'https://your-domain.com/mypocket-reader'; // Placeholder for demo
+                    }
+
+                    if (baseUrl.startsWith('http://') || baseUrl.startsWith('https://')) {
+                        return baseUrl;
+                    } else {
+                        return window.location.origin + window.location.pathname;
+                    }
+                } catch (error) {
+                    console.error('Error getting redirect URI:', error);
+                    return 'https://your-domain.com/mypocket-reader'; // Fallback
                 }
             }
 
@@ -1022,7 +1033,7 @@
 
                 this.articles = demoArticles;
                 this.displayArticles(this.articles);
-                this.updateStatus(`✨ Showing ${this.articles.length} demo articles to showcase the new colorful design!`, 'success');
+                this.updateStatus(`✨ Demo Mode: Showing ${this.articles.length} colorful article tiles! Deploy to real domain for full OneDrive functionality.`, 'success');
             }
 
             checkAuthFromURL() {
@@ -1048,23 +1059,65 @@
             }
 
             loadStoredToken() {
-                this.accessToken = localStorage.getItem('mypocket_access_token');
-                if (this.accessToken) {
-                    this.updateConnectionStatus(true);
-                    // Don't auto-load articles, keep demo articles for showcase
+                try {
+                    this.accessToken = localStorage.getItem('mypocket_access_token');
+                    if (this.accessToken) {
+                        this.updateConnectionStatus(true);
+                        // Don't auto-load articles, keep demo articles for showcase
+                    }
+                } catch (error) {
+                    console.log('🔶 localStorage not available (sandboxed environment)');
+                    // In sandboxed environments, we can't persist tokens
                 }
             }
 
             saveToken(token) {
-                localStorage.setItem('mypocket_access_token', token);
+                try {
+                    localStorage.setItem('mypocket_access_token', token);
+                } catch (error) {
+                    console.log('🔶 Cannot save token in sandboxed environment');
+                    // Token will only persist for current session
+                }
             }
 
             clearToken() {
-                localStorage.removeItem('mypocket_access_token');
+                try {
+                    localStorage.removeItem('mypocket_access_token');
+                } catch (error) {
+                    console.log('🔶 Cannot clear token from localStorage in sandboxed environment');
+                }
                 this.accessToken = null;
             }
 
             authenticate() {
+                // Check if we're in a sandboxed environment
+                if (this.redirectUri.includes('your-domain.com') || window.location.href.includes('srcdoc')) {
+                    this.updateStatus('🔶 Demo Mode: Authentication requires deployment to a real domain', 'error');
+                    
+                    const demoInfo = `
+🔶 Authentication Demo Limitations:
+
+This is running in a sandboxed environment (like Claude artifacts), so real Microsoft authentication cannot be completed.
+
+For full functionality:
+1. Save this HTML file to your computer
+2. Deploy it to a web server or hosting platform  
+3. Register the actual URL in Azure App Registration
+4. Update the clientId if needed
+
+Current demo shows:
+✨ Colorful article tiles
+✨ Reading interface
+✨ Export functionality
+✨ Search and filter features
+
+The authentication and OneDrive sync will work when deployed to a real domain!
+                    `;
+                    
+                    alert(demoInfo);
+                    return;
+                }
+
                 if (!this.redirectUri || (!this.redirectUri.startsWith('http://') && !this.redirectUri.startsWith('https://'))) {
                     this.updateStatus('❌ Invalid redirect URI. Please open this page via HTTP/HTTPS.', 'error');
                     console.error('🔴 Invalid redirect URI:', this.redirectUri);
@@ -1783,7 +1836,12 @@ The tiles now use 12 different color gradients that cycle through the articles, 
                 const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
                 
                 document.documentElement.setAttribute('data-theme', newTheme);
-                localStorage.setItem('theme', newTheme);
+                
+                try {
+                    localStorage.setItem('theme', newTheme);
+                } catch (error) {
+                    console.log('🔶 Cannot save theme preference (sandboxed environment)');
+                }
                 
                 this.updateDarkModeButton(newTheme);
                 this.updateStatus(
@@ -1793,9 +1851,16 @@ The tiles now use 12 different color gradients that cycle through the articles, 
             }
 
             loadThemePreference() {
-                const savedTheme = localStorage.getItem('theme') || 'light';
-                document.documentElement.setAttribute('data-theme', savedTheme);
-                this.updateDarkModeButton(savedTheme);
+                try {
+                    const savedTheme = localStorage.getItem('theme') || 'light';
+                    document.documentElement.setAttribute('data-theme', savedTheme);
+                    this.updateDarkModeButton(savedTheme);
+                } catch (error) {
+                    console.log('🔶 Cannot load theme preference (sandboxed environment)');
+                    // Default to light theme
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    this.updateDarkModeButton('light');
+                }
             }
 
             updateDarkModeButton(theme) {
