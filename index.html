@@ -1098,6 +1098,10 @@
                 }
 
                 const articlesHTML = articles.map((article, index) => {
+                    // Calculate word count and reading time dynamically
+                    const wordCount = article.wordCount || this.calculateWordCount(article);
+                    const readTime = article.readTime || this.calculateReadingTime(wordCount);
+                    
                     return `
                     <div class="article-card" data-index="${index}">
                         <div class="article-image" id="image-${index}">
@@ -1130,8 +1134,8 @@
                                 <span class="article-date">📅 ${this.formatDate(article.dateAdded)}</span>
                             </div>
                             <div class="article-stats">
-                                <span>⏱️ ${article.readTime || 1} min read</span>
-                                <span>📝 ${article.wordCount || 0} words</span>
+                                <span>⏱️ ${readTime} min read</span>
+                                <span>📝 ${wordCount.toLocaleString()} words</span>
                             </div>
                         </div>
                         <div class="article-actions">
@@ -1598,7 +1602,60 @@
                 }
             }
 
+            // Calculate word count from article content
+            calculateWordCount(article) {
+                // Try different content fields to get text
+                const contentFields = ['content', 'html', 'fullContent', 'textContent', 'body', 'readableContent', 'articleContent', 'savedContent'];
+                
+                let textContent = '';
+                
+                // First try to get content from main fields
+                for (const field of contentFields) {
+                    if (article[field] && typeof article[field] === 'string') {
+                        textContent = article[field];
+                        break;
+                    }
+                }
+                
+                // If no content found, try to use excerpt or title
+                if (!textContent || textContent.trim().length === 0) {
+                    textContent = (article.excerpt || article.title || '').toString();
+                }
+                
+                // If we have HTML content, strip HTML tags
+                if (textContent.includes('<')) {
+                    // Create a temporary div to strip HTML
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = textContent;
+                    textContent = tempDiv.textContent || tempDiv.innerText || '';
+                }
+                
+                // Count words
+                const words = textContent
+                    .replace(/[^\w\s]/g, ' ') // Replace punctuation with spaces
+                    .split(/\s+/) // Split on whitespace
+                    .filter(word => word.length > 0); // Remove empty strings
+                
+                return words.length;
+            }
+
+            // Calculate reading time based on word count
+            calculateReadingTime(wordCount) {
+                // Average reading speed is about 200-250 words per minute
+                const wordsPerMinute = 225;
+                const minutes = Math.ceil(wordCount / wordsPerMinute);
+                return Math.max(1, minutes); // Minimum 1 minute
+            }
+
             displayEmptyState() {
+                const container = document.getElementById('articlesContainer');
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📖</div>
+                        <h3>No articles found</h3>
+                        <p>Use the MyPocket browser extension to save articles, then refresh this page.</p>
+                    </div>`;
+            }
                 const container = document.getElementById('articlesContainer');
                 container.innerHTML = `
                     <div class="empty-state">
@@ -1629,11 +1686,15 @@
                 this.currentArticle = this.articles[index];
                 const overlay = document.getElementById('readerOverlay');
 
+                // Calculate reading time if not available
+                const wordCount = this.currentArticle.wordCount || this.calculateWordCount(this.currentArticle);
+                const readTime = this.currentArticle.readTime || this.calculateReadingTime(wordCount);
+
                 // Set title and meta info
                 document.getElementById('readerTitle').textContent = this.currentArticle.title;
                 document.getElementById('readerDate').textContent = this.formatDate(this.currentArticle.dateAdded);
                 document.getElementById('readerDomain').textContent = this.getDomain(this.currentArticle.url);
-                document.getElementById('readerTime').textContent = `${this.currentArticle.readTime || 1} min read`;
+                document.getElementById('readerTime').textContent = `${readTime} min read`;
                 
                 // Show loading state first
                 document.getElementById('readerContent').innerHTML = `
@@ -2017,6 +2078,9 @@
             }
 
             createArticleHTML(article) {
+                const wordCount = article.wordCount || this.calculateWordCount(article);
+                const readTime = article.readTime || this.calculateReadingTime(wordCount);
+                
                 return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2078,7 +2142,8 @@
             <div style="margin-bottom: 8px;">🌐 From: <a href="${article.url}" style="color: #ee5a24;">${this.getDomain(article.url)}</a></div>
             ${article.author ? `<div style="margin-bottom: 8px;">✍️ By: ${this.escapeHtml(article.author)}</div>` : ''}
             <div style="margin-bottom: 8px;">📅 Saved: ${this.formatDate(article.dateAdded)}</div>
-            <div>⏱️ Reading time: ${article.readTime || 1} minutes</div>
+            <div style="margin-bottom: 8px;">⏱️ Reading time: ${readTime} minutes</div>
+            <div>📝 Word count: ${wordCount.toLocaleString()} words</div>
         </div>
     </div>
     <div class="content">
