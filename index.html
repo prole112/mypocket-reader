@@ -828,6 +828,9 @@
                     <button id="refreshBtn" class="btn btn-secondary" style="display: none;">
                         <span>🔄</span> Refresh
                     </button>
+                    <button id="refreshImagesBtn" class="btn btn-secondary" style="display: none;" onclick="webReader.refreshAllImages()">
+                        <span>🖼️</span> Refresh Images
+                    </button>
                     <button id="debugBtn" class="btn btn-secondary" onclick="webReader.showDebugInfo()">
                         <span>🔧</span> Debug
                     </button>
@@ -1003,17 +1006,20 @@
                 const connectIcon = document.getElementById('connectIcon');
                 const connectText = document.getElementById('connectText');
                 const refreshBtn = document.getElementById('refreshBtn');
+                const refreshImagesBtn = document.getElementById('refreshImagesBtn');
 
                 if (connected) {
                     connectIcon.textContent = '✅';
                     connectText.textContent = 'Connected';
                     connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
                     refreshBtn.style.display = 'inline-flex';
+                    refreshImagesBtn.style.display = 'inline-flex';
                 } else {
                     connectIcon.textContent = '☁️';
                     connectText.textContent = 'Connect OneDrive';
                     connectBtn.style.background = 'rgba(255,255,255,0.2)';
                     refreshBtn.style.display = 'none';
+                    refreshImagesBtn.style.display = 'none';
                 }
             }
 
@@ -1023,7 +1029,28 @@
                 status.className = `status ${type}`;
             }
 
-            async loadArticles() {
+            // NEW: Force refresh all images
+            async refreshAllImages() {
+                if (this.articles.length === 0) {
+                    this.updateStatus('❌ No articles loaded. Connect to OneDrive first.', 'error');
+                    return;
+                }
+
+                if (!confirm('Refresh all article images? This will re-extract images from websites and may take a few minutes.')) {
+                    return;
+                }
+
+                this.updateStatus('🔄 Force refreshing all images...', 'loading');
+                
+                // Clear all extracted images to force re-extraction
+                this.articles.forEach(article => {
+                    delete article.extractedImageUrl;
+                    delete article.imageExtractedDate;
+                });
+
+                // Re-extract all images
+                await this.loadAllArticleImages(this.articles);
+            }
                 if (!this.accessToken) {
                     this.updateStatus('Not connected to OneDrive', 'error');
                     return;
@@ -1151,76 +1178,141 @@
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
                 
                 // Show image loading status
-                this.updateStatus(`🔍 Extracting real images from article websites...`, 'loading');
+                this.updateStatus(`🎨 Loading images (saved ones instantly, extracting new ones)...`, 'loading');
                 
-                // ENHANCED: Extract real images from original websites
+                // SMART: Load saved images instantly, extract new ones, save to OneDrive
                 this.loadAllArticleImages(articles);
             }
 
-            // ENHANCED: Extract real images from article websites
+            // ENHANCED: Extract and SAVE images to OneDrive backup
             async loadAllArticleImages(articles) {
-                console.log('🎨 REAL IMAGE EXTRACTOR - Getting actual article images...');
+                console.log('🎨 SMART IMAGE SYSTEM - Extract once, save forever!');
                 
-                let successCount = 0;
-                const totalImages = articles.length;
+                let extractedCount = 0;
+                let savedCount = 0;
+                let totalImages = articles.length;
                 
-                // Load images sequentially to avoid overwhelming websites
+                // Check which articles need image extraction
+                const articlesNeedingImages = articles.filter(article => 
+                    !article.extractedImageUrl || this.shouldRefreshImage(article)
+                );
+
+                if (articlesNeedingImages.length === 0) {
+                    console.log('✅ All articles already have fresh extracted images!');
+                    this.loadSavedImages(articles);
+                    this.updateStatus(`✅ Loaded ${totalImages} saved images instantly!`, 'success');
+                    return;
+                }
+
+                console.log(`🔍 Need to extract/refresh images for ${articlesNeedingImages.length}/${totalImages} articles`);
+                
+                // Load already-saved images first (instant)
+                this.loadSavedImages(articles);
+                
+                // Extract images for articles that don't have them or need refresh
                 for (let i = 0; i < articles.length; i++) {
+                    const article = articles[i];
+                    
+                    // Skip if already has fresh extracted image
+                    if (article.extractedImageUrl && !this.shouldRefreshImage(article)) {
+                        continue;
+                    }
+                    
                     try {
-                        const success = await this.extractRealArticleImage(articles[i], i);
-                        if (success) successCount++;
+                        const extractedImageUrl = await this.extractAndSaveArticleImage(article, i);
+                        if (extractedImageUrl) {
+                            // Save the extracted image URL back to the article
+                            article.extractedImageUrl = extractedImageUrl;
+                            article.imageExtractedDate = new Date().toISOString();
+                            extractedCount++;
+                            
+                            // Update the visual immediately
+                            this.setArticleImageDirect(document.getElementById(`image-${i}`), extractedImageUrl);
+                        }
                         
                         // Update progress
                         const progress = Math.round(((i + 1) / totalImages) * 100);
-                        this.updateStatus(`🔍 Extracting real images... ${i + 1}/${totalImages} (${progress}%)`, 'loading');
+                        this.updateStatus(`🔍 Extracting and saving images... ${i + 1}/${totalImages} (${progress}%)`, 'loading');
                         
                         // Delay to be respectful to websites
-                        await new Promise(resolve => setTimeout(resolve, 200));
+                        await new Promise(resolve => setTimeout(resolve, 300));
                         
                     } catch (error) {
                         console.error(`Failed to extract image for article ${i}:`, error);
-                        // Use category fallback for failed extractions
-                        this.setArticleImageDirect(document.getElementById(`image-${i}`), this.getCategoryBasedImage(articles[i], i));
-                        successCount++;
                     }
                 }
                 
-                this.updateStatus(`✅ Extracted ${successCount}/${totalImages} real article images!`, 'success');
-                console.log(`🎨 Real image extraction complete: ${successCount}/${totalImages} successful`);
+                // Save updated articles back to OneDrive if we extracted any new images
+                if (extractedCount > 0 && this.accessToken) {
+                    try {
+                        this.updateStatus('💾 Saving extracted images to OneDrive...', 'loading');
+                        await this.updateOneDriveBackup();
+                        this.updateStatus(`✅ Extracted ${extractedCount} new images and saved to OneDrive! Next load will be instant.`, 'success');
+                    } catch (error) {
+                        console.error('Failed to save images to OneDrive:', error);
+                        this.updateStatus(`✅ Extracted ${extractedCount} images (OneDrive save failed - will re-extract next time)`, 'error');
+                    }
+                } else {
+                    this.updateStatus(`✅ All images loaded! ${extractedCount} newly extracted, ${totalImages - articlesNeedingImages.length} from saved data.`, 'success');
+                }
+                
+                console.log(`🎨 Image extraction complete: ${extractedCount} new, ${totalImages - articlesNeedingImages.length} cached`);
             }
 
-            // NEW: Extract the actual featured image from the article's website
-            async extractRealArticleImage(article, index) {
-                const imageElement = document.getElementById(`image-${index}`);
-                if (!imageElement) return false;
+            // NEW: Check if an image should be refreshed (e.g., if it's old)
+            shouldRefreshImage(article) {
+                // Don't refresh if no extraction date
+                if (!article.imageExtractedDate) return true;
+                
+                try {
+                    const extractedDate = new Date(article.imageExtractedDate);
+                    const now = new Date();
+                    const daysSinceExtraction = (now - extractedDate) / (1000 * 60 * 60 * 24);
+                    
+                    // Refresh images older than 30 days
+                    return daysSinceExtraction > 30;
+                } catch (error) {
+                    // If date is invalid, refresh
+                    return true;
+                }
+            }
 
-                console.log(`🔍 Extracting real image from: ${this.getDomain(article.url)}`);
+            // NEW: Load saved images immediately (instant loading)
+            loadSavedImages(articles) {
+                articles.forEach((article, index) => {
+                    if (article.extractedImageUrl) {
+                        console.log(`⚡ Loading saved image for: ${article.title.substring(0, 30)}...`);
+                        this.setArticleImageDirect(document.getElementById(`image-${index}`), article.extractedImageUrl);
+                    }
+                });
+            }
 
-                // Strategy 1: Try saved article images first (fastest)
+            // ENHANCED: Extract and prepare for saving
+            async extractAndSaveArticleImage(article, index) {
+                console.log(`🔍 Extracting NEW image from: ${this.getDomain(article.url)}`);
+
+                // Strategy 1: Try saved article images first (from browser extension)
                 const savedImage = this.getBestArticleImage(article);
                 if (savedImage) {
-                    console.log(`✅ Using saved image: ${article.title.substring(0, 30)}...`);
-                    this.setArticleImageDirect(imageElement, savedImage);
-                    return true;
+                    console.log(`✅ Using extension-saved image: ${article.title.substring(0, 30)}...`);
+                    return savedImage;
                 }
 
                 // Strategy 2: Extract image from the original website
                 try {
                     const extractedImage = await this.fetchRealImageFromWebsite(article.url);
                     if (extractedImage) {
-                        console.log(`✅ Extracted real image: ${article.title.substring(0, 30)}...`);
-                        this.setArticleImageDirect(imageElement, extractedImage);
-                        return true;
+                        console.log(`✅ Extracted from website: ${article.title.substring(0, 30)}...`);
+                        return extractedImage;
                     }
                 } catch (error) {
-                    console.log(`⚠️ Could not extract from website: ${error.message}`);
+                    console.log(`⚠️ Website extraction failed: ${error.message}`);
                 }
 
                 // Strategy 3: Use intelligent category-based fallback
                 console.log(`🎨 Using intelligent fallback: ${article.title.substring(0, 30)}...`);
                 const fallbackImage = this.getCategoryBasedImage(article, index);
-                this.setArticleImageDirect(imageElement, fallbackImage);
-                return true;
+                return fallbackImage;
             }
 
             // NEW: Fetch the actual featured image from a website
