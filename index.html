@@ -903,7 +903,7 @@
                 this.accessToken = null;
                 this.articles = [];
                 this.currentArticle = null;
-                this.imageUpdated = false; // Track if we added new images to save back
+                this.imageUpdated = false; // NEW: Track if we extracted new images to save back
 
                 this.init();
             }
@@ -1089,7 +1089,7 @@
                 }
             }
 
-            // Enhanced displayArticles with SMART IMAGE CACHING
+            // Enhanced displayArticles with real image extraction and OneDrive caching
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1151,15 +1151,15 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
                 
-                // SMART IMAGE CACHING: Load saved images instantly, extract new ones
-                this.loadImagesWithCaching(articles);
+                // NEW: Start real image extraction with OneDrive caching
+                this.loadArticleImagesWithCaching(articles);
             }
 
-            // NEW: Smart image caching system - EXTRACT REAL IMAGES FROM WEBSITES
-            async loadImagesWithCaching(articles) {
+            // NEW: Real image extraction with OneDrive caching system
+            async loadArticleImagesWithCaching(articles) {
                 console.log('🎨 REAL IMAGE EXTRACTION + ONEDRIVE CACHING');
                 
-                // Step 1: Load saved images instantly
+                // Step 1: Load saved real images instantly
                 let savedImages = 0;
                 let needExtraction = [];
                 
@@ -1468,8 +1468,6 @@
                 return iconPatterns.some(pattern => src.toLowerCase().includes(pattern));
             }
 
-
-
             // Set article image
             setArticleImage(imageElement, imageUrl) {
                 if (!imageElement) return;
@@ -1542,15 +1540,47 @@
             }
 
             async loadArticleContent(article) {
-                console.log('🚀 CONTENT LOADER');
+                console.log('🚀 NEW CONTENT LOADER STARTING - Version 2.0');
                 const contentElement = document.getElementById('readerContent');
                 
                 // First try to get saved content
                 let content = this.getArticleContent(article);
                 
+                // If no saved content found, try to fetch from original URL
                 if (!content) {
-                    console.log('🌐 No saved content found.');
-                    content = this.getFallbackContent(article);
+                    console.log('🌐 No saved content found. Attempting to fetch from original URL...');
+                    
+                    try {
+                        // Show fetching status
+                        contentElement.innerHTML = `
+                            <div style="text-align: center; padding: 40px;">
+                                <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+                                <p><strong>🌐 Fetching article content...</strong></p>
+                                <p style="font-size: 0.9em; color: var(--text-secondary);">
+                                    Loading from ${this.getDomain(article.url)}
+                                </p>
+                                <p style="font-size: 0.8em; color: var(--text-secondary);">
+                                    This may take a few seconds...
+                                </p>
+                            </div>
+                        `;
+                        
+                        // Fetch content using proxy services
+                        const fetchedContent = await this.fetchArticleContent(article.url);
+                        
+                        if (fetchedContent && fetchedContent.trim()) {
+                            content = fetchedContent;
+                            console.log('✅ Successfully fetched article content');
+                            this.updateStatus('✅ Article content loaded successfully!', 'success');
+                        } else {
+                            throw new Error('No content extracted from fetched page');
+                        }
+                        
+                    } catch (error) {
+                        console.log('❌ Failed to fetch content:', error.message);
+                        this.updateStatus('❌ Could not fetch article content. Using fallback.', 'error');
+                        content = this.getFallbackContent(article, error.message);
+                    }
                 } else {
                     console.log('✅ Using saved content');
                     this.updateStatus('✅ Article loaded from saved content', 'success');
@@ -1560,11 +1590,181 @@
                 contentElement.innerHTML = content;
             }
 
-            getFallbackContent(article) {
+            async fetchArticleContent(url) {
+                try {
+                    console.log(`🌐 Starting fetch for: ${url}`);
+                    
+                    // Method 1: Try using AllOrigins proxy (most reliable)
+                    try {
+                        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                        console.log(`Trying AllOrigins proxy...`);
+                        
+                        const response = await fetch(proxyUrl);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            const html = data.contents;
+                            
+                            if (html && html.length > 1000) { // Ensure we got substantial content
+                                console.log(`✅ AllOrigins success: ${html.length} chars`);
+                                const extractedContent = this.extractContentFromHTML(html, url);
+                                if (extractedContent && extractedContent.length > 500) {
+                                    return extractedContent;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`AllOrigins failed: ${error.message}`);
+                    }
+                    
+                    // Method 2: Try CORS proxy
+                    try {
+                        const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                        console.log(`Trying CORS proxy...`);
+                        
+                        const response = await fetch(corsProxyUrl);
+                        
+                        if (response.ok) {
+                            const html = await response.text();
+                            
+                            if (html && html.length > 1000) {
+                                console.log(`✅ CORS proxy success: ${html.length} chars`);
+                                const extractedContent = this.extractContentFromHTML(html, url);
+                                if (extractedContent && extractedContent.length > 500) {
+                                    return extractedContent;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`CORS proxy failed: ${error.message}`);
+                    }
+                    
+                    // Method 3: Try direct fetch (will likely fail due to CORS, but worth trying)
+                    try {
+                        console.log(`Trying direct fetch...`);
+                        const response = await fetch(url, {
+                            mode: 'cors',
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader)'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const html = await response.text();
+                            console.log(`✅ Direct fetch success: ${html.length} chars`);
+                            return this.extractContentFromHTML(html, url);
+                        }
+                    } catch (error) {
+                        console.log(`Direct fetch failed (expected): ${error.message}`);
+                    }
+                    
+                    throw new Error('All proxy methods failed to fetch content');
+                    
+                } catch (error) {
+                    console.error('❌ All fetch methods failed:', error);
+                    throw error;
+                }
+            }
+
+            extractContentFromHTML(html, url) {
+                try {
+                    // Create a temporary DOM to parse the HTML
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Remove unwanted elements
+                    const unwantedSelectors = [
+                        'script', 'style', 'nav', 'header', 'footer', 
+                        '.sidebar', '.menu', '.navigation', '.comments',
+                        '.advertisement', '.ads', '.social-share',
+                        '[role="banner"]', '[role="navigation"]', '[role="complementary"]'
+                    ];
+                    
+                    unwantedSelectors.forEach(selector => {
+                        doc.querySelectorAll(selector).forEach(el => el.remove());
+                    });
+                    
+                    // Try to find the main content using common selectors
+                    const contentSelectors = [
+                        'article',
+                        '[role="main"]',
+                        '.post-content', '.entry-content', '.article-content',
+                        '.content', '.main-content', '.post-body',
+                        '.entry', '.post', '.article-body',
+                        'main', '#content', '#main'
+                    ];
+                    
+                    let contentElement = null;
+                    
+                    for (const selector of contentSelectors) {
+                        contentElement = doc.querySelector(selector);
+                        if (contentElement && contentElement.textContent.trim().length > 200) {
+                            break;
+                        }
+                    }
+                    
+                    // If no main content found, try to get paragraphs from body
+                    if (!contentElement || contentElement.textContent.trim().length < 200) {
+                        const paragraphs = Array.from(doc.querySelectorAll('p'))
+                            .filter(p => p.textContent.trim().length > 50)
+                            .slice(0, 20); // Take first 20 substantial paragraphs
+                        
+                        if (paragraphs.length > 0) {
+                            const div = doc.createElement('div');
+                            paragraphs.forEach(p => div.appendChild(p.cloneNode(true)));
+                            contentElement = div;
+                        }
+                    }
+                    
+                    if (contentElement) {
+                        // Clean up the content
+                        let content = contentElement.innerHTML;
+                        
+                        // Fix relative URLs to absolute
+                        const baseUrl = new URL(url).origin;
+                        content = content.replace(/src="\/([^"]+)"/g, `src="${baseUrl}/$1"`);
+                        content = content.replace(/href="\/([^"]+)"/g, `href="${baseUrl}/$1"`);
+                        
+                        // Add a note about the source
+                        content = `
+                            <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                                <p style="margin: 0; font-size: 0.9em;">
+                                    <strong>📡 Content fetched from original source</strong><br>
+                                    This article content was retrieved in real-time from <a href="${url}" target="_blank" style="color: #1976d2;">${this.getDomain(url)}</a>
+                                </p>
+                            </div>
+                            ${content}
+                        `;
+                        
+                        return content;
+                    }
+                    
+                    throw new Error('Could not extract readable content from page');
+                    
+                } catch (error) {
+                    console.error('Content extraction error:', error);
+                    throw error;
+                }
+            }
+
+            getFallbackContent(article, errorMessage) {
                 return `
                     <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 8px; margin: 20px 0;">
                         <h3>📄 Content Not Available</h3>
-                        <p>The full article content wasn't saved with this article.</p>
+                        <p>We couldn't load the full article content. This can happen because:</p>
+                        <ul style="margin: 15px 0;">
+                            <li>The website blocks automated content fetching</li>
+                            <li>CORS (Cross-Origin) restrictions prevent access</li>
+                            <li>The article content wasn't saved by the browser extension</li>
+                            <li>Network connectivity issues</li>
+                        </ul>
+                        
+                        <p><strong>What you can do:</strong></p>
+                        <ol style="margin: 15px 0;">
+                            <li><strong>Visit the original article</strong> using the button below</li>
+                            <li><strong>Re-save the article</strong> with your browser extension</li>
+                            <li><strong>Check extension settings</strong> for content extraction options</li>
+                        </ol>
                         
                         <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0;">
                             <p><strong>Available excerpt:</strong></p>
@@ -1576,20 +1776,40 @@
                                 🔗 Read Full Article
                             </a>
                         </div>
+                        
+                        <details style="margin-top: 20px;">
+                            <summary style="cursor: pointer; color: #666;">Technical Details</summary>
+                            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
+                                Error: ${errorMessage}
+                            </p>
+                        </details>
                     </div>
                 `;
             }
 
-            // Get the best available content for reading
+            // Get the best available content for reading - simplified version
             getArticleContent(article) {
-                const contentFields = ['content', 'html', 'fullContent', 'textContent', 'body'];
+                console.log('📖 Checking for saved content...');
+                
+                // Try content fields in order
+                const contentFields = ['content', 'html', 'fullContent', 'textContent', 'body', 'readableContent', 'articleContent', 'savedContent'];
                 
                 for (const field of contentFields) {
                     if (article[field] && article[field].trim()) {
+                        console.log(`✅ Found content in ${field} (${article[field].length} chars)`);
                         return article[field];
                     }
                 }
                 
+                // Look for any substantial text content
+                for (const [key, value] of Object.entries(article)) {
+                    if (typeof value === 'string' && value.length > 200 && key !== 'excerpt' && key !== 'url') {
+                        console.log(`✅ Found substantial content in ${key} (${value.length} chars)`);
+                        return value;
+                    }
+                }
+                
+                console.log('❌ No saved content found');
                 return null;
             }
 
@@ -1751,7 +1971,7 @@
         </div>
     </div>
     <div class="content">
-        ${article.content || article.excerpt || 'Content not available'}
+        ${article.content}
     </div>
     <div class="footer">
         <p><strong>✨ Exported from MyPocket Web Reader</strong></p>
@@ -1885,6 +2105,28 @@ Protocol: ${window.location.protocol}
 Host: ${window.location.host}
 Has Access Token: ${!!this.accessToken}
 Articles Loaded: ${this.articles.length}
+
+Azure AD Redirect URI Requirements:
+- Must be absolute URI (http:// or https://)
+- Must be registered in Azure AD App Registration
+- Must match exactly (including trailing slashes)
+
+Common Issues:
+1. Using file:// protocol (not supported)
+2. Redirect URI not registered in Azure AD
+3. Mismatch between actual URI and registered URI
+
+Next Steps:
+1. Open Azure Portal → App registrations
+2. Find your app: ${this.clientId}
+3. Go to Authentication → Platform configurations
+4. Add Web platform with redirect URI: ${this.redirectUri}
+5. Make sure URI is exact match
+
+Button Issues:
+- Try clicking "Show Buttons" to test if buttons work
+- Check browser console for JavaScript errors
+- Inspect element to see if buttons are in DOM
                 `;
 
                 alert(info);
