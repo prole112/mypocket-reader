@@ -903,6 +903,7 @@
                 this.accessToken = null;
                 this.articles = [];
                 this.currentArticle = null;
+                this.imageUpdated = false; // Track if we added new images to save back
 
                 this.init();
             }
@@ -1088,7 +1089,7 @@
                 }
             }
 
-            // Display articles with REAL image extraction
+            // Enhanced displayArticles with SMART IMAGE CACHING
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1118,7 +1119,7 @@
                             ">
                                 <div style="text-align: center;">
                                     <div style="font-size: 1.5em; margin-bottom: 5px;">🖼️</div>
-                                    <div style="font-size: 0.8em;">Loading image...</div>
+                                    <div style="font-size: 0.8em;">Loading...</div>
                                 </div>
                             </div>
                         </div>
@@ -1150,85 +1151,133 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
                 
-                // Show image loading status
-                this.updateStatus(`🎨 Extracting real images from article websites...`, 'loading');
-                
-                // Extract real images from article websites
-                this.loadAllArticleImages(articles);
+                // SMART IMAGE CACHING: Load saved images instantly, extract new ones
+                this.loadImagesWithCaching(articles);
             }
 
-            // NEW: Extract real images from article websites
-            async loadAllArticleImages(articles) {
-                console.log('🎨 REAL IMAGE EXTRACTOR - Getting actual article images...');
+            // NEW: Smart image caching system
+            async loadImagesWithCaching(articles) {
+                console.log('🎨 SMART IMAGE CACHING SYSTEM - Extract once, save forever!');
                 
-                let successCount = 0;
-                const totalImages = articles.length;
+                // Step 1: Load saved images instantly
+                let savedImages = 0;
+                let needExtraction = [];
                 
-                // Load images sequentially to avoid overwhelming websites
-                for (let i = 0; i < articles.length; i++) {
-                    try {
-                        const success = await this.extractRealArticleImage(articles[i], i);
-                        if (success) successCount++;
-                        
-                        // Update progress
-                        const progress = Math.round(((i + 1) / totalImages) * 100);
-                        this.updateStatus(`🔍 Extracting real images... ${i + 1}/${totalImages} (${progress}%)`, 'loading');
-                        
-                        // Delay to be respectful to websites
-                        await new Promise(resolve => setTimeout(resolve, 300));
-                        
-                    } catch (error) {
-                        console.error(`Failed to extract image for article ${i}:`, error);
-                        // Use category fallback for failed extractions
-                        this.setArticleImageDirect(document.getElementById(`image-${i}`), this.getCategoryBasedImage(articles[i], i));
-                        successCount++;
+                articles.forEach((article, index) => {
+                    if (article.cachedImageUrl) {
+                        // Load saved image instantly
+                        this.setArticleImage(document.getElementById(`image-${index}`), article.cachedImageUrl);
+                        savedImages++;
+                        console.log(`⚡ Instant load: ${article.title.substring(0, 30)}...`);
+                    } else {
+                        // Mark for extraction
+                        needExtraction.push({article, index});
                     }
+                });
+                
+                if (savedImages > 0) {
+                    this.updateStatus(`⚡ Loaded ${savedImages} saved images instantly!`, 'success');
                 }
                 
-                this.updateStatus(`✅ Extracted ${successCount}/${totalImages} real article images!`, 'success');
-                console.log(`🎨 Real image extraction complete: ${successCount}/${totalImages} successful`);
+                // Step 2: Extract images for articles that don't have cached images
+                if (needExtraction.length > 0) {
+                    this.updateStatus(`🔍 Extracting ${needExtraction.length} new images (will save to OneDrive)...`, 'loading');
+                    
+                    let extractedCount = 0;
+                    for (let i = 0; i < needExtraction.length; i++) {
+                        const {article, index} = needExtraction[i];
+                        
+                        try {
+                            // Extract image
+                            const imageUrl = await this.extractImageFromArticle(article);
+                            
+                            if (imageUrl) {
+                                // Save to article data
+                                article.cachedImageUrl = imageUrl;
+                                article.imageCachedDate = new Date().toISOString();
+                                this.imageUpdated = true;
+                                
+                                // Display immediately
+                                this.setArticleImage(document.getElementById(`image-${index}`), imageUrl);
+                                extractedCount++;
+                                
+                                console.log(`✅ Extracted and cached: ${article.title.substring(0, 30)}...`);
+                            } else {
+                                // Use fallback
+                                const fallbackUrl = this.generatePlaceholderImage(article, index);
+                                article.cachedImageUrl = fallbackUrl;
+                                article.imageCachedDate = new Date().toISOString();
+                                this.imageUpdated = true;
+                                
+                                this.setArticleImage(document.getElementById(`image-${index}`), fallbackUrl);
+                                extractedCount++;
+                            }
+                            
+                            // Update progress
+                            const progress = Math.round(((i + 1) / needExtraction.length) * 100);
+                            this.updateStatus(`🔍 Extracting images... ${i + 1}/${needExtraction.length} (${progress}%)`, 'loading');
+                            
+                            // Delay to be respectful to websites
+                            await new Promise(resolve => setTimeout(resolve, 300));
+                            
+                        } catch (error) {
+                            console.error(`Failed to extract image for article ${index}:`, error);
+                            // Use fallback
+                            const fallbackUrl = this.generatePlaceholderImage(article, index);
+                            article.cachedImageUrl = fallbackUrl;
+                            article.imageCachedDate = new Date().toISOString();
+                            this.imageUpdated = true;
+                            
+                            this.setArticleImage(document.getElementById(`image-${index}`), fallbackUrl);
+                            extractedCount++;
+                        }
+                    }
+                    
+                    // Step 3: Save updated articles back to OneDrive
+                    if (this.imageUpdated && this.accessToken) {
+                        try {
+                            this.updateStatus('💾 Saving cached images to OneDrive...', 'loading');
+                            await this.updateOneDriveBackup();
+                            this.updateStatus(`✅ Extracted ${extractedCount} images and saved to OneDrive! Next load will be instant.`, 'success');
+                        } catch (error) {
+                            console.error('Failed to save to OneDrive:', error);
+                            this.updateStatus(`✅ Extracted ${extractedCount} images (OneDrive save failed)`, 'error');
+                        }
+                    } else {
+                        this.updateStatus(`✅ Extracted ${extractedCount} new images!`, 'success');
+                    }
+                } else {
+                    this.updateStatus(`✅ All ${savedImages} images loaded from cache instantly!`, 'success');
+                }
+                
+                console.log(`🎨 Smart caching complete: ${savedImages} cached, ${needExtraction.length} extracted`);
             }
 
-            // Extract the actual featured image from the article's website
-            async extractRealArticleImage(article, index) {
-                const imageElement = document.getElementById(`image-${index}`);
-                if (!imageElement) return false;
-
-                console.log(`🔍 Extracting real image from: ${this.getDomain(article.url)}`);
-
-                // Strategy 1: Try saved article images first (fastest)
+            // Extract image from a single article
+            async extractImageFromArticle(article) {
+                // Strategy 1: Try saved article images first
                 const savedImage = this.getBestArticleImage(article);
                 if (savedImage) {
-                    console.log(`✅ Using saved image: ${article.title.substring(0, 30)}...`);
-                    this.setArticleImageDirect(imageElement, savedImage);
-                    return true;
+                    return savedImage;
                 }
 
-                // Strategy 2: Extract image from the original website
+                // Strategy 2: Extract from website
                 try {
                     const extractedImage = await this.fetchRealImageFromWebsite(article.url);
                     if (extractedImage) {
-                        console.log(`✅ Extracted real image: ${article.title.substring(0, 30)}...`);
-                        this.setArticleImageDirect(imageElement, extractedImage);
-                        return true;
+                        return extractedImage;
                     }
                 } catch (error) {
-                    console.log(`⚠️ Could not extract from website: ${error.message}`);
+                    console.log(`Website extraction failed for ${article.url}: ${error.message}`);
                 }
 
-                // Strategy 3: Use intelligent category-based fallback
-                console.log(`🎨 Using intelligent fallback: ${article.title.substring(0, 30)}...`);
-                const fallbackImage = this.getCategoryBasedImage(article, index);
-                this.setArticleImageDirect(imageElement, fallbackImage);
-                return true;
+                // Strategy 3: No real image found
+                return null;
             }
 
-            // Fetch the actual featured image from a website
+            // Fetch real image from website
             async fetchRealImageFromWebsite(url) {
                 try {
-                    console.log(`🌐 Fetching webpage to extract image: ${url}`);
-                    
-                    // Try AllOrigins proxy
                     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
                     const response = await fetch(proxyUrl);
                     
@@ -1240,202 +1289,146 @@
                     const html = data.contents;
                     
                     if (!html || html.length < 500) {
-                        throw new Error('No substantial HTML content received');
+                        throw new Error('No substantial HTML content');
                     }
                     
-                    // Parse the HTML and extract the best image
-                    const extractedImageUrl = this.parseHTMLForBestImage(html, url);
-                    
-                    if (extractedImageUrl) {
-                        console.log(`🎯 Found image: ${extractedImageUrl}`);
-                        return extractedImageUrl;
-                    }
-                    
-                    throw new Error('No suitable image found in webpage');
+                    return this.parseHTMLForBestImage(html, url);
                     
                 } catch (error) {
-                    console.log(`❌ Website image extraction failed: ${error.message}`);
                     throw error;
                 }
             }
 
-            // Parse HTML to find the best image
+            // Parse HTML for best image
             parseHTMLForBestImage(html, baseUrl) {
                 try {
-                    // Create a DOM parser
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
                     
-                    // Strategy 1: Look for Open Graph image (most reliable)
+                    // Try Open Graph image
                     const ogImage = doc.querySelector('meta[property="og:image"]');
                     if (ogImage) {
                         const imageUrl = this.makeAbsoluteUrl(ogImage.getAttribute('content'), baseUrl);
                         if (this.isValidImageUrl(imageUrl)) {
-                            console.log(`🎯 Found Open Graph image: ${imageUrl}`);
                             return imageUrl;
                         }
                     }
                     
-                    // Strategy 2: Look for Twitter card image
-                    const twitterImage = doc.querySelector('meta[name="twitter:image"], meta[property="twitter:image"]');
+                    // Try Twitter card image
+                    const twitterImage = doc.querySelector('meta[name="twitter:image"]');
                     if (twitterImage) {
                         const imageUrl = this.makeAbsoluteUrl(twitterImage.getAttribute('content'), baseUrl);
                         if (this.isValidImageUrl(imageUrl)) {
-                            console.log(`🎯 Found Twitter card image: ${imageUrl}`);
                             return imageUrl;
                         }
                     }
                     
-                    // Strategy 3: Look for article featured image
-                    const featuredSelectors = [
+                    // Try featured image selectors
+                    const selectors = [
                         '.featured-image img',
-                        '.hero-image img',
+                        '.hero-image img', 
                         '.post-thumbnail img',
-                        '.article-image img',
-                        '.entry-image img',
-                        '.wp-post-image',
-                        'article img:first-of-type',
-                        '.content img:first-of-type',
-                        '.post-content img:first-of-type'
+                        'article img:first-of-type'
                     ];
                     
-                    for (const selector of featuredSelectors) {
+                    for (const selector of selectors) {
                         const img = doc.querySelector(selector);
                         if (img) {
-                            const src = img.getAttribute('src') || img.getAttribute('data-src') || img.getAttribute('data-lazy-src');
-                            if (src) {
+                            const src = img.getAttribute('src') || img.getAttribute('data-src');
+                            if (src && !this.isIconOrLogo(src)) {
                                 const imageUrl = this.makeAbsoluteUrl(src, baseUrl);
-                                if (this.isValidImageUrl(imageUrl) && !this.isIconOrLogo(src)) {
-                                    console.log(`🎯 Found featured image: ${imageUrl}`);
+                                if (this.isValidImageUrl(imageUrl)) {
                                     return imageUrl;
                                 }
                             }
                         }
                     }
                     
-                    console.log(`❌ No suitable image found in HTML`);
                     return null;
                     
                 } catch (error) {
-                    console.error('HTML parsing error:', error);
                     return null;
                 }
             }
 
-            // Convert relative URLs to absolute
+            // Helper functions
             makeAbsoluteUrl(imageUrl, baseUrl) {
                 if (!imageUrl) return null;
                 
                 try {
-                    // If already absolute, return as-is
                     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
                         return imageUrl;
                     }
-                    
-                    // Handle protocol-relative URLs
                     if (imageUrl.startsWith('//')) {
                         return 'https:' + imageUrl;
                     }
-                    
-                    // If relative, make it absolute
                     const base = new URL(baseUrl);
                     return new URL(imageUrl, base.origin).href;
                 } catch (error) {
-                    console.log(`Failed to make absolute URL: ${imageUrl}, base: ${baseUrl}`);
                     return null;
                 }
             }
 
-            // Enhanced URL validation
             isValidImageUrl(url) {
-                if (!url || typeof url !== 'string') return false;
-                
-                // Must be a valid URL
+                if (!url) return false;
                 try {
                     new URL(url);
+                    const imagePattern = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i;
+                    return imagePattern.test(url);
                 } catch {
                     return false;
                 }
-                
-                // Must have common image extensions or be from known image services
-                const imagePattern = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i;
-                const imageServices = ['unsplash.com', 'images.unsplash.com', 'picsum.photos', 'via.placeholder.com'];
-                
-                return imagePattern.test(url) || imageServices.some(service => url.includes(service));
             }
 
-            // Enhanced icon/logo detection
             isIconOrLogo(src) {
                 if (!src) return false;
-                
-                const iconPatterns = [
-                    'icon', 'logo', 'avatar', 'profile', 'favicon', 'sprite', 
-                    'button', 'badge', 'social', 'thumb', 'thumbnail',
-                    '/icons/', '/images/icons/', 'gravatar', 'user-content'
-                ];
-                
-                const srcLower = src.toLowerCase();
-                return iconPatterns.some(pattern => srcLower.includes(pattern)) ||
-                       srcLower.includes('.ico') ||
-                       (srcLower.includes('64x64') || srcLower.includes('32x32'));
+                const iconPatterns = ['icon', 'logo', 'avatar', 'favicon', 'sprite', 'button'];
+                return iconPatterns.some(pattern => src.toLowerCase().includes(pattern));
             }
 
-            // Get category-based images for fallbacks
-            getCategoryBasedImage(article, index) {
+            // Generate beautiful placeholder image
+            generatePlaceholderImage(article, index) {
                 const domain = this.getDomain(article.url).toLowerCase();
                 const title = article.title.toLowerCase();
                 
-                // Technology/Programming
-                if (domain.includes('github') || domain.includes('stackoverflow') || domain.includes('dev.to') ||
-                    title.includes('code') || title.includes('programming') || title.includes('javascript') || title.includes('react')) {
-                    return `https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                // Category-based Unsplash images
+                if (domain.includes('github') || title.includes('code') || title.includes('programming')) {
+                    return `https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=250&fit=crop&q=80`;
+                }
+                if (domain.includes('business') || title.includes('business') || title.includes('startup')) {
+                    return `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=250&fit=crop&q=80`;
+                }
+                if (domain.includes('news') || title.includes('news')) {
+                    return `https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=250&fit=crop&q=80`;
                 }
                 
-                // Business/Finance
-                if (domain.includes('business') || domain.includes('finance') || domain.includes('linkedin') ||
-                    title.includes('business') || title.includes('finance') || title.includes('startup') || title.includes('entrepreneur')) {
-                    return `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-                
-                // News/Media
-                if (domain.includes('news') || domain.includes('bbc') || domain.includes('cnn') ||
-                    title.includes('news') || title.includes('politics') || title.includes('media')) {
-                    return `https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-                
-                // Default beautiful images based on index
-                const defaultImages = [
-                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Mountain landscape
-                    'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Abstract colorful
-                    'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Space/galaxy
-                    'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // City skyline
-                    'https://images.unsplash.com/photo-1470115636492-6d2b56f9146d?w=400&h=250&fit=crop&crop=center&q=80&auto=format' // Forest/trees
+                // Default beautiful images
+                const defaults = [
+                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=400&h=250&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&h=250&fit=crop&q=80',
+                    'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=250&fit=crop&q=80'
                 ];
                 
-                return defaultImages[index % defaultImages.length];
+                return defaults[index % defaults.length];
             }
 
-            // Set image directly
-            setArticleImageDirect(imageElement, imageUrl) {
+            // Set article image
+            setArticleImage(imageElement, imageUrl) {
+                if (!imageElement) return;
+                
                 imageElement.innerHTML = `
                     <img src="${imageUrl}" 
                          alt="Article image" 
                          style="
                             opacity: 0; 
-                            transition: opacity 0.8s ease;
+                            transition: opacity 0.5s ease;
                             width: 100%;
                             height: 100%;
                             object-fit: cover;
-                            border-radius: inherit;
                          "
-                         onload="
-                            this.style.opacity='1';
-                            console.log('✅ Image loaded successfully');
-                         " 
-                         onerror="
-                            console.log('⚠️ Image failed, using fallback');
-                            this.src='https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
-                         ">
+                         onload="this.style.opacity='1';" 
+                         onerror="this.style.display='none';">
                 `;
             }
 
@@ -1499,8 +1492,8 @@
                 let content = this.getArticleContent(article);
                 
                 if (!content) {
-                    console.log('🌐 No saved content found. Using fallback.');
-                    content = this.getFallbackContent(article, 'No content saved with article');
+                    console.log('🌐 No saved content found.');
+                    content = this.getFallbackContent(article);
                 } else {
                     console.log('✅ Using saved content');
                     this.updateStatus('✅ Article loaded from saved content', 'success');
@@ -1510,7 +1503,7 @@
                 contentElement.innerHTML = content;
             }
 
-            getFallbackContent(article, errorMessage) {
+            getFallbackContent(article) {
                 return `
                     <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 8px; margin: 20px 0;">
                         <h3>📄 Content Not Available</h3>
@@ -1532,19 +1525,14 @@
 
             // Get the best available content for reading
             getArticleContent(article) {
-                console.log('📖 Checking for saved content...');
-                
-                // Try content fields in order
-                const contentFields = ['content', 'html', 'fullContent', 'textContent', 'body', 'readableContent', 'articleContent', 'savedContent'];
+                const contentFields = ['content', 'html', 'fullContent', 'textContent', 'body'];
                 
                 for (const field of contentFields) {
                     if (article[field] && article[field].trim()) {
-                        console.log(`✅ Found content in ${field} (${article[field].length} chars)`);
                         return article[field];
                     }
                 }
                 
-                console.log('❌ No saved content found');
                 return null;
             }
 
@@ -1840,23 +1828,6 @@ Protocol: ${window.location.protocol}
 Host: ${window.location.host}
 Has Access Token: ${!!this.accessToken}
 Articles Loaded: ${this.articles.length}
-
-Azure AD Redirect URI Requirements:
-- Must be absolute URI (http:// or https://)
-- Must be registered in Azure AD App Registration
-- Must match exactly (including trailing slashes)
-
-Common Issues:
-1. Using file:// protocol (not supported)
-2. Redirect URI not registered in Azure AD
-3. Mismatch between actual URI and registered URI
-
-Next Steps:
-1. Open Azure Portal → App registrations
-2. Find your app: ${this.clientId}
-3. Go to Authentication → Platform configurations
-4. Add Web platform with redirect URI: ${this.redirectUri}
-5. Make sure URI is exact match
                 `;
 
                 alert(info);
