@@ -1054,26 +1054,47 @@
                 this.addLoadMoreImagesButton(articles);
             }
 
-            // Add a button to load more images in batches
+            // Add a button to load more images in batches - AT THE TOP
             addLoadMoreImagesButton(articles) {
                 const container = document.getElementById('articlesContainer');
                 
                 const buttonHTML = `
-                    <div style="text-align: center; margin: 40px 0;">
-                        <button id="loadMoreImages" class="btn btn-secondary" style="font-size: 16px; padding: 15px 30px;">
-                            <span>🖼️</span> Load More Images (Testing Proxy)
+                    <div style="text-align: center; margin: 20px 0 30px 0; padding: 20px; background: var(--surface); border-radius: 12px; border: 1px solid var(--border);">
+                        <button id="loadMoreImages" class="btn btn-secondary" style="font-size: 16px; padding: 15px 30px; margin-bottom: 10px;">
+                            <span>🖼️</span> Load More Images (Next 20 Articles)
                         </button>
-                        <p style="margin-top: 10px; color: var(--text-secondary); font-size: 0.9em;">
-                            Testing image fetching for first 10 articles. If successful, click to load more.
+                        <p style="margin: 10px 0 0 0; color: var(--text-secondary); font-size: 0.9em;">
+                            📊 Testing image fetching for first 10 articles. ${this.getImageSuccessCount()}/10 images loaded. Click to try more!
+                        </p>
+                        <p style="margin: 5px 0 0 0; color: var(--text-secondary); font-size: 0.8em;">
+                            💡 Some sites block image fetching (normal). Major news sites work best.
                         </p>
                     </div>
                 `;
                 
-                container.innerHTML += buttonHTML;
+                // Add the button at the TOP, before the articles grid
+                const existingGrid = container.querySelector('.articles-grid');
+                if (existingGrid) {
+                    existingGrid.insertAdjacentHTML('beforebegin', buttonHTML);
+                } else {
+                    container.innerHTML = buttonHTML + container.innerHTML;
+                }
                 
                 document.getElementById('loadMoreImages').addEventListener('click', () => {
                     this.loadMoreImages(articles);
                 });
+            }
+
+            // Count how many images have actually loaded
+            getImageSuccessCount() {
+                let count = 0;
+                for (let i = 0; i < 10; i++) {
+                    const imageElement = document.getElementById(`image-${i}`);
+                    if (imageElement && imageElement.querySelector('img')) {
+                        count++;
+                    }
+                }
+                return count;
             }
 
             // Load more images in batches
