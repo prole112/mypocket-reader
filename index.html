@@ -1152,10 +1152,10 @@
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
                 
                 // Show image loading status
-                this.updateStatus(`🔍 Loading images (with OneDrive backup)...`, 'loading');
+                this.updateStatus(`🔍 Extracting real images from article websites...`, 'loading');
                 
                 // ENHANCED: Extract real images from original websites + backup to OneDrive
-                this.loadAllArticleImagesWithBackup(articles);
+                this.loadAllArticleImages(articles);
             }
 
             // ENHANCED: Extract real images from original websites
