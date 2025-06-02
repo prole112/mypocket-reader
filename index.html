@@ -170,7 +170,7 @@
 
         /* Header */
         .header {
-            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
             color: white;
             padding: 20px 0;
             box-shadow: var(--shadow);
@@ -302,8 +302,8 @@
 
         .articles-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-            gap: 24px;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 18px;
             margin-top: 20px;
         }
 
@@ -679,7 +679,7 @@
 
             .articles-grid {
                 grid-template-columns: 1fr;
-                gap: 20px;
+                gap: 16px;
             }
 
             .article-card {
@@ -1158,9 +1158,9 @@
                 this.loadAllArticleImagesWithBackup(articles);
             }
 
-            // NEW: Enhanced image loading with OneDrive backup
-            async loadAllArticleImagesWithBackup(articles) {
-                console.log('🎨 ENHANCED IMAGE LOADER WITH ONEDRIVE BACKUP - Starting...');
+            // ENHANCED: Extract real images from original websites
+            async loadAllArticleImages(articles) {
+                console.log('🎨 REAL IMAGE EXTRACTOR - Getting actual article images...');
                 
                 let successCount = 0;
                 let backupCount = 0;
@@ -1169,40 +1169,37 @@
                 // Load images sequentially to avoid overwhelming websites
                 for (let i = 0; i < articles.length; i++) {
                     try {
-                        const result = await this.extractAndBackupArticleImage(articles[i], i);
+                        const result = await this.extractRealArticleImage(articles[i], i);
                         if (result.success) successCount++;
                         if (result.backed_up) backupCount++;
                         
                         // Update progress
                         const progress = Math.round(((i + 1) / totalImages) * 100);
-                        this.updateStatus(`🔍 Loading images... ${i + 1}/${totalImages} (${progress}%) | ${backupCount} backed up`, 'loading');
+                        this.updateStatus(`🔍 Extracting real images... ${i + 1}/${totalImages} (${progress}%) | ${backupCount} backed up`, 'loading');
                         
                         // Delay to be respectful to websites
                         await new Promise(resolve => setTimeout(resolve, 200));
                         
                     } catch (error) {
-                        console.error(`Failed to process image for article ${i}:`, error);
+                        console.error(`Failed to extract image for article ${i}:`, error);
                         // Use category fallback for failed extractions
                         this.setArticleImageDirect(document.getElementById(`image-${i}`), this.getCategoryBasedImage(articles[i], i));
                         successCount++;
                     }
                 }
                 
-                this.updateStatus(`✅ Loaded ${successCount}/${totalImages} images | ${backupCount} backed up to OneDrive!`, 'success');
-                console.log(`🎨 Enhanced image loading complete: ${successCount}/${totalImages} successful, ${backupCount} backed up`);
+                this.updateStatus(`✅ Extracted ${successCount}/${totalImages} real article images! | ${backupCount} backed up`, 'success');
+                console.log(`🎨 Real image extraction complete: ${successCount}/${totalImages} successful, ${backupCount} backed up`);
             }
 
-            // NEW: Extract image and backup to OneDrive
-            async extractAndBackupArticleImage(article, index) {
+            // NEW: Extract image and backup to OneDrive - KEEPING YOUR ORIGINAL LOGIC
+            async extractRealArticleImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
                 if (!imageElement) return { success: false, backed_up: false };
 
-                console.log(`🔍 Processing image for: ${this.getDomain(article.url)}`);
+                console.log(`🔍 Extracting real image from: ${this.getDomain(article.url)}`);
 
-                let imageUrl = null;
-                let imageSource = 'fallback';
-
-                // Strategy 1: Check for backed-up image in OneDrive first
+                // NEW: Strategy 0: Check for backed-up image in OneDrive first (if available)
                 if (article.backedUpImage && this.accessToken) {
                     try {
                         const backedUpUrl = await this.getBackedUpImageUrl(article.backedUpImage);
@@ -1212,59 +1209,64 @@
                             return { success: true, backed_up: false }; // Already backed up
                         }
                     } catch (error) {
-                        console.log(`⚠️ Failed to load backed-up image: ${error.message}`);
+                        console.log(`⚠️ Failed to load backed-up image, extracting fresh: ${error.message}`);
                     }
                 }
 
-                // Strategy 2: Try saved article images (fastest)
+                // YOUR ORIGINAL Strategy 1: Try saved article images first (fastest)
                 const savedImage = this.getBestArticleImage(article);
                 if (savedImage) {
                     console.log(`✅ Using saved image: ${article.title.substring(0, 30)}...`);
-                    imageUrl = savedImage;
-                    imageSource = 'saved';
-                }
-
-                // Strategy 3: Extract image from the original website
-                if (!imageUrl) {
-                    try {
-                        const extractedImage = await this.fetchRealImageFromWebsite(article.url);
-                        if (extractedImage) {
-                            console.log(`✅ Extracted real image: ${article.title.substring(0, 30)}...`);
-                            imageUrl = extractedImage;
-                            imageSource = 'extracted';
+                    this.setArticleImageDirect(imageElement, savedImage);
+                    // NEW: Try to backup saved image too
+                    let backedUp = false;
+                    if (this.imageBackupEnabled && this.accessToken) {
+                        try {
+                            const backupInfo = await this.backupImageToOneDrive(savedImage, article, index);
+                            if (backupInfo) {
+                                article.backedUpImage = backupInfo;
+                                backedUp = true;
+                            }
+                        } catch (error) {
+                            console.log(`⚠️ Backup of saved image failed: ${error.message}`);
                         }
-                    } catch (error) {
-                        console.log(`⚠️ Could not extract from website: ${error.message}`);
                     }
+                    return { success: true, backed_up: backedUp };
                 }
 
-                // Strategy 4: Use intelligent category-based fallback
-                if (!imageUrl) {
-                    console.log(`🎨 Using intelligent fallback: ${article.title.substring(0, 30)}...`);
-                    imageUrl = this.getCategoryBasedImage(article, index);
-                    imageSource = 'fallback';
-                }
-
-                // Set the image
-                this.setArticleImageDirect(imageElement, imageUrl);
-
-                // NEW: Backup image to OneDrive if it's a real extracted image
-                let backedUp = false;
-                if (imageSource === 'extracted' && this.imageBackupEnabled && this.accessToken) {
-                    try {
-                        const backupInfo = await this.backupImageToOneDrive(imageUrl, article, index);
-                        if (backupInfo) {
-                            // Update article with backup info
-                            article.backedUpImage = backupInfo;
-                            backedUp = true;
-                            console.log(`💾 Image backed up to OneDrive: ${backupInfo.fileName}`);
+                // YOUR ORIGINAL Strategy 2: Extract image from the original website
+                try {
+                    const extractedImage = await this.fetchRealImageFromWebsite(article.url);
+                    if (extractedImage) {
+                        console.log(`✅ Extracted real image: ${article.title.substring(0, 30)}...`);
+                        this.setArticleImageDirect(imageElement, extractedImage);
+                        
+                        // NEW: Backup the extracted image
+                        let backedUp = false;
+                        if (this.imageBackupEnabled && this.accessToken) {
+                            try {
+                                const backupInfo = await this.backupImageToOneDrive(extractedImage, article, index);
+                                if (backupInfo) {
+                                    article.backedUpImage = backupInfo;
+                                    backedUp = true;
+                                    console.log(`💾 Real image backed up: ${backupInfo.fileName}`);
+                                }
+                            } catch (error) {
+                                console.log(`⚠️ Image backup failed: ${error.message}`);
+                            }
                         }
-                    } catch (error) {
-                        console.log(`⚠️ Image backup failed: ${error.message}`);
+                        
+                        return { success: true, backed_up: backedUp };
                     }
+                } catch (error) {
+                    console.log(`⚠️ Could not extract from website: ${error.message}`);
                 }
 
-                return { success: true, backed_up: backedUp };
+                // YOUR ORIGINAL Strategy 3: Use intelligent category-based fallback
+                console.log(`🎨 Using intelligent fallback: ${article.title.substring(0, 30)}...`);
+                const fallbackImage = this.getCategoryBasedImage(article, index);
+                this.setArticleImageDirect(imageElement, fallbackImage);
+                return { success: true, backed_up: false };
             }
 
             // NEW: Backup image to OneDrive
