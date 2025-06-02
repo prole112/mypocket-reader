@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPocket - Web Reader with Image Backup</title>
+    <title>MyPocket - Web Reader with Real Image Backup</title>
     <style>
         * {
             margin: 0;
@@ -666,12 +666,12 @@
             }
         }
 
-        /* Image backup status indicator */
-        .image-backup-status {
+        /* Image extraction status indicator */
+        .image-status {
             position: absolute;
             bottom: 8px;
-            right: 8px;
-            background: rgba(0, 0, 0, 0.7);
+            left: 8px;
+            background: rgba(0, 0, 0, 0.8);
             color: white;
             padding: 4px 8px;
             border-radius: 12px;
@@ -680,18 +680,41 @@
             display: flex;
             align-items: center;
             gap: 4px;
+            z-index: 5;
         }
 
-        .image-backup-status.backed-up {
-            background: rgba(76, 175, 80, 0.8);
+        .image-status.backed-up {
+            background: rgba(76, 175, 80, 0.9);
         }
 
-        .image-backup-status.backing-up {
-            background: rgba(255, 152, 0, 0.8);
+        .image-status.extracted {
+            background: rgba(33, 150, 243, 0.9);
         }
 
-        .image-backup-status.fallback {
-            background: rgba(96, 125, 139, 0.8);
+        .image-status.extracting {
+            background: rgba(255, 152, 0, 0.9);
+        }
+
+        .image-status.failed {
+            background: rgba(96, 125, 139, 0.9);
+        }
+
+        /* Website source indicator */
+        .website-source {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: 500;
+            z-index: 5;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         /* Responsive */
@@ -846,7 +869,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    📚 MyPocket Web Reader
+                    📚 MyPocket - Real Image Extraction + Backup
                 </div>
                 <div class="header-actions">
                     <button id="connectBtn" class="btn btn-primary">
@@ -856,8 +879,8 @@
                     <button id="refreshBtn" class="btn btn-secondary" style="display: none;">
                         <span>🔄</span> Refresh
                     </button>
-                    <button id="backupImagesBtn" class="btn btn-secondary" style="display: none;" onclick="webReader.backupAllImages()">
-                        <span>📸</span> Backup Images
+                    <button id="backupImagesBtn" class="btn btn-secondary" style="display: none;" onclick="webReader.backupAllRealImages()">
+                        <span>📸</span> Backup Real Images
                     </button>
                     <button id="debugBtn" class="btn btn-secondary" onclick="webReader.showDebugInfo()">
                         <span>🔧</span> Debug
@@ -895,7 +918,7 @@
                 <div class="empty-state">
                     <div class="empty-state-icon">📖</div>
                     <h3>Welcome to MyPocket Web Reader</h3>
-                    <p>Connect to OneDrive to access your saved articles from anywhere!</p>
+                    <p>Connect to OneDrive to access your saved articles with real extracted images!</p>
                 </div>
             </div>
         </div>
@@ -934,8 +957,14 @@
                 this.accessToken = null;
                 this.articles = [];
                 this.currentArticle = null;
-                this.imageBackupQueue = [];
-                this.imageBackupProgress = { total: 0, completed: 0, failed: 0 };
+                
+                // Image extraction and backup tracking
+                this.imageExtractionStats = {
+                    total: 0,
+                    backedUp: 0,
+                    extracted: 0,
+                    failed: 0
+                };
 
                 this.init();
             }
@@ -1124,7 +1153,10 @@
                 }
             }
 
-            // Enhanced displayArticles with intelligent image loading
+            // ============================================================================
+            // REAL IMAGE EXTRACTION + BACKUP SYSTEM
+            // ============================================================================
+
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1133,8 +1165,9 @@
                     return;
                 }
 
+                console.log('🎨 REAL IMAGE EXTRACTION SYSTEM - Loading actual article images from websites...');
+
                 const articlesHTML = articles.map((article, index) => {
-                    const imageStatus = this.getImageStatus(article);
                     return `
                     <div class="article-card" data-index="${index}">
                         <div class="article-image" id="image-${index}">
@@ -1155,11 +1188,12 @@
                             ">
                                 <div style="text-align: center;">
                                     <div style="font-size: 1.5em; margin-bottom: 5px;">🖼️</div>
-                                    <div style="font-size: 0.8em;">Loading image...</div>
+                                    <div style="font-size: 0.8em;">Extracting real image...</div>
                                 </div>
                             </div>
-                            <div class="image-backup-status ${imageStatus.class}">
-                                ${imageStatus.icon} ${imageStatus.text}
+                            <div class="website-source">${this.getDomain(article.url)}</div>
+                            <div class="image-status extracting" id="status-${index}">
+                                ⏳ Extracting...
                             </div>
                         </div>
                         <div class="article-content" onclick="webReader.openReader(${index})">
@@ -1190,154 +1224,404 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
                 
-                // Intelligent image loading based on backup status
-                this.loadArticleImagesIntelligently(articles);
+                // Reset stats
+                this.imageExtractionStats = {
+                    total: articles.length,
+                    backedUp: 0,
+                    extracted: 0,
+                    failed: 0
+                };
+                
+                // Start the intelligent real image loading process
+                this.loadRealImagesWithBackup(articles);
             }
 
-            // NEW: Intelligent image loading with backup priority
-            async loadArticleImagesIntelligently(articles) {
-                console.log('🎨 INTELLIGENT IMAGE LOADER - Using backed up images when available...');
+            // MAIN PROCESS: Load real images with backup priority
+            async loadRealImagesWithBackup(articles) {
+                console.log('🎯 STARTING REAL IMAGE EXTRACTION WITH BACKUP SYSTEM');
+                console.log(`📊 Processing ${articles.length} articles for real image extraction`);
                 
-                let backedUpCount = 0;
-                let extractedCount = 0;
-                let fallbackCount = 0;
+                this.updateStatus(`🎨 Extracting real images from ${articles.length} article websites...`, 'loading');
                 
                 for (let i = 0; i < articles.length; i++) {
                     const article = articles[i];
                     
                     try {
-                        // Priority 1: Check for backed up image
-                        if (article.backupImageUrl) {
-                            console.log(`✅ Using backed up image for: ${article.title.substring(0, 30)}...`);
-                            await this.loadBackedUpImage(article, i);
-                            backedUpCount++;
-                            this.updateImageStatus(i, 'backed-up', '☁️', 'Backed up');
+                        // STEP 1: Check if we have a backed up real image
+                        if (article.realImageBackupUrl) {
+                            console.log(`☁️ Using backed up real image from ${this.getDomain(article.url)}: ${article.title.substring(0, 30)}...`);
+                            await this.loadBackedUpRealImage(article, i);
+                            this.imageExtractionStats.backedUp++;
+                            this.updateImageStatus(i, 'backed-up', '☁️ From backup');
                             continue;
                         }
                         
-                        // Priority 2: Try to extract and backup new image
-                        console.log(`🔍 No backup found, extracting for: ${article.title.substring(0, 30)}...`);
-                        const success = await this.extractAndBackupImage(article, i);
+                        // STEP 2: Extract real image from the website
+                        console.log(`🔍 Extracting real image from ${this.getDomain(article.url)}: ${article.title.substring(0, 30)}...`);
+                        this.updateImageStatus(i, 'extracting', '🔍 Extracting...');
                         
-                        if (success) {
-                            extractedCount++;
-                            this.updateImageStatus(i, 'backed-up', '☁️', 'Backed up');
+                        const realImageUrl = await this.extractRealImageFromWebsite(article.url);
+                        
+                        if (realImageUrl) {
+                            console.log(`✅ Successfully extracted real image from ${this.getDomain(article.url)}`);
+                            
+                            // STEP 3: Display the real image immediately
+                            this.setRealImageDisplay(document.getElementById(`image-${i}`), realImageUrl, this.getDomain(article.url));
+                            this.updateImageStatus(i, 'extracted', '🎯 Real image');
+                            
+                            // STEP 4: Try to backup the real image to OneDrive
+                            if (this.accessToken) {
+                                try {
+                                    const backupUrl = await this.backupRealImageToOneDrive(realImageUrl, article, i);
+                                    if (backupUrl) {
+                                        article.realImageBackupUrl = backupUrl;
+                                        this.updateImageStatus(i, 'backed-up', '☁️ Backed up');
+                                        console.log(`☁️ Real image backed up to OneDrive for ${this.getDomain(article.url)}`);
+                                    }
+                                } catch (backupError) {
+                                    console.log(`⚠️ Backup failed but real image extracted: ${backupError.message}`);
+                                }
+                            }
+                            
+                            this.imageExtractionStats.extracted++;
                         } else {
-                            // Priority 3: Use intelligent fallback
-                            this.setArticleImageDirect(
-                                document.getElementById(`image-${i}`), 
-                                this.getCategoryBasedImage(article, i)
-                            );
-                            fallbackCount++;
-                            this.updateImageStatus(i, 'fallback', '🎨', 'Fallback');
+                            // STEP 5: Use smart fallback if extraction fails
+                            console.log(`❌ Could not extract real image from ${this.getDomain(article.url)}, using smart fallback`);
+                            this.setSmartFallbackImage(document.getElementById(`image-${i}`), article, i);
+                            this.updateImageStatus(i, 'failed', '🎨 Fallback');
+                            this.imageExtractionStats.failed++;
                         }
                         
-                        // Delay between requests
-                        await new Promise(resolve => setTimeout(resolve, 100));
+                        // Small delay to be respectful to websites
+                        await new Promise(resolve => setTimeout(resolve, 200));
                         
                     } catch (error) {
-                        console.error(`Failed to load image for article ${i}:`, error);
-                        this.setArticleImageDirect(
-                            document.getElementById(`image-${i}`), 
-                            this.getCategoryBasedImage(article, i)
-                        );
-                        fallbackCount++;
-                        this.updateImageStatus(i, 'fallback', '🎨', 'Fallback');
+                        console.error(`Error processing image for article ${i}:`, error);
+                        this.setSmartFallbackImage(document.getElementById(`image-${i}`), article, i);
+                        this.updateImageStatus(i, 'failed', '🎨 Fallback');
+                        this.imageExtractionStats.failed++;
+                    }
+                    
+                    // Update progress
+                    const processed = i + 1;
+                    const progress = Math.round((processed / articles.length) * 100);
+                    this.updateStatus(`🎨 Processing images: ${processed}/${articles.length} (${progress}%) - Real: ${this.imageExtractionStats.extracted + this.imageExtractionStats.backedUp}, Fallback: ${this.imageExtractionStats.failed}`, 'loading');
+                }
+                
+                // Final stats
+                const realImagesCount = this.imageExtractionStats.extracted + this.imageExtractionStats.backedUp;
+                console.log(`🎯 REAL IMAGE EXTRACTION COMPLETE:`);
+                console.log(`   ✅ Real images: ${realImagesCount}/${articles.length}`);
+                console.log(`   ☁️ From backup: ${this.imageExtractionStats.backedUp}`);
+                console.log(`   🔍 Newly extracted: ${this.imageExtractionStats.extracted}`);
+                console.log(`   🎨 Smart fallbacks: ${this.imageExtractionStats.failed}`);
+                
+                this.updateStatus(`✅ Images loaded: ${realImagesCount} real images (${this.imageExtractionStats.backedUp} from backup, ${this.imageExtractionStats.extracted} extracted), ${this.imageExtractionStats.failed} fallbacks`, 'success');
+                
+                // Update backup if we extracted new real images
+                if (this.imageExtractionStats.extracted > 0 && this.accessToken) {
+                    try {
+                        await this.updateOneDriveBackup();
+                        console.log('☁️ Updated OneDrive backup with new real image URLs');
+                    } catch (error) {
+                        console.error('Failed to update backup:', error);
+                    }
+                }
+            }
+
+            // Extract real image from website using CORS proxies
+            async extractRealImageFromWebsite(url) {
+                try {
+                    console.log(`🌐 Analyzing webpage for real images: ${url}`);
+                    
+                    // Method 1: Try AllOrigins proxy (most reliable)
+                    try {
+                        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                        const response = await fetch(proxyUrl);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            const html = data.contents;
+                            
+                            if (html && html.length > 1000) {
+                                const realImageUrl = this.parseHTMLForRealImage(html, url);
+                                if (realImageUrl) {
+                                    console.log(`🎯 Real image found via AllOrigins: ${realImageUrl}`);
+                                    return realImageUrl;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`AllOrigins failed: ${error.message}`);
+                    }
+                    
+                    // Method 2: Try CorsProxy.io
+                    try {
+                        const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                        const response = await fetch(corsProxyUrl);
+                        
+                        if (response.ok) {
+                            const html = await response.text();
+                            
+                            if (html && html.length > 1000) {
+                                const realImageUrl = this.parseHTMLForRealImage(html, url);
+                                if (realImageUrl) {
+                                    console.log(`🎯 Real image found via CorsProxy: ${realImageUrl}`);
+                                    return realImageUrl;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`CorsProxy failed: ${error.message}`);
+                    }
+                    
+                    // Method 3: Try website-specific patterns
+                    const patternBasedImage = this.extractImageFromUrlPatterns(url);
+                    if (patternBasedImage) {
+                        console.log(`🎯 Real image found via URL patterns: ${patternBasedImage}`);
+                        return patternBasedImage;
+                    }
+                    
+                    console.log(`❌ No real image could be extracted from: ${url}`);
+                    return null;
+                    
+                } catch (error) {
+                    console.error(`Error extracting real image from ${url}:`, error);
+                    return null;
+                }
+            }
+
+            // Parse HTML to find the REAL featured image from the article
+            parseHTMLForRealImage(html, baseUrl) {
+                try {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    console.log(`🔍 Analyzing HTML from ${this.getDomain(baseUrl)} for real article image...`);
+                    
+                    // PRIORITY 1: Open Graph image (Facebook/LinkedIn sharing image)
+                    const ogImage = doc.querySelector('meta[property="og:image"]');
+                    if (ogImage) {
+                        const imageUrl = this.makeAbsoluteUrl(ogImage.getAttribute('content'), baseUrl);
+                        if (this.isValidRealImageUrl(imageUrl)) {
+                            console.log(`🎯 Found Open Graph image: ${imageUrl}`);
+                            return imageUrl;
+                        }
+                    }
+                    
+                    // PRIORITY 2: Twitter card image
+                    const twitterImage = doc.querySelector('meta[name="twitter:image"], meta[property="twitter:image"]');
+                    if (twitterImage) {
+                        const imageUrl = this.makeAbsoluteUrl(twitterImage.getAttribute('content'), baseUrl);
+                        if (this.isValidRealImageUrl(imageUrl)) {
+                            console.log(`🎯 Found Twitter card image: ${imageUrl}`);
+                            return imageUrl;
+                        }
+                    }
+                    
+                    // PRIORITY 3: JSON-LD structured data (Google/SEO)
+                    const jsonLdScripts = doc.querySelectorAll('script[type="application/ld+json"]');
+                    for (const script of jsonLdScripts) {
+                        try {
+                            const data = JSON.parse(script.textContent);
+                            const structuredImage = this.extractImageFromStructuredData(data);
+                            if (structuredImage) {
+                                const imageUrl = this.makeAbsoluteUrl(structuredImage, baseUrl);
+                                if (this.isValidRealImageUrl(imageUrl)) {
+                                    console.log(`🎯 Found structured data image: ${imageUrl}`);
+                                    return imageUrl;
+                                }
+                            }
+                        } catch (e) {
+                            // Ignore malformed JSON-LD
+                        }
+                    }
+                    
+                    // PRIORITY 4: Article/blog specific featured image selectors
+                    const featuredSelectors = [
+                        '.featured-image img',
+                        '.hero-image img',
+                        '.post-thumbnail img',
+                        '.article-image img',
+                        '.entry-image img',
+                        '.wp-post-image',
+                        '.post-featured-image img',
+                        '.article-hero img',
+                        '.story-featured-image img'
+                    ];
+                    
+                    for (const selector of featuredSelectors) {
+                        const img = doc.querySelector(selector);
+                        if (img) {
+                            const src = img.getAttribute('src') || img.getAttribute('data-src') || img.getAttribute('data-lazy-src');
+                            if (src) {
+                                const imageUrl = this.makeAbsoluteUrl(src, baseUrl);
+                                if (this.isValidRealImageUrl(imageUrl) && !this.isIconOrLogo(src)) {
+                                    console.log(`🎯 Found featured image via selector ${selector}: ${imageUrl}`);
+                                    return imageUrl;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // PRIORITY 5: First substantial image in article content
+                    const contentSelectors = [
+                        'article img:first-of-type',
+                        '.content img:first-of-type',
+                        '.post-content img:first-of-type',
+                        '.entry-content img:first-of-type',
+                        '.article-body img:first-of-type',
+                        'main img:first-of-type'
+                    ];
+                    
+                    for (const selector of contentSelectors) {
+                        const img = doc.querySelector(selector);
+                        if (img) {
+                            const src = img.getAttribute('src') || img.getAttribute('data-src');
+                            if (src && !this.isIconOrLogo(src)) {
+                                const imageUrl = this.makeAbsoluteUrl(src, baseUrl);
+                                if (this.isValidRealImageUrl(imageUrl)) {
+                                    console.log(`🎯 Found content image via selector ${selector}: ${imageUrl}`);
+                                    return imageUrl;
+                                }
+                            }
+                        }
+                    }
+                    
+                    console.log(`❌ No real article image found in HTML from ${this.getDomain(baseUrl)}`);
+                    return null;
+                    
+                } catch (error) {
+                    console.error('HTML parsing error:', error);
+                    return null;
+                }
+            }
+
+            // Extract image from JSON-LD structured data
+            extractImageFromStructuredData(data) {
+                if (typeof data !== 'object') return null;
+                
+                // Handle arrays
+                if (Array.isArray(data)) {
+                    for (const item of data) {
+                        const image = this.extractImageFromStructuredData(item);
+                        if (image) return image;
+                    }
+                    return null;
+                }
+                
+                // Look for various image properties
+                const imageProperties = ['image', 'thumbnailUrl', 'photo', 'primaryImageOfPage'];
+                
+                for (const prop of imageProperties) {
+                    if (data[prop]) {
+                        if (typeof data[prop] === 'string') return data[prop];
+                        if (Array.isArray(data[prop]) && data[prop].length > 0) {
+                            const firstImage = data[prop][0];
+                            return typeof firstImage === 'string' ? firstImage : firstImage.url;
+                        }
+                        if (data[prop].url) return data[prop].url;
                     }
                 }
                 
-                this.updateStatus(`✅ Images loaded: ${backedUpCount} from backup, ${extractedCount} newly extracted, ${fallbackCount} fallbacks`, 'success');
-                console.log(`🎨 Image loading complete: ${backedUpCount} backed up, ${extractedCount} extracted, ${fallbackCount} fallbacks`);
+                // Recursively search nested objects
+                for (const key in data) {
+                    if (typeof data[key] === 'object') {
+                        const image = this.extractImageFromStructuredData(data[key]);
+                        if (image) return image;
+                    }
+                }
+                
+                return null;
             }
 
-            // NEW: Load backed up image from OneDrive
-            async loadBackedUpImage(article, index) {
+            // Extract images using website-specific URL patterns
+            extractImageFromUrlPatterns(url) {
+                const domain = this.getDomain(url).toLowerCase();
+                
+                // Medium articles
+                if (domain.includes('medium.com')) {
+                    // Extract Medium story ID and construct featured image URL
+                    const storyMatch = url.match(/\/([\w\d-]+)-([a-f0-9]+)$/);
+                    if (storyMatch) {
+                        return `https://miro.medium.com/v2/resize:fit:1400/1*${storyMatch[2]}.jpeg`;
+                    }
+                }
+                
+                // GitHub repositories
+                if (domain.includes('github.com')) {
+                    const repoMatch = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+                    if (repoMatch) {
+                        return `https://opengraph.githubassets.com/1/${repoMatch[1]}/${repoMatch[2]}`;
+                    }
+                }
+                
+                // YouTube videos
+                if (domain.includes('youtube.com') || domain.includes('youtu.be')) {
+                    const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
+                    if (videoIdMatch) {
+                        return `https://img.youtube.com/vi/${videoIdMatch[1]}/maxresdefault.jpg`;
+                    }
+                }
+                
+                // Dev.to articles
+                if (domain.includes('dev.to')) {
+                    // Most dev.to articles have predictable social image patterns
+                    const pathMatch = url.match(/dev\.to\/[^\/]+\/([^\/\?]+)/);
+                    if (pathMatch) {
+                        return `https://res.cloudinary.com/practicaldev/image/fetch/s--placeholder--/c_imagga_scale,f_auto,fl_progressive,h_420,q_auto,w_1000/https://dev.to/social_previews/article/${pathMatch[1]}.png`;
+                    }
+                }
+                
+                return null;
+            }
+
+            // Load backed up real image
+            async loadBackedUpRealImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
-                if (!imageElement || !article.backupImageUrl) return false;
+                if (!imageElement || !article.realImageBackupUrl) return false;
 
                 try {
-                    // Test if the backed up image URL is still valid
-                    const testResponse = await fetch(article.backupImageUrl, { method: 'HEAD' });
+                    // Validate that the backed up image URL is still accessible
+                    const testResponse = await fetch(article.realImageBackupUrl, { method: 'HEAD' });
                     
                     if (testResponse.ok) {
-                        this.setArticleImageDirect(imageElement, article.backupImageUrl);
+                        this.setRealImageDisplay(imageElement, article.realImageBackupUrl, this.getDomain(article.url));
                         return true;
                     } else {
-                        console.log(`⚠️ Backed up image URL no longer valid: ${article.backupImageUrl}`);
-                        // Clear the invalid backup URL
-                        article.backupImageUrl = null;
+                        console.log(`⚠️ Backed up real image URL no longer valid, will re-extract`);
+                        article.realImageBackupUrl = null;
                         return false;
                     }
                 } catch (error) {
-                    console.log(`⚠️ Error accessing backed up image: ${error.message}`);
-                    article.backupImageUrl = null;
+                    console.log(`⚠️ Error accessing backed up real image: ${error.message}`);
+                    article.realImageBackupUrl = null;
                     return false;
                 }
             }
 
-            // NEW: Extract image and backup to OneDrive
-            async extractAndBackupImage(article, index) {
-                try {
-                    this.updateImageStatus(index, 'backing-up', '⏳', 'Extracting...');
-                    
-                    // Extract the image
-                    const extractedImageUrl = await this.extractRealImageFromWebsite(article.url);
-                    
-                    if (!extractedImageUrl) {
-                        console.log(`❌ No image extracted for: ${article.title.substring(0, 30)}...`);
-                        return false;
-                    }
-                    
-                    this.updateImageStatus(index, 'backing-up', '☁️', 'Backing up...');
-                    
-                    // Download and backup the image
-                    const backupUrl = await this.backupImageToOneDrive(extractedImageUrl, article, index);
-                    
-                    if (backupUrl) {
-                        // Update article with backup URL
-                        article.backupImageUrl = backupUrl;
-                        
-                        // Display the backed up image
-                        const imageElement = document.getElementById(`image-${index}`);
-                        this.setArticleImageDirect(imageElement, backupUrl);
-                        
-                        // Save updated article data
-                        await this.updateOneDriveBackup();
-                        
-                        console.log(`✅ Image backed up successfully for: ${article.title.substring(0, 30)}...`);
-                        return true;
-                    }
-                    
-                    return false;
-                    
-                } catch (error) {
-                    console.error(`Error extracting and backing up image:`, error);
-                    return false;
-                }
-            }
-
-            // NEW: Backup image to OneDrive
-            async backupImageToOneDrive(imageUrl, article, index) {
-                if (!this.accessToken || !imageUrl) return null;
+            // Backup real image to OneDrive
+            async backupRealImageToOneDrive(realImageUrl, article, index) {
+                if (!this.accessToken || !realImageUrl) return null;
 
                 try {
-                    console.log(`☁️ Backing up image to OneDrive: ${imageUrl}`);
+                    console.log(`☁️ Backing up real image to OneDrive: ${realImageUrl}`);
                     
-                    // Create images folder if it doesn't exist
+                    // Ensure images folder exists
                     await this.ensureImagesFolderExists();
                     
-                    // Download the image
-                    const imageResponse = await fetch(imageUrl);
+                    // Download the real image
+                    const imageResponse = await fetch(realImageUrl);
                     if (!imageResponse.ok) {
-                        throw new Error(`Failed to download image: ${imageResponse.status}`);
+                        throw new Error(`Failed to download real image: ${imageResponse.status}`);
                     }
                     
                     const imageBlob = await imageResponse.blob();
                     
-                    // Generate a unique filename
-                    const extension = this.getImageExtension(imageUrl) || 'jpg';
+                    // Generate filename for the real image
+                    const extension = this.getImageExtension(realImageUrl) || 'jpg';
                     const articleId = this.generateArticleId(article);
-                    const filename = `article-${articleId}-${Date.now()}.${extension}`;
+                    const filename = `real-image-${articleId}-${Date.now()}.${extension}`;
                     
                     // Upload to OneDrive
                     const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/images/${filename}:/content`;
@@ -1352,242 +1636,218 @@
                     });
                     
                     if (!uploadResponse.ok) {
-                        throw new Error(`Failed to upload image: ${uploadResponse.status}`);
+                        throw new Error(`Failed to upload real image: ${uploadResponse.status}`);
                     }
                     
                     const uploadResult = await uploadResponse.json();
-                    
-                    // Get the download URL
                     const downloadUrl = uploadResult['@microsoft.graph.downloadUrl'] || uploadResult.webUrl;
                     
-                    console.log(`✅ Image backed up successfully: ${filename}`);
+                    console.log(`✅ Real image backed up successfully: ${filename}`);
                     return downloadUrl;
                     
                 } catch (error) {
-                    console.error('Image backup failed:', error);
+                    console.error('Real image backup failed:', error);
                     return null;
                 }
             }
 
-            // NEW: Ensure images folder exists in OneDrive
-            async ensureImagesFolderExists() {
-                if (!this.accessToken) return false;
-
-                try {
-                    // Check if images folder exists
-                    const checkResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/images', {
-                        headers: {
-                            'Authorization': `Bearer ${this.accessToken}`
-                        }
-                    });
-
-                    if (checkResponse.ok) {
-                        return true; // Folder exists
-                    }
-
-                    // Create the folder
-                    const createResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${this.accessToken}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            name: 'images',
-                            folder: {},
-                            '@microsoft.graph.conflictBehavior': 'replace'
-                        })
-                    });
-
-                    if (!createResponse.ok) {
-                        throw new Error(`Failed to create images folder: ${createResponse.status}`);
-                    }
-
-                    console.log('✅ Images folder created in OneDrive');
-                    return true;
-
-                } catch (error) {
-                    console.error('Failed to ensure images folder exists:', error);
-                    return false;
-                }
-            }
-
-            // NEW: Backup all images for articles that don't have backups
-            async backupAllImages() {
+            // Backup all real images for articles that don't have backups
+            async backupAllRealImages() {
                 if (!this.accessToken) {
                     this.updateStatus('❌ Not connected to OneDrive', 'error');
                     return;
                 }
 
-                const articlesNeedingBackup = this.articles.filter(article => !article.backupImageUrl);
+                const articlesNeedingBackup = this.articles.filter(article => !article.realImageBackupUrl);
                 
                 if (articlesNeedingBackup.length === 0) {
-                    this.updateStatus('✅ All articles already have backed up images!', 'success');
+                    this.updateStatus('✅ All articles already have real image backups!', 'success');
                     return;
                 }
 
-                this.updateStatus(`🔄 Backing up images for ${articlesNeedingBackup.length} articles...`, 'loading');
+                this.updateStatus(`🔄 Extracting and backing up real images for ${articlesNeedingBackup.length} articles...`, 'loading');
                 
                 let successCount = 0;
-                let totalCount = articlesNeedingBackup.length;
 
                 for (let i = 0; i < articlesNeedingBackup.length; i++) {
                     const article = articlesNeedingBackup[i];
                     const articleIndex = this.articles.indexOf(article);
                     
                     try {
-                        this.updateStatus(`🔄 Backing up image ${i + 1}/${totalCount}: ${article.title.substring(0, 40)}...`, 'loading');
+                        this.updateStatus(`🔄 Processing ${i + 1}/${articlesNeedingBackup.length}: Extracting real image from ${this.getDomain(article.url)}...`, 'loading');
+                        this.updateImageStatus(articleIndex, 'extracting', '🔍 Extracting...');
                         
-                        const success = await this.extractAndBackupImage(article, articleIndex);
-                        if (success) {
-                            successCount++;
+                        // Extract real image
+                        const realImageUrl = await this.extractRealImageFromWebsite(article.url);
+                        
+                        if (realImageUrl) {
+                            // Display the real image
+                            this.setRealImageDisplay(document.getElementById(`image-${articleIndex}`), realImageUrl, this.getDomain(article.url));
+                            
+                            // Backup to OneDrive
+                            const backupUrl = await this.backupRealImageToOneDrive(realImageUrl, article, articleIndex);
+                            
+                            if (backupUrl) {
+                                article.realImageBackupUrl = backupUrl;
+                                this.updateImageStatus(articleIndex, 'backed-up', '☁️ Backed up');
+                                successCount++;
+                            } else {
+                                this.updateImageStatus(articleIndex, 'extracted', '🎯 Real image');
+                            }
+                        } else {
+                            this.setSmartFallbackImage(document.getElementById(`image-${articleIndex}`), article, articleIndex);
+                            this.updateImageStatus(articleIndex, 'failed', '🎨 Fallback');
                         }
-                        
-                        // Update progress
-                        this.updateImageStatus(articleIndex, success ? 'backed-up' : 'fallback', 
-                                            success ? '☁️' : '🎨', 
-                                            success ? 'Backed up' : 'Fallback');
                         
                         // Delay between requests
-                        await new Promise(resolve => setTimeout(resolve, 500));
+                        await new Promise(resolve => setTimeout(resolve, 1000));
                         
                     } catch (error) {
-                        console.error(`Failed to backup image for article ${articleIndex}:`, error);
+                        console.error(`Failed to backup real image for article ${articleIndex}:`, error);
+                        this.setSmartFallbackImage(document.getElementById(`image-${articleIndex}`), article, articleIndex);
+                        this.updateImageStatus(articleIndex, 'failed', '🎨 Fallback');
                     }
                 }
 
-                this.updateStatus(`✅ Image backup complete: ${successCount}/${totalCount} images backed up successfully!`, 'success');
+                this.updateStatus(`✅ Real image backup complete: ${successCount}/${articlesNeedingBackup.length} real images backed up!`, 'success');
                 
-                // Refresh the display
-                this.displayArticles(this.articles);
-            }
-
-            // Helper methods for image backup
-
-            getImageStatus(article) {
-                if (article.backupImageUrl) {
-                    return { class: 'backed-up', icon: '☁️', text: 'Backed up' };
-                } else {
-                    return { class: 'fallback', icon: '🎨', text: 'Will extract' };
+                // Update the backup file
+                if (successCount > 0) {
+                    try {
+                        await this.updateOneDriveBackup();
+                    } catch (error) {
+                        console.error('Failed to update backup file:', error);
+                    }
                 }
             }
 
-            updateImageStatus(index, statusClass, icon, text) {
-                const statusElement = document.querySelector(`#image-${index} .image-backup-status`);
+            // ============================================================================
+            // HELPER METHODS
+            // ============================================================================
+
+            // Display real image with proper attribution
+            setRealImageDisplay(imageElement, realImageUrl, websiteSource) {
+                imageElement.innerHTML = `
+                    <img src="${realImageUrl}" 
+                         alt="Real article image from ${websiteSource}" 
+                         style="
+                            opacity: 0; 
+                            transition: opacity 0.8s ease;
+                            width: 100%;
+                            height: 100%;
+                            object-fit: cover;
+                            border-radius: inherit;
+                         "
+                         onload="
+                            this.style.opacity='1';
+                            console.log('✅ Real image loaded from ${websiteSource}');
+                         " 
+                         onerror="
+                            console.log('⚠️ Real image failed to load, using fallback');
+                            this.parentElement.innerHTML = '${this.getSmartFallbackImageHTML()}';
+                         ">
+                    <div class="website-source">${websiteSource}</div>
+                    <div class="image-status extracted">🎯 Real image</div>
+                `;
+            }
+
+            // Set smart fallback image when real extraction fails
+            setSmartFallbackImage(imageElement, article, index) {
+                const fallbackUrl = this.getCategoryBasedFallbackImage(article, index);
+                imageElement.innerHTML = `
+                    <img src="${fallbackUrl}" 
+                         alt="Smart fallback image" 
+                         style="
+                            opacity: 0.9;
+                            width: 100%;
+                            height: 100%;
+                            object-fit: cover;
+                            border-radius: inherit;
+                         ">
+                    <div class="website-source">${this.getDomain(article.url)}</div>
+                    <div class="image-status failed">🎨 Smart fallback</div>
+                `;
+            }
+
+            // Get smart fallback image based on article content and source
+            getCategoryBasedFallbackImage(article, index) {
+                const domain = this.getDomain(article.url).toLowerCase();
+                const title = article.title.toLowerCase();
+                
+                // Technology/Programming
+                if (domain.includes('github') || domain.includes('stackoverflow') || domain.includes('dev.to') ||
+                    title.includes('code') || title.includes('programming') || title.includes('javascript') || title.includes('react')) {
+                    return `https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Business/Finance
+                if (domain.includes('business') || domain.includes('finance') || domain.includes('linkedin') ||
+                    title.includes('business') || title.includes('finance') || title.includes('startup')) {
+                    return `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // News/Media
+                if (domain.includes('news') || domain.includes('bbc') || domain.includes('cnn') ||
+                    title.includes('news') || title.includes('politics')) {
+                    return `https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Science/Research
+                if (domain.includes('arxiv') || domain.includes('research') ||
+                    title.includes('science') || title.includes('research') || title.includes('study')) {
+                    return `https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Default rotation
+                const defaultImages = [
+                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
+                    'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
+                    'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=250&fit=crop&crop=center&q=80&auto=format'
+                ];
+                
+                return defaultImages[index % defaultImages.length];
+            }
+
+            // Update image status indicator
+            updateImageStatus(index, statusClass, text) {
+                const statusElement = document.getElementById(`status-${index}`);
                 if (statusElement) {
-                    statusElement.className = `image-backup-status ${statusClass}`;
-                    statusElement.innerHTML = `${icon} ${text}`;
+                    statusElement.className = `image-status ${statusClass}`;
+                    statusElement.textContent = text;
                 }
             }
 
-            getImageExtension(url) {
-                const match = url.match(/\.([a-zA-Z0-9]+)(\?|$)/);
-                return match ? match[1].toLowerCase() : null;
-            }
-
-            generateArticleId(article) {
-                // Generate a short, unique ID for the article
-                const titleHash = this.simpleHash(article.title);
-                const urlHash = this.simpleHash(article.url);
-                return `${titleHash}-${urlHash}`.substring(0, 16);
-            }
-
-            simpleHash(str) {
-                let hash = 0;
-                for (let i = 0; i < str.length; i++) {
-                    const char = str.charCodeAt(i);
-                    hash = ((hash << 5) - hash) + char;
-                    hash = hash & hash; // Convert to 32-bit integer
-                }
-                return Math.abs(hash).toString(36);
-            }
-
-            // Enhanced image extraction methods (same as before but optimized)
-            async extractRealImageFromWebsite(url) {
+            // Validation methods
+            isValidRealImageUrl(url) {
+                if (!url || typeof url !== 'string') return false;
+                
                 try {
-                    console.log(`🌐 Extracting image from: ${this.getDomain(url)}`);
-                    
-                    // Method 1: Try AllOrigins proxy
-                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-                    const response = await fetch(proxyUrl);
-                    
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch webpage');
-                    }
-                    
-                    const data = await response.json();
-                    const html = data.contents;
-                    
-                    if (!html || html.length < 500) {
-                        throw new Error('No substantial HTML content received');
-                    }
-                    
-                    // Parse the HTML and extract the best image
-                    const extractedImageUrl = this.parseHTMLForBestImage(html, url);
-                    
-                    if (extractedImageUrl) {
-                        console.log(`🎯 Found image: ${extractedImageUrl}`);
-                        return extractedImageUrl;
-                    }
-                    
-                    throw new Error('No suitable image found in webpage');
-                    
-                } catch (error) {
-                    console.log(`❌ Website image extraction failed: ${error.message}`);
-                    return null;
+                    new URL(url);
+                } catch {
+                    return false;
                 }
+                
+                // Must be a valid image URL
+                const imagePattern = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i;
+                const imageServices = ['unsplash.com', 'images.unsplash.com', 'miro.medium.com', 'opengraph.githubassets.com', 'img.youtube.com'];
+                
+                return imagePattern.test(url) || imageServices.some(service => url.includes(service));
             }
 
-            parseHTMLForBestImage(html, baseUrl) {
-                try {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    
-                    // Strategy 1: Open Graph image
-                    const ogImage = doc.querySelector('meta[property="og:image"]');
-                    if (ogImage) {
-                        const imageUrl = this.makeAbsoluteUrl(ogImage.getAttribute('content'), baseUrl);
-                        if (this.isValidImageUrl(imageUrl)) {
-                            return imageUrl;
-                        }
-                    }
-                    
-                    // Strategy 2: Twitter card image
-                    const twitterImage = doc.querySelector('meta[name="twitter:image"], meta[property="twitter:image"]');
-                    if (twitterImage) {
-                        const imageUrl = this.makeAbsoluteUrl(twitterImage.getAttribute('content'), baseUrl);
-                        if (this.isValidImageUrl(imageUrl)) {
-                            return imageUrl;
-                        }
-                    }
-                    
-                    // Strategy 3: Featured image selectors
-                    const featuredSelectors = [
-                        '.featured-image img',
-                        '.hero-image img', 
-                        '.post-thumbnail img',
-                        '.article-image img',
-                        'article img:first-of-type'
-                    ];
-                    
-                    for (const selector of featuredSelectors) {
-                        const img = doc.querySelector(selector);
-                        if (img) {
-                            const src = img.getAttribute('src') || img.getAttribute('data-src');
-                            if (src) {
-                                const imageUrl = this.makeAbsoluteUrl(src, baseUrl);
-                                if (this.isValidImageUrl(imageUrl) && !this.isIconOrLogo(src)) {
-                                    return imageUrl;
-                                }
-                            }
-                        }
-                    }
-                    
-                    return null;
-                } catch (error) {
-                    console.error('HTML parsing error:', error);
-                    return null;
-                }
+            isIconOrLogo(src) {
+                if (!src) return false;
+                
+                const iconPatterns = [
+                    'icon', 'logo', 'avatar', 'profile', 'favicon', 'sprite', 
+                    'button', 'badge', 'social', 'thumb', 'header', 'nav'
+                ];
+                
+                const srcLower = src.toLowerCase();
+                return iconPatterns.some(pattern => srcLower.includes(pattern)) ||
+                       srcLower.includes('.ico') ||
+                       srcLower.includes('16x16') ||
+                       srcLower.includes('32x32') ||
+                       srcLower.includes('64x64');
             }
 
             makeAbsoluteUrl(imageUrl, baseUrl) {
@@ -1609,80 +1869,61 @@
                 }
             }
 
-            isValidImageUrl(url) {
-                if (!url || typeof url !== 'string') return false;
-                
+            // Utility methods
+            getImageExtension(url) {
+                const match = url.match(/\.([a-zA-Z0-9]+)(\?|$)/);
+                return match ? match[1].toLowerCase() : null;
+            }
+
+            generateArticleId(article) {
+                const titleHash = this.simpleHash(article.title);
+                const urlHash = this.simpleHash(article.url);
+                return `${titleHash}-${urlHash}`.substring(0, 16);
+            }
+
+            simpleHash(str) {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    const char = str.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash;
+                }
+                return Math.abs(hash).toString(36);
+            }
+
+            async ensureImagesFolderExists() {
+                if (!this.accessToken) return false;
+
                 try {
-                    new URL(url);
-                } catch {
+                    const checkResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/images', {
+                        headers: { 'Authorization': `Bearer ${this.accessToken}` }
+                    });
+
+                    if (checkResponse.ok) return true;
+
+                    const createResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${this.accessToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            name: 'images',
+                            folder: {},
+                            '@microsoft.graph.conflictBehavior': 'replace'
+                        })
+                    });
+
+                    return createResponse.ok;
+                } catch (error) {
+                    console.error('Failed to ensure images folder exists:', error);
                     return false;
                 }
-                
-                const imagePattern = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i;
-                const imageServices = ['unsplash.com', 'images.unsplash.com', 'picsum.photos'];
-                
-                return imagePattern.test(url) || imageServices.some(service => url.includes(service));
             }
 
-            isIconOrLogo(src) {
-                if (!src) return false;
-                
-                const iconPatterns = ['icon', 'logo', 'avatar', 'favicon', 'sprite', 'button'];
-                const srcLower = src.toLowerCase();
-                return iconPatterns.some(pattern => srcLower.includes(pattern));
-            }
-
-            getCategoryBasedImage(article, index) {
-                const domain = this.getDomain(article.url).toLowerCase();
-                const title = article.title.toLowerCase();
-                
-                // Technology/Programming
-                if (domain.includes('github') || title.includes('code') || title.includes('programming')) {
-                    return `https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-                
-                // Business/Finance
-                if (title.includes('business') || title.includes('finance') || title.includes('startup')) {
-                    return `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-                
-                // Default images array for variety
-                const defaultImages = [
-                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1470115636492-6d2b56f9146d?w=400&h=250&fit=crop&crop=center&q=80&auto=format'
-                ];
-                
-                return defaultImages[index % defaultImages.length];
-            }
-
-            setArticleImageDirect(imageElement, imageUrl) {
-                imageElement.innerHTML = `
-                    <img src="${imageUrl}" 
-                         alt="Article image" 
-                         style="
-                            opacity: 0; 
-                            transition: opacity 0.8s ease;
-                            width: 100%;
-                            height: 100%;
-                            object-fit: cover;
-                            border-radius: inherit;
-                         "
-                         onload="
-                            this.style.opacity='1';
-                            console.log('✅ Image loaded successfully');
-                         " 
-                         onerror="
-                            console.log('⚠️ Image failed, using fallback');
-                            this.src='https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
-                         ">
-                    <div class="image-backup-status backed-up">
-                        ☁️ Backed up
-                    </div>
-                `;
-            }
+            // ============================================================================
+            // EXISTING METHODS (Reader, Search, etc.)
+            // ============================================================================
 
             displayEmptyState() {
                 const container = document.getElementById('articlesContainer');
@@ -1715,70 +1956,46 @@
                 this.currentArticle = this.articles[index];
                 const overlay = document.getElementById('readerOverlay');
 
-                // Set title and meta info
                 document.getElementById('readerTitle').textContent = this.currentArticle.title;
                 document.getElementById('readerDate').textContent = this.formatDate(this.currentArticle.dateAdded);
                 document.getElementById('readerDomain').textContent = this.getDomain(this.currentArticle.url);
                 document.getElementById('readerTime').textContent = `${this.currentArticle.readTime || 1} min read`;
                 
-                // Show loading state first
                 document.getElementById('readerContent').innerHTML = `
                     <div style="text-align: center; padding: 40px;">
                         <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
-                        <p>Checking for article content...</p>
+                        <p>Loading article content...</p>
                     </div>
                 `;
 
                 overlay.classList.add('active');
                 document.body.style.overflow = 'hidden';
                 
-                // Try to get content, fetch if needed
                 setTimeout(() => this.loadArticleContent(this.currentArticle), 100);
             }
 
             async loadArticleContent(article) {
-                console.log('🚀 CONTENT LOADER STARTING');
                 const contentElement = document.getElementById('readerContent');
                 
-                // First try to get saved content
                 let content = this.getArticleContent(article);
                 
-                // If no saved content found, try to fetch from original URL
                 if (!content) {
-                    console.log('🌐 No saved content found. Attempting to fetch from original URL...');
-                    
                     try {
                         contentElement.innerHTML = `
                             <div style="text-align: center; padding: 40px;">
                                 <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
                                 <p><strong>🌐 Fetching article content...</strong></p>
-                                <p style="font-size: 0.9em; color: var(--text-secondary);">
-                                    Loading from ${this.getDomain(article.url)}
-                                </p>
                             </div>
                         `;
                         
                         const fetchedContent = await this.fetchArticleContent(article.url);
-                        
-                        if (fetchedContent && fetchedContent.trim()) {
-                            content = fetchedContent;
-                            console.log('✅ Successfully fetched article content');
-                            this.updateStatus('✅ Article content loaded successfully!', 'success');
-                        } else {
-                            throw new Error('No content extracted from fetched page');
-                        }
+                        content = fetchedContent || this.getFallbackContent(article);
                         
                     } catch (error) {
-                        console.log('❌ Failed to fetch content:', error.message);
-                        this.updateStatus('❌ Could not fetch article content. Using fallback.', 'error');
                         content = this.getFallbackContent(article, error.message);
                     }
-                } else {
-                    console.log('✅ Using saved content');
-                    this.updateStatus('✅ Article loaded from saved content', 'success');
                 }
                 
-                // Display the final content
                 contentElement.innerHTML = content;
             }
 
@@ -1796,10 +2013,8 @@
                         }
                     }
                     
-                    throw new Error('Failed to fetch content');
-                    
+                    return null;
                 } catch (error) {
-                    console.error('Content fetch failed:', error);
                     throw error;
                 }
             }
@@ -1809,25 +2024,14 @@
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
                     
-                    // Remove unwanted elements
-                    const unwantedSelectors = [
-                        'script', 'style', 'nav', 'header', 'footer', 
-                        '.sidebar', '.menu', '.navigation', '.comments'
-                    ];
-                    
+                    const unwantedSelectors = ['script', 'style', 'nav', 'header', 'footer'];
                     unwantedSelectors.forEach(selector => {
                         doc.querySelectorAll(selector).forEach(el => el.remove());
                     });
                     
-                    // Find main content
-                    const contentSelectors = [
-                        'article',
-                        '.post-content', '.entry-content', '.article-content',
-                        '.content', '.main-content', '.post-body'
-                    ];
+                    const contentSelectors = ['article', '.post-content', '.entry-content', '.content'];
                     
                     let contentElement = null;
-                    
                     for (const selector of contentSelectors) {
                         contentElement = doc.querySelector(selector);
                         if (contentElement && contentElement.textContent.trim().length > 200) {
@@ -1837,34 +2041,29 @@
                     
                     if (contentElement) {
                         let content = contentElement.innerHTML;
-                        
-                        // Fix relative URLs
                         const baseUrl = new URL(url).origin;
                         content = content.replace(/src="\/([^"]+)"/g, `src="${baseUrl}/$1"`);
-                        content = content.replace(/href="\/([^"]+)"/g, `href="${baseUrl}/$1"`);
                         
                         return `
                             <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                                 <p style="margin: 0; font-size: 0.9em;">
                                     <strong>📡 Content fetched from original source</strong><br>
-                                    Retrieved from <a href="${url}" target="_blank" style="color: #1976d2;">${this.getDomain(url)}</a>
+                                    Retrieved from <a href="${url}" target="_blank">${this.getDomain(url)}</a>
                                 </p>
                             </div>
                             ${content}
                         `;
                     }
                     
-                    throw new Error('Could not extract readable content');
-                    
+                    return null;
                 } catch (error) {
-                    console.error('Content extraction error:', error);
                     throw error;
                 }
             }
 
-            getFallbackContent(article, errorMessage) {
+            getFallbackContent(article, errorMessage = '') {
                 return `
-                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 8px;">
                         <h3>📄 Content Not Available</h3>
                         <p>We couldn't load the full article content.</p>
                         
@@ -1874,7 +2073,7 @@
                         </div>
                         
                         <div style="text-align: center; margin: 20px 0;">
-                            <a href="${article.url}" target="_blank" style="display: inline-block; background: #ee5a24; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                            <a href="${article.url}" target="_blank" style="display: inline-block; background: #ee5a24; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px;">
                                 🔗 Read Full Article
                             </a>
                         </div>
@@ -1883,7 +2082,7 @@
             }
 
             getArticleContent(article) {
-                const contentFields = ['content', 'html', 'fullContent', 'textContent', 'body'];
+                const contentFields = ['content', 'html', 'fullContent', 'textContent'];
                 
                 for (const field of contentFields) {
                     if (article[field] && article[field].trim()) {
@@ -1895,8 +2094,7 @@
             }
 
             closeReader() {
-                const overlay = document.getElementById('readerOverlay');
-                overlay.classList.remove('active');
+                document.getElementById('readerOverlay').classList.remove('active');
                 document.body.style.overflow = 'auto';
             }
 
@@ -1910,51 +2108,40 @@
                 const article = this.articles[index];
                 if (!article) return;
 
-                if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article and its backed up image.`)) {
+                if (confirm(`Delete "${article.title}"?\n\nThis will remove the article and its backed up real image.`)) {
                     try {
-                        // Delete backed up image if it exists
-                        if (article.backupImageUrl && this.accessToken) {
-                            await this.deleteBackedUpImage(article.backupImageUrl);
+                        if (article.realImageBackupUrl && this.accessToken) {
+                            await this.deleteBackedUpRealImage(article.realImageBackupUrl);
                         }
                         
                         this.articles.splice(index, 1);
 
                         if (this.accessToken) {
-                            this.updateStatus('Updating OneDrive backup...', 'loading');
                             await this.updateOneDriveBackup();
-                            this.updateStatus(`✅ Article deleted. ${this.articles.length} articles remaining.`, 'success');
+                            this.updateStatus(`✅ Article deleted. ${this.articles.length} remaining.`, 'success');
                         }
 
                         this.displayArticles(this.articles);
-
                     } catch (error) {
-                        console.error('Error deleting article:', error);
-                        this.updateStatus(`❌ Failed to delete article: ${error.message}`, 'error');
+                        this.updateStatus(`❌ Failed to delete: ${error.message}`, 'error');
                     }
                 }
             }
 
-            async deleteBackedUpImage(imageUrl) {
+            async deleteBackedUpRealImage(imageUrl) {
                 try {
-                    // Extract filename from the OneDrive URL
                     const urlMatch = imageUrl.match(/\/images\/([^\/\?]+)/);
                     if (!urlMatch) return;
                     
                     const filename = urlMatch[1];
                     const deleteUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/images/${filename}`;
                     
-                    const response = await fetch(deleteUrl, {
+                    await fetch(deleteUrl, {
                         method: 'DELETE',
-                        headers: {
-                            'Authorization': `Bearer ${this.accessToken}`
-                        }
+                        headers: { 'Authorization': `Bearer ${this.accessToken}` }
                     });
-                    
-                    if (response.ok) {
-                        console.log(`✅ Deleted backed up image: ${filename}`);
-                    }
                 } catch (error) {
-                    console.error('Failed to delete backed up image:', error);
+                    console.error('Failed to delete backed up real image:', error);
                 }
             }
 
@@ -1966,38 +2153,33 @@
                     const html = this.createArticleHTML(article);
                     const filename = `${this.sanitizeFilename(article.title)}.html`;
                     this.downloadFile(html, filename, 'text/html');
-                    this.updateStatus(`📤 Article "${article.title}" exported successfully!`, 'success');
+                    this.updateStatus(`📤 Article exported successfully!`, 'success');
                 } catch (error) {
-                    console.error('Error exporting article:', error);
-                    this.updateStatus(`❌ Failed to export article: ${error.message}`, 'error');
+                    this.updateStatus(`❌ Export failed: ${error.message}`, 'error');
                 }
             }
 
             async updateOneDriveBackup() {
-                if (!this.accessToken) {
-                    throw new Error('Not connected to OneDrive');
-                }
+                if (!this.accessToken) throw new Error('Not connected to OneDrive');
 
                 const backup = {
                     articles: this.articles,
                     settings: {},
                     exportDate: new Date().toISOString(),
-                    version: "3.4-with-image-backup",
+                    version: "3.5-real-image-backup",
                     deviceInfo: {
-                        browser: "Web Reader",
+                        browser: "Web Reader with Real Image Extraction",
                         platform: navigator.platform,
                         timestamp: Date.now(),
                         articleCount: this.articles.length,
-                        backedUpImagesCount: this.articles.filter(a => a.backupImageUrl).length
+                        realImagesBackedUp: this.articles.filter(a => a.realImageBackupUrl).length
                     }
                 };
 
                 const fileName = `mypocket-backup-${new Date().toISOString().split('T')[0]}.json`;
                 const fileContent = JSON.stringify(backup, null, 2);
 
-                const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
-
-                const uploadResponse = await fetch(uploadUrl, {
+                const uploadResponse = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${this.accessToken}`,
@@ -2007,86 +2189,40 @@
                 });
 
                 if (!uploadResponse.ok) {
-                    const errorText = await uploadResponse.text();
-                    throw new Error(`Failed to update OneDrive backup: ${uploadResponse.status} - ${errorText}`);
+                    throw new Error(`Backup failed: ${uploadResponse.status}`);
                 }
 
                 return await uploadResponse.json();
             }
 
             createArticleHTML(article) {
+                const realImageNote = article.realImageBackupUrl ? '<div>📸 Real image backed up to OneDrive</div>' : '';
+                
                 return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${this.escapeHtml(article.title)}</title>
     <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            max-width: 800px; 
-            margin: 0 auto; 
-            padding: 40px 20px; 
-            line-height: 1.7; 
-            color: #333;
-        }
-        .header { 
-            border-bottom: 3px solid #ee5a24; 
-            margin-bottom: 32px; 
-            padding-bottom: 24px; 
-        }
-        .title { 
-            font-size: 2.4em; 
-            font-weight: bold; 
-            margin-bottom: 16px; 
-            color: #2c3e50; 
-            line-height: 1.2; 
-        }
-        .meta { 
-            color: #7f8c8d; 
-            font-size: 0.95em; 
-            margin-bottom: 24px; 
-        }
-        .content { 
-            font-size: 1.15em; 
-            line-height: 1.8; 
-        }
-        .content img { 
-            max-width: 100%; 
-            height: auto; 
-            margin: 24px 0; 
-            border-radius: 8px; 
-        }
-        .content p { 
-            margin-bottom: 1.4em; 
-        }
-        .footer { 
-            margin-top: 48px; 
-            padding-top: 24px; 
-            border-top: 2px solid #f0f0f0; 
-            color: #666; 
-            font-size: 0.9em; 
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px 20px; line-height: 1.7; }
+        .header { border-bottom: 3px solid #ee5a24; margin-bottom: 32px; padding-bottom: 24px; }
+        .title { font-size: 2.4em; font-weight: bold; margin-bottom: 16px; color: #2c3e50; }
+        .content { font-size: 1.15em; line-height: 1.8; }
     </style>
 </head>
 <body>
     <div class="header">
         <h1 class="title">${this.escapeHtml(article.title)}</h1>
-        <div class="meta">
-            <div style="margin-bottom: 8px;">🌐 From: <a href="${article.url}" style="color: #ee5a24;">${this.getDomain(article.url)}</a></div>
-            ${article.author ? `<div style="margin-bottom: 8px;">✍️ By: ${this.escapeHtml(article.author)}</div>` : ''}
-            <div style="margin-bottom: 8px;">📅 Saved: ${this.formatDate(article.dateAdded)}</div>
-            <div>⏱️ Reading time: ${article.readTime || 1} minutes</div>
-            ${article.backupImageUrl ? '<div style="margin-top: 8px;">📸 Image backed up to OneDrive</div>' : ''}
-        </div>
+        <div>🌐 From: <a href="${article.url}">${this.getDomain(article.url)}</a></div>
+        <div>📅 Saved: ${this.formatDate(article.dateAdded)}</div>
+        ${realImageNote}
     </div>
     <div class="content">
         ${article.content || article.textContent || 'Content not available'}
     </div>
-    <div class="footer">
-        <p><strong>✨ Exported from MyPocket Web Reader with Image Backup</strong></p>
-        <p>Original URL: <a href="${article.url}" style="color: #ee5a24;">${article.url}</a></p>
-        <p>Export Date: ${new Date().toLocaleDateString()}</p>
+    <div style="margin-top: 48px; padding-top: 24px; border-top: 2px solid #f0f0f0;">
+        <p><strong>✨ Exported from MyPocket with Real Image Backup</strong></p>
+        <p>Original: <a href="${article.url}">${article.url}</a></p>
     </div>
 </body>
 </html>`;
@@ -2095,14 +2231,12 @@
             downloadFile(content, filename, mimeType) {
                 const blob = new Blob([content], { type: mimeType });
                 const url = URL.createObjectURL(blob);
-
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = filename;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-
                 URL.revokeObjectURL(url);
             }
 
@@ -2147,76 +2281,59 @@
             }
 
             showDebugInfo() {
-                const backedUpCount = this.articles.filter(a => a.backupImageUrl).length;
+                const realImagesCount = this.articles.filter(a => a.realImageBackupUrl).length;
                 const info = `
-MyPocket Web Reader Debug Info:
-=====================================
+MyPocket Web Reader - Real Image Extraction + Backup:
+====================================================
 
-Current URL: ${window.location.href}
-Redirect URI: ${this.redirectUri}
-Client ID: ${this.clientId}
-Has Access Token: ${!!this.accessToken}
-Articles Loaded: ${this.articles.length}
-Images Backed Up: ${backedUpCount}/${this.articles.length}
+System Status:
+- Articles: ${this.articles.length}
+- Real Images Backed Up: ${realImagesCount}/${this.articles.length}
+- Connected to OneDrive: ${!!this.accessToken}
 
-Image Backup Features:
-- Automatic image extraction and backup to OneDrive
-- Intelligent fallback system
-- Real-time backup status indicators
-- Manual backup for all images
+Real Image Extraction Features:
+✅ Open Graph images (Facebook/LinkedIn sharing)
+✅ Twitter card images  
+✅ JSON-LD structured data (Google/SEO)
+✅ Article featured images
+✅ Content images
+✅ Website-specific patterns (Medium, GitHub, YouTube)
+✅ Automatic backup to OneDrive
+✅ Smart category-based fallbacks
 
-Storage Structure:
-- Articles: /MyPocket/mypocket-backup-*.json
-- Images: /MyPocket/images/article-*.jpg/png/webp
+Image Sources Detected:
+${this.articles.map(a => `- ${this.getDomain(a.url)}: ${a.realImageBackupUrl ? 'REAL IMAGE BACKED UP' : 'NEEDS EXTRACTION'}`).join('\n')}
 
-Next Steps for Setup:
-1. Open Azure Portal → App registrations
-2. Find your app: ${this.clientId}
-3. Go to Authentication → Platform configurations
-4. Add Web platform with redirect URI: ${this.redirectUri}
+Backup Structure:
+- Articles: /MyPocket/mypocket-backup-*.json  
+- Real Images: /MyPocket/images/real-image-*.jpg/png/webp
                 `;
 
                 alert(info);
-                console.log('🔧 Debug Info:', {
-                    currentUrl: window.location.href,
-                    redirectUri: this.redirectUri,
-                    hasToken: !!this.accessToken,
+                console.log('🔧 Real Image System Debug:', {
                     articlesCount: this.articles.length,
-                    backedUpImagesCount: backedUpCount
+                    realImagesBackedUp: realImagesCount,
+                    extractionStats: this.imageExtractionStats
                 });
             }
 
             toggleTestMode() {
                 document.body.classList.toggle('test-mode');
                 const isTestMode = document.body.classList.contains('test-mode');
-
                 const testBtn = document.getElementById('testBtn');
                 if (testBtn) {
-                    testBtn.innerHTML = isTestMode
-                        ? '<span>👁️</span> Hide Buttons'
-                        : '<span>👁️</span> Show Buttons';
+                    testBtn.innerHTML = isTestMode ? '<span>👁️</span> Hide Buttons' : '<span>👁️</span> Show Buttons';
                 }
-
-                this.updateStatus(
-                    isTestMode
-                        ? '🔍 Test mode ON - Action buttons always visible'
-                        : '👁️ Test mode OFF - Action buttons show on hover',
-                    'success'
-                );
+                this.updateStatus(isTestMode ? 'Test mode ON' : 'Test mode OFF', 'success');
             }
 
             toggleDarkMode() {
                 const currentTheme = document.documentElement.getAttribute('data-theme');
                 const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                
                 document.documentElement.setAttribute('data-theme', newTheme);
                 localStorage.setItem('theme', newTheme);
-                
                 this.updateDarkModeButton(newTheme);
-                this.updateStatus(
-                    newTheme === 'dark' ? '🌙 Dark mode enabled' : '☀️ Light mode enabled',
-                    'success'
-                );
+                this.updateStatus(newTheme === 'dark' ? '🌙 Dark mode enabled' : '☀️ Light mode enabled', 'success');
             }
 
             loadThemePreference() {
@@ -2235,6 +2352,7 @@ Next Steps for Setup:
             }
         }
 
+        // Initialize the application
         let webReader;
         document.addEventListener('DOMContentLoaded', () => {
             webReader = new MyPocketWebReader();
