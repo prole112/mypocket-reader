@@ -1190,6 +1190,18 @@
                 
                 this.updateStatus(`✅ Extracted ${successCount}/${totalImages} real article images! | ${backupCount} backed up`, 'success');
                 console.log(`🎨 Real image extraction complete: ${successCount}/${totalImages} successful, ${backupCount} backed up`);
+                
+                // NEW: Save the updated article metadata (including backedUpImage info) back to OneDrive
+                if (backupCount > 0 && this.accessToken) {
+                    try {
+                        console.log(`💾 Saving updated article metadata with ${backupCount} new image backups...`);
+                        await this.updateOneDriveBackup();
+                        this.updateStatus(`✅ Images processed and article metadata updated! ${backupCount} new backups saved.`, 'success');
+                    } catch (error) {
+                        console.error('Failed to update article metadata:', error);
+                        this.updateStatus(`⚠️ Images backed up but failed to save metadata. Will re-process next time.`, 'error');
+                    }
+                }
             }
 
             // NEW: Extract image and backup to OneDrive - KEEPING YOUR ORIGINAL LOGIC
