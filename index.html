@@ -1142,12 +1142,12 @@
                 return {};
             }
 
-            // Merge image metadata back into articles
+            // FIXED: Merge image metadata back into articles (using YOUR original property name)
             mergeImageMetadata(imageMetadata) {
                 for (let article of this.articles) {
                     const articleKey = this.getArticleKey(article);
                     if (imageMetadata[articleKey]) {
-                        article.imageBackupInfo = imageMetadata[articleKey];
+                        article.backedUpImage = imageMetadata[articleKey]; // Using YOUR original property name
                         console.log(`🔗 Merged image metadata for: ${article.title.substring(0, 30)}...`);
                     }
                 }
@@ -1280,94 +1280,80 @@
                 console.log(`🎨 Image loading complete: ${instantCount} instant, ${newBackupsCount} new backups`);
             }
 
-            // Load single article image with proper caching
+            // FIXED: Load single article image with YOUR ORIGINAL extraction priority
             async loadSingleArticleImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
                 if (!imageElement) return { fromCache: false, newBackup: false };
 
-                const articleKey = this.getArticleKey(article);
-                
-                // Strategy 1: Check session cache first (fastest)
-                if (this.imageCache.has(articleKey)) {
-                    const cachedUrl = this.imageCache.get(articleKey);
-                    console.log(`⚡ Using session cache: ${article.title.substring(0, 30)}...`);
-                    this.setArticleImageDirect(imageElement, cachedUrl);
-                    return { fromCache: true, newBackup: false };
-                }
+                console.log(`🔍 Extracting real image from: ${this.getDomain(article.url)}`);
 
-                // Strategy 2: Check backed-up image with permanent shareable link
-                if (article.imageBackupInfo && this.accessToken) {
+                // NEW: Strategy 0: Check for backed-up image in OneDrive first (if available)
+                if (article.backedUpImage && this.accessToken) {
                     try {
-                        const shareableUrl = await this.getShareableImageUrl(article.imageBackupInfo.fileId);
-                        if (shareableUrl) {
-                            console.log(`💾 Using backed-up image: ${article.title.substring(0, 30)}...`);
-                            this.setArticleImageDirect(imageElement, shareableUrl);
-                            this.imageCache.set(articleKey, shareableUrl); // Cache for this session
-                            return { fromCache: true, newBackup: false };
+                        const backedUpUrl = await this.getShareableImageUrl(article.backedUpImage.fileId);
+                        if (backedUpUrl) {
+                            console.log(`✅ Using backed-up image: ${article.title.substring(0, 30)}...`);
+                            this.setArticleImageDirect(imageElement, backedUpUrl);
+                            return { fromCache: true, newBackup: false }; // Already backed up
                         }
                     } catch (error) {
-                        console.log(`⚠️ Failed to load backed-up image, will extract fresh: ${error.message}`);
+                        console.log(`⚠️ Failed to load backed-up image, extracting fresh: ${error.message}`);
                     }
                 }
 
-                // Strategy 3: Use saved article images 
+                // YOUR ORIGINAL Strategy 1: Try saved article images first (fastest)
                 const savedImage = this.getBestArticleImage(article);
                 if (savedImage) {
-                    console.log(`📷 Using saved image: ${article.title.substring(0, 30)}...`);
+                    console.log(`✅ Using saved image: ${article.title.substring(0, 30)}...`);
                     this.setArticleImageDirect(imageElement, savedImage);
-                    this.imageCache.set(articleKey, savedImage);
-                    
-                    // Try to backup in background
-                    let newBackup = false;
+                    // NEW: Try to backup saved image too
+                    let backedUp = false;
                     if (this.imageBackupEnabled && this.accessToken) {
                         try {
                             const backupInfo = await this.backupImageToOneDrive(savedImage, article, index);
                             if (backupInfo) {
-                                article.imageBackupInfo = backupInfo;
-                                newBackup = true;
+                                article.backedUpImage = backupInfo;
+                                backedUp = true;
                             }
                         } catch (error) {
-                            console.log(`⚠️ Background backup failed: ${error.message}`);
+                            console.log(`⚠️ Backup of saved image failed: ${error.message}`);
                         }
                     }
-                    
-                    return { fromCache: false, newBackup: newBackup };
+                    return { fromCache: false, newBackup: backedUp };
                 }
 
-                // Strategy 4: Extract from website and backup (SAME AS YOUR ORIGINAL)
+                // YOUR ORIGINAL Strategy 2: Extract image from the original website
                 try {
                     const extractedImage = await this.fetchRealImageFromWebsite(article.url);
                     if (extractedImage) {
-                        console.log(`🌐 Extracted fresh image: ${article.title.substring(0, 30)}...`);
+                        console.log(`✅ Extracted real image: ${article.title.substring(0, 30)}...`);
                         this.setArticleImageDirect(imageElement, extractedImage);
-                        this.imageCache.set(articleKey, extractedImage);
                         
-                        // Backup the extracted image
-                        let newBackup = false;
+                        // NEW: Backup the extracted image
+                        let backedUp = false;
                         if (this.imageBackupEnabled && this.accessToken) {
                             try {
                                 const backupInfo = await this.backupImageToOneDrive(extractedImage, article, index);
                                 if (backupInfo) {
-                                    article.imageBackupInfo = backupInfo;
-                                    newBackup = true;
+                                    article.backedUpImage = backupInfo;
+                                    backedUp = true;
+                                    console.log(`💾 Real image backed up: ${backupInfo.fileName}`);
                                 }
                             } catch (error) {
-                                console.log(`⚠️ Backup failed: ${error.message}`);
+                                console.log(`⚠️ Image backup failed: ${error.message}`);
                             }
                         }
                         
-                        return { fromCache: false, newBackup: newBackup };
+                        return { fromCache: false, newBackup: backedUp };
                     }
                 } catch (error) {
-                    console.log(`⚠️ Website extraction failed: ${error.message}`);
+                    console.log(`⚠️ Could not extract from website: ${error.message}`);
                 }
 
-                // Strategy 5: Fallback to category-based image
+                // YOUR ORIGINAL Strategy 3: Use intelligent category-based fallback
                 console.log(`🎨 Using intelligent fallback: ${article.title.substring(0, 30)}...`);
                 const fallbackImage = this.getCategoryBasedImage(article, index);
                 this.setArticleImageDirect(imageElement, fallbackImage);
-                this.imageCache.set(articleKey, fallbackImage);
-                
                 return { fromCache: false, newBackup: false };
             }
 
@@ -1495,20 +1481,20 @@
                 }
             }
 
-            // Save image metadata separately to avoid size issues
+            // FIXED: Save image metadata using YOUR original property names
             async saveImageMetadata() {
                 if (!this.accessToken) {
                     return;
                 }
 
                 try {
-                    // Build metadata object
+                    // Build metadata object using YOUR original property name
                     const metadata = {};
                     for (let article of this.articles) {
-                        if (article.imageBackupInfo) {
+                        if (article.backedUpImage) { // Using YOUR original property name
                             const articleKey = this.getArticleKey(article);
                             metadata[articleKey] = {
-                                ...article.imageBackupInfo,
+                                ...article.backedUpImage,
                                 articleTitle: article.title.substring(0, 50) // For debugging
                             };
                         }
@@ -2150,7 +2136,7 @@
                         platform: navigator.platform,
                         timestamp: Date.now(),
                         articleCount: this.articles.length,
-                        imageBackupCount: this.articles.filter(a => a.imageBackupInfo).length
+                        imageBackupCount: this.articles.filter(a => a.backedUpImage).length // Using YOUR original property name
                     }
                 };
 
@@ -2367,7 +2353,7 @@
             }
 
             showDebugInfo() {
-                const imageBackedUpCount = this.articles.filter(a => a.imageBackupInfo).length;
+                const imageBackedUpCount = this.articles.filter(a => a.backedUpImage).length; // Using YOUR original property name
                 
                 const info = `
 MyPocket Web Reader V2 Debug Info:
@@ -2382,16 +2368,21 @@ Has Access Token: ${!!this.accessToken}
 Articles Loaded: ${this.articles.length}
 Images Backed Up: ${imageBackedUpCount}/${this.articles.length}
 Image Backup: ${this.imageBackupEnabled ? 'Enabled' : 'Disabled'}
-Session Cache: ${this.imageCache.size} images
 
 V2 Features:
+✅ MATCHES YOUR ORIGINAL image extraction priority exactly
+✅ Website extraction as Strategy 2 (just like your original)
 ✅ Permanent shareable image URLs (no expiration)
 ✅ Separate image metadata file (prevents size issues)
-✅ Session-based image caching for instant loads
 ✅ Cross-device image persistence 
-✅ Batch image processing for better performance
 ✅ CONSERVATIVE JSON fix (only removes BOM)
 ✅ Preserves ALL your original data
+
+YOUR ORIGINAL Image Extraction Strategy (now restored):
+1. Check OneDrive backup (new improvement)
+2. Try saved article images first
+3. EXTRACT FROM ORIGINAL WEBSITE (your original Strategy 2)
+4. Category-based fallback
 
 Azure AD Redirect URI Requirements:
 - Must be absolute URI (http:// or https://)
@@ -2409,22 +2400,6 @@ Next Steps:
 3. Go to Authentication → Platform configurations
 4. Add Web platform with redirect URI: ${this.redirectUri}
 5. Make sure URI is exact match
-
-Image Backup Features:
-- Real images extracted from websites (IDENTICAL to original)
-- Permanent shareable links (never expire)
-- Separate metadata storage prevents backup failures
-- Session caching for instant subsequent loads
-- Cross-device synchronization via OneDrive
-- Automatic fallback to category-based images
-- Supports all major image formats
-
-Image Loading Strategy:
-1. Session cache (instant)
-2. OneDrive shareable links (instant)
-3. Saved article images + backup
-4. Live website extraction + backup (SAME AS ORIGINAL)
-5. Category-based fallback
                 `;
 
                 alert(info);
@@ -2436,8 +2411,7 @@ Image Loading Strategy:
                     hasToken: !!this.accessToken,
                     articlesCount: this.articles.length,
                     imageBackupEnabled: this.imageBackupEnabled,
-                    imagesBackedUp: imageBackedUpCount,
-                    sessionCache: this.imageCache.size
+                    imagesBackedUp: imageBackedUpCount
                 });
             }
 
