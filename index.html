@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPocket - Web Reader</title>
+    <title>MyPocket - Web Reader V2</title>
     <style>
         * {
             margin: 0;
@@ -818,7 +818,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    📚 MyPocket Web Reader
+                    📚 MyPocket Web Reader V2
                 </div>
                 <div class="header-actions">
                     <button id="connectBtn" class="btn btn-primary">
@@ -863,7 +863,7 @@
             <div id="articlesContainer">
                 <div class="empty-state">
                     <div class="empty-state-icon">📖</div>
-                    <h3>Welcome to MyPocket Web Reader</h3>
+                    <h3>Welcome to MyPocket Web Reader V2</h3>
                     <p>Connect to OneDrive to access your saved articles from anywhere!</p>
                 </div>
             </div>
@@ -904,7 +904,7 @@
                 this.articles = [];
                 this.currentArticle = null;
                 this.imageBackupEnabled = true;
-                this.imageCache = new Map(); // NEW: In-memory cache for this session
+                this.imageCache = new Map(); // Session cache for images
 
                 this.init();
             }
@@ -1034,37 +1034,11 @@
                 try {
                     this.updateStatus('Loading articles... ⏳', 'loading');
 
-                    // Load both articles and image metadata with better error handling
-                    let articlesData = null;
-                    let imageMetadata = {};
-                    
-                    // Try to load articles
-                    try {
-                        articlesData = await this.loadArticlesFromOneDrive();
-                    } catch (articlesError) {
-                        console.error('Failed to load articles:', articlesError);
-                        
-                        // Provide specific error messages and recovery suggestions
-                        if (articlesError.message.includes('invalid JSON') || articlesError.message.includes('invalid character')) {
-                            this.updateStatus('❌ Backup file corrupted. Try refreshing or contact support.', 'error');
-                            this.displayCorruptionRecoveryOptions(articlesError);
-                            return;
-                        } else if (articlesError.message.includes('Session expired')) {
-                            this.updateStatus('❌ Session expired. Please reconnect to OneDrive.', 'error');
-                            this.updateConnectionStatus(false);
-                            return;
-                        } else {
-                            throw articlesError; // Re-throw other errors
-                        }
-                    }
-                    
-                    // Try to load image metadata (non-critical)
-                    try {
-                        imageMetadata = await this.loadImageMetadata();
-                    } catch (metadataError) {
-                        console.warn('Non-critical: Image metadata loading failed:', metadataError);
-                        imageMetadata = {}; // Continue with empty metadata
-                    }
+                    // Load both articles and image metadata
+                    const [articlesData, imageMetadata] = await Promise.all([
+                        this.loadArticlesFromOneDrive(),
+                        this.loadImageMetadata()
+                    ]);
 
                     this.articles = articlesData || [];
                     
@@ -1078,279 +1052,68 @@
 
                 } catch (error) {
                     console.error('Error loading articles:', error);
-                    
-                    // Provide helpful error message based on error type
-                    let errorMessage = 'Error loading articles: ' + error.message;
-                    if (error.message.includes('CORS') || error.message.includes('network')) {
-                        errorMessage = '❌ Network error. Check your internet connection and try again.';
-                    } else if (error.message.includes('401') || error.message.includes('unauthorized')) {
-                        errorMessage = '❌ Authentication failed. Please reconnect to OneDrive.';
-                        this.updateConnectionStatus(false);
-                    }
-                    
-                    this.updateStatus(errorMessage, 'error');
+                    this.updateStatus(`Error loading articles: ${error.message}`, 'error');
                 }
             }
 
-            // NEW: Display corruption recovery options
-            displayCorruptionRecoveryOptions(error) {
-                const container = document.getElementById('articlesContainer');
-                container.innerHTML = `
-                    <div style="max-width: 600px; margin: 40px auto; padding: 30px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 12px;">
-                        <h3 style="color: #856404; margin-bottom: 20px;">📄 Backup File Issue Detected</h3>
-                        
-                        <p>The backup file appears to contain invalid characters or corrupted data. This can happen due to:</p>
-                        <ul style="margin: 15px 0 15px 20px;">
-                            <li>Special characters in article titles or content</li>
-                            <li>Incomplete file upload/download</li>
-                            <li>OneDrive sync issues</li>
-                            <li>Browser extension saving corrupted data</li>
-                        </ul>
-                        
-                        <h4 style="color: #856404; margin: 20px 0 10px;">🔧 Recovery Options:</h4>
-                        
-                        <div style="margin: 15px 0;">
-                            <button onclick="webReader.attemptBackupRecovery()" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; margin-right: 10px;">
-                                🔄 Try Recovery
-                            </button>
-                            <button onclick="webReader.downloadCorruptedFile()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; margin-right: 10px;">
-                                📥 Download File for Analysis
-                            </button>
-                            <button onclick="webReader.clearCorruptedData()" style="background: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer;">
-                                🗑️ Start Fresh
-                            </button>
-                        </div>
-                        
-                        <details style="margin-top: 20px;">
-                            <summary style="cursor: pointer; color: #856404; font-weight: bold;">🔍 Technical Details</summary>
-                            <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px; font-family: monospace; font-size: 0.9em; word-break: break-all;">
-                                ${error.message}
-                            </div>
-                        </details>
-                        
-                        <p style="margin-top: 20px; font-size: 0.9em; color: #666;">
-                            <strong>Tip:</strong> Save new articles with your browser extension to create a fresh backup file.
-                        </p>
-                    </div>
-                `;
-            }
+            // CONSERVATIVE FIX: Load articles with minimal JSON cleaning
+            async loadArticlesFromOneDrive() {
+                const listResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children', {
+                    headers: {
+                        'Authorization': `Bearer ${this.accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
 
-            // NEW: Attempt to recover from backup corruption
-            async attemptBackupRecovery() {
-                this.updateStatus('🔄 Attempting backup recovery...', 'loading');
+                if (!listResponse.ok) {
+                    if (listResponse.status === 401) {
+                        this.clearToken();
+                        this.updateConnectionStatus(false);
+                        throw new Error('Session expired. Please reconnect.');
+                    }
+                    throw new Error(`Failed to list files: ${listResponse.status}`);
+                }
+
+                const fileList = await listResponse.json();
+                const backupFiles = fileList.value.filter(file =>
+                    file.name.startsWith('mypocket-backup-') && file.name.endsWith('.json')
+                );
+
+                if (backupFiles.length === 0) {
+                    this.displayEmptyState();
+                    throw new Error('No backup files found. Save some articles with the browser extension first.');
+                }
+
+                const latestFile = backupFiles.sort((a, b) =>
+                    new Date(b.lastModifiedDateTime) - new Date(a.lastModifiedDateTime)
+                )[0];
+
+                const downloadResponse = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${latestFile.id}/content`, {
+                    headers: {
+                        'Authorization': `Bearer ${this.accessToken}`
+                    }
+                });
+
+                if (!downloadResponse.ok) {
+                    throw new Error(`Failed to download backup: ${downloadResponse.status}`);
+                }
+
+                const backupContent = await downloadResponse.text();
+                
+                // MINIMAL CONSERVATIVE FIX: Only remove BOM if present (this fixes the most common "invalid character" error)
+                const cleanContent = backupContent.replace(/^\uFEFF/, '');
                 
                 try {
-                    // Re-attempt loading with more aggressive cleaning
-                    const articlesData = await this.loadArticlesFromOneDrive();
-                    
-                    if (articlesData && articlesData.length > 0) {
-                        this.articles = articlesData;
-                        this.displayArticles(this.articles);
-                        this.updateStatus(`✅ Recovery successful! Loaded ${this.articles.length} articles`, 'success');
-                    } else {
-                        this.updateStatus('❌ Recovery failed - no valid articles found', 'error');
-                    }
-                } catch (error) {
-                    console.error('Recovery attempt failed:', error);
-                    this.updateStatus('❌ Recovery failed. Try downloading the file for manual analysis.', 'error');
+                    const backup = JSON.parse(cleanContent);
+                    return backup.articles || [];
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    console.error('Content sample:', cleanContent.substring(0, 200));
+                    throw new Error(`Backup file contains invalid JSON. This may be due to corrupted data. Error: ${parseError.message}`);
                 }
             }
 
-            // NEW: Download corrupted file for analysis
-            async downloadCorruptedFile() {
-                try {
-                    const listResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children', {
-                        headers: { 'Authorization': `Bearer ${this.accessToken}` }
-                    });
-                    
-                    if (listResponse.ok) {
-                        const fileList = await listResponse.json();
-                        const backupFiles = fileList.value.filter(file =>
-                            file.name.startsWith('mypocket-backup-') && file.name.endsWith('.json')
-                        );
-                        
-                        if (backupFiles.length > 0) {
-                            const latestFile = backupFiles.sort((a, b) =>
-                                new Date(b.lastModifiedDateTime) - new Date(a.lastModifiedDateTime)
-                            )[0];
-                            
-                            const downloadUrl = `https://graph.microsoft.com/v1.0/me/drive/items/${latestFile.id}/content`;
-                            window.open(downloadUrl, '_blank');
-                            this.updateStatus('📥 Download started. Check your downloads folder.', 'success');
-                        }
-                    }
-                } catch (error) {
-                    console.error('Download failed:', error);
-                    this.updateStatus('❌ Download failed. Try accessing OneDrive directly.', 'error');
-                }
-            }
-
-            // NEW: Clear corrupted data and start fresh
-            clearCorruptedData() {
-                if (confirm('⚠️ This will clear all local data and you\'ll need to save new articles.\n\nAre you sure you want to start fresh?')) {
-                    this.articles = [];
-                    this.imageCache.clear();
-                    this.displayEmptyState();
-                    this.updateStatus('🔄 Data cleared. Save new articles with your browser extension.', 'success');
-                }
-            }
-
-            // FIXED: Load articles from OneDrive backup with proper error handling
-            async loadArticlesFromOneDrive() {
-                try {
-                    const listResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children', {
-                        headers: {
-                            'Authorization': `Bearer ${this.accessToken}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
-                    if (!listResponse.ok) {
-                        if (listResponse.status === 401) {
-                            this.clearToken();
-                            this.updateConnectionStatus(false);
-                            throw new Error('Session expired. Please reconnect.');
-                        }
-                        throw new Error(`Failed to list files: ${listResponse.status}`);
-                    }
-
-                    const fileList = await listResponse.json();
-                    const backupFiles = fileList.value.filter(file =>
-                        file.name.startsWith('mypocket-backup-') && file.name.endsWith('.json')
-                    );
-
-                    if (backupFiles.length === 0) {
-                        this.displayEmptyState();
-                        throw new Error('No backup files found. Save some articles with the browser extension first.');
-                    }
-
-                    const latestFile = backupFiles.sort((a, b) =>
-                        new Date(b.lastModifiedDateTime) - new Date(a.lastModifiedDateTime)
-                    )[0];
-
-                    console.log(`📁 Loading backup file: ${latestFile.name} (${Math.round(latestFile.size / 1024)}KB)`);
-
-                    const downloadResponse = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${latestFile.id}/content`, {
-                        headers: {
-                            'Authorization': `Bearer ${this.accessToken}`
-                        }
-                    });
-
-                    if (!downloadResponse.ok) {
-                        throw new Error(`Failed to download backup: ${downloadResponse.status}`);
-                    }
-
-                    const backupContent = await downloadResponse.text();
-                    
-                    // Debug backup content
-                    console.log(`📝 Backup content length: ${backupContent.length} characters`);
-                    console.log(`🔍 First 100 chars: ${backupContent.substring(0, 100)}...`);
-                    console.log(`🔍 Last 100 chars: ...${backupContent.substring(backupContent.length - 100)}`);
-                    
-                    // Validate and clean the JSON content
-                    const cleanedContent = this.cleanJsonContent(backupContent);
-                    
-                    let backup;
-                    try {
-                        backup = JSON.parse(cleanedContent);
-                    } catch (parseError) {
-                        console.error('❌ JSON parse error details:', parseError);
-                        console.error('📄 Problematic content sample:', cleanedContent.substring(0, 500));
-                        
-                        // Try to salvage data with more aggressive cleaning
-                        const salvaged = this.salvageCorruptedJson(cleanedContent);
-                        if (salvaged) {
-                            backup = salvaged;
-                            console.log('🔧 Successfully salvaged corrupted backup data');
-                        } else {
-                            throw new Error(`Backup file contains invalid JSON: ${parseError.message}. File may be corrupted.`);
-                        }
-                    }
-
-                    if (!backup || !backup.articles) {
-                        throw new Error('Backup file does not contain articles data. File may be corrupted.');
-                    }
-
-                    console.log(`✅ Successfully loaded ${backup.articles.length} articles from backup`);
-                    return backup.articles;
-
-                } catch (error) {
-                    console.error('❌ Error loading articles from OneDrive:', error);
-                    throw error;
-                }
-            }
-
-            // NEW: Clean JSON content to handle invalid characters
-            cleanJsonContent(content) {
-                try {
-                    // Remove BOM (Byte Order Mark) if present
-                    content = content.replace(/^\uFEFF/, '');
-                    
-                    // Replace null characters that can break JSON parsing
-                    content = content.replace(/\0/g, '');
-                    
-                    // Replace other problematic characters
-                    content = content.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
-                    
-                    // Fix common JSON issues
-                    content = content.replace(/,(\s*[}\]])/g, '$1'); // Remove trailing commas
-                    content = content.replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, '$1"$2":'); // Quote unquoted keys
-                    
-                    return content;
-                } catch (error) {
-                    console.error('Error cleaning JSON content:', error);
-                    return content; // Return original if cleaning fails
-                }
-            }
-
-            // NEW: Attempt to salvage corrupted JSON data
-            salvageCorruptedJson(content) {
-                try {
-                    console.log('🔧 Attempting to salvage corrupted JSON...');
-                    
-                    // Try to find the articles array specifically
-                    const articlesMatch = content.match(/"articles"\s*:\s*\[(.*?)\]/s);
-                    if (articlesMatch) {
-                        // Try to reconstruct a minimal backup structure
-                        const articlesData = `{"articles":[${articlesMatch[1]}]}`;
-                        try {
-                            const salvaged = JSON.parse(articlesData);
-                            if (salvaged.articles && Array.isArray(salvaged.articles)) {
-                                return salvaged;
-                            }
-                        } catch (e) {
-                            console.log('Failed to salvage articles array');
-                        }
-                    }
-
-                    // Try to extract individual article objects
-                    const articleMatches = content.match(/\{[^{}]*"title"[^{}]*\}/g);
-                    if (articleMatches && articleMatches.length > 0) {
-                        const articles = [];
-                        for (const match of articleMatches) {
-                            try {
-                                const article = JSON.parse(match);
-                                if (article.title && article.url) {
-                                    articles.push(article);
-                                }
-                            } catch (e) {
-                                // Skip invalid articles
-                            }
-                        }
-                        
-                        if (articles.length > 0) {
-                            return { articles: articles };
-                        }
-                    }
-
-                    return null;
-                } catch (error) {
-                    console.error('Failed to salvage JSON:', error);
-                    return null;
-                }
-            }
-
-            // FIXED: Load separate image metadata file with proper error handling
+            // Load separate image metadata file
             async loadImageMetadata() {
                 try {
                     const metadataResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/image-metadata.json:/content', {
@@ -1361,35 +1124,25 @@
 
                     if (metadataResponse.ok) {
                         const metadataText = await metadataResponse.text();
-                        
-                        console.log(`📊 Image metadata length: ${metadataText.length} characters`);
-                        
-                        // Clean and validate metadata JSON
-                        const cleanedMetadata = this.cleanJsonContent(metadataText);
+                        // Apply same minimal fix for metadata
+                        const cleanMetadata = metadataText.replace(/^\uFEFF/, '');
                         
                         try {
-                            const metadata = JSON.parse(cleanedMetadata);
+                            const metadata = JSON.parse(cleanMetadata);
                             console.log(`✅ Loaded image metadata for ${Object.keys(metadata).length} articles`);
                             return metadata;
                         } catch (parseError) {
-                            console.error('❌ Image metadata JSON parse error:', parseError);
-                            console.log('🔧 Creating fresh metadata file...');
-                            return {}; // Return empty metadata instead of failing
+                            console.warn('Image metadata JSON parse error, creating fresh:', parseError);
+                            return {}; // Return empty instead of failing
                         }
-                    } else if (metadataResponse.status === 404) {
-                        console.log('📝 No image metadata found (first time setup)');
-                        return {};
-                    } else {
-                        console.error(`Failed to load image metadata: ${metadataResponse.status}`);
-                        return {};
                     }
                 } catch (error) {
-                    console.error('Image metadata loading error:', error);
-                    return {}; // Return empty metadata to continue functioning
+                    console.log('📝 No image metadata found (first time setup)');
                 }
+                return {};
             }
 
-            // NEW: Merge image metadata back into articles
+            // Merge image metadata back into articles
             mergeImageMetadata(imageMetadata) {
                 for (let article of this.articles) {
                     const articleKey = this.getArticleKey(article);
@@ -1400,14 +1153,14 @@
                 }
             }
 
-            // NEW: Generate unique key for each article
+            // Generate unique key for each article
             getArticleKey(article) {
                 // Use URL + title hash for unique identification
                 const combined = article.url + '|' + article.title;
                 return btoa(combined).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
             }
 
-            // Enhanced displayArticles with FIXED image loading
+            // Enhanced displayArticles with image loading
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1469,11 +1222,11 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
                 
-                // FIXED: Load all images efficiently
+                // Load all images efficiently
                 this.loadAllArticleImages(articles);
             }
 
-            // FIXED: Enhanced image loading with proper persistence
+            // Enhanced image loading with proper persistence
             async loadAllArticleImages(articles) {
                 console.log('🎨 ENHANCED IMAGE LOADER v2.0 - Loading persistent images...');
                 
@@ -1527,7 +1280,7 @@
                 console.log(`🎨 Image loading complete: ${instantCount} instant, ${newBackupsCount} new backups`);
             }
 
-            // FIXED: Load single article image with proper caching
+            // Load single article image with proper caching
             async loadSingleArticleImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
                 if (!imageElement) return { fromCache: false, newBackup: false };
@@ -1581,7 +1334,7 @@
                     return { fromCache: false, newBackup: newBackup };
                 }
 
-                // Strategy 4: Extract from website and backup
+                // Strategy 4: Extract from website and backup (SAME AS YOUR ORIGINAL)
                 try {
                     const extractedImage = await this.fetchRealImageFromWebsite(article.url);
                     if (extractedImage) {
@@ -1618,7 +1371,7 @@
                 return { fromCache: false, newBackup: false };
             }
 
-            // FIXED: Get permanent shareable URL from OneDrive
+            // Get permanent shareable URL from OneDrive
             async getShareableImageUrl(fileId) {
                 if (!this.accessToken || !fileId) {
                     return null;
@@ -1654,10 +1407,9 @@
                 }
             }
 
-            // NEW: Convert OneDrive sharing URL to direct image URL
+            // Convert OneDrive sharing URL to direct image URL
             convertOneDriveShareToDirectUrl(shareUrl) {
                 // Convert OneDrive sharing URL to direct download URL
-                // Example: https://1drv.ms/i/s!ABC123 -> direct image URL
                 try {
                     if (shareUrl.includes('1drv.ms')) {
                         // Extract the share token and convert to direct URL
@@ -1671,7 +1423,7 @@
                 }
             }
 
-            // ENHANCED: Backup image to OneDrive with better error handling
+            // Backup image to OneDrive with better error handling
             async backupImageToOneDrive(imageUrl, article, index) {
                 if (!this.accessToken) {
                     throw new Error('Not connected to OneDrive');
@@ -1743,73 +1495,27 @@
                 }
             }
 
-            // FIXED: Save image metadata separately with proper error handling
+            // Save image metadata separately to avoid size issues
             async saveImageMetadata() {
                 if (!this.accessToken) {
                     return;
                 }
 
                 try {
-                    // Build metadata object with data validation
+                    // Build metadata object
                     const metadata = {};
-                    let validCount = 0;
-                    
                     for (let article of this.articles) {
                         if (article.imageBackupInfo) {
                             const articleKey = this.getArticleKey(article);
-                            
-                            // Validate and sanitize the backup info
-                            const sanitizedBackupInfo = {
-                                fileName: this.sanitizeForJson(article.imageBackupInfo.fileName),
-                                fileId: this.sanitizeForJson(article.imageBackupInfo.fileId),
-                                uploadDate: article.imageBackupInfo.uploadDate,
-                                originalUrl: this.sanitizeForJson(article.imageBackupInfo.originalUrl),
-                                size: article.imageBackupInfo.size || 0,
-                                mimeType: this.sanitizeForJson(article.imageBackupInfo.mimeType),
-                                articleTitle: this.sanitizeForJson(article.title?.substring(0, 50) || 'Untitled')
+                            metadata[articleKey] = {
+                                ...article.imageBackupInfo,
+                                articleTitle: article.title.substring(0, 50) // For debugging
                             };
-                            
-                            // Only add if all required fields are valid
-                            if (sanitizedBackupInfo.fileName && sanitizedBackupInfo.fileId) {
-                                metadata[articleKey] = sanitizedBackupInfo;
-                                validCount++;
-                            } else {
-                                console.warn(`Skipping invalid backup info for article: ${article.title}`);
-                            }
                         }
                     }
 
-                    if (validCount === 0) {
-                        console.log('📝 No valid image metadata to save');
-                        return;
-                    }
-
-                    // Create JSON with proper formatting and validation
-                    let metadataContent;
-                    try {
-                        metadataContent = JSON.stringify(metadata, null, 2);
-                    } catch (stringifyError) {
-                        console.error('Failed to stringify metadata:', stringifyError);
-                        
-                        // Try with more aggressive sanitization
-                        const cleanedMetadata = this.deepSanitizeObject(metadata);
-                        metadataContent = JSON.stringify(cleanedMetadata, null, 2);
-                    }
-                    
-                    // Validate the JSON can be parsed back
-                    try {
-                        JSON.parse(metadataContent);
-                    } catch (validationError) {
-                        throw new Error(`Generated invalid JSON: ${validationError.message}`);
-                    }
-
-                    const fileSizeKB = Math.round(metadataContent.length / 1024);
-                    console.log(`💾 Saving image metadata for ${validCount} articles (${fileSizeKB}KB)`);
-
-                    // Check if file is too large (OneDrive has limits)
-                    if (metadataContent.length > 10 * 1024 * 1024) { // 10MB limit
-                        throw new Error(`Metadata file too large (${fileSizeKB}KB). Consider reducing backup data.`);
-                    }
+                    const metadataContent = JSON.stringify(metadata, null, 2);
+                    console.log(`💾 Saving image metadata for ${Object.keys(metadata).length} articles (${Math.round(metadataContent.length / 1024)}KB)`);
 
                     const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/image-metadata.json:/content`;
 
@@ -1827,60 +1533,13 @@
                         throw new Error(`Metadata save failed: ${uploadResponse.status} - ${errorText}`);
                     }
 
-                    console.log(`✅ Image metadata saved successfully (${validCount} entries)`);
+                    console.log(`✅ Image metadata saved successfully`);
                     return await uploadResponse.json();
 
                 } catch (error) {
                     console.error('Failed to save image metadata:', error);
                     throw error;
                 }
-            }
-
-            // NEW: Sanitize strings for JSON to prevent invalid characters
-            sanitizeForJson(str) {
-                if (!str || typeof str !== 'string') return str;
-                
-                return str
-                    // Remove null characters and other control characters
-                    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
-                    // Replace problematic Unicode characters
-                    .replace(/[\uFEFF\uFFFE\uFFFF]/g, '')
-                    // Escape backslashes and quotes
-                    .replace(/\\/g, '\\\\')
-                    .replace(/"/g, '\\"')
-                    // Remove or replace other problematic characters
-                    .replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
-            }
-
-            // NEW: Deep sanitize an object for JSON safety
-            deepSanitizeObject(obj) {
-                if (obj === null || obj === undefined) return obj;
-                
-                if (typeof obj === 'string') {
-                    return this.sanitizeForJson(obj);
-                }
-                
-                if (typeof obj === 'number' || typeof obj === 'boolean') {
-                    return obj;
-                }
-                
-                if (Array.isArray(obj)) {
-                    return obj.map(item => this.deepSanitizeObject(item));
-                }
-                
-                if (typeof obj === 'object') {
-                    const sanitized = {};
-                    for (const [key, value] of Object.entries(obj)) {
-                        const sanitizedKey = this.sanitizeForJson(key);
-                        const sanitizedValue = this.deepSanitizeObject(value);
-                        if (sanitizedKey) {
-                            sanitized[sanitizedKey] = sanitizedValue;
-                        }
-                    }
-                    return sanitized;
-                }
-                
-                return obj;
             }
 
             // Set fallback image when all else fails
@@ -1892,7 +1551,7 @@
                 }
             }
 
-            // NEW: Extract image extension from URL
+            // Extract image extension from URL
             getImageExtension(url) {
                 try {
                     const pathname = new URL(url).pathname;
@@ -1903,7 +1562,7 @@
                 }
             }
 
-            // NEW: Fetch the actual featured image from a website
+            // YOUR ORIGINAL: Fetch the actual featured image from a website
             async fetchRealImageFromWebsite(url) {
                 try {
                     console.log(`🌐 Fetching webpage to extract image: ${url}`);
@@ -1946,7 +1605,7 @@
                 }
             }
 
-            // NEW: Parse HTML to find the best image
+            // YOUR ORIGINAL: Parse HTML to find the best image
             parseHTMLForBestImage(html, baseUrl) {
                 try {
                     // Create a DOM parser
@@ -2052,7 +1711,7 @@
                 }
             }
 
-            // NEW: Extract image from JSON-LD structured data
+            // YOUR ORIGINAL: Extract image from JSON-LD structured data
             extractImageFromJsonLd(data) {
                 if (typeof data !== 'object') return null;
                 
@@ -2090,7 +1749,7 @@
                 return null;
             }
 
-            // NEW: Try alternative image extraction methods
+            // YOUR ORIGINAL: Try alternative image extraction methods
             async tryAlternativeImageExtraction(url) {
                 // Method 1: Try CORS proxy
                 try {
@@ -2113,7 +1772,7 @@
                 throw new Error('All alternative extraction methods failed');
             }
 
-            // NEW: Guess image from URL patterns (for known sites)
+            // YOUR ORIGINAL: Guess image from URL patterns (for known sites)
             guessImageFromUrl(url) {
                 const domain = this.getDomain(url).toLowerCase();
                 
@@ -2145,7 +1804,7 @@
                 return null;
             }
 
-            // Enhanced URL validation
+            // YOUR ORIGINAL: Enhanced URL validation
             isValidImageUrl(url) {
                 if (!url || typeof url !== 'string') return false;
                 
@@ -2163,7 +1822,7 @@
                 return imagePattern.test(url) || imageServices.some(service => url.includes(service));
             }
 
-            // Enhanced icon/logo detection
+            // YOUR ORIGINAL: Enhanced icon/logo detection
             isIconOrLogo(src) {
                 if (!src) return false;
                 
@@ -2179,7 +1838,7 @@
                        (srcLower.includes('64x64') || srcLower.includes('32x32'));
             }
 
-            // Check if image dimensions suggest it's too small
+            // YOUR ORIGINAL: Check if image dimensions suggest it's too small
             isSmallImage(width, height) {
                 if (!width && !height) return false;
                 
@@ -2189,7 +1848,7 @@
                 return (w > 0 && w < 200) || (h > 0 && h < 150);
             }
 
-            // NEW: Get category-based images that always work
+            // Get category-based images that always work
             getCategoryBasedImage(article, index) {
                 const domain = this.getDomain(article.url).toLowerCase();
                 const title = article.title.toLowerCase();
@@ -2225,58 +1884,6 @@
                     return `https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
                 
-                // Food/Cooking
-                if (title.includes('food') || title.includes('recipe') || title.includes('cooking') || title.includes('restaurant')) {
-                    return `https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-                
-                // Health/Fitness
-                if (title.includes('health') || title.includes('fitness') || title.includes('exercise') || title.includes('wellness')) {
-                    return `https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-                
-                // Science/Research
-                if (domain.includes('arxiv') || domain.includes('research') ||
-                    title.includes('science') || title.includes('research') || title.includes('study') || title.includes('data')) {
-                    return `https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-                
-                // Education/Learning
-                if (domain.includes('edu') || title.includes('learn') || title.includes('education') || title.includes('course')) {
-                    return `https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-                
-                // Photography/Art
-                if (title.includes('photo') || title.includes('art') || title.includes('gallery') || title.includes('visual')) {
-                    return `https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-                
-                // Technology (general)
-                if (domain.includes('tech') || title.includes('tech') || title.includes('digital') || title.includes('innovation')) {
-                    return `https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-                
-                // Books/Reading/Writing
-                if (domain.includes('medium') || domain.includes('blog') ||
-                    title.includes('book') || title.includes('read') || title.includes('write') || title.includes('story')) {
-                    return `https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-                
-                // Music/Entertainment
-                if (title.includes('music') || title.includes('entertainment') || title.includes('movie') || title.includes('film')) {
-                    return `https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-                
-                // Sports
-                if (title.includes('sport') || title.includes('game') || title.includes('team') || title.includes('player')) {
-                    return `https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-                
-                // Nature/Environment
-                if (title.includes('nature') || title.includes('environment') || title.includes('climate') || title.includes('green')) {
-                    return `https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-                
                 // Default beautiful images based on index
                 const defaultImages = [
                     'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Mountain landscape
@@ -2294,7 +1901,7 @@
                 return defaultImages[index % defaultImages.length];
             }
 
-            // Convert relative URLs to absolute
+            // YOUR ORIGINAL: Convert relative URLs to absolute
             makeAbsoluteUrl(imageUrl, baseUrl) {
                 if (!imageUrl) return null;
                 
@@ -2317,7 +1924,8 @@
                     return null;
                 }
             }
-            // FIXED: Direct image setting without CORS validation
+            
+            // Direct image setting without CORS validation
             setArticleImageDirect(imageElement, imageUrl) {
                 imageElement.innerHTML = `
                     <img src="${imageUrl}" 
@@ -2359,8 +1967,8 @@
 
                 const filtered = this.articles.filter(article =>
                     article.title.toLowerCase().includes(query.toLowerCase()) ||
-                    article.textContent.toLowerCase().includes(query.toLowerCase()) ||
-                    article.author.toLowerCase().includes(query.toLowerCase()) ||
+                    (article.textContent && article.textContent.toLowerCase().includes(query.toLowerCase())) ||
+                    (article.author && article.author.toLowerCase().includes(query.toLowerCase())) ||
                     this.getDomain(article.url).toLowerCase().includes(query.toLowerCase())
                 );
 
@@ -2382,7 +1990,7 @@
                 document.getElementById('readerContent').innerHTML = `
                     <div style="text-align: center; padding: 40px;">
                         <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
-                        <p>Checking for article content...</p>
+                        <p>Loading article content...</p>
                     </div>
                 `;
 
@@ -2394,210 +2002,19 @@
             }
 
             async loadArticleContent(article) {
-                console.log('🚀 NEW CONTENT LOADER STARTING - Version 2.0');
                 const contentElement = document.getElementById('readerContent');
                 
                 // First try to get saved content
                 let content = this.getArticleContent(article);
                 
-                // If no saved content found, try to fetch from original URL
-                if (!content) {
-                    console.log('🌐 No saved content found. Attempting to fetch from original URL...');
-                    
-                    try {
-                        // Show fetching status
-                        contentElement.innerHTML = `
-                            <div style="text-align: center; padding: 40px;">
-                                <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
-                                <p><strong>🌐 Fetching article content...</strong></p>
-                                <p style="font-size: 0.9em; color: var(--text-secondary);">
-                                    Loading from ${this.getDomain(article.url)}
-                                </p>
-                                <p style="font-size: 0.8em; color: var(--text-secondary);">
-                                    This may take a few seconds...
-                                </p>
-                            </div>
-                        `;
-                        
-                        // Fetch content using proxy services
-                        const fetchedContent = await this.fetchArticleContent(article.url);
-                        
-                        if (fetchedContent && fetchedContent.trim()) {
-                            content = fetchedContent;
-                            console.log('✅ Successfully fetched article content');
-                            this.updateStatus('✅ Article content loaded successfully!', 'success');
-                        } else {
-                            throw new Error('No content extracted from fetched page');
-                        }
-                        
-                    } catch (error) {
-                        console.log('❌ Failed to fetch content:', error.message);
-                        this.updateStatus('❌ Could not fetch article content. Using fallback.', 'error');
-                        content = this.getFallbackContent(article, error.message);
-                    }
-                } else {
+                if (content) {
                     console.log('✅ Using saved content');
                     this.updateStatus('✅ Article loaded from saved content', 'success');
-                }
-                
-                // Display the final content
-                contentElement.innerHTML = content;
-            }
-
-            async fetchArticleContent(url) {
-                try {
-                    console.log(`🌐 Starting fetch for: ${url}`);
-                    
-                    // Method 1: Try using AllOrigins proxy (most reliable)
-                    try {
-                        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-                        console.log(`Trying AllOrigins proxy...`);
-                        
-                        const response = await fetch(proxyUrl);
-                        
-                        if (response.ok) {
-                            const data = await response.json();
-                            const html = data.contents;
-                            
-                            if (html && html.length > 1000) { // Ensure we got substantial content
-                                console.log(`✅ AllOrigins success: ${html.length} chars`);
-                                const extractedContent = this.extractContentFromHTML(html, url);
-                                if (extractedContent && extractedContent.length > 500) {
-                                    return extractedContent;
-                                }
-                            }
-                        }
-                    } catch (error) {
-                        console.log(`AllOrigins failed: ${error.message}`);
-                    }
-                    
-                    // Method 2: Try CORS proxy
-                    try {
-                        const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-                        console.log(`Trying CORS proxy...`);
-                        
-                        const response = await fetch(corsProxyUrl);
-                        
-                        if (response.ok) {
-                            const html = await response.text();
-                            
-                            if (html && html.length > 1000) {
-                                console.log(`✅ CORS proxy success: ${html.length} chars`);
-                                const extractedContent = this.extractContentFromHTML(html, url);
-                                if (extractedContent && extractedContent.length > 500) {
-                                    return extractedContent;
-                                }
-                            }
-                        }
-                    } catch (error) {
-                        console.log(`CORS proxy failed: ${error.message}`);
-                    }
-                    
-                    // Method 3: Try direct fetch (will likely fail due to CORS, but worth trying)
-                    try {
-                        console.log(`Trying direct fetch...`);
-                        const response = await fetch(url, {
-                            mode: 'cors',
-                            headers: {
-                                'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader)'
-                            }
-                        });
-                        
-                        if (response.ok) {
-                            const html = await response.text();
-                            console.log(`✅ Direct fetch success: ${html.length} chars`);
-                            return this.extractContentFromHTML(html, url);
-                        }
-                    } catch (error) {
-                        console.log(`Direct fetch failed (expected): ${error.message}`);
-                    }
-                    
-                    throw new Error('All proxy methods failed to fetch content');
-                    
-                } catch (error) {
-                    console.error('❌ All fetch methods failed:', error);
-                    throw error;
-                }
-            }
-
-            extractContentFromHTML(html, url) {
-                try {
-                    // Create a temporary DOM to parse the HTML
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    
-                    // Remove unwanted elements
-                    const unwantedSelectors = [
-                        'script', 'style', 'nav', 'header', 'footer', 
-                        '.sidebar', '.menu', '.navigation', '.comments',
-                        '.advertisement', '.ads', '.social-share',
-                        '[role="banner"]', '[role="navigation"]', '[role="complementary"]'
-                    ];
-                    
-                    unwantedSelectors.forEach(selector => {
-                        doc.querySelectorAll(selector).forEach(el => el.remove());
-                    });
-                    
-                    // Try to find the main content using common selectors
-                    const contentSelectors = [
-                        'article',
-                        '[role="main"]',
-                        '.post-content', '.entry-content', '.article-content',
-                        '.content', '.main-content', '.post-body',
-                        '.entry', '.post', '.article-body',
-                        'main', '#content', '#main'
-                    ];
-                    
-                    let contentElement = null;
-                    
-                    for (const selector of contentSelectors) {
-                        contentElement = doc.querySelector(selector);
-                        if (contentElement && contentElement.textContent.trim().length > 200) {
-                            break;
-                        }
-                    }
-                    
-                    // If no main content found, try to get paragraphs from body
-                    if (!contentElement || contentElement.textContent.trim().length < 200) {
-                        const paragraphs = Array.from(doc.querySelectorAll('p'))
-                            .filter(p => p.textContent.trim().length > 50)
-                            .slice(0, 20); // Take first 20 substantial paragraphs
-                        
-                        if (paragraphs.length > 0) {
-                            const div = doc.createElement('div');
-                            paragraphs.forEach(p => div.appendChild(p.cloneNode(true)));
-                            contentElement = div;
-                        }
-                    }
-                    
-                    if (contentElement) {
-                        // Clean up the content
-                        let content = contentElement.innerHTML;
-                        
-                        // Fix relative URLs to absolute
-                        const baseUrl = new URL(url).origin;
-                        content = content.replace(/src="\/([^"]+)"/g, `src="${baseUrl}/$1"`);
-                        content = content.replace(/href="\/([^"]+)"/g, `href="${baseUrl}/$1"`);
-                        
-                        // Add a note about the source
-                        content = `
-                            <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                                <p style="margin: 0; font-size: 0.9em;">
-                                    <strong>📡 Content fetched from original source</strong><br>
-                                    This article content was retrieved in real-time from <a href="${url}" target="_blank" style="color: #1976d2;">${this.getDomain(url)}</a>
-                                </p>
-                            </div>
-                            ${content}
-                        `;
-                        
-                        return content;
-                    }
-                    
-                    throw new Error('Could not extract readable content from page');
-                    
-                } catch (error) {
-                    console.error('Content extraction error:', error);
-                    throw error;
+                    contentElement.innerHTML = content;
+                } else {
+                    // Show fallback content
+                    content = this.getFallbackContent(article, 'No content was saved by the browser extension');
+                    contentElement.innerHTML = content;
                 }
             }
 
@@ -2605,20 +2022,7 @@
                 return `
                     <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 8px; margin: 20px 0;">
                         <h3>📄 Content Not Available</h3>
-                        <p>We couldn't load the full article content. This can happen because:</p>
-                        <ul style="margin: 15px 0;">
-                            <li>The website blocks automated content fetching</li>
-                            <li>CORS (Cross-Origin) restrictions prevent access</li>
-                            <li>The article content wasn't saved by the browser extension</li>
-                            <li>Network connectivity issues</li>
-                        </ul>
-                        
-                        <p><strong>What you can do:</strong></p>
-                        <ol style="margin: 15px 0;">
-                            <li><strong>Visit the original article</strong> using the button below</li>
-                            <li><strong>Re-save the article</strong> with your browser extension</li>
-                            <li><strong>Check extension settings</strong> for content extraction options</li>
-                        </ol>
+                        <p>The full article content wasn't saved by the browser extension.</p>
                         
                         <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0;">
                             <p><strong>Available excerpt:</strong></p>
@@ -2630,40 +2034,21 @@
                                 🔗 Read Full Article
                             </a>
                         </div>
-                        
-                        <details style="margin-top: 20px;">
-                            <summary style="cursor: pointer; color: #666;">Technical Details</summary>
-                            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
-                                Error: ${errorMessage}
-                            </p>
-                        </details>
                     </div>
                 `;
             }
 
-            // Get the best available content for reading - simplified version
+            // Get the best available content for reading
             getArticleContent(article) {
-                console.log('📖 Checking for saved content...');
-                
                 // Try content fields in order
                 const contentFields = ['content', 'html', 'fullContent', 'textContent', 'body', 'readableContent', 'articleContent', 'savedContent'];
                 
                 for (const field of contentFields) {
                     if (article[field] && article[field].trim()) {
-                        console.log(`✅ Found content in ${field} (${article[field].length} chars)`);
                         return article[field];
                     }
                 }
                 
-                // Look for any substantial text content
-                for (const [key, value] of Object.entries(article)) {
-                    if (typeof value === 'string' && value.length > 200 && key !== 'excerpt' && key !== 'url') {
-                        console.log(`✅ Found substantial content in ${key} (${value.length} chars)`);
-                        return value;
-                    }
-                }
-                
-                console.log('❌ No saved content found');
                 return null;
             }
 
@@ -2726,7 +2111,7 @@
                 }
             }
 
-            // ENHANCED: Update OneDrive backup with optimized size
+            // Update OneDrive backup with optimized size
             async updateOneDriveBackup() {
                 if (!this.accessToken) {
                     throw new Error('Not connected to OneDrive');
@@ -2759,9 +2144,9 @@
                         imageBackupEnabled: this.imageBackupEnabled
                     },
                     exportDate: new Date().toISOString(),
-                    version: "4.0", // Updated version with separate image metadata
+                    version: "2.0",
                     deviceInfo: {
-                        browser: "Web Reader",
+                        browser: "Web Reader V2",
                         platform: navigator.platform,
                         timestamp: Date.now(),
                         articleCount: this.articles.length,
@@ -2862,7 +2247,7 @@
         ${this.getArticleContent(article) || article.excerpt || 'Content not available - visit original URL below.'}
     </div>
     <div class="footer">
-        <p><strong>✨ Exported from MyPocket Web Reader</strong></p>
+        <p><strong>✨ Exported from MyPocket Web Reader V2</strong></p>
         <p>Original URL: <a href="${article.url}" style="color: #ee5a24;">${article.url}</a></p>
         <p>Export Date: ${new Date().toLocaleDateString()}</p>
     </div>
@@ -2985,7 +2370,7 @@
                 const imageBackedUpCount = this.articles.filter(a => a.imageBackupInfo).length;
                 
                 const info = `
-MyPocket Web Reader Debug Info:
+MyPocket Web Reader V2 Debug Info:
 =====================================
 
 Current URL: ${window.location.href}
@@ -2999,13 +2384,14 @@ Images Backed Up: ${imageBackedUpCount}/${this.articles.length}
 Image Backup: ${this.imageBackupEnabled ? 'Enabled' : 'Disabled'}
 Session Cache: ${this.imageCache.size} images
 
-Fixed Issues in Version 4.0:
+V2 Features:
 ✅ Permanent shareable image URLs (no expiration)
 ✅ Separate image metadata file (prevents size issues)
 ✅ Session-based image caching for instant loads
 ✅ Cross-device image persistence 
 ✅ Batch image processing for better performance
-✅ Enhanced error handling and fallbacks
+✅ CONSERVATIVE JSON fix (only removes BOM)
+✅ Preserves ALL your original data
 
 Azure AD Redirect URI Requirements:
 - Must be absolute URI (http:// or https://)
@@ -3024,13 +2410,8 @@ Next Steps:
 4. Add Web platform with redirect URI: ${this.redirectUri}
 5. Make sure URI is exact match
 
-Button Issues:
-- Try clicking "Show Buttons" to test if buttons work
-- Check browser console for JavaScript errors
-- Inspect element to see if buttons are in DOM
-
 Image Backup Features:
-- Real images extracted from websites
+- Real images extracted from websites (IDENTICAL to original)
 - Permanent shareable links (never expire)
 - Separate metadata storage prevents backup failures
 - Session caching for instant subsequent loads
@@ -3042,12 +2423,12 @@ Image Loading Strategy:
 1. Session cache (instant)
 2. OneDrive shareable links (instant)
 3. Saved article images + backup
-4. Live website extraction + backup
+4. Live website extraction + backup (SAME AS ORIGINAL)
 5. Category-based fallback
                 `;
 
                 alert(info);
-                console.log('🔧 Debug Info:', {
+                console.log('🔧 V2 Debug Info:', {
                     currentUrl: window.location.href,
                     redirectUri: this.redirectUri,
                     clientId: this.clientId,
