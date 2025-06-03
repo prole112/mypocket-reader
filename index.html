@@ -155,19 +155,6 @@
             color: #f85149;
         }
 
-        /* NEW: Sync status styling */
-        [data-theme="dark"] .sync-status.synced {
-            background: rgba(25, 135, 84, 0.2);
-            border-color: #198754;
-            color: #3fb950;
-        }
-
-        [data-theme="dark"] .sync-status.syncing {
-            background: rgba(255, 193, 7, 0.2);
-            border-color: #ffc107;
-            color: #ffb800;
-        }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
@@ -307,31 +294,6 @@
             color: #27ae60;
         }
 
-        /* NEW: Sync Status */
-        .sync-status {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 12px 16px;
-            margin: 15px 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9em;
-        }
-
-        .sync-status.synced {
-            border-color: #27ae60;
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .sync-status.syncing {
-            border-color: #ffc107;
-            background: #fff3cd;
-            color: #856404;
-        }
-
         /* Articles Grid - NEW ORGANIC SHAPES */
         .articles-section {
             padding: 40px 0;
@@ -393,36 +355,6 @@
 
         .article-card:hover .article-actions {
             opacity: 1 !important;
-        }
-
-        /* NEW: Sync indicator on cards */
-        .article-card::before {
-            content: '';
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #27ae60;
-            opacity: 0;
-            z-index: 5;
-            transition: opacity 0.3s ease;
-        }
-
-        .article-card.synced::before {
-            opacity: 1;
-        }
-
-        .article-card.syncing::before {
-            background: #ffc107;
-            opacity: 1;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
         }
 
         /* Organic shaped image area */
@@ -925,14 +857,6 @@
         Connect to OneDrive to view your saved articles
     </div>
 
-    <!-- NEW: Sync Status -->
-    <div class="container">
-        <div id="syncStatus" class="sync-status" style="display: none;">
-            <span id="syncIcon">🔄</span>
-            <span id="syncMessage">Checking sync status...</span>
-        </div>
-    </div>
-
     <!-- Articles -->
     <section class="articles-section">
         <div class="container">
@@ -981,25 +905,7 @@
                 this.currentArticle = null;
                 this.imageBackupEnabled = true; // NEW: Enable image backup by default
 
-                // NEW: Add sync tracking
-                this.deviceId = this.getOrCreateDeviceId();
-                this.syncCache = new Map(); // Cache for verified backups
-                this.lastSyncCheck = null;
-
                 this.init();
-            }
-
-            // NEW: Device ID for cross-device sync
-            getOrCreateDeviceId() {
-                let deviceId = localStorage.getItem('mypocket_device_id');
-                if (!deviceId) {
-                    deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                    localStorage.setItem('mypocket_device_id', deviceId);
-                    console.log('🆔 Created new device ID:', deviceId);
-                } else {
-                    console.log('🆔 Using existing device ID:', deviceId);
-                }
-                return deviceId;
             }
 
             getRedirectUri() {
@@ -1067,35 +973,6 @@
                 this.accessToken = null;
             }
 
-            // NEW: Enhanced token validation
-            async validateAndRefreshToken() {
-                if (!this.accessToken) return false;
-                
-                try {
-                    console.log('🔍 Validating token...');
-                    const response = await fetch('https://graph.microsoft.com/v1.0/me', {
-                        headers: { 'Authorization': `Bearer ${this.accessToken}` }
-                    });
-                    
-                    if (response.ok) {
-                        console.log('✅ Token is valid');
-                        return true;
-                    } else if (response.status === 401) {
-                        console.log('🔄 Token expired, clearing...');
-                        this.clearToken();
-                        this.updateConnectionStatus(false);
-                        this.updateStatus('🔑 Session expired. Please reconnect to prevent re-processing images.', 'error');
-                        this.showSyncStatus('⚠️ Session expired - images may be re-processed on reconnect', 'syncing');
-                        return false;
-                    }
-                } catch (error) {
-                    console.log('❌ Token validation failed:', error);
-                    return false;
-                }
-                
-                return false;
-            }
-
             authenticate() {
                 if (!this.redirectUri || (!this.redirectUri.startsWith('http://') && !this.redirectUri.startsWith('https://'))) {
                     this.updateStatus('❌ Invalid redirect URI. Please open this page via HTTP/HTTPS.', 'error');
@@ -1147,49 +1024,14 @@
                 status.className = `status ${type}`;
             }
 
-            // NEW: Show sync status indicator
-            showSyncStatus(message, type = 'syncing') {
-                const syncStatus = document.getElementById('syncStatus');
-                const syncIcon = document.getElementById('syncIcon');
-                const syncMessage = document.getElementById('syncMessage');
-
-                syncStatus.style.display = 'flex';
-                syncStatus.className = `sync-status ${type}`;
-                
-                if (type === 'synced') {
-                    syncIcon.textContent = '✅';
-                } else if (type === 'syncing') {
-                    syncIcon.textContent = '🔄';
-                } else {
-                    syncIcon.textContent = '⚠️';
-                }
-                
-                syncMessage.textContent = message;
-
-                // Auto-hide success messages after 5 seconds
-                if (type === 'synced') {
-                    setTimeout(() => {
-                        syncStatus.style.display = 'none';
-                    }, 5000);
-                }
-            }
-
-            // ENHANCED: Load articles with sync checking
             async loadArticles() {
                 if (!this.accessToken) {
                     this.updateStatus('Not connected to OneDrive', 'error');
                     return;
                 }
 
-                // NEW: First validate token
-                const tokenValid = await this.validateAndRefreshToken();
-                if (!tokenValid) {
-                    return;
-                }
-
                 try {
-                    this.updateStatus('🔍 Loading articles and checking sync status...', 'loading');
-                    this.showSyncStatus('Checking cross-device sync status...', 'syncing');
+                    this.updateStatus('Loading articles... ⏳', 'loading');
 
                     const listResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children', {
                         headers: {
@@ -1237,106 +1079,17 @@
                     const backup = JSON.parse(backupContent);
 
                     this.articles = backup.articles || [];
-                    this.lastSyncCheck = Date.now();
-                    
-                    // NEW: Validate existing image backups before displaying
-                    await this.validateExistingImageBackups();
-                    
                     this.displayArticles(this.articles);
 
-                    // NEW: Show comprehensive sync status
-                    const syncInfo = backup.syncInfo || {};
-                    const backedUpCount = this.articles.filter(a => a.backedUpImage && a.imageBackupVerified).length;
-                    const totalImages = this.articles.length;
-                    
-                    if (backedUpCount === totalImages && totalImages > 0) {
-                        this.showSyncStatus(`🎉 All ${totalImages} images perfectly synced across devices!`, 'synced');
-                        this.updateStatus(`✅ Loaded ${this.articles.length} articles. All images synced!`, 'success');
-                    } else {
-                        this.showSyncStatus(`📱 ${backedUpCount}/${totalImages} images synced. Processing remaining...`, 'syncing');
-                        this.updateStatus(`✅ Loaded ${this.articles.length} articles. ${backedUpCount} images already synced.`, 'success');
-                    }
+                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name}`, 'success');
 
                 } catch (error) {
                     console.error('Error loading articles:', error);
                     this.updateStatus(`Error loading articles: ${error.message}`, 'error');
-                    this.showSyncStatus('❌ Sync check failed', 'error');
                 }
             }
 
-            // NEW: Validate existing image backups to prevent re-processing
-            async validateExistingImageBackups() {
-                if (!this.accessToken) return;
-
-                console.log('🔍 Validating existing image backups across devices...');
-                
-                try {
-                    // Get list of images in OneDrive
-                    const imagesResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/images:/children', {
-                        headers: { 'Authorization': `Bearer ${this.accessToken}` }
-                    });
-
-                    if (imagesResponse.ok) {
-                        const imageFiles = await imagesResponse.json();
-                        const existingImages = new Map();
-                        
-                        imageFiles.value.forEach(file => {
-                            existingImages.set(file.name, {
-                                id: file.id,
-                                downloadUrl: file['@microsoft.graph.downloadUrl'],
-                                size: file.size,
-                                lastModified: file.lastModifiedDateTime
-                            });
-                        });
-
-                        console.log(`📁 Found ${existingImages.size} existing images in OneDrive`);
-
-                        // Validate each article's backed up image
-                        let verifiedCount = 0;
-                        let missingCount = 0;
-                        
-                        for (const article of this.articles) {
-                            if (article.backedUpImage) {
-                                const fileName = article.backedUpImage.fileName;
-                                const existingFile = existingImages.get(fileName);
-                                
-                                if (existingFile) {
-                                    // Image exists, mark as verified
-                                    article.imageBackupVerified = true;
-                                    article.backedUpImage.fileId = existingFile.id;
-                                    article.backedUpImage.lastVerified = Date.now();
-                                    this.syncCache.set(fileName, existingFile.downloadUrl);
-                                    verifiedCount++;
-                                    console.log(`✅ Verified: ${fileName}`);
-                                } else {
-                                    // Image missing, will need to re-process
-                                    console.log(`⚠️ Missing: ${fileName}, will re-process`);
-                                    article.backedUpImage = null;
-                                    article.imageBackupVerified = false;
-                                    missingCount++;
-                                }
-                            }
-                        }
-
-                        console.log(`✅ Verified ${verifiedCount}/${this.articles.length} image backups`);
-                        
-                        if (missingCount > 0) {
-                            console.log(`⚠️ ${missingCount} images need re-processing`);
-                        }
-                        
-                        // Cache validation timestamp
-                        localStorage.setItem('last_image_validation', Date.now().toString());
-                        localStorage.setItem('validated_image_count', verifiedCount.toString());
-                        
-                    } else {
-                        console.log('📁 Images folder not found, all images will be processed');
-                    }
-                } catch (error) {
-                    console.log('⚠️ Could not validate existing images:', error.message);
-                }
-            }
-
-            // Enhanced displayArticles with GUARANTEED real images + OneDrive backup + sync indicators
+            // Enhanced displayArticles with GUARANTEED real images + OneDrive backup
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1346,11 +1099,8 @@
                 }
 
                 const articlesHTML = articles.map((article, index) => {
-                    // NEW: Add sync class for visual indicator
-                    const syncClass = article.imageBackupVerified ? 'synced' : '';
-                    
                     return `
-                    <div class="article-card ${syncClass}" data-index="${index}">
+                    <div class="article-card" data-index="${index}">
                         <div class="article-image" id="image-${index}">
                             <div style="
                                 width: 100%; 
@@ -1369,7 +1119,7 @@
                             ">
                                 <div style="text-align: center;">
                                     <div style="font-size: 1.5em; margin-bottom: 5px;">🖼️</div>
-                                    <div style="font-size: 0.8em;">${article.imageBackupVerified ? 'Loading synced...' : 'Processing...'}</div>
+                                    <div style="font-size: 0.8em;">Loading image...</div>
                                 </div>
                             </div>
                         </div>
@@ -1383,7 +1133,6 @@
                             <div class="article-stats">
                                 <span>⏱️ ${article.readTime || 1} min read</span>
                                 <span>📝 ${article.wordCount || 0} words</span>
-                                ${article.imageBackupVerified ? '<span style="color: #27ae60;">✅ Synced</span>' : ''}
                             </div>
                         </div>
                         <div class="article-actions">
@@ -1402,155 +1151,77 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
                 
-                // Show image loading status with sync awareness
-                const verifiedCount = articles.filter(a => a.imageBackupVerified).length;
-                if (verifiedCount === articles.length) {
-                    this.updateStatus(`🎉 Loading ${articles.length} perfectly synced images...`, 'loading');
-                } else {
-                    this.updateStatus(`🔍 Smart loading: ${verifiedCount} synced, ${articles.length - verifiedCount} processing...`, 'loading');
-                }
+                // Show image loading status
+                this.updateStatus(`🔍 Extracting real images from article websites...`, 'loading');
                 
-                // ENHANCED: Extract real images from original websites + backup to OneDrive + sync awareness
+                // ENHANCED: Extract real images from original websites + backup to OneDrive
                 this.loadAllArticleImages(articles);
             }
 
-            // ENHANCED: Smart image loading with sync awareness - keeping your ORIGINAL extraction logic
+            // ENHANCED: Extract real images from original websites
             async loadAllArticleImages(articles) {
-                console.log('🎨 SMART SYNC-AWARE IMAGE LOADER - Starting...');
-                
-                // Check sync status first
-                const alreadyProcessedCount = articles.filter(a => a.backedUpImage && a.imageBackupVerified).length;
-                const totalImages = articles.length;
-                
-                if (alreadyProcessedCount === totalImages && totalImages > 0) {
-                    console.log('🎉 All images already synced! Loading from OneDrive...');
-                    this.updateStatus(`🎉 All ${totalImages} images already synced across devices!`, 'success');
-                    this.showSyncStatus(`🎉 Perfect sync! All ${totalImages} images ready instantly`, 'synced');
-                    
-                    // Load all verified images
-                    for (let i = 0; i < articles.length; i++) {
-                        await this.loadVerifiedImage(articles[i], i);
-                        
-                        // Add sync indicator to card
-                        const card = document.querySelector(`[data-index="${i}"]`);
-                        if (card) card.classList.add('synced');
-                    }
-                    return;
-                }
-                
-                const needsProcessing = totalImages - alreadyProcessedCount;
-                console.log(`🔄 Processing ${needsProcessing} images (${alreadyProcessedCount} already synced)`);
-                this.showSyncStatus(`🔄 Processing ${needsProcessing} new images with REAL website extraction...`, 'syncing');
+                console.log('🎨 REAL IMAGE EXTRACTOR - Getting actual article images...');
                 
                 let successCount = 0;
                 let backupCount = 0;
+                const totalImages = articles.length;
                 
-                // Process images with sync awareness - keeping your ORIGINAL logic
+                // Load images sequentially to avoid overwhelming websites
                 for (let i = 0; i < articles.length; i++) {
-                    const article = articles[i];
-                    const card = document.querySelector(`[data-index="${i}"]`);
-                    
-                    if (article.imageBackupVerified) {
-                        // Load existing verified image
-                        await this.loadVerifiedImage(article, i);
-                        if (card) card.classList.add('synced');
-                        successCount++;
-                    } else {
-                        // Process new/missing image using YOUR ORIGINAL extraction logic
-                        if (card) card.classList.add('syncing');
+                    try {
+                        const result = await this.extractRealArticleImage(articles[i], i);
+                        if (result.success) successCount++;
+                        if (result.backed_up) backupCount++;
                         
-                        try {
-                            const result = await this.extractRealArticleImage(article, i);
-                            if (result.success) {
-                                successCount++;
-                                if (card) {
-                                    card.classList.remove('syncing');
-                                    card.classList.add('synced');
-                                }
-                            }
-                            if (result.backed_up) {
-                                backupCount++;
-                            }
-                            
-                            // Update progress
-                            const progress = Math.round(((i + 1) / totalImages) * 100);
-                            this.updateStatus(`🔄 REAL image extraction... ${i + 1}/${totalImages} (${progress}%) | ${backupCount} newly synced`, 'loading');
-                            
-                            // Respectful delay
-                            await new Promise(resolve => setTimeout(resolve, 200));
-                            
-                        } catch (error) {
-                            console.error(`Failed to process image for article ${i}:`, error);
-                            // Use category fallback for failed extractions
-                            this.setArticleImageDirect(document.getElementById(`image-${i}`), this.getCategoryBasedImage(articles[i], i));
-                            if (card) {
-                                card.classList.remove('syncing');
-                                card.classList.add('synced');
-                            }
-                            successCount++;
-                        }
+                        // Update progress
+                        const progress = Math.round(((i + 1) / totalImages) * 100);
+                        this.updateStatus(`🔍 Extracting real images... ${i + 1}/${totalImages} (${progress}%) | ${backupCount} backed up`, 'loading');
+                        
+                        // Delay to be respectful to websites
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                        
+                    } catch (error) {
+                        console.error(`Failed to extract image for article ${i}:`, error);
+                        // Use category fallback for failed extractions
+                        this.setArticleImageDirect(document.getElementById(`image-${i}`), this.getCategoryBasedImage(articles[i], i));
+                        successCount++;
                     }
                 }
                 
-                // Final sync status update
-                if (backupCount > 0) {
-                    this.updateStatus(`✅ Smart sync complete! ${successCount}/${totalImages} REAL images ready.`, 'success');
-                    this.showSyncStatus(`🎉 ${backupCount} new REAL images synced for all your devices!`, 'synced');
-                    
-                    // Update backup with new sync info
+                this.updateStatus(`✅ Extracted ${successCount}/${totalImages} real article images! | ${backupCount} backed up`, 'success');
+                console.log(`🎨 Real image extraction complete: ${successCount}/${totalImages} successful, ${backupCount} backed up`);
+                
+                // NEW: Save the updated article metadata (including backedUpImage info) back to OneDrive
+                if (backupCount > 0 && this.accessToken) {
                     try {
+                        console.log(`💾 Saving updated article metadata with ${backupCount} new image backups...`);
+                        this.updateStatus(`💾 Saving metadata for ${backupCount} backed up images...`, 'loading');
+                        
                         await this.updateOneDriveBackup();
-                        console.log('💾 Cross-device sync metadata updated');
+                        this.updateStatus(`✅ Complete! ${backupCount} images backed up and metadata saved. Next load will be instant!`, 'success');
+                        
                     } catch (error) {
-                        console.log('⚠️ Sync metadata update failed:', error.message);
+                        console.error('Failed to update article metadata:', error);
+                        
+                        // Show more helpful error message
+                        if (error.message.includes('413') || error.message.includes('too large')) {
+                            this.updateStatus(`⚠️ Images backed up successfully! Metadata file too large to save - images will still work but may re-process next time.`, 'success');
+                        } else if (error.message.includes('timeout') || error.message.includes('network')) {
+                            this.updateStatus(`⚠️ Images backed up! Network timeout saving metadata - trying again next load.`, 'success');
+                        } else {
+                            this.updateStatus(`⚠️ Images backed up to OneDrive! Metadata save failed - will retry next time. Error: ${error.message.substring(0, 50)}...`, 'success');
+                        }
+                        
+                        // Even if metadata save fails, the images are still backed up and working
+                        console.log('✅ Note: Images are still successfully backed up in OneDrive/MyPocket/images/ folder');
                     }
-                } else {
-                    this.updateStatus(`✅ All ${successCount} images loaded from perfect sync!`, 'success');
-                    this.showSyncStatus(`✅ All REAL images loaded from perfect sync!`, 'synced');
                 }
             }
 
-            // NEW: Load verified image from cache or OneDrive
-            async loadVerifiedImage(article, index) {
-                const imageElement = document.getElementById(`image-${index}`);
-                if (!imageElement || !article.backedUpImage) return;
-
-                try {
-                    // Check cache first for speed
-                    const cachedUrl = this.syncCache.get(article.backedUpImage.fileName);
-                    if (cachedUrl) {
-                        this.setArticleImageDirect(imageElement, cachedUrl);
-                        return;
-                    }
-
-                    // Get fresh download URL from OneDrive
-                    const downloadUrl = await this.getBackedUpImageUrl(article.backedUpImage);
-                    if (downloadUrl) {
-                        this.syncCache.set(article.backedUpImage.fileName, downloadUrl);
-                        this.setArticleImageDirect(imageElement, downloadUrl);
-                        console.log(`✅ Loaded synced image: ${article.backedUpImage.fileName}`);
-                    } else {
-                        // Fallback if OneDrive image is inaccessible
-                        this.setArticleImageDirect(imageElement, this.getCategoryBasedImage(article, index));
-                        console.log(`⚠️ Fallback image for: ${article.title.substring(0, 30)}...`);
-                    }
-                } catch (error) {
-                    console.log(`⚠️ Could not load verified image: ${error.message}`);
-                    this.setArticleImageDirect(imageElement, this.getCategoryBasedImage(article, index));
-                }
-            }
-
-            // KEEPING YOUR ORIGINAL: Extract real images and backup to OneDrive - EXACT SAME LOGIC
+            // NEW: Extract image and backup to OneDrive - KEEPING YOUR ORIGINAL LOGIC
             async extractRealArticleImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
                 if (!imageElement) return { success: false, backed_up: false };
-
-                // NEW: Skip if already verified (redundant check for safety)
-                if (article.imageBackupVerified && article.backedUpImage) {
-                    console.log(`✅ Using verified sync: ${article.title.substring(0, 30)}...`);
-                    await this.loadVerifiedImage(article, index);
-                    return { success: true, backed_up: false };
-                }
 
                 console.log(`🔍 Extracting real image from: ${this.getDomain(article.url)}`);
 
@@ -1580,7 +1251,6 @@
                             const backupInfo = await this.backupImageToOneDrive(savedImage, article, index);
                             if (backupInfo) {
                                 article.backedUpImage = backupInfo;
-                                article.imageBackupVerified = true;
                                 backedUp = true;
                             }
                         } catch (error) {
@@ -1604,7 +1274,6 @@
                                 const backupInfo = await this.backupImageToOneDrive(extractedImage, article, index);
                                 if (backupInfo) {
                                     article.backedUpImage = backupInfo;
-                                    article.imageBackupVerified = true;
                                     backedUp = true;
                                     console.log(`💾 Real image backed up: ${backupInfo.fileName}`);
                                 }
@@ -1626,7 +1295,7 @@
                 return { success: true, backed_up: false };
             }
 
-            // NEW: Backup image to OneDrive for cross-device sync
+            // NEW: Backup image to OneDrive
             async backupImageToOneDrive(imageUrl, article, index) {
                 if (!this.accessToken) {
                     throw new Error('Not connected to OneDrive');
@@ -1648,7 +1317,7 @@
                     const imageExtension = this.getImageExtension(imageUrl) || 'jpg';
                     const sanitizedTitle = this.sanitizeFilename(article.title);
                     const timestamp = Date.now();
-                    const fileName = `sync_${sanitizedTitle}_${timestamp}.${imageExtension}`;
+                    const fileName = `image_${sanitizedTitle}_${timestamp}.${imageExtension}`;
 
                     // Upload to OneDrive in MyPocket/images folder
                     const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/images/${fileName}:/content`;
@@ -1674,9 +1343,7 @@
                         fileId: uploadResult.id,
                         uploadDate: new Date().toISOString(),
                         originalUrl: imageUrl,
-                        size: imageBuffer.byteLength,
-                        syncDevice: this.deviceId,
-                        syncVersion: '3.7'
+                        size: imageBuffer.byteLength
                     };
 
                 } catch (error) {
@@ -1723,7 +1390,7 @@
                 }
             }
 
-            // YOUR ORIGINAL: Fetch the actual featured image from a website
+            // NEW: Fetch the actual featured image from a website
             async fetchRealImageFromWebsite(url) {
                 try {
                     console.log(`🌐 Fetching webpage to extract image: ${url}`);
@@ -1766,7 +1433,7 @@
                 }
             }
 
-            // YOUR ORIGINAL: Parse HTML to find the best image
+            // NEW: Parse HTML to find the best image
             parseHTMLForBestImage(html, baseUrl) {
                 try {
                     // Create a DOM parser
@@ -1872,7 +1539,7 @@
                 }
             }
 
-            // YOUR ORIGINAL: Extract image from JSON-LD structured data
+            // NEW: Extract image from JSON-LD structured data
             extractImageFromJsonLd(data) {
                 if (typeof data !== 'object') return null;
                 
@@ -1910,7 +1577,7 @@
                 return null;
             }
 
-            // YOUR ORIGINAL: Try alternative image extraction methods
+            // NEW: Try alternative image extraction methods
             async tryAlternativeImageExtraction(url) {
                 // Method 1: Try CORS proxy
                 try {
@@ -1933,7 +1600,7 @@
                 throw new Error('All alternative extraction methods failed');
             }
 
-            // YOUR ORIGINAL: Guess image from URL patterns (for known sites)
+            // NEW: Guess image from URL patterns (for known sites)
             guessImageFromUrl(url) {
                 const domain = this.getDomain(url).toLowerCase();
                 
@@ -2009,7 +1676,7 @@
                 return (w > 0 && w < 200) || (h > 0 && h < 150);
             }
 
-            // YOUR ORIGINAL: Get category-based images that always work
+            // NEW: Get category-based images that always work
             getCategoryBasedImage(article, index) {
                 const domain = this.getDomain(article.url).toLowerCase();
                 const title = article.title.toLowerCase();
@@ -2137,7 +1804,6 @@
                     return null;
                 }
             }
-
             // FIXED: Direct image setting without CORS validation
             setArticleImageDirect(imageElement, imageUrl) {
                 imageElement.innerHTML = `
@@ -2504,20 +2170,16 @@
                 const article = this.articles[index];
                 if (!article) return;
 
-                if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your OneDrive backup and affect sync across all devices.`)) {
+                if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your OneDrive backup.`)) {
                     try {
                         this.articles.splice(index, 1);
 
                         if (this.accessToken) {
-                            this.updateStatus('Updating cross-device sync...', 'loading');
-                            this.showSyncStatus('Updating sync across all devices...', 'syncing');
-                            
+                            this.updateStatus('Updating OneDrive backup...', 'loading');
                             await this.updateOneDriveBackup();
-                            
-                            this.updateStatus(`✅ Article deleted and sync updated across all devices. ${this.articles.length} articles remaining.`, 'success');
-                            this.showSyncStatus('✅ Sync updated across all devices', 'synced');
+                            this.updateStatus(`✅ Article deleted and backup updated. ${this.articles.length} articles remaining.`, 'success');
                         } else {
-                            this.updateStatus(`❌ Article deleted locally but sync not updated (not connected).`, 'error');
+                            this.updateStatus(`❌ Article deleted locally but OneDrive backup not updated (not connected).`, 'error');
                         }
 
                         this.displayArticles(this.articles);
@@ -2544,13 +2206,13 @@
                 }
             }
 
-            // ENHANCED: Update backup with comprehensive sync metadata
+            // ENHANCED: Update OneDrive backup with optimized size
             async updateOneDriveBackup() {
                 if (!this.accessToken) {
                     throw new Error('Not connected to OneDrive');
                 }
 
-                // Create optimized backup with sync info
+                // Optimize articles by removing large content fields for backup
                 const optimizedArticles = this.articles.map(article => ({
                     title: article.title,
                     url: article.url,
@@ -2560,17 +2222,15 @@
                     wordCount: article.wordCount,
                     author: article.author,
                     domain: this.getDomain(article.url),
-                    // CRITICAL: Keep ALL sync-related image info
+                    // Keep image backup info
                     backedUpImage: article.backedUpImage,
-                    imageBackupVerified: article.imageBackupVerified,
-                    lastSyncUpdate: article.lastSyncUpdate,
                     featuredImage: article.featuredImage,
                     image: article.image,
                     images: article.images,
-                    // Keep original content fields for compatibility
-                    content: article.content,
-                    html: article.html,
-                    textContent: article.textContent
+                    // Skip heavy content fields to reduce size
+                    // content: article.content,  // Skip large content
+                    // textContent: article.textContent,  // Skip large text
+                    // html: article.html  // Skip large HTML
                 }));
 
                 const backup = {
@@ -2578,24 +2238,21 @@
                     settings: {
                         imageBackupEnabled: this.imageBackupEnabled
                     },
-                    syncInfo: {
-                        lastSyncDevice: this.deviceId,
-                        lastSyncTimestamp: Date.now(),
-                        imageProcessingComplete: true,
-                        processedImageCount: this.articles.filter(a => a.backedUpImage).length,
-                        verifiedImageCount: this.articles.filter(a => a.imageBackupVerified).length,
-                        syncVersion: "3.7",
-                        crossDeviceReady: true,
-                        deviceCount: this.getEstimatedDeviceCount()
-                    },
                     exportDate: new Date().toISOString(),
-                    version: "3.7"
+                    version: "3.5", // Updated version with optimized backup
+                    deviceInfo: {
+                        browser: "Web Reader",
+                        platform: navigator.platform,
+                        timestamp: Date.now(),
+                        articleCount: this.articles.length,
+                        imageBackupCount: this.articles.filter(a => a.backedUpImage).length
+                    }
                 };
 
                 const fileName = `mypocket-backup-${new Date().toISOString().split('T')[0]}.json`;
                 const fileContent = JSON.stringify(backup, null, 2);
 
-                console.log(`💾 Updating cross-device sync: ${backup.articles.length} articles, ${backup.syncInfo.verifiedImageCount} synced images`);
+                console.log(`💾 Backing up ${backup.articles.length} articles (${Math.round(fileContent.length / 1024)}KB)`);
 
                 const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
 
@@ -2610,20 +2267,10 @@
 
                 if (!uploadResponse.ok) {
                     const errorText = await uploadResponse.text();
-                    throw new Error(`Cross-device sync update failed: ${uploadResponse.status} - ${errorText}`);
+                    throw new Error(`Failed to update OneDrive backup: ${uploadResponse.status} - ${errorText}`);
                 }
 
                 return await uploadResponse.json();
-            }
-
-            // Estimate device count for sync info
-            getEstimatedDeviceCount() {
-                const deviceHistory = JSON.parse(localStorage.getItem('device_history') || '[]');
-                if (!deviceHistory.includes(this.deviceId)) {
-                    deviceHistory.push(this.deviceId);
-                    localStorage.setItem('device_history', JSON.stringify(deviceHistory));
-                }
-                return deviceHistory.length;
             }
 
             createArticleHTML(article) {
@@ -2692,10 +2339,10 @@
         </div>
     </div>
     <div class="content">
-        ${this.getArticleContent(article) || article.excerpt}
+        ${article.content}
     </div>
     <div class="footer">
-        <p><strong>✨ Exported from MyPocket Web Reader (Enhanced Cross-Device Sync)</strong></p>
+        <p><strong>✨ Exported from MyPocket Web Reader</strong></p>
         <p>Original URL: <a href="${article.url}" style="color: #ee5a24;">${article.url}</a></p>
         <p>Export Date: ${new Date().toLocaleDateString()}</p>
     </div>
@@ -2864,63 +2511,56 @@
 
             showDebugInfo() {
                 const info = `
-MyPocket Web Reader - Enhanced Cross-Device Sync
-================================================
+MyPocket Web Reader Debug Info:
+=====================================
 
-🆔 Device Info:
-- Device ID: ${this.deviceId}
-- Current URL: ${window.location.href}
-- Redirect URI: ${this.redirectUri}
+Current URL: ${window.location.href}
+Redirect URI: ${this.redirectUri}
+Client ID: ${this.clientId}
+Protocol: ${window.location.protocol}
+Host: ${window.location.host}
+Has Access Token: ${!!this.accessToken}
+Articles Loaded: ${this.articles.length}
+Image Backup: ${this.imageBackupEnabled ? 'Enabled' : 'Disabled'}
 
-🔐 Authentication:
-- Client ID: ${this.clientId}
-- Has Access Token: ${!!this.accessToken}
-- Protocol: ${window.location.protocol}
+Azure AD Redirect URI Requirements:
+- Must be absolute URI (http:// or https://)
+- Must be registered in Azure AD App Registration
+- Must match exactly (including trailing slashes)
 
-📊 Sync Status:
-- Articles Loaded: ${this.articles.length}
-- Images Synced: ${this.articles.filter(a => a.imageBackupVerified).length}
-- Image Backup: ${this.imageBackupEnabled ? 'Enabled' : 'Disabled'}
-- Last Sync Check: ${this.lastSyncCheck ? new Date(this.lastSyncCheck).toLocaleString() : 'Never'}
+Common Issues:
+1. Using file:// protocol (not supported)
+2. Redirect URI not registered in Azure AD
+3. Mismatch between actual URI and registered URI
 
-🌐 Cross-Device Features:
-- Device ID Tracking: ✅
-- Image Backup Verification: ✅
-- Smart Image Loading: ✅
-- Sync Status Indicators: ✅
-- Token Validation: ✅
-- REAL Website Image Extraction: ✅
+Next Steps:
+1. Open Azure Portal → App registrations
+2. Find your app: ${this.clientId}
+3. Go to Authentication → Platform configurations
+4. Add Web platform with redirect URI: ${this.redirectUri}
+5. Make sure URI is exact match
 
-🔧 Troubleshooting:
-1. If images re-process on new devices, check:
-   - OneDrive connection is stable
-   - Token hasn't expired
-   - Images folder exists in OneDrive
-   
-2. For sync issues:
-   - Clear browser cache and reconnect
-   - Check network connectivity
-   - Verify Azure AD app registration
+Button Issues:
+- Try clicking "Show Buttons" to test if buttons work
+- Check browser console for JavaScript errors
+- Inspect element to see if buttons are in DOM
 
-📱 Device History: ${this.getEstimatedDeviceCount()} devices detected
-
-🎯 Image Extraction Strategy:
-1. Saved images from browser extension
-2. REAL website extraction (Open Graph, Twitter cards, etc.)
-3. Intelligent category-based fallbacks
+Image Backup Features:
+- Real images extracted from websites
+- Backed up to OneDrive/MyPocket/images/
+- Automatic fallback to category-based images
+- Supports all major image formats
                 `;
 
                 alert(info);
-                console.log('🔧 Enhanced Debug Info:', {
-                    deviceId: this.deviceId,
+                console.log('🔧 Debug Info:', {
                     currentUrl: window.location.href,
                     redirectUri: this.redirectUri,
                     clientId: this.clientId,
+                    protocol: window.location.protocol,
                     hasToken: !!this.accessToken,
                     articlesCount: this.articles.length,
-                    syncedImages: this.articles.filter(a => a.imageBackupVerified).length,
-                    lastSyncCheck: this.lastSyncCheck,
-                    estimatedDevices: this.getEstimatedDeviceCount()
+                    imageBackup: this.imageBackupEnabled
                 });
             }
 
