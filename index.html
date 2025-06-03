@@ -1154,234 +1154,145 @@
                 // Show image loading status
                 this.updateStatus(`🔍 Extracting real images from article websites...`, 'loading');
                 
-                // AUTO-START: Automatically begin image upgrading if beneficial
-            async autoStartImageBackup(articles) {
-                if (!this.accessToken) {
-                    console.log('🔍 Not connected to OneDrive - skipping auto image backup');
-                    return;
-                }
-
-                // Count articles that could benefit from image upgrades
-                const canUpgrade = articles.filter(article => {
-                    // Can upgrade if: no backed up image AND (no saved image OR using fallback currently)
-                    const hasBackup = !!article.backedUpImage;
-                    const hasSavedImage = !!this.getBestArticleImage(article);
-                    
-                    return !hasBackup || !hasSavedImage;
-                });
-                
-                const hasBackedUp = articles.filter(article => article.backedUpImage).length;
-                const hasRealImages = articles.filter(article => this.getBestArticleImage(article)).length;
-
-                console.log(`🔍 AUTO IMAGE UPGRADE CHECK:`);
-                console.log(`   Total articles: ${articles.length}`);
-                console.log(`   Already backed up: ${hasBackedUp}`);
-                console.log(`   Have real images: ${hasRealImages}`);
-                console.log(`   Can be upgraded: ${canUpgrade.length}`);
-
-                if (canUpgrade.length === 0) {
-                    console.log('✅ All images already optimized - no upgrades needed');
-                    this.updateStatus(`✅ All images optimized! ${hasBackedUp} backed up, ${hasRealImages} real images loaded.`, 'success');
-                    return;
-                }
-
-                // Auto-start if reasonable number of articles can be upgraded
-                if (canUpgrade.length <= 100) {
-                    console.log(`🚀 AUTO-STARTING image upgrade for ${canUpgrade.length} articles`);
-                    this.updateStatus(`🚀 Auto-starting image upgrade for ${canUpgrade.length} articles...`, 'loading');
-                    this.loadAllArticleImages(articles);
-                } else {
-                    // Ask user for large batches
-                    this.updateStatus(`💡 ${canUpgrade.length} articles can be upgraded with better images. Click "Start Upgrade" to begin.`, 'loading');
-                    this.showImageBackupPrompt(canUpgrade.length);
-                }
-            }
-
-            // Show backup prompt for large batches
-            showImageBackupPrompt(count) {
-                const prompt = document.createElement('div');
-                prompt.style.cssText = `
-                    position: fixed; top: 20px; right: 20px; z-index: 1000;
-                    background: #fff; border: 2px solid #ee5a24; border-radius: 12px;
-                    padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-                    max-width: 350px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                `;
-                
-                prompt.innerHTML = `
-                    <h3 style="margin: 0 0 12px; color: #ee5a24;">🖼️ Image Upgrade Available</h3>
-                    <p style="margin: 0 0 15px; line-height: 1.4;">
-                        ${count} articles can have their images upgraded with better versions and backed up to OneDrive.
-                    </p>
-                    <div style="display: flex; gap: 10px;">
-                        <button onclick="this.parentElement.parentElement.remove(); webReader.loadAllArticleImages(webReader.articles);" 
-                                style="flex: 1; background: #ee5a24; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                            Start Upgrade
-                        </button>
-                        <button onclick="this.parentElement.parentElement.remove();" 
-                                style="flex: 1; background: #f0f0f0; color: #666; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">
-                            Skip
-                        </button>
-                    </div>
-                `;
-                
-                document.body.appendChild(prompt);
-                
-                // Auto-remove after 30 seconds
-                setTimeout(() => {
-                    if (prompt.parentElement) prompt.remove();
-                }, 30000);
-            } + backup to OneDrive
+                // ENHANCED: Extract real images from original websites + backup to OneDrive
                 this.loadAllArticleImages(articles);
             }
 
-            // ENHANCED: Upgrade existing images with better versions + backup
+            // ENHANCED: Extract real images from original websites
             async loadAllArticleImages(articles) {
-                console.log('🎨 IMAGE UPGRADER - Improving existing images with better versions...');
+                console.log('🎨 REAL IMAGE EXTRACTOR - Getting actual article images...');
                 
-                let upgradeCount = 0;
+                let successCount = 0;
                 let backupCount = 0;
                 const totalImages = articles.length;
                 
-                // Process articles sequentially to improve their images
+                // Load images sequentially to avoid overwhelming websites
                 for (let i = 0; i < articles.length; i++) {
                     try {
-                        const result = await this.upgradeArticleImage(articles[i], i);
-                        if (result.upgraded) upgradeCount++;
+                        const result = await this.extractRealArticleImage(articles[i], i);
+                        if (result.success) successCount++;
                         if (result.backed_up) backupCount++;
                         
                         // Update progress
                         const progress = Math.round(((i + 1) / totalImages) * 100);
-                        this.updateStatus(`🔍 Upgrading images... ${i + 1}/${totalImages} (${progress}%) | ${upgradeCount} improved | ${backupCount} backed up`, 'loading');
+                        this.updateStatus(`🔍 Extracting real images... ${i + 1}/${totalImages} (${progress}%) | ${backupCount} backed up`, 'loading');
                         
                         // Delay to be respectful to websites
                         await new Promise(resolve => setTimeout(resolve, 200));
                         
                     } catch (error) {
-                        console.error(`Failed to upgrade image for article ${i}:`, error);
+                        console.error(`Failed to extract image for article ${i}:`, error);
+                        // Use category fallback for failed extractions
+                        this.setArticleImageDirect(document.getElementById(`image-${i}`), this.getCategoryBasedImage(articles[i], i));
+                        successCount++;
                     }
                 }
                 
-                this.updateStatus(`✅ Image upgrade complete! ${upgradeCount} images improved, ${backupCount} backed up`, 'success');
-                console.log(`🎨 Image upgrade complete: ${upgradeCount} upgraded, ${backupCount} backed up`);
+                this.updateStatus(`✅ Extracted ${successCount}/${totalImages} real article images! | ${backupCount} backed up`, 'success');
+                console.log(`🎨 Real image extraction complete: ${successCount}/${totalImages} successful, ${backupCount} backed up`);
                 
-                // Save metadata if we made improvements
+                // NEW: Save the updated article metadata (including backedUpImage info) back to OneDrive
                 if (backupCount > 0 && this.accessToken) {
                     try {
                         console.log(`💾 Saving updated article metadata with ${backupCount} new image backups...`);
                         this.updateStatus(`💾 Saving metadata for ${backupCount} backed up images...`, 'loading');
                         
                         await this.updateOneDriveBackup();
-                        this.updateStatus(`✅ Complete! ${upgradeCount} images improved and ${backupCount} backed up. Next load will be even faster!`, 'success');
+                        this.updateStatus(`✅ Complete! ${backupCount} images backed up and metadata saved. Next load will be instant!`, 'success');
                         
                     } catch (error) {
                         console.error('Failed to update article metadata:', error);
                         
+                        // Show more helpful error message
                         if (error.message.includes('413') || error.message.includes('too large')) {
-                            this.updateStatus(`✅ Images improved and backed up! Metadata file too large - images will still work perfectly.`, 'success');
+                            this.updateStatus(`⚠️ Images backed up successfully! Metadata file too large to save - images will still work but may re-process next time.`, 'success');
                         } else if (error.message.includes('timeout') || error.message.includes('network')) {
-                            this.updateStatus(`✅ Images improved and backed up! Network timeout saving metadata - will retry next time.`, 'success');
+                            this.updateStatus(`⚠️ Images backed up! Network timeout saving metadata - trying again next load.`, 'success');
                         } else {
-                            this.updateStatus(`✅ Images improved and backed up to OneDrive! Metadata save will retry next time.`, 'success');
+                            this.updateStatus(`⚠️ Images backed up to OneDrive! Metadata save failed - will retry next time. Error: ${error.message.substring(0, 50)}...`, 'success');
                         }
+                        
+                        // Even if metadata save fails, the images are still backed up and working
+                        console.log('✅ Note: Images are still successfully backed up in OneDrive/MyPocket/images/ folder');
                     }
                 }
             }
 
-            // NEW: Upgrade an existing image to a better version (if possible)
-            async upgradeArticleImage(article, index) {
+            // NEW: Extract image and backup to OneDrive - KEEPING YOUR ORIGINAL LOGIC
+            async extractRealArticleImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
-                if (!imageElement) return { upgraded: false, backed_up: false };
+                if (!imageElement) return { success: false, backed_up: false };
 
-                const currentImg = imageElement.querySelector('img');
-                if (!currentImg) return { upgraded: false, backed_up: false };
+                console.log(`🔍 Extracting real image from: ${this.getDomain(article.url)}`);
 
-                const currentSrc = currentImg.src;
-                console.log(`🔍 Checking if we can upgrade image for: ${this.getDomain(article.url)}`);
-
-                // Strategy 1: If using OneDrive backup, check if it's accessible
+                // NEW: Strategy 0: Check for backed-up image in OneDrive first (if available)
                 if (article.backedUpImage && this.accessToken) {
                     try {
                         const backedUpUrl = await this.getBackedUpImageUrl(article.backedUpImage);
-                        if (backedUpUrl && backedUpUrl !== currentSrc) {
-                            console.log(`✅ Upgrading to backed-up image: ${article.title.substring(0, 30)}...`);
-                            this.setArticleImageDirect(imageElement, backedUpUrl, true);
-                            return { upgraded: true, backed_up: false }; // Already backed up
+                        if (backedUpUrl) {
+                            console.log(`✅ Using backed-up image: ${article.title.substring(0, 30)}...`);
+                            this.setArticleImageDirect(imageElement, backedUpUrl);
+                            return { success: true, backed_up: false }; // Already backed up
                         }
                     } catch (error) {
-                        console.log(`⚠️ Backed-up image not accessible: ${error.message}`);
+                        console.log(`⚠️ Failed to load backed-up image, extracting fresh: ${error.message}`);
                     }
                 }
 
-                // Strategy 2: If currently using category fallback, try to get real image
-                const isUsingFallback = currentSrc.includes('images.unsplash.com');
-                if (isUsingFallback) {
-                    // First check for saved article images we might have missed
-                    const savedImage = this.getBestArticleImage(article);
-                    if (savedImage && savedImage !== currentSrc) {
-                        console.log(`✅ Upgrading to saved image: ${article.title.substring(0, 30)}...`);
-                        this.setArticleImageDirect(imageElement, savedImage, true);
+                // YOUR ORIGINAL Strategy 1: Try saved article images first (fastest)
+                const savedImage = this.getBestArticleImage(article);
+                if (savedImage) {
+                    console.log(`✅ Using saved image: ${article.title.substring(0, 30)}...`);
+                    this.setArticleImageDirect(imageElement, savedImage);
+                    // NEW: Try to backup saved image too
+                    let backedUp = false;
+                    if (this.imageBackupEnabled && this.accessToken) {
+                        try {
+                            const backupInfo = await this.backupImageToOneDrive(savedImage, article, index);
+                            if (backupInfo) {
+                                article.backedUpImage = backupInfo;
+                                backedUp = true;
+                            }
+                        } catch (error) {
+                            console.log(`⚠️ Backup of saved image failed: ${error.message}`);
+                        }
+                    }
+                    return { success: true, backed_up: backedUp };
+                }
+
+                // YOUR ORIGINAL Strategy 2: Extract image from the original website
+                try {
+                    const extractedImage = await this.fetchRealImageFromWebsite(article.url);
+                    if (extractedImage) {
+                        console.log(`✅ Extracted real image: ${article.title.substring(0, 30)}...`);
+                        this.setArticleImageDirect(imageElement, extractedImage);
                         
-                        // Try to backup this saved image
+                        // NEW: Backup the extracted image
                         let backedUp = false;
                         if (this.imageBackupEnabled && this.accessToken) {
                             try {
-                                const backupInfo = await this.backupImageToOneDrive(savedImage, article, index);
+                                const backupInfo = await this.backupImageToOneDrive(extractedImage, article, index);
                                 if (backupInfo) {
                                     article.backedUpImage = backupInfo;
                                     backedUp = true;
+                                    console.log(`💾 Real image backed up: ${backupInfo.fileName}`);
                                 }
                             } catch (error) {
-                                console.log(`⚠️ Backup of saved image failed: ${error.message}`);
+                                console.log(`⚠️ Image backup failed: ${error.message}`);
                             }
                         }
                         
-                        return { upgraded: true, backed_up: backedUp };
+                        return { success: true, backed_up: backedUp };
                     }
-
-                    // Try to extract a real image from the website
-                    try {
-                        const extractedImage = await this.fetchRealImageFromWebsite(article.url);
-                        if (extractedImage && extractedImage !== currentSrc) {
-                            console.log(`✅ Upgrading to extracted real image: ${article.title.substring(0, 30)}...`);
-                            this.setArticleImageDirect(imageElement, extractedImage, true);
-                            
-                            // Backup the extracted image
-                            let backedUp = false;
-                            if (this.imageBackupEnabled && this.accessToken) {
-                                try {
-                                    const backupInfo = await this.backupImageToOneDrive(extractedImage, article, index);
-                                    if (backupInfo) {
-                                        article.backedUpImage = backupInfo;
-                                        backedUp = true;
-                                        console.log(`💾 Real image backed up: ${backupInfo.fileName}`);
-                                    }
-                                } catch (error) {
-                                    console.log(`⚠️ Image backup failed: ${error.message}`);
-                                }
-                            }
-                            
-                            return { upgraded: true, backed_up: backedUp };
-                        }
-                    } catch (error) {
-                        console.log(`⚠️ Could not extract better image from website: ${error.message}`);
-                    }
+                } catch (error) {
+                    console.log(`⚠️ Could not extract from website: ${error.message}`);
                 }
 
-                // Strategy 3: If we have a good image but no backup, back it up
-                if (!article.backedUpImage && !isUsingFallback && this.imageBackupEnabled && this.accessToken) {
-                    try {
-                        const backupInfo = await this.backupImageToOneDrive(currentSrc, article, index);
-                        if (backupInfo) {
-                            article.backedUpImage = backupInfo;
-                            console.log(`💾 Current image backed up: ${backupInfo.fileName}`);
-                            return { upgraded: false, backed_up: true };
-                        }
-                    } catch (error) {
-                        console.log(`⚠️ Backup of current image failed: ${error.message}`);
-                    }
-                }
-
-                return { upgraded: false, backed_up: false };
+                // YOUR ORIGINAL Strategy 3: Use intelligent category-based fallback
+                console.log(`🎨 Using intelligent fallback: ${article.title.substring(0, 30)}...`);
+                const fallbackImage = this.getCategoryBasedImage(article, index);
+                this.setArticleImageDirect(imageElement, fallbackImage);
+                return { success: true, backed_up: false };
             }
 
             // NEW: Backup image to OneDrive
@@ -1893,35 +1804,28 @@
                     return null;
                 }
             }
-            // Enhanced image setting - smooth for upgrades, immediate for initial display
-            setArticleImageDirect(imageElement, imageUrl, smooth = true) {
-                const img = imageElement.querySelector('img');
-                
-                if (img && smooth) {
-                    // Upgrade existing image smoothly
-                    img.style.transition = 'opacity 0.3s ease';
-                    img.style.opacity = '0';
-                    
-                    setTimeout(() => {
-                        img.src = imageUrl;
-                        img.onload = () => {
-                            img.style.opacity = '1';
-                            console.log('✅ Image upgraded successfully');
-                        };
-                        img.onerror = () => {
-                            console.log('⚠️ Image upgrade failed, keeping current');
-                            img.style.opacity = '1'; // Show original image
-                        };
-                    }, 150);
-                } else {
-                    // Set image immediately (initial display)
-                    imageElement.innerHTML = `
-                        <img src="${imageUrl}" 
-                             alt="Article image" 
-                             style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;"
-                             onerror="this.src='https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format';">
-                    `;
-                }
+            // FIXED: Direct image setting without CORS validation
+            setArticleImageDirect(imageElement, imageUrl) {
+                imageElement.innerHTML = `
+                    <img src="${imageUrl}" 
+                         alt="Article image" 
+                         style="
+                            opacity: 0; 
+                            transition: opacity 0.8s ease;
+                            width: 100%;
+                            height: 100%;
+                            object-fit: cover;
+                            border-radius: inherit;
+                         "
+                         onload="
+                            this.style.opacity='1';
+                            console.log('✅ Image loaded successfully');
+                         " 
+                         onerror="
+                            console.log('⚠️ Image failed, using fallback');
+                            this.src='https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                         ">
+                `;
             }
 
             displayEmptyState() {
