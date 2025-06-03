@@ -1195,11 +1195,25 @@
                 if (backupCount > 0 && this.accessToken) {
                     try {
                         console.log(`💾 Saving updated article metadata with ${backupCount} new image backups...`);
+                        this.updateStatus(`💾 Saving metadata for ${backupCount} backed up images...`, 'loading');
+                        
                         await this.updateOneDriveBackup();
-                        this.updateStatus(`✅ Images processed and article metadata updated! ${backupCount} new backups saved.`, 'success');
+                        this.updateStatus(`✅ Complete! ${backupCount} images backed up and metadata saved. Next load will be instant!`, 'success');
+                        
                     } catch (error) {
                         console.error('Failed to update article metadata:', error);
-                        this.updateStatus(`⚠️ Images backed up but failed to save metadata. Will re-process next time.`, 'error');
+                        
+                        // Show more helpful error message
+                        if (error.message.includes('413') || error.message.includes('too large')) {
+                            this.updateStatus(`⚠️ Images backed up successfully! Metadata file too large to save - images will still work but may re-process next time.`, 'success');
+                        } else if (error.message.includes('timeout') || error.message.includes('network')) {
+                            this.updateStatus(`⚠️ Images backed up! Network timeout saving metadata - trying again next load.`, 'success');
+                        } else {
+                            this.updateStatus(`⚠️ Images backed up to OneDrive! Metadata save failed - will retry next time. Error: ${error.message.substring(0, 50)}...`, 'success');
+                        }
+                        
+                        // Even if metadata save fails, the images are still backed up and working
+                        console.log('✅ Note: Images are still successfully backed up in OneDrive/MyPocket/images/ folder');
                     }
                 }
             }
@@ -2192,29 +2206,53 @@
                 }
             }
 
-            // ENHANCED: Update OneDrive backup to include image backup info
+            // ENHANCED: Update OneDrive backup with optimized size
             async updateOneDriveBackup() {
                 if (!this.accessToken) {
                     throw new Error('Not connected to OneDrive');
                 }
 
+                // Optimize articles by removing large content fields for backup
+                const optimizedArticles = this.articles.map(article => ({
+                    title: article.title,
+                    url: article.url,
+                    excerpt: article.excerpt,
+                    dateAdded: article.dateAdded,
+                    readTime: article.readTime,
+                    wordCount: article.wordCount,
+                    author: article.author,
+                    domain: this.getDomain(article.url),
+                    // Keep image backup info
+                    backedUpImage: article.backedUpImage,
+                    featuredImage: article.featuredImage,
+                    image: article.image,
+                    images: article.images,
+                    // Skip heavy content fields to reduce size
+                    // content: article.content,  // Skip large content
+                    // textContent: article.textContent,  // Skip large text
+                    // html: article.html  // Skip large HTML
+                }));
+
                 const backup = {
-                    articles: this.articles, // Articles now include backedUpImage property
+                    articles: optimizedArticles,
                     settings: {
                         imageBackupEnabled: this.imageBackupEnabled
                     },
                     exportDate: new Date().toISOString(),
-                    version: "3.4", // Updated version with image backup
+                    version: "3.5", // Updated version with optimized backup
                     deviceInfo: {
                         browser: "Web Reader",
                         platform: navigator.platform,
                         timestamp: Date.now(),
-                        articleCount: this.articles.length
+                        articleCount: this.articles.length,
+                        imageBackupCount: this.articles.filter(a => a.backedUpImage).length
                     }
                 };
 
                 const fileName = `mypocket-backup-${new Date().toISOString().split('T')[0]}.json`;
                 const fileContent = JSON.stringify(backup, null, 2);
+
+                console.log(`💾 Backing up ${backup.articles.length} articles (${Math.round(fileContent.length / 1024)}KB)`);
 
                 const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
 
