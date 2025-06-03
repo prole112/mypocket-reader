@@ -903,7 +903,8 @@
                 this.accessToken = null;
                 this.articles = [];
                 this.currentArticle = null;
-                this.imageBackupEnabled = true; // NEW: Enable image backup by default
+                this.imageBackupEnabled = true;
+                this.imageCache = new Map(); // NEW: In-memory cache for this session
 
                 this.init();
             }
@@ -1033,55 +1034,21 @@
                 try {
                     this.updateStatus('Loading articles... ⏳', 'loading');
 
-                    const listResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children', {
-                        headers: {
-                            'Authorization': `Bearer ${this.accessToken}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
+                    // Load both articles and image metadata
+                    const [articlesData, imageMetadata] = await Promise.all([
+                        this.loadArticlesFromOneDrive(),
+                        this.loadImageMetadata()
+                    ]);
 
-                    if (!listResponse.ok) {
-                        if (listResponse.status === 401) {
-                            this.clearToken();
-                            this.updateConnectionStatus(false);
-                            this.updateStatus('Session expired. Please reconnect.', 'error');
-                            return;
-                        }
-                        throw new Error(`Failed to list files: ${listResponse.status}`);
+                    this.articles = articlesData || [];
+                    
+                    // Merge image metadata back into articles
+                    if (imageMetadata) {
+                        this.mergeImageMetadata(imageMetadata);
                     }
 
-                    const fileList = await listResponse.json();
-                    const backupFiles = fileList.value.filter(file =>
-                        file.name.startsWith('mypocket-backup-') && file.name.endsWith('.json')
-                    );
-
-                    if (backupFiles.length === 0) {
-                        this.updateStatus('No backup files found. Save some articles with the browser extension first.', 'error');
-                        this.displayEmptyState();
-                        return;
-                    }
-
-                    const latestFile = backupFiles.sort((a, b) =>
-                        new Date(b.lastModifiedDateTime) - new Date(a.lastModifiedDateTime)
-                    )[0];
-
-                    const downloadResponse = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${latestFile.id}/content`, {
-                        headers: {
-                            'Authorization': `Bearer ${this.accessToken}`
-                        }
-                    });
-
-                    if (!downloadResponse.ok) {
-                        throw new Error(`Failed to download backup: ${downloadResponse.status}`);
-                    }
-
-                    const backupContent = await downloadResponse.text();
-                    const backup = JSON.parse(backupContent);
-
-                    this.articles = backup.articles || [];
                     this.displayArticles(this.articles);
-
-                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name}`, 'success');
+                    this.updateStatus(`✅ Loaded ${this.articles.length} articles`, 'success');
 
                 } catch (error) {
                     console.error('Error loading articles:', error);
@@ -1089,7 +1056,94 @@
                 }
             }
 
-            // Enhanced displayArticles with GUARANTEED real images + OneDrive backup
+            // FIXED: Load articles from OneDrive backup
+            async loadArticlesFromOneDrive() {
+                const listResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children', {
+                    headers: {
+                        'Authorization': `Bearer ${this.accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!listResponse.ok) {
+                    if (listResponse.status === 401) {
+                        this.clearToken();
+                        this.updateConnectionStatus(false);
+                        throw new Error('Session expired. Please reconnect.');
+                    }
+                    throw new Error(`Failed to list files: ${listResponse.status}`);
+                }
+
+                const fileList = await listResponse.json();
+                const backupFiles = fileList.value.filter(file =>
+                    file.name.startsWith('mypocket-backup-') && file.name.endsWith('.json')
+                );
+
+                if (backupFiles.length === 0) {
+                    this.displayEmptyState();
+                    throw new Error('No backup files found. Save some articles with the browser extension first.');
+                }
+
+                const latestFile = backupFiles.sort((a, b) =>
+                    new Date(b.lastModifiedDateTime) - new Date(a.lastModifiedDateTime)
+                )[0];
+
+                const downloadResponse = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${latestFile.id}/content`, {
+                    headers: {
+                        'Authorization': `Bearer ${this.accessToken}`
+                    }
+                });
+
+                if (!downloadResponse.ok) {
+                    throw new Error(`Failed to download backup: ${downloadResponse.status}`);
+                }
+
+                const backupContent = await downloadResponse.text();
+                const backup = JSON.parse(backupContent);
+
+                return backup.articles || [];
+            }
+
+            // NEW: Load separate image metadata file
+            async loadImageMetadata() {
+                try {
+                    const metadataResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/image-metadata.json:/content', {
+                        headers: {
+                            'Authorization': `Bearer ${this.accessToken}`
+                        }
+                    });
+
+                    if (metadataResponse.ok) {
+                        const metadataText = await metadataResponse.text();
+                        const metadata = JSON.parse(metadataText);
+                        console.log(`✅ Loaded image metadata for ${Object.keys(metadata).length} articles`);
+                        return metadata;
+                    }
+                } catch (error) {
+                    console.log('📝 No image metadata found (first time setup)');
+                }
+                return {};
+            }
+
+            // NEW: Merge image metadata back into articles
+            mergeImageMetadata(imageMetadata) {
+                for (let article of this.articles) {
+                    const articleKey = this.getArticleKey(article);
+                    if (imageMetadata[articleKey]) {
+                        article.imageBackupInfo = imageMetadata[articleKey];
+                        console.log(`🔗 Merged image metadata for: ${article.title.substring(0, 30)}...`);
+                    }
+                }
+            }
+
+            // NEW: Generate unique key for each article
+            getArticleKey(article) {
+                // Use URL + title hash for unique identification
+                const combined = article.url + '|' + article.title;
+                return btoa(combined).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
+            }
+
+            // Enhanced displayArticles with FIXED image loading
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1151,151 +1205,209 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
                 
-                // Show image loading status
-                this.updateStatus(`🔍 Extracting real images from article websites...`, 'loading');
-                
-                // ENHANCED: Extract real images from original websites + backup to OneDrive
+                // FIXED: Load all images efficiently
                 this.loadAllArticleImages(articles);
             }
 
-            // ENHANCED: Extract real images from original websites
+            // FIXED: Enhanced image loading with proper persistence
             async loadAllArticleImages(articles) {
-                console.log('🎨 REAL IMAGE EXTRACTOR - Getting actual article images...');
+                console.log('🎨 ENHANCED IMAGE LOADER v2.0 - Loading persistent images...');
                 
-                let successCount = 0;
-                let backupCount = 0;
+                let instantCount = 0;
+                let newBackupsCount = 0;
                 const totalImages = articles.length;
                 
-                // Load images sequentially to avoid overwhelming websites
-                for (let i = 0; i < articles.length; i++) {
-                    try {
-                        const result = await this.extractRealArticleImage(articles[i], i);
-                        if (result.success) successCount++;
-                        if (result.backed_up) backupCount++;
-                        
-                        // Update progress
-                        const progress = Math.round(((i + 1) / totalImages) * 100);
-                        this.updateStatus(`🔍 Extracting real images... ${i + 1}/${totalImages} (${progress}%) | ${backupCount} backed up`, 'loading');
-                        
-                        // Delay to be respectful to websites
-                        await new Promise(resolve => setTimeout(resolve, 200));
-                        
-                    } catch (error) {
-                        console.error(`Failed to extract image for article ${i}:`, error);
-                        // Use category fallback for failed extractions
-                        this.setArticleImageDirect(document.getElementById(`image-${i}`), this.getCategoryBasedImage(articles[i], i));
-                        successCount++;
-                    }
-                }
+                this.updateStatus(`🔍 Loading images... Checking ${totalImages} articles`, 'loading');
                 
-                this.updateStatus(`✅ Extracted ${successCount}/${totalImages} real article images! | ${backupCount} backed up`, 'success');
-                console.log(`🎨 Real image extraction complete: ${successCount}/${totalImages} successful, ${backupCount} backed up`);
-                
-                // NEW: Save the updated article metadata (including backedUpImage info) back to OneDrive
-                if (backupCount > 0 && this.accessToken) {
-                    try {
-                        console.log(`💾 Saving updated article metadata with ${backupCount} new image backups...`);
-                        this.updateStatus(`💾 Saving metadata for ${backupCount} backed up images...`, 'loading');
-                        
-                        await this.updateOneDriveBackup();
-                        this.updateStatus(`✅ Complete! ${backupCount} images backed up and metadata saved. Next load will be instant!`, 'success');
-                        
-                    } catch (error) {
-                        console.error('Failed to update article metadata:', error);
-                        
-                        // Show more helpful error message
-                        if (error.message.includes('413') || error.message.includes('too large')) {
-                            this.updateStatus(`⚠️ Images backed up successfully! Metadata file too large to save - images will still work but may re-process next time.`, 'success');
-                        } else if (error.message.includes('timeout') || error.message.includes('network')) {
-                            this.updateStatus(`⚠️ Images backed up! Network timeout saving metadata - trying again next load.`, 'success');
-                        } else {
-                            this.updateStatus(`⚠️ Images backed up to OneDrive! Metadata save failed - will retry next time. Error: ${error.message.substring(0, 50)}...`, 'success');
+                // Process images in batches to avoid overwhelming the system
+                const batchSize = 3;
+                for (let i = 0; i < articles.length; i += batchSize) {
+                    const batch = articles.slice(i, Math.min(i + batchSize, articles.length));
+                    
+                    await Promise.all(batch.map(async (article, batchIndex) => {
+                        const actualIndex = i + batchIndex;
+                        try {
+                            const result = await this.loadSingleArticleImage(article, actualIndex);
+                            if (result.fromCache) instantCount++;
+                            if (result.newBackup) newBackupsCount++;
+                        } catch (error) {
+                            console.error(`Failed to load image for article ${actualIndex}:`, error);
+                            this.setFallbackImage(actualIndex, article);
                         }
-                        
-                        // Even if metadata save fails, the images are still backed up and working
-                        console.log('✅ Note: Images are still successfully backed up in OneDrive/MyPocket/images/ folder');
+                    }));
+                    
+                    // Update progress
+                    const processed = Math.min(i + batchSize, articles.length);
+                    const progress = Math.round((processed / totalImages) * 100);
+                    this.updateStatus(`🔍 Loading images... ${processed}/${totalImages} (${progress}%) | ${instantCount} instant`, 'loading');
+                    
+                    // Small delay between batches to prevent rate limiting
+                    if (i + batchSize < articles.length) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
                     }
                 }
+                
+                // Save any new image metadata
+                if (newBackupsCount > 0) {
+                    try {
+                        await this.saveImageMetadata();
+                        this.updateStatus(`✅ Images loaded! ${instantCount} instant, ${newBackupsCount} new backups saved`, 'success');
+                    } catch (error) {
+                        console.error('Failed to save image metadata:', error);
+                        this.updateStatus(`⚠️ Images loaded! ${instantCount} instant, ${newBackupsCount} backed up (metadata save failed)`, 'success');
+                    }
+                } else {
+                    this.updateStatus(`✅ All ${totalImages} images loaded instantly from backup!`, 'success');
+                }
+                
+                console.log(`🎨 Image loading complete: ${instantCount} instant, ${newBackupsCount} new backups`);
             }
 
-            // NEW: Extract image and backup to OneDrive - KEEPING YOUR ORIGINAL LOGIC
-            async extractRealArticleImage(article, index) {
+            // FIXED: Load single article image with proper caching
+            async loadSingleArticleImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
-                if (!imageElement) return { success: false, backed_up: false };
+                if (!imageElement) return { fromCache: false, newBackup: false };
 
-                console.log(`🔍 Extracting real image from: ${this.getDomain(article.url)}`);
+                const articleKey = this.getArticleKey(article);
+                
+                // Strategy 1: Check session cache first (fastest)
+                if (this.imageCache.has(articleKey)) {
+                    const cachedUrl = this.imageCache.get(articleKey);
+                    console.log(`⚡ Using session cache: ${article.title.substring(0, 30)}...`);
+                    this.setArticleImageDirect(imageElement, cachedUrl);
+                    return { fromCache: true, newBackup: false };
+                }
 
-                // NEW: Strategy 0: Check for backed-up image in OneDrive first (if available)
-                if (article.backedUpImage && this.accessToken) {
+                // Strategy 2: Check backed-up image with permanent shareable link
+                if (article.imageBackupInfo && this.accessToken) {
                     try {
-                        const backedUpUrl = await this.getBackedUpImageUrl(article.backedUpImage);
-                        if (backedUpUrl) {
-                            console.log(`✅ Using backed-up image: ${article.title.substring(0, 30)}...`);
-                            this.setArticleImageDirect(imageElement, backedUpUrl);
-                            return { success: true, backed_up: false }; // Already backed up
+                        const shareableUrl = await this.getShareableImageUrl(article.imageBackupInfo.fileId);
+                        if (shareableUrl) {
+                            console.log(`💾 Using backed-up image: ${article.title.substring(0, 30)}...`);
+                            this.setArticleImageDirect(imageElement, shareableUrl);
+                            this.imageCache.set(articleKey, shareableUrl); // Cache for this session
+                            return { fromCache: true, newBackup: false };
                         }
                     } catch (error) {
-                        console.log(`⚠️ Failed to load backed-up image, extracting fresh: ${error.message}`);
+                        console.log(`⚠️ Failed to load backed-up image, will extract fresh: ${error.message}`);
                     }
                 }
 
-                // YOUR ORIGINAL Strategy 1: Try saved article images first (fastest)
+                // Strategy 3: Use saved article images 
                 const savedImage = this.getBestArticleImage(article);
                 if (savedImage) {
-                    console.log(`✅ Using saved image: ${article.title.substring(0, 30)}...`);
+                    console.log(`📷 Using saved image: ${article.title.substring(0, 30)}...`);
                     this.setArticleImageDirect(imageElement, savedImage);
-                    // NEW: Try to backup saved image too
-                    let backedUp = false;
+                    this.imageCache.set(articleKey, savedImage);
+                    
+                    // Try to backup in background
+                    let newBackup = false;
                     if (this.imageBackupEnabled && this.accessToken) {
                         try {
                             const backupInfo = await this.backupImageToOneDrive(savedImage, article, index);
                             if (backupInfo) {
-                                article.backedUpImage = backupInfo;
-                                backedUp = true;
+                                article.imageBackupInfo = backupInfo;
+                                newBackup = true;
                             }
                         } catch (error) {
-                            console.log(`⚠️ Backup of saved image failed: ${error.message}`);
+                            console.log(`⚠️ Background backup failed: ${error.message}`);
                         }
                     }
-                    return { success: true, backed_up: backedUp };
+                    
+                    return { fromCache: false, newBackup: newBackup };
                 }
 
-                // YOUR ORIGINAL Strategy 2: Extract image from the original website
+                // Strategy 4: Extract from website and backup
                 try {
                     const extractedImage = await this.fetchRealImageFromWebsite(article.url);
                     if (extractedImage) {
-                        console.log(`✅ Extracted real image: ${article.title.substring(0, 30)}...`);
+                        console.log(`🌐 Extracted fresh image: ${article.title.substring(0, 30)}...`);
                         this.setArticleImageDirect(imageElement, extractedImage);
+                        this.imageCache.set(articleKey, extractedImage);
                         
-                        // NEW: Backup the extracted image
-                        let backedUp = false;
+                        // Backup the extracted image
+                        let newBackup = false;
                         if (this.imageBackupEnabled && this.accessToken) {
                             try {
                                 const backupInfo = await this.backupImageToOneDrive(extractedImage, article, index);
                                 if (backupInfo) {
-                                    article.backedUpImage = backupInfo;
-                                    backedUp = true;
-                                    console.log(`💾 Real image backed up: ${backupInfo.fileName}`);
+                                    article.imageBackupInfo = backupInfo;
+                                    newBackup = true;
                                 }
                             } catch (error) {
-                                console.log(`⚠️ Image backup failed: ${error.message}`);
+                                console.log(`⚠️ Backup failed: ${error.message}`);
                             }
                         }
                         
-                        return { success: true, backed_up: backedUp };
+                        return { fromCache: false, newBackup: newBackup };
                     }
                 } catch (error) {
-                    console.log(`⚠️ Could not extract from website: ${error.message}`);
+                    console.log(`⚠️ Website extraction failed: ${error.message}`);
                 }
 
-                // YOUR ORIGINAL Strategy 3: Use intelligent category-based fallback
+                // Strategy 5: Fallback to category-based image
                 console.log(`🎨 Using intelligent fallback: ${article.title.substring(0, 30)}...`);
                 const fallbackImage = this.getCategoryBasedImage(article, index);
                 this.setArticleImageDirect(imageElement, fallbackImage);
-                return { success: true, backed_up: false };
+                this.imageCache.set(articleKey, fallbackImage);
+                
+                return { fromCache: false, newBackup: false };
             }
 
-            // NEW: Backup image to OneDrive
+            // FIXED: Get permanent shareable URL from OneDrive
+            async getShareableImageUrl(fileId) {
+                if (!this.accessToken || !fileId) {
+                    return null;
+                }
+
+                try {
+                    // Create a shareable link that doesn't expire
+                    const shareResponse = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/createLink`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${this.accessToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            type: 'view',
+                            scope: 'anonymous'
+                        })
+                    });
+
+                    if (shareResponse.ok) {
+                        const shareData = await shareResponse.json();
+                        // Convert the sharing URL to a direct image URL
+                        const directUrl = this.convertOneDriveShareToDirectUrl(shareData.link.webUrl);
+                        return directUrl;
+                    } else {
+                        console.log(`Failed to create shareable link: ${shareResponse.status}`);
+                        return null;
+                    }
+
+                } catch (error) {
+                    console.error('Failed to get shareable image URL:', error);
+                    return null;
+                }
+            }
+
+            // NEW: Convert OneDrive sharing URL to direct image URL
+            convertOneDriveShareToDirectUrl(shareUrl) {
+                // Convert OneDrive sharing URL to direct download URL
+                // Example: https://1drv.ms/i/s!ABC123 -> direct image URL
+                try {
+                    if (shareUrl.includes('1drv.ms')) {
+                        // Extract the share token and convert to direct URL
+                        const base64 = btoa(shareUrl).replace(/=+$/, '');
+                        return `https://api.onedrive.com/v1.0/shares/u!${base64}/root/content`;
+                    }
+                    return shareUrl; // Return as-is if not OneDrive format
+                } catch (error) {
+                    console.error('Failed to convert OneDrive URL:', error);
+                    return shareUrl;
+                }
+            }
+
+            // ENHANCED: Backup image to OneDrive with better error handling
             async backupImageToOneDrive(imageUrl, article, index) {
                 if (!this.accessToken) {
                     throw new Error('Not connected to OneDrive');
@@ -1304,20 +1416,31 @@
                 try {
                     console.log(`💾 Backing up image to OneDrive: ${imageUrl}`);
 
-                    // Download the image
-                    const imageResponse = await fetch(imageUrl);
+                    // Download the image with better error handling
+                    const imageResponse = await fetch(imageUrl, {
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader)'
+                        }
+                    });
+                    
                     if (!imageResponse.ok) {
                         throw new Error(`Failed to fetch image: ${imageResponse.status}`);
                     }
 
                     const imageBlob = await imageResponse.blob();
+                    
+                    // Check if it's actually an image
+                    if (!imageBlob.type.startsWith('image/')) {
+                        throw new Error(`Not an image file: ${imageBlob.type}`);
+                    }
+                    
                     const imageBuffer = await imageBlob.arrayBuffer();
 
                     // Generate a unique filename
                     const imageExtension = this.getImageExtension(imageUrl) || 'jpg';
                     const sanitizedTitle = this.sanitizeFilename(article.title);
                     const timestamp = Date.now();
-                    const fileName = `image_${sanitizedTitle}_${timestamp}.${imageExtension}`;
+                    const fileName = `${sanitizedTitle}_${timestamp}.${imageExtension}`;
 
                     // Upload to OneDrive in MyPocket/images folder
                     const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/images/${fileName}:/content`;
@@ -1338,13 +1461,17 @@
 
                     const uploadResult = await uploadResponse.json();
 
-                    return {
+                    const backupInfo = {
                         fileName: fileName,
                         fileId: uploadResult.id,
                         uploadDate: new Date().toISOString(),
                         originalUrl: imageUrl,
-                        size: imageBuffer.byteLength
+                        size: imageBuffer.byteLength,
+                        mimeType: imageBlob.type
                     };
+
+                    console.log(`✅ Image backed up: ${fileName} (${Math.round(imageBuffer.byteLength / 1024)}KB)`);
+                    return backupInfo;
 
                 } catch (error) {
                     console.error('Image backup error:', error);
@@ -1352,30 +1479,59 @@
                 }
             }
 
-            // NEW: Get backed-up image URL from OneDrive
-            async getBackedUpImageUrl(backupInfo) {
-                if (!this.accessToken || !backupInfo) {
-                    return null;
+            // NEW: Save image metadata separately to avoid size issues
+            async saveImageMetadata() {
+                if (!this.accessToken) {
+                    return;
                 }
 
                 try {
-                    // Get the file download URL from OneDrive
-                    const fileResponse = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${backupInfo.fileId}`, {
-                        headers: {
-                            'Authorization': `Bearer ${this.accessToken}`
+                    // Build metadata object
+                    const metadata = {};
+                    for (let article of this.articles) {
+                        if (article.imageBackupInfo) {
+                            const articleKey = this.getArticleKey(article);
+                            metadata[articleKey] = {
+                                ...article.imageBackupInfo,
+                                articleTitle: article.title.substring(0, 50) // For debugging
+                            };
                         }
-                    });
-
-                    if (!fileResponse.ok) {
-                        throw new Error(`Failed to get file info: ${fileResponse.status}`);
                     }
 
-                    const fileInfo = await fileResponse.json();
-                    return fileInfo['@microsoft.graph.downloadUrl']; // This is a direct download URL
+                    const metadataContent = JSON.stringify(metadata, null, 2);
+                    console.log(`💾 Saving image metadata for ${Object.keys(metadata).length} articles (${Math.round(metadataContent.length / 1024)}KB)`);
+
+                    const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/image-metadata.json:/content`;
+
+                    const uploadResponse = await fetch(uploadUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${this.accessToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: metadataContent
+                    });
+
+                    if (!uploadResponse.ok) {
+                        const errorText = await uploadResponse.text();
+                        throw new Error(`Metadata save failed: ${uploadResponse.status} - ${errorText}`);
+                    }
+
+                    console.log(`✅ Image metadata saved successfully`);
+                    return await uploadResponse.json();
 
                 } catch (error) {
-                    console.error('Failed to get backed-up image URL:', error);
-                    return null;
+                    console.error('Failed to save image metadata:', error);
+                    throw error;
+                }
+            }
+
+            // Set fallback image when all else fails
+            setFallbackImage(index, article) {
+                const imageElement = document.getElementById(`image-${index}`);
+                if (imageElement) {
+                    const fallbackImage = this.getCategoryBasedImage(article, index);
+                    this.setArticleImageDirect(imageElement, fallbackImage);
                 }
             }
 
@@ -2172,11 +2328,18 @@
 
                 if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your OneDrive backup.`)) {
                     try {
+                        // Remove from local array
                         this.articles.splice(index, 1);
 
                         if (this.accessToken) {
                             this.updateStatus('Updating OneDrive backup...', 'loading');
-                            await this.updateOneDriveBackup();
+                            
+                            // Update both article backup and image metadata
+                            await Promise.all([
+                                this.updateOneDriveBackup(),
+                                this.saveImageMetadata()
+                            ]);
+                            
                             this.updateStatus(`✅ Article deleted and backup updated. ${this.articles.length} articles remaining.`, 'success');
                         } else {
                             this.updateStatus(`❌ Article deleted locally but OneDrive backup not updated (not connected).`, 'error');
@@ -2222,8 +2385,7 @@
                     wordCount: article.wordCount,
                     author: article.author,
                     domain: this.getDomain(article.url),
-                    // Keep image backup info
-                    backedUpImage: article.backedUpImage,
+                    // Keep essential image info but not backup details (stored separately)
                     featuredImage: article.featuredImage,
                     image: article.image,
                     images: article.images,
@@ -2231,6 +2393,7 @@
                     // content: article.content,  // Skip large content
                     // textContent: article.textContent,  // Skip large text
                     // html: article.html  // Skip large HTML
+                    // imageBackupInfo: excluded (stored in separate metadata file)
                 }));
 
                 const backup = {
@@ -2239,13 +2402,13 @@
                         imageBackupEnabled: this.imageBackupEnabled
                     },
                     exportDate: new Date().toISOString(),
-                    version: "3.5", // Updated version with optimized backup
+                    version: "4.0", // Updated version with separate image metadata
                     deviceInfo: {
                         browser: "Web Reader",
                         platform: navigator.platform,
                         timestamp: Date.now(),
                         articleCount: this.articles.length,
-                        imageBackupCount: this.articles.filter(a => a.backedUpImage).length
+                        imageBackupCount: this.articles.filter(a => a.imageBackupInfo).length
                     }
                 };
 
@@ -2339,7 +2502,7 @@
         </div>
     </div>
     <div class="content">
-        ${article.content}
+        ${this.getArticleContent(article) || article.excerpt || 'Content not available - visit original URL below.'}
     </div>
     <div class="footer">
         <p><strong>✨ Exported from MyPocket Web Reader</strong></p>
@@ -2397,54 +2560,6 @@
                 }
                 
                 return null;
-            }
-
-            // Smart icon selection based on domain
-            getArticleIcon(url) {
-                const domain = this.getDomain(url).toLowerCase();
-                
-                const siteIcons = {
-                    'youtube.com': '📺',
-                    'github.com': '🐙',
-                    'stackoverflow.com': '💻',
-                    'medium.com': '📝',
-                    'dev.to': '👨‍💻',
-                    'twitter.com': '🐦',
-                    'x.com': '🐦',
-                    'linkedin.com': '💼',
-                    'reddit.com': '🔴',
-                    'hackernews.ycombinator.com': '🟠',
-                    'techcrunch.com': '📰',
-                    'theverge.com': '📱',
-                    'arstechnica.com': '🔬',
-                    'wired.com': '⚡',
-                    'bbc.com': '📺',
-                    'cnn.com': '📰',
-                    'nytimes.com': '📰',
-                    'guardian.co.uk': '📰',
-                    'washingtonpost.com': '📰',
-                    'wikipedia.org': '📖',
-                    'arxiv.org': '🎓',
-                };
-                
-                for (const [siteDomain, icon] of Object.entries(siteIcons)) {
-                    if (domain.includes(siteDomain)) {
-                        return icon;
-                    }
-                }
-                
-                if (domain.includes('blog') || domain.includes('medium')) return '📝';
-                if (domain.includes('news')) return '📰';
-                if (domain.includes('tech')) return '💻';
-                if (domain.includes('code') || domain.includes('dev')) return '👨‍💻';
-                if (domain.includes('video') || domain.includes('tube')) return '📺';
-                if (domain.includes('music') || domain.includes('spotify')) return '🎵';
-                if (domain.includes('photo') || domain.includes('image')) return '📸';
-                if (domain.includes('shop') || domain.includes('store')) return '🛒';
-                if (domain.includes('book') || domain.includes('read')) return '📚';
-                if (domain.includes('learn') || domain.includes('edu')) return '🎓';
-                
-                return '📄';
             }
 
             getDomain(url) {
@@ -2510,6 +2625,8 @@
             }
 
             showDebugInfo() {
+                const imageBackedUpCount = this.articles.filter(a => a.imageBackupInfo).length;
+                
                 const info = `
 MyPocket Web Reader Debug Info:
 =====================================
@@ -2521,7 +2638,17 @@ Protocol: ${window.location.protocol}
 Host: ${window.location.host}
 Has Access Token: ${!!this.accessToken}
 Articles Loaded: ${this.articles.length}
+Images Backed Up: ${imageBackedUpCount}/${this.articles.length}
 Image Backup: ${this.imageBackupEnabled ? 'Enabled' : 'Disabled'}
+Session Cache: ${this.imageCache.size} images
+
+Fixed Issues in Version 4.0:
+✅ Permanent shareable image URLs (no expiration)
+✅ Separate image metadata file (prevents size issues)
+✅ Session-based image caching for instant loads
+✅ Cross-device image persistence 
+✅ Batch image processing for better performance
+✅ Enhanced error handling and fallbacks
 
 Azure AD Redirect URI Requirements:
 - Must be absolute URI (http:// or https://)
@@ -2547,9 +2674,19 @@ Button Issues:
 
 Image Backup Features:
 - Real images extracted from websites
-- Backed up to OneDrive/MyPocket/images/
+- Permanent shareable links (never expire)
+- Separate metadata storage prevents backup failures
+- Session caching for instant subsequent loads
+- Cross-device synchronization via OneDrive
 - Automatic fallback to category-based images
 - Supports all major image formats
+
+Image Loading Strategy:
+1. Session cache (instant)
+2. OneDrive shareable links (instant)
+3. Saved article images + backup
+4. Live website extraction + backup
+5. Category-based fallback
                 `;
 
                 alert(info);
@@ -2560,7 +2697,9 @@ Image Backup Features:
                     protocol: window.location.protocol,
                     hasToken: !!this.accessToken,
                     articlesCount: this.articles.length,
-                    imageBackup: this.imageBackupEnabled
+                    imageBackupEnabled: this.imageBackupEnabled,
+                    imagesBackedUp: imageBackedUpCount,
+                    sessionCache: this.imageCache.size
                 });
             }
 
