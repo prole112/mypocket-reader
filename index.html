@@ -1464,12 +1464,12 @@
                     return { success: true, backed_up: false };
                 }
 
-                console.log(`🔍 Processing fresh image: ${this.getDomain(article.url)}`);
+                console.log(`🔍 Processing fresh image from website: ${this.getDomain(article.url)}`);
 
-                // Strategy 1: Try saved article images first
+                // PRIORITY 1: Try saved article images first (from browser extension)
                 const savedImage = this.getBestArticleImage(article);
                 if (savedImage) {
-                    console.log(`✅ Using saved image: ${article.title.substring(0, 30)}...`);
+                    console.log(`✅ Using saved image from extension: ${article.title.substring(0, 30)}...`);
                     this.setArticleImageDirect(imageElement, savedImage);
                     
                     // Try to backup for cross-device sync
@@ -1482,7 +1482,7 @@
                                 article.imageBackupVerified = true;
                                 article.lastSyncUpdate = Date.now();
                                 backedUp = true;
-                                console.log(`💾 Image backed up for sync: ${backupInfo.fileName}`);
+                                console.log(`💾 Saved image backed up for sync: ${backupInfo.fileName}`);
                             }
                         } catch (error) {
                             console.log(`⚠️ Sync backup failed: ${error.message}`);
@@ -1491,14 +1491,15 @@
                     return { success: true, backed_up: backedUp };
                 }
 
-                // Strategy 2: Extract from website
+                // PRIORITY 2: Extract REAL image from original website
                 try {
+                    console.log(`🌐 Extracting REAL image from website: ${article.url}`);
                     const extractedImage = await this.fetchRealImageFromWebsite(article.url);
                     if (extractedImage) {
-                        console.log(`✅ Extracted real image: ${article.title.substring(0, 30)}...`);
+                        console.log(`✅ Extracted REAL website image: ${article.title.substring(0, 30)}...`);
                         this.setArticleImageDirect(imageElement, extractedImage);
                         
-                        // Backup for cross-device sync
+                        // Backup the REAL extracted image for cross-device sync
                         let backedUp = false;
                         if (this.imageBackupEnabled && this.accessToken) {
                             try {
@@ -1508,7 +1509,7 @@
                                     article.imageBackupVerified = true;
                                     article.lastSyncUpdate = Date.now();
                                     backedUp = true;
-                                    console.log(`💾 Extracted image synced: ${backupInfo.fileName}`);
+                                    console.log(`💾 REAL website image synced: ${backupInfo.fileName}`);
                                 }
                             } catch (error) {
                                 console.log(`⚠️ Sync backup failed: ${error.message}`);
@@ -1521,8 +1522,8 @@
                     console.log(`⚠️ Website extraction failed: ${error.message}`);
                 }
 
-                // Strategy 3: Intelligent fallback
-                console.log(`🎨 Using intelligent fallback: ${article.title.substring(0, 30)}...`);
+                // PRIORITY 3: Intelligent category-based fallback (only when website extraction fails)
+                console.log(`🎨 Website extraction failed, using intelligent category fallback: ${article.title.substring(0, 30)}...`);
                 const fallbackImage = this.getCategoryBasedImage(article, index);
                 this.setArticleImageDirect(imageElement, fallbackImage);
                 return { success: true, backed_up: false };
@@ -1955,6 +1956,7 @@
                 return (w > 0 && w < 200) || (h > 0 && h < 150);
             }
 
+            // ENHANCED category-based images - only used as intelligent fallback when website extraction fails
             getCategoryBasedImage(article, index) {
                 const domain = this.getDomain(article.url).toLowerCase();
                 const title = article.title.toLowerCase();
@@ -1971,13 +1973,86 @@
                     return `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
                 
-                // Default beautiful images based on index
+                // Design/Creative
+                if (domain.includes('dribbble') || domain.includes('behance') || 
+                    title.includes('design') || title.includes('ui') || title.includes('ux') || title.includes('creative')) {
+                    return `https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // News/Media
+                if (domain.includes('news') || domain.includes('bbc') || domain.includes('cnn') ||
+                    title.includes('news') || title.includes('politics') || title.includes('media')) {
+                    return `https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Travel/Adventure
+                if (title.includes('travel') || title.includes('vacation') || title.includes('adventure') || title.includes('journey')) {
+                    return `https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Food/Cooking
+                if (title.includes('food') || title.includes('recipe') || title.includes('cooking') || title.includes('restaurant')) {
+                    return `https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Health/Fitness
+                if (title.includes('health') || title.includes('fitness') || title.includes('exercise') || title.includes('wellness')) {
+                    return `https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Science/Research
+                if (domain.includes('arxiv') || domain.includes('research') ||
+                    title.includes('science') || title.includes('research') || title.includes('study') || title.includes('data')) {
+                    return `https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Education/Learning
+                if (domain.includes('edu') || title.includes('learn') || title.includes('education') || title.includes('course')) {
+                    return `https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Photography/Art
+                if (title.includes('photo') || title.includes('art') || title.includes('gallery') || title.includes('visual')) {
+                    return `https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Technology (general)
+                if (domain.includes('tech') || title.includes('tech') || title.includes('digital') || title.includes('innovation')) {
+                    return `https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Books/Reading/Writing
+                if (domain.includes('medium') || domain.includes('blog') ||
+                    title.includes('book') || title.includes('read') || title.includes('write') || title.includes('story')) {
+                    return `https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Music/Entertainment
+                if (title.includes('music') || title.includes('entertainment') || title.includes('movie') || title.includes('film')) {
+                    return `https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Sports
+                if (title.includes('sport') || title.includes('game') || title.includes('team') || title.includes('player')) {
+                    return `https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Nature/Environment
+                if (title.includes('nature') || title.includes('environment') || title.includes('climate') || title.includes('green')) {
+                    return `https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Default beautiful images based on index (only used when no category matches and website extraction failed)
                 const defaultImages = [
-                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1470115636492-6d2b56f9146d?w=400&h=250&fit=crop&crop=center&q=80&auto=format'
+                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Mountain landscape
+                    'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Abstract colorful
+                    'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Space/galaxy
+                    'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // City skyline
+                    'https://images.unsplash.com/photo-1470115636492-6d2b56f9146d?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Forest/trees
+                    'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Sunset/sunrise
+                    'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Architecture
+                    'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Lake reflection
+                    'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&h=250&fit=crop&crop=center&q=80&auto=format'  // Geometric pattern
                 ];
                 
                 return defaultImages[index % defaultImages.length];
@@ -2119,43 +2194,160 @@
             }
 
             async fetchArticleContent(url) {
-                // Your existing fetchArticleContent implementation
-                // Simplified for space - keeping the allorigins proxy approach
                 try {
-                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-                    const response = await fetch(proxyUrl);
+                    console.log(`🌐 Starting content fetch for: ${url}`);
                     
-                    if (response.ok) {
-                        const data = await response.json();
-                        return this.extractContentFromHTML(data.contents, url);
+                    // Method 1: Try using AllOrigins proxy (most reliable)
+                    try {
+                        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                        console.log(`Trying AllOrigins proxy...`);
+                        
+                        const response = await fetch(proxyUrl);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            const html = data.contents;
+                            
+                            if (html && html.length > 1000) { // Ensure we got substantial content
+                                console.log(`✅ AllOrigins success: ${html.length} chars`);
+                                const extractedContent = this.extractContentFromHTML(html, url);
+                                if (extractedContent && extractedContent.length > 500) {
+                                    return extractedContent;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`AllOrigins failed: ${error.message}`);
                     }
+                    
+                    // Method 2: Try CORS proxy
+                    try {
+                        const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                        console.log(`Trying CORS proxy...`);
+                        
+                        const response = await fetch(corsProxyUrl);
+                        
+                        if (response.ok) {
+                            const html = await response.text();
+                            
+                            if (html && html.length > 1000) {
+                                console.log(`✅ CORS proxy success: ${html.length} chars`);
+                                const extractedContent = this.extractContentFromHTML(html, url);
+                                if (extractedContent && extractedContent.length > 500) {
+                                    return extractedContent;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`CORS proxy failed: ${error.message}`);
+                    }
+                    
+                    // Method 3: Try direct fetch (will likely fail due to CORS, but worth trying)
+                    try {
+                        console.log(`Trying direct fetch...`);
+                        const response = await fetch(url, {
+                            mode: 'cors',
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader)'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const html = await response.text();
+                            console.log(`✅ Direct fetch success: ${html.length} chars`);
+                            return this.extractContentFromHTML(html, url);
+                        }
+                    } catch (error) {
+                        console.log(`Direct fetch failed (expected): ${error.message}`);
+                    }
+                    
+                    throw new Error('All proxy methods failed to fetch content');
+                    
                 } catch (error) {
-                    console.log('Fetch failed:', error);
+                    console.error('❌ All fetch methods failed:', error);
+                    throw error;
                 }
-                
-                throw new Error('All fetch methods failed');
             }
 
             extractContentFromHTML(html, url) {
-                // Your existing HTML content extraction logic
-                // Simplified for space
                 try {
+                    // Create a temporary DOM to parse the HTML
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
                     
-                    const contentSelectors = ['article', '[role="main"]', '.post-content', '.entry-content'];
+                    // Remove unwanted elements
+                    const unwantedSelectors = [
+                        'script', 'style', 'nav', 'header', 'footer', 
+                        '.sidebar', '.menu', '.navigation', '.comments',
+                        '.advertisement', '.ads', '.social-share',
+                        '[role="banner"]', '[role="navigation"]', '[role="complementary"]'
+                    ];
+                    
+                    unwantedSelectors.forEach(selector => {
+                        doc.querySelectorAll(selector).forEach(el => el.remove());
+                    });
+                    
+                    // Try to find the main content using common selectors
+                    const contentSelectors = [
+                        'article',
+                        '[role="main"]',
+                        '.post-content', '.entry-content', '.article-content',
+                        '.content', '.main-content', '.post-body',
+                        '.entry', '.post', '.article-body',
+                        'main', '#content', '#main'
+                    ];
+                    
+                    let contentElement = null;
                     
                     for (const selector of contentSelectors) {
-                        const element = doc.querySelector(selector);
-                        if (element && element.textContent.trim().length > 200) {
-                            return element.innerHTML;
+                        contentElement = doc.querySelector(selector);
+                        if (contentElement && contentElement.textContent.trim().length > 200) {
+                            break;
                         }
                     }
+                    
+                    // If no main content found, try to get paragraphs from body
+                    if (!contentElement || contentElement.textContent.trim().length < 200) {
+                        const paragraphs = Array.from(doc.querySelectorAll('p'))
+                            .filter(p => p.textContent.trim().length > 50)
+                            .slice(0, 20); // Take first 20 substantial paragraphs
+                        
+                        if (paragraphs.length > 0) {
+                            const div = doc.createElement('div');
+                            paragraphs.forEach(p => div.appendChild(p.cloneNode(true)));
+                            contentElement = div;
+                        }
+                    }
+                    
+                    if (contentElement) {
+                        // Clean up the content
+                        let content = contentElement.innerHTML;
+                        
+                        // Fix relative URLs to absolute
+                        const baseUrl = new URL(url).origin;
+                        content = content.replace(/src="\/([^"]+)"/g, `src="${baseUrl}/$1"`);
+                        content = content.replace(/href="\/([^"]+)"/g, `href="${baseUrl}/$1"`);
+                        
+                        // Add a note about the source
+                        content = `
+                            <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                                <p style="margin: 0; font-size: 0.9em;">
+                                    <strong>📡 Content fetched from original source</strong><br>
+                                    This article content was retrieved in real-time from <a href="${url}" target="_blank" style="color: #1976d2;">${this.getDomain(url)}</a>
+                                </p>
+                            </div>
+                            ${content}
+                        `;
+                        
+                        return content;
+                    }
+                    
+                    throw new Error('Could not extract readable content from page');
+                    
                 } catch (error) {
                     console.error('Content extraction error:', error);
+                    throw error;
                 }
-                
-                throw new Error('Could not extract content');
             }
 
             getFallbackContent(article, errorMessage) {
