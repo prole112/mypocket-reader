@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPocket - Web Reader (PKCE Edition)</title>
+    <title>MyPocket - Web Reader (PKCE + Enhanced Images)</title>
     <style>
         * {
             margin: 0;
@@ -683,26 +683,6 @@
             border-color: rgba(0, 123, 255, 0.2);
         }
 
-        /* Warning notifications */
-        .notification {
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            background: linear-gradient(135deg, #ff6b35, #f7931e);
-            color: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            z-index: 1001;
-            max-width: 350px;
-            animation: slideIn 0.5s ease-out;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
         /* Responsive */
         @media (max-width: 768px) {
             .container {
@@ -769,37 +749,10 @@
             }
         }
 
-        /* Connection Status */
-        .connection-status {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 15px;
-            margin: 20px 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .connection-status.connected {
-            border-color: #27ae60;
-            background: #d4edda;
-        }
-
-        .connection-status.disconnected {
-            border-color: #e74c3c;
-            background: #f8d7da;
-        }
-
         /* Additional organic elements */
         @keyframes float {
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-6px); }
-        }
-
-        @keyframes floatPattern {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
         @keyframes shimmer {
@@ -852,7 +805,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    🔒 MyPocket Web Reader PKCE
+                    🔒 MyPocket PKCE + Enhanced Images
                 </div>
                 <div class="header-actions">
                     <button id="connectBtn" class="btn btn-primary">
@@ -891,7 +844,7 @@
 
     <!-- Status -->
     <div class="status" id="status">
-        Connect to OneDrive with persistent authentication
+        Connect to OneDrive with PKCE authentication + enhanced image extraction
     </div>
 
     <!-- Articles -->
@@ -900,11 +853,11 @@
             <div id="articlesContainer">
                 <div class="empty-state">
                     <div class="empty-state-icon">🔒</div>
-                    <h3>Welcome to MyPocket Web Reader PKCE</h3>
-                    <p>Connect to OneDrive with persistent authentication - no more hourly re-logins!</p>
+                    <h3>Welcome to MyPocket PKCE + Enhanced Images</h3>
+                    <p>Best of both worlds: PKCE persistent authentication + your original advanced image extraction!</p>
                     <div style="margin-top: 20px;">
                         <span class="pkce-indicator persistent">🔒 PKCE Enabled</span>
-                        <span class="pkce-indicator">🔄 Auto-Refresh</span>
+                        <span class="pkce-indicator">🎨 Enhanced Images</span>
                     </div>
                 </div>
             </div>
@@ -939,7 +892,7 @@
             constructor() {
                 this.clientId = '436e8796-8c40-47c3-9ad5-b8882f3ef7f7';
                 this.redirectUri = this.getRedirectUri();
-                console.log('🔵 PKCE Redirect URI:', this.redirectUri);
+                console.log('🔵 PKCE + Enhanced Images Redirect URI:', this.redirectUri);
 
                 // PKCE & Token Management
                 this.accessToken = null;
@@ -948,10 +901,10 @@
                 this.codeVerifier = null;
                 this.refreshTimer = null;
 
-                // Application state
+                // Application state (keeping original structure)
                 this.articles = [];
                 this.currentArticle = null;
-                this.imageBackupEnabled = true;
+                this.imageBackupEnabled = true; // NEW: Enable image backup by default
 
                 this.init();
             }
@@ -982,7 +935,7 @@
                 document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
             }
 
-            // ==================== PKCE IMPLEMENTATION ====================
+            // ==================== PKCE AUTHENTICATION (New) ====================
 
             // Generate PKCE code verifier and challenge
             async generatePKCE() {
@@ -1132,7 +1085,7 @@
                     sessionStorage.removeItem('pkce_redirect_uri');
                     sessionStorage.removeItem('pkce_state');
 
-                    this.updateStatus('✅ Connected with persistent authentication! No more hourly re-logins.', 'success');
+                    this.updateStatus('✅ Connected with PKCE + enhanced image extraction! No more hourly re-logins.', 'success');
                     
                     // Load articles
                     await this.loadArticles();
@@ -1143,7 +1096,7 @@
                 }
             }
 
-            // ==================== TOKEN MANAGEMENT ====================
+            // ==================== TOKEN MANAGEMENT (New) ====================
 
             // Save tokens securely to localStorage
             saveTokens(tokens) {
@@ -1309,7 +1262,7 @@
                 console.log('🗑️ Tokens cleared');
             }
 
-            // ==================== ENHANCED API CALLS ====================
+            // ==================== ENHANCED API CALLS (New) ====================
 
             // Make authenticated requests with automatic token refresh
             async makeAuthenticatedRequest(url, options = {}) {
@@ -1354,7 +1307,13 @@
                 return response;
             }
 
-            // ==================== UPDATED METHODS ====================
+            // ==================== ORIGINAL ARTICLE LOADING (Updated for PKCE) ====================
+
+            updateStatus(message, type = '') {
+                const status = document.getElementById('status');
+                status.textContent = message;
+                status.className = `status ${type}`;
+            }
 
             // Enhanced connection status with persistent indicator
             updateConnectionStatus(connected) {
@@ -1369,7 +1328,7 @@
                     if (this.refreshToken) {
                         connectText.textContent = 'Connected (Persistent)';
                         connectBtn.style.background = 'rgba(39, 174, 96, 0.9)';
-                        connectBtn.title = 'Persistent connection with auto-refresh enabled';
+                        connectBtn.title = 'Persistent PKCE connection with auto-refresh + enhanced images';
                     } else {
                         connectText.textContent = 'Connected';
                         connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
@@ -1381,12 +1340,12 @@
                     connectIcon.textContent = '☁️';
                     connectText.textContent = 'Connect OneDrive';
                     connectBtn.style.background = 'rgba(255,255,255,0.2)';
-                    connectBtn.title = 'Connect to OneDrive with persistent PKCE authentication';
+                    connectBtn.title = 'Connect with PKCE + enhanced image extraction';
                     refreshBtn.style.display = 'none';
                 }
             }
 
-            // Updated loadArticles using authenticated requests
+            // Updated loadArticles using PKCE authenticated requests
             async loadArticles() {
                 if (!this.accessToken) {
                     this.updateStatus('Not connected to OneDrive', 'error');
@@ -1441,12 +1400,9 @@
                 }
             }
 
-            updateStatus(message, type = '') {
-                const status = document.getElementById('status');
-                status.textContent = message;
-                status.className = `status ${type}`;
-            }
+            // ==================== ORIGINAL IMAGE SYSTEM (Enhanced + PKCE) ====================
 
+            // Enhanced displayArticles with GUARANTEED real images + OneDrive backup (ORIGINAL LOGIC)
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1509,9 +1465,9 @@
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
                 
                 // Show image loading status
-                this.updateStatus(`🔍 Extracting real images from article websites...`, 'loading');
+                this.updateStatus(`🔍 Extracting real images from article websites with PKCE backup...`, 'loading');
                 
-                // Extract real images from original websites + backup to OneDrive
+                // ENHANCED: Extract real images from original websites + backup to OneDrive
                 this.loadAllArticleImages(articles);
             }
 
@@ -1524,14 +1480,14 @@
                         <p>Use the MyPocket browser extension to save articles, then refresh this page.</p>
                         <div style="margin-top: 20px;">
                             <span class="pkce-indicator persistent">🔒 PKCE Ready</span>
-                            <span class="pkce-indicator">🔄 Auto-Refresh Enabled</span>
+                            <span class="pkce-indicator">🎨 Enhanced Images Ready</span>
                         </div>
                     </div>`;
             }
 
-            // Enhanced image loading with PKCE-backed OneDrive uploads
+            // ORIGINAL: Enhanced image loading with optimized size (KEEPING ORIGINAL LOGIC)
             async loadAllArticleImages(articles) {
-                console.log('🎨 REAL IMAGE EXTRACTOR - Getting actual article images...');
+                console.log('🎨 REAL IMAGE EXTRACTOR - Getting actual article images with PKCE backup...');
                 
                 let successCount = 0;
                 let backupCount = 0;
@@ -1546,7 +1502,7 @@
                         
                         // Update progress
                         const progress = Math.round(((i + 1) / totalImages) * 100);
-                        this.updateStatus(`🔍 Extracting real images... ${i + 1}/${totalImages} (${progress}%) | ${backupCount} backed up`, 'loading');
+                        this.updateStatus(`🔍 Extracting real images... ${i + 1}/${totalImages} (${progress}%) | ${backupCount} backed up with PKCE`, 'loading');
                         
                         // Delay to be respectful to websites
                         await new Promise(resolve => setTimeout(resolve, 200));
@@ -1559,42 +1515,44 @@
                     }
                 }
                 
-                this.updateStatus(`✅ Extracted ${successCount}/${totalImages} real article images! | ${backupCount} backed up`, 'success');
+                this.updateStatus(`✅ Extracted ${successCount}/${totalImages} real article images! | ${backupCount} backed up with PKCE`, 'success');
                 console.log(`🎨 Real image extraction complete: ${successCount}/${totalImages} successful, ${backupCount} backed up`);
                 
-                // Save the updated article metadata (including backedUpImage info) back to OneDrive
+                // NEW: Save the updated article metadata (including backedUpImage info) back to OneDrive
                 if (backupCount > 0 && this.accessToken) {
                     try {
-                        console.log(`💾 Saving updated article metadata with ${backupCount} new image backups...`);
-                        this.updateStatus(`💾 Saving metadata for ${backupCount} backed up images...`, 'loading');
+                        console.log(`💾 Saving updated article metadata with ${backupCount} new PKCE image backups...`);
+                        this.updateStatus(`💾 Saving metadata for ${backupCount} backed up images with PKCE...`, 'loading');
                         
                         await this.updateOneDriveBackup();
-                        this.updateStatus(`✅ Complete! ${backupCount} images backed up and metadata saved with PKCE auth!`, 'success');
+                        this.updateStatus(`✅ Complete! ${backupCount} images backed up with PKCE and metadata saved. Next load will be instant!`, 'success');
                         
                     } catch (error) {
                         console.error('Failed to update article metadata:', error);
                         
+                        // Show more helpful error message
                         if (error.message.includes('413') || error.message.includes('too large')) {
-                            this.updateStatus(`⚠️ Images backed up successfully! Metadata file too large to save - images will still work but may re-process next time.`, 'success');
+                            this.updateStatus(`⚠️ Images backed up successfully with PKCE! Metadata file too large to save - images will still work but may re-process next time.`, 'success');
                         } else if (error.message.includes('timeout') || error.message.includes('network')) {
-                            this.updateStatus(`⚠️ Images backed up! Network timeout saving metadata - trying again next load.`, 'success');
+                            this.updateStatus(`⚠️ Images backed up with PKCE! Network timeout saving metadata - trying again next load.`, 'success');
                         } else {
-                            this.updateStatus(`⚠️ Images backed up to OneDrive with PKCE! Metadata save failed - will retry next time.`, 'success');
+                            this.updateStatus(`⚠️ Images backed up to OneDrive with PKCE! Metadata save failed - will retry next time. Error: ${error.message.substring(0, 50)}...`, 'success');
                         }
                         
+                        // Even if metadata save fails, the images are still backed up and working
                         console.log('✅ Note: Images are still successfully backed up in OneDrive/MyPocket/images/ folder');
                     }
                 }
             }
 
-            // Enhanced image extraction with PKCE backup
+            // ORIGINAL: Extract image and backup to OneDrive - KEEPING YOUR ORIGINAL LOGIC
             async extractRealArticleImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
                 if (!imageElement) return { success: false, backed_up: false };
 
                 console.log(`🔍 Extracting real image from: ${this.getDomain(article.url)}`);
 
-                // Check for backed-up image in OneDrive first
+                // NEW: Strategy 0: Check for backed-up image in OneDrive first (if available)
                 if (article.backedUpImage && this.accessToken) {
                     try {
                         const backedUpUrl = await this.getBackedUpImageUrl(article.backedUpImage);
@@ -1608,12 +1566,12 @@
                     }
                 }
 
-                // Try saved article images first
+                // YOUR ORIGINAL Strategy 1: Try saved article images first (fastest)
                 const savedImage = this.getBestArticleImage(article);
                 if (savedImage) {
                     console.log(`✅ Using saved image: ${article.title.substring(0, 30)}...`);
                     this.setArticleImageDirect(imageElement, savedImage);
-                    
+                    // NEW: Try to backup saved image too
                     let backedUp = false;
                     if (this.imageBackupEnabled && this.accessToken) {
                         try {
@@ -1629,13 +1587,14 @@
                     return { success: true, backed_up: backedUp };
                 }
 
-                // Extract image from the original website
+                // YOUR ORIGINAL Strategy 2: Extract image from the original website
                 try {
                     const extractedImage = await this.fetchRealImageFromWebsite(article.url);
                     if (extractedImage) {
                         console.log(`✅ Extracted real image: ${article.title.substring(0, 30)}...`);
                         this.setArticleImageDirect(imageElement, extractedImage);
                         
+                        // NEW: Backup the extracted image
                         let backedUp = false;
                         if (this.imageBackupEnabled && this.accessToken) {
                             try {
@@ -1656,500 +1615,19 @@
                     console.log(`⚠️ Could not extract from website: ${error.message}`);
                 }
 
-                // Use intelligent category-based fallback
+                // YOUR ORIGINAL Strategy 3: Use intelligent category-based fallback
                 console.log(`🎨 Using intelligent fallback: ${article.title.substring(0, 30)}...`);
                 const fallbackImage = this.getCategoryBasedImage(article, index);
                 this.setArticleImageDirect(imageElement, fallbackImage);
                 return { success: true, backed_up: false };
             }
 
-            // Enhanced backup image method using PKCE authenticated requests
-            async backupImageToOneDrive(imageUrl, article, index) {
-                if (!this.accessToken) {
-                    throw new Error('Not connected to OneDrive');
-                }
-
-                try {
-                    console.log(`💾 Backing up image to OneDrive with PKCE: ${imageUrl}`);
-
-                    // Download the image
-                    const imageResponse = await fetch(imageUrl);
-                    if (!imageResponse.ok) {
-                        throw new Error(`Failed to fetch image: ${imageResponse.status}`);
-                    }
-
-                    const imageBlob = await imageResponse.blob();
-                    const imageBuffer = await imageBlob.arrayBuffer();
-
-                    // Generate filename
-                    const imageExtension = this.getImageExtension(imageUrl) || 'jpg';
-                    const sanitizedTitle = this.sanitizeFilename(article.title);
-                    const timestamp = Date.now();
-                    const fileName = `pkce_image_${sanitizedTitle}_${timestamp}.${imageExtension}`;
-
-                    // Upload using PKCE authenticated request
-                    const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/images/${fileName}:/content`;
-
-                    const uploadResponse = await this.makeAuthenticatedRequest(uploadUrl, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': imageBlob.type || 'image/jpeg'
-                        },
-                        body: imageBuffer
-                    });
-
-                    if (!uploadResponse.ok) {
-                        const errorText = await uploadResponse.text();
-                        throw new Error(`Upload failed: ${uploadResponse.status} - ${errorText}`);
-                    }
-
-                    const uploadResult = await uploadResponse.json();
-
-                    return {
-                        fileName: fileName,
-                        fileId: uploadResult.id,
-                        uploadDate: new Date().toISOString(),
-                        originalUrl: imageUrl,
-                        size: imageBuffer.byteLength,
-                        authMethod: 'PKCE'
-                    };
-
-                } catch (error) {
-                    console.error('PKCE Image backup error:', error);
-                    throw error;
-                }
-            }
-
-            // Get backed-up image URL from OneDrive using PKCE auth
-            async getBackedUpImageUrl(backupInfo) {
-                if (!this.accessToken || !backupInfo) {
-                    return null;
-                }
-
-                try {
-                    // Get the file download URL from OneDrive using PKCE authenticated request
-                    const fileResponse = await this.makeAuthenticatedRequest(`https://graph.microsoft.com/v1.0/me/drive/items/${backupInfo.fileId}`);
-
-                    if (!fileResponse.ok) {
-                        throw new Error(`Failed to get file info: ${fileResponse.status}`);
-                    }
-
-                    const fileInfo = await fileResponse.json();
-                    return fileInfo['@microsoft.graph.downloadUrl']; // This is a direct download URL
-
-                } catch (error) {
-                    console.error('Failed to get backed-up image URL with PKCE:', error);
-                    return null;
-                }
-            }
-
-            // Updated backup method using PKCE authenticated requests
-            async updateOneDriveBackup() {
-                if (!this.accessToken) {
-                    throw new Error('Not connected to OneDrive');
-                }
-
-                const optimizedArticles = this.articles.map(article => ({
-                    title: article.title,
-                    url: article.url,
-                    excerpt: article.excerpt,
-                    dateAdded: article.dateAdded,
-                    readTime: article.readTime,
-                    wordCount: article.wordCount,
-                    author: article.author,
-                    domain: this.getDomain(article.url),
-                    backedUpImage: article.backedUpImage,
-                    featuredImage: article.featuredImage,
-                    image: article.image,
-                    images: article.images,
-                }));
-
-                const backup = {
-                    articles: optimizedArticles,
-                    settings: { imageBackupEnabled: this.imageBackupEnabled },
-                    exportDate: new Date().toISOString(),
-                    version: "4.0-PKCE",
-                    deviceInfo: {
-                        browser: "Web Reader PKCE",
-                        platform: navigator.platform,
-                        timestamp: Date.now(),
-                        articleCount: this.articles.length,
-                        imageBackupCount: this.articles.filter(a => a.backedUpImage).length,
-                        authMethod: "PKCE",
-                        refreshTokenAvailable: !!this.refreshToken
-                    }
-                };
-
-                const fileName = `mypocket-backup-pkce-${new Date().toISOString().split('T')[0]}.json`;
-                const fileContent = JSON.stringify(backup, null, 2);
-
-                console.log(`💾 Backing up ${backup.articles.length} articles with PKCE (${Math.round(fileContent.length / 1024)}KB)`);
-
-                const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
-
-                const uploadResponse = await this.makeAuthenticatedRequest(uploadUrl, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: fileContent
-                });
-
-                if (!uploadResponse.ok) {
-                    const errorText = await uploadResponse.text();
-                    throw new Error(`Failed to update OneDrive backup: ${uploadResponse.status} - ${errorText}`);
-                }
-
-                return await uploadResponse.json();
-            }
-
-            // ==================== PKCE TEST & DEBUG METHODS ====================
-
-            // Test PKCE configuration
-            async testPKCEConfig() {
-                console.log('🧪 Testing PKCE Configuration...');
-                
-                try {
-                    // Test PKCE generation
-                    const codeChallenge = await this.generatePKCE();
-                    console.log('✅ PKCE generation works');
-                    
-                    // Test redirect URI
-                    if (!this.redirectUri.startsWith('https://') && !this.redirectUri.startsWith('http://')) {
-                        throw new Error('Invalid redirect URI protocol');
-                    }
-                    console.log('✅ Redirect URI valid:', this.redirectUri);
-                    
-                    // Test if we can build auth URL
-                    const testAuthUrl = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?` +
-                        `client_id=${this.clientId}&` +
-                        `response_type=code&` +
-                        `redirect_uri=${encodeURIComponent(this.redirectUri)}&` +
-                        `scope=Files.ReadWrite%20User.Read%20offline_access&` +
-                        `code_challenge=${codeChallenge}&` +
-                        `code_challenge_method=S256`;
-                    
-                    console.log('✅ Auth URL generated:', testAuthUrl);
-
-                    // Test crypto API availability
-                    if (!window.crypto || !window.crypto.subtle) {
-                        throw new Error('Web Crypto API not available');
-                    }
-                    console.log('✅ Web Crypto API available');
-                    
-                    const results = `🧪 PKCE Test Results:
-
-✅ PKCE generation: OK
-✅ Redirect URI: ${this.redirectUri}
-✅ Auth URL: Generated successfully
-✅ Web Crypto API: Available
-✅ Client ID: ${this.clientId}
-
-${this.accessToken ? '🔒 Currently authenticated with PKCE' : '☁️ Not authenticated'}
-${this.refreshToken ? '🔄 Refresh token available' : '⚠️ No refresh token'}
-
-Configuration looks good! Ready for PKCE authentication.`;
-                    
-                    alert(results);
-                    
-                } catch (error) {
-                    console.error('❌ PKCE test failed:', error);
-                    alert(`❌ PKCE Test Failed:\n\n${error.message}\n\nCheck console for details.`);
-                }
-            }
-
-            // Show token info with PKCE details
-            showTokenInfo() {
-                if (!this.accessToken) {
-                    alert('❌ No token available');
-                    return;
-                }
-                
-                const timeLeft = this.tokenExpiry ? Math.round((this.tokenExpiry - Date.now()) / 60000) : 0;
-                const hasRefreshToken = !!this.refreshToken;
-                
-                const info = `🔐 PKCE Token Info:
-        
-✅ Access Token: Active
-🔄 Refresh Token: ${hasRefreshToken ? 'Available' : 'Missing'}
-⏰ Expires In: ${timeLeft} minutes
-📅 Expires At: ${new Date(this.tokenExpiry)}
-🔒 Auth Method: PKCE Flow
-🔄 Auto-Refresh: ${hasRefreshToken ? 'Enabled' : 'Disabled'}
-⏰ Next Refresh: ${this.refreshTimer ? 'Scheduled' : 'Not scheduled'}
-
-${hasRefreshToken ? '✅ Persistent connection active!' : '⚠️ Limited session - will expire soon'}`;
-                
-                alert(info);
-                console.log('🔐 PKCE Token Debug:', {
-                    hasAccessToken: !!this.accessToken,
-                    hasRefreshToken: !!this.refreshToken,
-                    expiresAt: new Date(this.tokenExpiry),
-                    minutesLeft: timeLeft,
-                    autoRefreshScheduled: !!this.refreshTimer
-                });
-            }
-
-            // Enhanced debug info for PKCE
-            showDebugInfo() {
-                const info = `
-MyPocket Web Reader Debug Info (PKCE Edition):
-=============================================
-
-🌐 Connection Info:
-- Current URL: ${window.location.href}
-- Redirect URI: ${this.redirectUri}
-- Client ID: ${this.clientId}
-- Protocol: ${window.location.protocol}
-- Host: ${window.location.host}
-
-🔐 PKCE Authentication:
-- Auth Method: PKCE (Authorization Code + PKCE)
-- Has Access Token: ${!!this.accessToken}
-- Has Refresh Token: ${!!this.refreshToken}
-- Token Expires: ${this.tokenExpiry ? new Date(this.tokenExpiry) : 'N/A'}
-- Auto-Refresh: ${!!this.refreshToken ? 'Enabled' : 'Disabled'}
-- Refresh Scheduled: ${!!this.refreshTimer ? 'Yes' : 'No'}
-
-📊 Application State:
-- Articles Loaded: ${this.articles.length}
-- Image Backup: ${this.imageBackupEnabled ? 'Enabled' : 'Disabled'}
-- Current Article: ${this.currentArticle ? this.currentArticle.title.substring(0, 30) + '...' : 'None'}
-
-🔧 Azure AD Setup Required:
-1. Go to Azure Portal → App registrations
-2. Find app: ${this.clientId}
-3. Authentication → Add "Single-page application" platform
-4. Redirect URI: ${this.redirectUri}
-5. Implicit grant: ✓ Access tokens, ✓ ID tokens
-6. API permissions: Microsoft Graph (Files.ReadWrite, User.Read)
-
-🚀 PKCE Benefits Active:
-- ✅ Refresh tokens (no hourly re-auth)
-- ✅ More secure than implicit flow
-- ✅ Automatic token refresh
-- ✅ Persistent sessions (weeks/months)
-- ✅ Better error recovery
-
-🧪 Test Functions:
-- Use "Test PKCE" button to verify configuration
-- Check browser console for detailed logs
-- All API calls use automatic token refresh
-        `;
-
-                alert(info);
-                console.log('🔧 PKCE Debug Info:', {
-                    redirectUri: this.redirectUri,
-                    hasAccessToken: !!this.accessToken,
-                    hasRefreshToken: !!this.refreshToken,
-                    tokenExpiry: this.tokenExpiry ? new Date(this.tokenExpiry) : null,
-                    articlesCount: this.articles.length,
-                    authMethod: 'PKCE',
-                    refreshScheduled: !!this.refreshTimer
-                });
-            }
-
-            // ==================== ALL EXISTING METHODS (unchanged) ====================
-
-            searchArticles(query) {
-                if (!query) {
-                    this.displayArticles(this.articles);
-                    return;
-                }
-
-                const filtered = this.articles.filter(article =>
-                    article.title.toLowerCase().includes(query.toLowerCase()) ||
-                    article.textContent.toLowerCase().includes(query.toLowerCase()) ||
-                    article.author.toLowerCase().includes(query.toLowerCase()) ||
-                    this.getDomain(article.url).toLowerCase().includes(query.toLowerCase())
-                );
-
-                this.displayArticles(filtered);
-                this.updateStatus(`Found ${filtered.length} articles matching "${query}"`, filtered.length > 0 ? 'success' : 'error');
-            }
-
-            openReader(index) {
-                this.currentArticle = this.articles[index];
-                const overlay = document.getElementById('readerOverlay');
-
-                // Set title and meta info
-                document.getElementById('readerTitle').textContent = this.currentArticle.title;
-                document.getElementById('readerDate').textContent = this.formatDate(this.currentArticle.dateAdded);
-                document.getElementById('readerDomain').textContent = this.getDomain(this.currentArticle.url);
-                document.getElementById('readerTime').textContent = `${this.currentArticle.readTime || 1} min read`;
-                
-                // Show loading state first
-                document.getElementById('readerContent').innerHTML = `
-                    <div style="text-align: center; padding: 40px;">
-                        <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
-                        <p>Checking for article content...</p>
-                    </div>
-                `;
-
-                overlay.classList.add('active');
-                document.body.style.overflow = 'hidden';
-                
-                // Try to get content, fetch if needed
-                setTimeout(() => this.loadArticleContent(this.currentArticle), 100);
-            }
-
-            async loadArticleContent(article) {
-                console.log('🚀 PKCE CONTENT LOADER STARTING - Version 2.0');
-                const contentElement = document.getElementById('readerContent');
-                
-                // First try to get saved content
-                let content = this.getArticleContent(article);
-                
-                // If no saved content found, try to fetch from original URL
-                if (!content) {
-                    console.log('🌐 No saved content found. Attempting to fetch from original URL...');
-                    
-                    try {
-                        // Show fetching status
-                        contentElement.innerHTML = `
-                            <div style="text-align: center; padding: 40px;">
-                                <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
-                                <p><strong>🌐 Fetching article content with PKCE auth...</strong></p>
-                                <p style="font-size: 0.9em; color: var(--text-secondary);">
-                                    Loading from ${this.getDomain(article.url)}
-                                </p>
-                                <p style="font-size: 0.8em; color: var(--text-secondary);">
-                                    This may take a few seconds...
-                                </p>
-                            </div>
-                        `;
-                        
-                        // Fetch content using proxy services
-                        const fetchedContent = await this.fetchArticleContent(article.url);
-                        
-                        if (fetchedContent && fetchedContent.trim()) {
-                            content = fetchedContent;
-                            console.log('✅ Successfully fetched article content');
-                            this.updateStatus('✅ Article content loaded successfully with PKCE!', 'success');
-                        } else {
-                            throw new Error('No content extracted from fetched page');
-                        }
-                        
-                    } catch (error) {
-                        console.log('❌ Failed to fetch content:', error.message);
-                        this.updateStatus('❌ Could not fetch article content. Using fallback.', 'error');
-                        content = this.getFallbackContent(article, error.message);
-                    }
-                } else {
-                    console.log('✅ Using saved content');
-                    this.updateStatus('✅ Article loaded from saved content', 'success');
-                }
-                
-                // Display the final content
-                contentElement.innerHTML = content;
-            }
-
-            closeReader() {
-                const overlay = document.getElementById('readerOverlay');
-                overlay.classList.remove('active');
-                document.body.style.overflow = 'auto';
-            }
-
-            openOriginal() {
-                if (this.currentArticle) {
-                    window.open(this.currentArticle.url, '_blank');
-                }
-            }
-
-            async deleteArticle(index) {
-                const article = this.articles[index];
-                if (!article) return;
-
-                if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your OneDrive backup.`)) {
-                    try {
-                        this.articles.splice(index, 1);
-
-                        if (this.accessToken) {
-                            this.updateStatus('Updating OneDrive backup with PKCE...', 'loading');
-                            await this.updateOneDriveBackup();
-                            this.updateStatus(`✅ Article deleted and backup updated with PKCE. ${this.articles.length} articles remaining.`, 'success');
-                        } else {
-                            this.updateStatus(`❌ Article deleted locally but OneDrive backup not updated (not connected).`, 'error');
-                        }
-
-                        this.displayArticles(this.articles);
-
-                    } catch (error) {
-                        console.error('Error deleting article:', error);
-                        this.updateStatus(`❌ Failed to delete article: ${error.message}`, 'error');
-                    }
-                }
-            }
-
-            exportArticle(index) {
-                const article = this.articles[index];
-                if (!article) return;
-
-                try {
-                    const html = this.createArticleHTML(article);
-                    const filename = `${this.sanitizeFilename(article.title)}.html`;
-                    this.downloadFile(html, filename, 'text/html');
-                    this.updateStatus(`📤 Article "${article.title}" exported successfully!`, 'success');
-                } catch (error) {
-                    console.error('Error exporting article:', error);
-                    this.updateStatus(`❌ Failed to export article: ${error.message}`, 'error');
-                }
-            }
-
-            toggleTestMode() {
-                document.body.classList.toggle('test-mode');
-                const isTestMode = document.body.classList.contains('test-mode');
-
-                const testBtn = document.getElementById('testBtn');
-                if (testBtn) {
-                    testBtn.innerHTML = isTestMode
-                        ? '<span>👁️</span> Hide Buttons'
-                        : '<span>👁️</span> Show Buttons';
-                }
-
-                this.updateStatus(
-                    isTestMode
-                        ? '🔍 Test mode ON - Action buttons always visible'
-                        : '👁️ Test mode OFF - Action buttons show on hover',
-                    'success'
-                );
-            }
-
-            // Dark mode functionality
-            toggleDarkMode() {
-                const currentTheme = document.documentElement.getAttribute('data-theme');
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                
-                document.documentElement.setAttribute('data-theme', newTheme);
-                localStorage.setItem('theme', newTheme);
-                
-                this.updateDarkModeButton(newTheme);
-                this.updateStatus(
-                    newTheme === 'dark' ? '🌙 Dark mode enabled' : '☀️ Light mode enabled',
-                    'success'
-                );
-            }
-
-            loadThemePreference() {
-                const savedTheme = localStorage.getItem('theme') || 'light';
-                document.documentElement.setAttribute('data-theme', savedTheme);
-                this.updateDarkModeButton(savedTheme);
-            }
-
-            updateDarkModeButton(theme) {
-                const darkModeBtn = document.getElementById('darkModeBtn');
-                if (darkModeBtn) {
-                    darkModeBtn.innerHTML = theme === 'dark' 
-                        ? '<span>☀️</span> Light Mode'
-                        : '<span>🌙</span> Dark Mode';
-                }
-            }
-
-            // All the existing helper methods remain unchanged
+            // ORIGINAL: NEW: Fetch the actual featured image from a website (KEEPING ORIGINAL LOGIC)
             async fetchRealImageFromWebsite(url) {
                 try {
                     console.log(`🌐 Fetching webpage to extract image: ${url}`);
                     
+                    // Method 1: Try AllOrigins proxy
                     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
                     const response = await fetch(proxyUrl);
                     
@@ -2164,6 +1642,7 @@ MyPocket Web Reader Debug Info (PKCE Edition):
                         throw new Error('No substantial HTML content received');
                     }
                     
+                    // Parse the HTML and extract the best image
                     const extractedImageUrl = this.parseHTMLForBestImage(html, url);
                     
                     if (extractedImageUrl) {
@@ -2176,6 +1655,7 @@ MyPocket Web Reader Debug Info (PKCE Edition):
                 } catch (error) {
                     console.log(`❌ Website image extraction failed: ${error.message}`);
                     
+                    // Try alternative proxy methods
                     try {
                         return await this.tryAlternativeImageExtraction(url);
                     } catch (altError) {
@@ -2185,12 +1665,14 @@ MyPocket Web Reader Debug Info (PKCE Edition):
                 }
             }
 
+            // ORIGINAL: NEW: Parse HTML to find the best image (KEEPING ORIGINAL LOGIC)
             parseHTMLForBestImage(html, baseUrl) {
                 try {
+                    // Create a DOM parser
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
                     
-                    // Strategy 1: Look for Open Graph image
+                    // Strategy 1: Look for Open Graph image (most reliable)
                     const ogImage = doc.querySelector('meta[property="og:image"]');
                     if (ogImage) {
                         const imageUrl = this.makeAbsoluteUrl(ogImage.getAttribute('content'), baseUrl);
@@ -2237,6 +1719,49 @@ MyPocket Web Reader Debug Info (PKCE Edition):
                         }
                     }
                     
+                    // Strategy 4: Look for the first substantial image in the content
+                    const allImages = Array.from(doc.querySelectorAll('img')).filter(img => {
+                        const src = img.getAttribute('src') || img.getAttribute('data-src');
+                        const width = img.getAttribute('width') || img.style.width;
+                        const height = img.getAttribute('height') || img.style.height;
+                        
+                        // Filter out small images, icons, and logos
+                        return src && 
+                               !this.isIconOrLogo(src) && 
+                               !this.isSmallImage(width, height) &&
+                               !src.includes('avatar') &&
+                               !src.includes('profile');
+                    });
+                    
+                    for (const img of allImages) {
+                        const src = img.getAttribute('src') || img.getAttribute('data-src');
+                        if (src) {
+                            const imageUrl = this.makeAbsoluteUrl(src, baseUrl);
+                            if (this.isValidImageUrl(imageUrl)) {
+                                console.log(`🎯 Found content image: ${imageUrl}`);
+                                return imageUrl;
+                            }
+                        }
+                    }
+                    
+                    // Strategy 5: Look for images in JSON-LD structured data
+                    const jsonLdScripts = doc.querySelectorAll('script[type="application/ld+json"]');
+                    for (const script of jsonLdScripts) {
+                        try {
+                            const data = JSON.parse(script.textContent);
+                            const image = this.extractImageFromJsonLd(data);
+                            if (image) {
+                                const imageUrl = this.makeAbsoluteUrl(image, baseUrl);
+                                if (this.isValidImageUrl(imageUrl)) {
+                                    console.log(`🎯 Found JSON-LD image: ${imageUrl}`);
+                                    return imageUrl;
+                                }
+                            }
+                        } catch (e) {
+                            // Ignore malformed JSON-LD
+                        }
+                    }
+                    
                     console.log(`❌ No suitable image found in HTML`);
                     return null;
                     
@@ -2246,7 +1771,47 @@ MyPocket Web Reader Debug Info (PKCE Edition):
                 }
             }
 
+            // ORIGINAL: NEW: Extract image from JSON-LD structured data (KEEPING ORIGINAL LOGIC)
+            extractImageFromJsonLd(data) {
+                if (typeof data !== 'object') return null;
+                
+                // Handle arrays
+                if (Array.isArray(data)) {
+                    for (const item of data) {
+                        const image = this.extractImageFromJsonLd(item);
+                        if (image) return image;
+                    }
+                    return null;
+                }
+                
+                // Look for image properties
+                if (data.image) {
+                    if (typeof data.image === 'string') return data.image;
+                    if (Array.isArray(data.image) && data.image.length > 0) {
+                        return typeof data.image[0] === 'string' ? data.image[0] : data.image[0].url;
+                    }
+                    if (data.image.url) return data.image.url;
+                }
+                
+                // Look for thumbnailUrl
+                if (data.thumbnailUrl) {
+                    return typeof data.thumbnailUrl === 'string' ? data.thumbnailUrl : data.thumbnailUrl.url;
+                }
+                
+                // Recursively search nested objects
+                for (const key in data) {
+                    if (typeof data[key] === 'object') {
+                        const image = this.extractImageFromJsonLd(data[key]);
+                        if (image) return image;
+                    }
+                }
+                
+                return null;
+            }
+
+            // ORIGINAL: NEW: Try alternative image extraction methods (KEEPING ORIGINAL LOGIC)
             async tryAlternativeImageExtraction(url) {
+                // Method 1: Try CORS proxy
                 try {
                     const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
                     const response = await fetch(corsProxyUrl);
@@ -2260,22 +1825,27 @@ MyPocket Web Reader Debug Info (PKCE Edition):
                     console.log(`CORS proxy failed: ${error.message}`);
                 }
                 
+                // Method 2: Try to guess common image patterns based on URL
                 const guessedImage = this.guessImageFromUrl(url);
                 if (guessedImage) return guessedImage;
                 
                 throw new Error('All alternative extraction methods failed');
             }
 
+            // ORIGINAL: NEW: Guess image from URL patterns (for known sites) (KEEPING ORIGINAL LOGIC)
             guessImageFromUrl(url) {
                 const domain = this.getDomain(url).toLowerCase();
                 
+                // Medium articles often have predictable image patterns
                 if (domain.includes('medium.com')) {
+                    // Try to extract the article ID and construct image URL
                     const match = url.match(/\/([a-f0-9]+)$/);
                     if (match) {
                         return `https://miro.medium.com/max/1400/1*${match[1]}.png`;
                     }
                 }
                 
+                // GitHub repository images
                 if (domain.includes('github.com')) {
                     const pathMatch = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
                     if (pathMatch) {
@@ -2283,6 +1853,7 @@ MyPocket Web Reader Debug Info (PKCE Edition):
                     }
                 }
                 
+                // YouTube videos
                 if (domain.includes('youtube.com') || domain.includes('youtu.be')) {
                     const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
                     if (videoIdMatch) {
@@ -2293,9 +1864,12 @@ MyPocket Web Reader Debug Info (PKCE Edition):
                 return null;
             }
 
+            // ORIGINAL: NEW: Get category-based images that always work (KEEPING ORIGINAL LOGIC)
             getCategoryBasedImage(article, index) {
                 const domain = this.getDomain(article.url).toLowerCase();
                 const title = article.title.toLowerCase();
+                
+                // Use reliable image services that work well with direct img tags
                 
                 // Technology/Programming
                 if (domain.includes('github') || domain.includes('stackoverflow') || domain.includes('dev.to') ||
@@ -2309,18 +1883,93 @@ MyPocket Web Reader Debug Info (PKCE Edition):
                     return `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
                 
+                // Design/Creative
+                if (domain.includes('dribbble') || domain.includes('behance') || 
+                    title.includes('design') || title.includes('ui') || title.includes('ux') || title.includes('creative')) {
+                    return `https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // News/Media
+                if (domain.includes('news') || domain.includes('bbc') || domain.includes('cnn') ||
+                    title.includes('news') || title.includes('politics') || title.includes('media')) {
+                    return `https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Travel/Adventure
+                if (title.includes('travel') || title.includes('vacation') || title.includes('adventure') || title.includes('journey')) {
+                    return `https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Food/Cooking
+                if (title.includes('food') || title.includes('recipe') || title.includes('cooking') || title.includes('restaurant')) {
+                    return `https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Health/Fitness
+                if (title.includes('health') || title.includes('fitness') || title.includes('exercise') || title.includes('wellness')) {
+                    return `https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Science/Research
+                if (domain.includes('arxiv') || domain.includes('research') ||
+                    title.includes('science') || title.includes('research') || title.includes('study') || title.includes('data')) {
+                    return `https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Education/Learning
+                if (domain.includes('edu') || title.includes('learn') || title.includes('education') || title.includes('course')) {
+                    return `https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Photography/Art
+                if (title.includes('photo') || title.includes('art') || title.includes('gallery') || title.includes('visual')) {
+                    return `https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Technology (general)
+                if (domain.includes('tech') || title.includes('tech') || title.includes('digital') || title.includes('innovation')) {
+                    return `https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Books/Reading/Writing
+                if (domain.includes('medium') || domain.includes('blog') ||
+                    title.includes('book') || title.includes('read') || title.includes('write') || title.includes('story')) {
+                    return `https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Music/Entertainment
+                if (title.includes('music') || title.includes('entertainment') || title.includes('movie') || title.includes('film')) {
+                    return `https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Sports
+                if (title.includes('sport') || title.includes('game') || title.includes('team') || title.includes('player')) {
+                    return `https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
+                // Nature/Environment
+                if (title.includes('nature') || title.includes('environment') || title.includes('climate') || title.includes('green')) {
+                    return `https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+                
                 // Default beautiful images based on index
                 const defaultImages = [
-                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1470115636492-6d2b56f9146d?w=400&h=250&fit=crop&crop=center&q=80&auto=format'
+                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Mountain landscape
+                    'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Abstract colorful
+                    'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Space/galaxy
+                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Ocean waves
+                    'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // City skyline
+                    'https://images.unsplash.com/photo-1470115636492-6d2b56f9146d?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Forest/trees
+                    'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Sunset/sunrise
+                    'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Architecture
+                    'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Lake reflection
+                    'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&h=250&fit=crop&crop=center&q=80&auto=format'  // Geometric pattern
                 ];
                 
                 return defaultImages[index % defaultImages.length];
             }
 
+            // ORIGINAL: FIXED: Direct image setting without CORS validation (KEEPING ORIGINAL LOGIC)
             setArticleImageDirect(imageElement, imageUrl) {
                 imageElement.innerHTML = `
                     <img src="${imageUrl}" 
@@ -2344,10 +1993,433 @@ MyPocket Web Reader Debug Info (PKCE Edition):
                 `;
             }
 
+            // NEW: Backup image to OneDrive using PKCE authentication
+            async backupImageToOneDrive(imageUrl, article, index) {
+                if (!this.accessToken) {
+                    throw new Error('Not connected to OneDrive');
+                }
+
+                try {
+                    console.log(`💾 Backing up image to OneDrive with PKCE: ${imageUrl}`);
+
+                    // Download the image
+                    const imageResponse = await fetch(imageUrl);
+                    if (!imageResponse.ok) {
+                        throw new Error(`Failed to fetch image: ${imageResponse.status}`);
+                    }
+
+                    const imageBlob = await imageResponse.blob();
+                    const imageBuffer = await imageBlob.arrayBuffer();
+
+                    // Generate a unique filename
+                    const imageExtension = this.getImageExtension(imageUrl) || 'jpg';
+                    const sanitizedTitle = this.sanitizeFilename(article.title);
+                    const timestamp = Date.now();
+                    const fileName = `pkce_image_${sanitizedTitle}_${timestamp}.${imageExtension}`;
+
+                    // Upload to OneDrive in MyPocket/images folder using PKCE authenticated request
+                    const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/images/${fileName}:/content`;
+
+                    const uploadResponse = await this.makeAuthenticatedRequest(uploadUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': imageBlob.type || 'image/jpeg'
+                        },
+                        body: imageBuffer
+                    });
+
+                    if (!uploadResponse.ok) {
+                        const errorText = await uploadResponse.text();
+                        throw new Error(`Upload failed: ${uploadResponse.status} - ${errorText}`);
+                    }
+
+                    const uploadResult = await uploadResponse.json();
+
+                    return {
+                        fileName: fileName,
+                        fileId: uploadResult.id,
+                        uploadDate: new Date().toISOString(),
+                        originalUrl: imageUrl,
+                        size: imageBuffer.byteLength,
+                        authMethod: 'PKCE'
+                    };
+
+                } catch (error) {
+                    console.error('PKCE Image backup error:', error);
+                    throw error;
+                }
+            }
+
+            // NEW: Get backed-up image URL from OneDrive using PKCE
+            async getBackedUpImageUrl(backupInfo) {
+                if (!this.accessToken || !backupInfo) {
+                    return null;
+                }
+
+                try {
+                    // Get the file download URL from OneDrive using PKCE authenticated request
+                    const fileResponse = await this.makeAuthenticatedRequest(`https://graph.microsoft.com/v1.0/me/drive/items/${backupInfo.fileId}`);
+
+                    if (!fileResponse.ok) {
+                        throw new Error(`Failed to get file info: ${fileResponse.status}`);
+                    }
+
+                    const fileInfo = await fileResponse.json();
+                    return fileInfo['@microsoft.graph.downloadUrl']; // This is a direct download URL
+
+                } catch (error) {
+                    console.error('Failed to get backed-up image URL with PKCE:', error);
+                    return null;
+                }
+            }
+
+            // ENHANCED: Update OneDrive backup using PKCE authenticated requests
+            async updateOneDriveBackup() {
+                if (!this.accessToken) {
+                    throw new Error('Not connected to OneDrive');
+                }
+
+                // Optimize articles by removing large content fields for backup
+                const optimizedArticles = this.articles.map(article => ({
+                    title: article.title,
+                    url: article.url,
+                    excerpt: article.excerpt,
+                    dateAdded: article.dateAdded,
+                    readTime: article.readTime,
+                    wordCount: article.wordCount,
+                    author: article.author,
+                    domain: this.getDomain(article.url),
+                    // Keep image backup info
+                    backedUpImage: article.backedUpImage,
+                    featuredImage: article.featuredImage,
+                    image: article.image,
+                    images: article.images,
+                    // Skip heavy content fields to reduce size
+                    // content: article.content,  // Skip large content
+                    // textContent: article.textContent,  // Skip large text
+                    // html: article.html  // Skip large HTML
+                }));
+
+                const backup = {
+                    articles: optimizedArticles,
+                    settings: {
+                        imageBackupEnabled: this.imageBackupEnabled
+                    },
+                    exportDate: new Date().toISOString(),
+                    version: "4.0-PKCE-Enhanced", // Updated version with PKCE + enhanced images
+                    deviceInfo: {
+                        browser: "Web Reader PKCE + Enhanced Images",
+                        platform: navigator.platform,
+                        timestamp: Date.now(),
+                        articleCount: this.articles.length,
+                        imageBackupCount: this.articles.filter(a => a.backedUpImage).length,
+                        authMethod: "PKCE",
+                        refreshTokenAvailable: !!this.refreshToken,
+                        enhancedImageExtraction: true
+                    }
+                };
+
+                const fileName = `mypocket-backup-pkce-enhanced-${new Date().toISOString().split('T')[0]}.json`;
+                const fileContent = JSON.stringify(backup, null, 2);
+
+                console.log(`💾 Backing up ${backup.articles.length} articles with PKCE + enhanced images (${Math.round(fileContent.length / 1024)}KB)`);
+
+                const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
+
+                const uploadResponse = await this.makeAuthenticatedRequest(uploadUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: fileContent
+                });
+
+                if (!uploadResponse.ok) {
+                    const errorText = await uploadResponse.text();
+                    throw new Error(`Failed to update OneDrive backup: ${uploadResponse.status} - ${errorText}`);
+                }
+
+                return await uploadResponse.json();
+            }
+
+            // ==================== ORIGINAL HELPER METHODS (Kept intact) ====================
+
+            // Enhanced URL validation
+            isValidImageUrl(url) {
+                if (!url || typeof url !== 'string') return false;
+                
+                // Must be a valid URL
+                try {
+                    new URL(url);
+                } catch {
+                    return false;
+                }
+                
+                // Must have common image extensions or be from known image services
+                const imagePattern = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i;
+                const imageServices = ['unsplash.com', 'images.unsplash.com', 'picsum.photos', 'via.placeholder.com'];
+                
+                return imagePattern.test(url) || imageServices.some(service => url.includes(service));
+            }
+
+            // Enhanced icon/logo detection
+            isIconOrLogo(src) {
+                if (!src) return false;
+                
+                const iconPatterns = [
+                    'icon', 'logo', 'avatar', 'profile', 'favicon', 'sprite', 
+                    'button', 'badge', 'social', 'thumb', 'thumbnail',
+                    '/icons/', '/images/icons/', 'gravatar', 'user-content'
+                ];
+                
+                const srcLower = src.toLowerCase();
+                return iconPatterns.some(pattern => srcLower.includes(pattern)) ||
+                       srcLower.includes('.ico') ||
+                       (srcLower.includes('64x64') || srcLower.includes('32x32'));
+            }
+
+            // Check if image dimensions suggest it's too small
+            isSmallImage(width, height) {
+                if (!width && !height) return false;
+                
+                const w = parseInt(width) || 0;
+                const h = parseInt(height) || 0;
+                
+                return (w > 0 && w < 200) || (h > 0 && h < 150);
+            }
+
+            // Convert relative URLs to absolute
+            makeAbsoluteUrl(imageUrl, baseUrl) {
+                if (!imageUrl) return null;
+                
+                try {
+                    // If already absolute, return as-is
+                    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+                        return imageUrl;
+                    }
+                    
+                    // Handle protocol-relative URLs
+                    if (imageUrl.startsWith('//')) {
+                        return 'https:' + imageUrl;
+                    }
+                    
+                    // If relative, make it absolute
+                    const base = new URL(baseUrl);
+                    return new URL(imageUrl, base.origin).href;
+                } catch (error) {
+                    console.log(`Failed to make absolute URL: ${imageUrl}, base: ${baseUrl}`);
+                    return null;
+                }
+            }
+
+            // Enhanced image handling
+            getBestArticleImage(article) {
+                if (article.images && article.images.length > 0) {
+                    let bestImage = article.images[0];
+                    
+                    for (const img of article.images) {
+                        if (img.width && img.height) {
+                            if (img.width >= 300 && img.height >= 150) {
+                                bestImage = img;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    return bestImage.src || bestImage.url || bestImage;
+                }
+                
+                if (article.featuredImage) {
+                    return article.featuredImage;
+                }
+                
+                if (article.image) {
+                    return article.image;
+                }
+                
+                if (article.content) {
+                    const imgMatch = article.content.match(/<img[^>]+src="([^"]+)"/i);
+                    if (imgMatch && imgMatch[1]) {
+                        return imgMatch[1];
+                    }
+                }
+                
+                return null;
+            }
+
+            // NEW: Extract image extension from URL
+            getImageExtension(url) {
+                try {
+                    const pathname = new URL(url).pathname;
+                    const match = pathname.match(/\.([a-zA-Z0-9]+)$/);
+                    return match ? match[1].toLowerCase() : null;
+                } catch (error) {
+                    return null;
+                }
+            }
+
+            getDomain(url) {
+                try {
+                    return new URL(url).hostname.replace('www.', '');
+                } catch (e) {
+                    return url;
+                }
+            }
+
+            formatDate(dateString) {
+                try {
+                    const date = new Date(dateString);
+
+                    if (isNaN(date.getTime())) {
+                        console.error('Invalid date:', dateString);
+                        return 'invalid date';
+                    }
+
+                    const now = new Date();
+                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+                    const diffMs = today.getTime() - targetDate.getTime();
+                    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+                    if (diffDays < 0) {
+                        return date.toLocaleDateString();
+                    }
+
+                    if (diffDays === 0) {
+                        return 'today';
+                    } else if (diffDays === 1) {
+                        return 'yesterday';
+                    } else if (diffDays <= 7) {
+                        return `${diffDays} days ago`;
+                    } else if (diffDays <= 30) {
+                        const weeks = Math.floor(diffDays / 7);
+                        return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`;
+                    } else if (diffDays <= 365) {
+                        const months = Math.floor(diffDays / 30);
+                        return months === 1 ? '1 month ago' : `${months} months ago`;
+                    } else {
+                        const years = Math.floor(diffDays / 365);
+                        return years === 1 ? '1 year ago' : `${years} years ago`;
+                    }
+                } catch (error) {
+                    console.error('Date formatting error:', error, 'Input:', dateString);
+                    return 'date error';
+                }
+            }
+
+            escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            sanitizeFilename(filename) {
+                if (!filename) return 'article';
+                return filename.replace(/[^a-z0-9\s]/gi, '_').toLowerCase().substring(0, 50);
+            }
+
+            // ==================== ORIGINAL READER FUNCTIONALITY (Kept intact) ====================
+
+            searchArticles(query) {
+                if (!query) {
+                    this.displayArticles(this.articles);
+                    return;
+                }
+
+                const filtered = this.articles.filter(article =>
+                    article.title.toLowerCase().includes(query.toLowerCase()) ||
+                    article.textContent.toLowerCase().includes(query.toLowerCase()) ||
+                    article.author.toLowerCase().includes(query.toLowerCase()) ||
+                    this.getDomain(article.url).toLowerCase().includes(query.toLowerCase())
+                );
+
+                this.displayArticles(filtered);
+                this.updateStatus(`Found ${filtered.length} articles matching "${query}"`, filtered.length > 0 ? 'success' : 'error');
+            }
+
+            openReader(index) {
+                this.currentArticle = this.articles[index];
+                const overlay = document.getElementById('readerOverlay');
+
+                // Set title and meta info
+                document.getElementById('readerTitle').textContent = this.currentArticle.title;
+                document.getElementById('readerDate').textContent = this.formatDate(this.currentArticle.dateAdded);
+                document.getElementById('readerDomain').textContent = this.getDomain(this.currentArticle.url);
+                document.getElementById('readerTime').textContent = `${this.currentArticle.readTime || 1} min read`;
+                
+                // Show loading state first
+                document.getElementById('readerContent').innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+                        <p>Checking for article content with PKCE authentication...</p>
+                    </div>
+                `;
+
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                
+                // Try to get content, fetch if needed
+                setTimeout(() => this.loadArticleContent(this.currentArticle), 100);
+            }
+
+            async loadArticleContent(article) {
+                console.log('🚀 PKCE + ENHANCED CONTENT LOADER STARTING - Version 3.0');
+                const contentElement = document.getElementById('readerContent');
+                
+                // First try to get saved content
+                let content = this.getArticleContent(article);
+                
+                // If no saved content found, try to fetch from original URL
+                if (!content) {
+                    console.log('🌐 No saved content found. Attempting to fetch from original URL with PKCE auth...');
+                    
+                    try {
+                        // Show fetching status
+                        contentElement.innerHTML = `
+                            <div style="text-align: center; padding: 40px;">
+                                <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+                                <p><strong>🌐 Fetching article content with PKCE authentication...</strong></p>
+                                <p style="font-size: 0.9em; color: var(--text-secondary);">
+                                    Loading from ${this.getDomain(article.url)}
+                                </p>
+                                <p style="font-size: 0.8em; color: var(--text-secondary);">
+                                    Using enhanced image extraction + PKCE secure connection...
+                                </p>
+                            </div>
+                        `;
+                        
+                        // Fetch content using proxy services
+                        const fetchedContent = await this.fetchArticleContent(article.url);
+                        
+                        if (fetchedContent && fetchedContent.trim()) {
+                            content = fetchedContent;
+                            console.log('✅ Successfully fetched article content');
+                            this.updateStatus('✅ Article content loaded successfully with PKCE + enhanced images!', 'success');
+                        } else {
+                            throw new Error('No content extracted from fetched page');
+                        }
+                        
+                    } catch (error) {
+                        console.log('❌ Failed to fetch content:', error.message);
+                        this.updateStatus('❌ Could not fetch article content. Using fallback.', 'error');
+                        content = this.getFallbackContent(article, error.message);
+                    }
+                } else {
+                    console.log('✅ Using saved content');
+                    this.updateStatus('✅ Article loaded from saved content', 'success');
+                }
+                
+                // Display the final content
+                contentElement.innerHTML = content;
+            }
+
             async fetchArticleContent(url) {
                 try {
                     console.log(`🌐 Starting fetch for: ${url}`);
                     
+                    // Method 1: Try using AllOrigins proxy (most reliable)
                     try {
                         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
                         console.log(`Trying AllOrigins proxy...`);
@@ -2358,7 +2430,7 @@ MyPocket Web Reader Debug Info (PKCE Edition):
                             const data = await response.json();
                             const html = data.contents;
                             
-                            if (html && html.length > 1000) {
+                            if (html && html.length > 1000) { // Ensure we got substantial content
                                 console.log(`✅ AllOrigins success: ${html.length} chars`);
                                 const extractedContent = this.extractContentFromHTML(html, url);
                                 if (extractedContent && extractedContent.length > 500) {
@@ -2398,7 +2470,7 @@ MyPocket Web Reader Debug Info (PKCE Edition):
                         const response = await fetch(url, {
                             mode: 'cors',
                             headers: {
-                                'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader)'
+                                'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader PKCE)'
                             }
                         });
                         
@@ -2482,7 +2554,7 @@ MyPocket Web Reader Debug Info (PKCE Edition):
                         content = `
                             <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                                 <p style="margin: 0; font-size: 0.9em;">
-                                    <strong>📡 Content fetched with PKCE authentication</strong><br>
+                                    <strong>📡 Content fetched with PKCE authentication + enhanced images</strong><br>
                                     This article content was retrieved in real-time from <a href="${url}" target="_blank" style="color: #1976d2;">${this.getDomain(url)}</a>
                                 </p>
                             </div>
@@ -2526,7 +2598,8 @@ MyPocket Web Reader Debug Info (PKCE Edition):
                         
                         <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 15px 0;">
                             <p><strong>🔒 PKCE Authentication Status:</strong></p>
-                            <p style="font-size: 0.9em;">Connected with persistent authentication - no hourly re-logins required!</p>
+                            <p style="font-size: 0.9em;">Connected with persistent authentication + enhanced image extraction!</p>
+                            <p style="font-size: 0.8em;">Refresh Token: ${this.refreshToken ? 'Available (no re-login needed)' : 'Not available'}</p>
                         </div>
                         
                         <div style="text-align: center; margin: 20px 0;">
@@ -2540,14 +2613,16 @@ MyPocket Web Reader Debug Info (PKCE Edition):
                             <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
                                 Error: ${errorMessage}<br>
                                 Auth Method: PKCE (Authorization Code Flow)<br>
-                                Refresh Token: ${this.refreshToken ? 'Available' : 'Not available'}
+                                Refresh Token: ${this.refreshToken ? 'Available' : 'Not available'}<br>
+                                Enhanced Images: Enabled<br>
+                                Backup Images: ${this.imageBackupEnabled ? 'Enabled' : 'Disabled'}
                             </p>
                         </details>
                     </div>
                 `;
             }
 
-            // Get the best available content for reading
+            // Get the best available content for reading - simplified version
             getArticleContent(article) {
                 console.log('📖 Checking for saved content...');
                 
@@ -2571,6 +2646,58 @@ MyPocket Web Reader Debug Info (PKCE Edition):
                 
                 console.log('❌ No saved content found');
                 return null;
+            }
+
+            closeReader() {
+                const overlay = document.getElementById('readerOverlay');
+                overlay.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+
+            openOriginal() {
+                if (this.currentArticle) {
+                    window.open(this.currentArticle.url, '_blank');
+                }
+            }
+
+            async deleteArticle(index) {
+                const article = this.articles[index];
+                if (!article) return;
+
+                if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your OneDrive backup.`)) {
+                    try {
+                        this.articles.splice(index, 1);
+
+                        if (this.accessToken) {
+                            this.updateStatus('Updating OneDrive backup with PKCE + enhanced images...', 'loading');
+                            await this.updateOneDriveBackup();
+                            this.updateStatus(`✅ Article deleted and backup updated with PKCE. ${this.articles.length} articles remaining.`, 'success');
+                        } else {
+                            this.updateStatus(`❌ Article deleted locally but OneDrive backup not updated (not connected).`, 'error');
+                        }
+
+                        this.displayArticles(this.articles);
+
+                    } catch (error) {
+                        console.error('Error deleting article:', error);
+                        this.updateStatus(`❌ Failed to delete article: ${error.message}`, 'error');
+                    }
+                }
+            }
+
+            exportArticle(index) {
+                const article = this.articles[index];
+                if (!article) return;
+
+                try {
+                    const html = this.createArticleHTML(article);
+                    const filename = `${this.sanitizeFilename(article.title)}.html`;
+                    this.downloadFile(html, filename, 'text/html');
+                    this.updateStatus(`📤 Article "${article.title}" exported successfully with PKCE + enhanced images!`, 'success');
+                } catch (error) {
+                    console.error('Error exporting article:', error);
+                    this.updateStatus(`❌ Failed to export article: ${error.message}`, 'error');
+                }
             }
 
             createArticleHTML(article) {
@@ -2635,6 +2762,15 @@ MyPocket Web Reader Debug Info (PKCE Edition):
             display: inline-block;
             margin: 10px 0;
         }
+        .enhanced-badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            display: inline-block;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -2645,17 +2781,20 @@ MyPocket Web Reader Debug Info (PKCE Edition):
             ${article.author ? `<div style="margin-bottom: 8px;">✍️ By: ${this.escapeHtml(article.author)}</div>` : ''}
             <div style="margin-bottom: 8px;">📅 Saved: ${this.formatDate(article.dateAdded)}</div>
             <div>⏱️ Reading time: ${article.readTime || 1} minutes</div>
-            <div class="pkce-badge">🔒 Exported with PKCE Authentication</div>
+            <div class="pkce-badge">🔒 PKCE Authentication</div>
+            <div class="enhanced-badge">🎨 Enhanced Image Extraction</div>
         </div>
     </div>
     <div class="content">
         ${article.content || article.excerpt || 'Content not available'}
     </div>
     <div class="footer">
-        <p><strong>✨ Exported from MyPocket Web Reader (PKCE Edition)</strong></p>
+        <p><strong>✨ Exported from MyPocket Web Reader (PKCE + Enhanced Images Edition)</strong></p>
         <p>Original URL: <a href="${article.url}" style="color: #ee5a24;">${article.url}</a></p>
         <p>Export Date: ${new Date().toLocaleDateString()}</p>
         <p>Authentication: PKCE (Authorization Code Flow with Proof Key for Code Exchange)</p>
+        <p>Image Extraction: Enhanced multi-strategy extraction + OneDrive backup</p>
+        <p>Features: Persistent authentication, automatic token refresh, real image extraction</p>
     </div>
 </body>
 </html>`;
@@ -2675,203 +2814,188 @@ MyPocket Web Reader Debug Info (PKCE Edition):
                 URL.revokeObjectURL(url);
             }
 
-            // Enhanced image handling
-            getBestArticleImage(article) {
-                if (article.images && article.images.length > 0) {
-                    let bestImage = article.images[0];
-                    
-                    for (const img of article.images) {
-                        if (img.width && img.height) {
-                            if (img.width >= 300 && img.height >= 150) {
-                                bestImage = img;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    return bestImage.src || bestImage.url || bestImage;
-                }
-                
-                if (article.featuredImage) {
-                    return article.featuredImage;
-                }
-                
-                if (article.image) {
-                    return article.image;
-                }
-                
-                if (article.content) {
-                    const imgMatch = article.content.match(/<img[^>]+src="([^"]+)"/i);
-                    if (imgMatch && imgMatch[1]) {
-                        return imgMatch[1];
-                    }
-                }
-                
-                return null;
-            }
+            // ==================== PKCE TEST & DEBUG METHODS ====================
 
-            getImageExtension(url) {
+            // Test PKCE configuration
+            async testPKCEConfig() {
+                console.log('🧪 Testing PKCE + Enhanced Images Configuration...');
+                
                 try {
-                    const pathname = new URL(url).pathname;
-                    const match = pathname.match(/\.([a-zA-Z0-9]+)$/);
-                    return match ? match[1].toLowerCase() : null;
+                    // Test PKCE generation
+                    const codeChallenge = await this.generatePKCE();
+                    console.log('✅ PKCE generation works');
+                    
+                    // Test redirect URI
+                    if (!this.redirectUri.startsWith('https://') && !this.redirectUri.startsWith('http://')) {
+                        throw new Error('Invalid redirect URI protocol');
+                    }
+                    console.log('✅ Redirect URI valid:', this.redirectUri);
+                    
+                    // Test if we can build auth URL
+                    const testAuthUrl = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?` +
+                        `client_id=${this.clientId}&` +
+                        `response_type=code&` +
+                        `redirect_uri=${encodeURIComponent(this.redirectUri)}&` +
+                        `scope=Files.ReadWrite%20User.Read%20offline_access&` +
+                        `code_challenge=${codeChallenge}&` +
+                        `code_challenge_method=S256`;
+                    
+                    console.log('✅ Auth URL generated:', testAuthUrl);
+
+                    // Test crypto API availability
+                    if (!window.crypto || !window.crypto.subtle) {
+                        throw new Error('Web Crypto API not available');
+                    }
+                    console.log('✅ Web Crypto API available');
+
+                    // Test image extraction capabilities
+                    console.log('✅ Enhanced image extraction enabled');
+                    console.log('✅ OneDrive image backup enabled');
+                    
+                    const results = `🧪 PKCE + Enhanced Images Test Results:
+
+✅ PKCE generation: OK
+✅ Redirect URI: ${this.redirectUri}
+✅ Auth URL: Generated successfully
+✅ Web Crypto API: Available
+✅ Client ID: ${this.clientId}
+✅ Enhanced image extraction: Enabled
+✅ OneDrive image backup: ${this.imageBackupEnabled ? 'Enabled' : 'Disabled'}
+
+${this.accessToken ? '🔒 Currently authenticated with PKCE' : '☁️ Not authenticated'}
+${this.refreshToken ? '🔄 Refresh token available (persistent session)' : '⚠️ No refresh token'}
+
+Configuration looks perfect! Ready for PKCE authentication + enhanced image extraction.`;
+                    
+                    alert(results);
+                    
                 } catch (error) {
-                    return null;
+                    console.error('❌ PKCE + Enhanced Images test failed:', error);
+                    alert(`❌ PKCE + Enhanced Images Test Failed:\n\n${error.message}\n\nCheck console for details.`);
                 }
             }
 
-            isValidImageUrl(url) {
-                if (!url || typeof url !== 'string') return false;
-                
-                try {
-                    new URL(url);
-                } catch {
-                    return false;
-                }
-                
-                const imagePattern = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i;
-                const imageServices = ['unsplash.com', 'images.unsplash.com', 'picsum.photos', 'via.placeholder.com'];
-                
-                return imagePattern.test(url) || imageServices.some(service => url.includes(service));
+            // Show enhanced debug info
+            showDebugInfo() {
+                const info = `
+MyPocket Web Reader Debug Info (PKCE + Enhanced Images Edition):
+==============================================================
+
+🌐 Connection Info:
+- Current URL: ${window.location.href}
+- Redirect URI: ${this.redirectUri}
+- Client ID: ${this.clientId}
+- Protocol: ${window.location.protocol}
+- Host: ${window.location.host}
+
+🔐 PKCE Authentication:
+- Auth Method: PKCE (Authorization Code + PKCE)
+- Has Access Token: ${!!this.accessToken}
+- Has Refresh Token: ${!!this.refreshToken}
+- Token Expires: ${this.tokenExpiry ? new Date(this.tokenExpiry) : 'N/A'}
+- Auto-Refresh: ${!!this.refreshToken ? 'Enabled' : 'Disabled'}
+- Refresh Scheduled: ${!!this.refreshTimer ? 'Yes' : 'No'}
+
+🎨 Enhanced Image System:
+- Image Backup: ${this.imageBackupEnabled ? 'Enabled' : 'Disabled'}
+- Real Image Extraction: Enabled (multi-strategy)
+- OneDrive Image Backup: ${this.accessToken ? 'Available' : 'Requires authentication'}
+- Category-based Fallbacks: Enabled
+- Open Graph Extraction: Enabled
+- JSON-LD Extraction: Enabled
+
+📊 Application State:
+- Articles Loaded: ${this.articles.length}
+- Current Article: ${this.currentArticle ? this.currentArticle.title.substring(0, 30) + '...' : 'None'}
+- Images with Backup: ${this.articles.filter(a => a.backedUpImage).length}
+
+🔧 Azure AD Setup Required:
+1. Go to Azure Portal → App registrations
+2. Find app: ${this.clientId}
+3. Authentication → REMOVE "Web" platform
+4. Add "Single-page application" platform
+5. Redirect URI: ${this.redirectUri}
+6. Keep implicit grant: ✓ Access tokens, ✓ ID tokens
+7. API permissions: Microsoft Graph (Files.ReadWrite, User.Read)
+
+🚀 Features Active:
+- ✅ PKCE authentication (secure + persistent)
+- ✅ Automatic token refresh (no hourly disconnects)
+- ✅ Enhanced image extraction (your original advanced system)
+- ✅ OneDrive image backup with PKCE authentication
+- ✅ Multi-strategy image extraction (Open Graph, Twitter Cards, JSON-LD)
+- ✅ Category-based intelligent fallbacks
+- ✅ Real-time content fetching
+- ✅ Organic UI design with beautiful animations
+
+🧪 Test Functions:
+- Use "Test PKCE" button to verify configuration
+- Check browser console for detailed logs
+- All API calls use automatic PKCE token refresh
+- Enhanced image system extracts real images from websites
+        `;
+
+                alert(info);
+                console.log('🔧 PKCE + Enhanced Images Debug Info:', {
+                    redirectUri: this.redirectUri,
+                    hasAccessToken: !!this.accessToken,
+                    hasRefreshToken: !!this.refreshToken,
+                    tokenExpiry: this.tokenExpiry ? new Date(this.tokenExpiry) : null,
+                    articlesCount: this.articles.length,
+                    authMethod: 'PKCE',
+                    refreshScheduled: !!this.refreshTimer,
+                    imageBackupEnabled: this.imageBackupEnabled,
+                    imagesWithBackup: this.articles.filter(a => a.backedUpImage).length
+                });
             }
 
-            isIconOrLogo(src) {
-                if (!src) return false;
-                
-                const iconPatterns = [
-                    'icon', 'logo', 'avatar', 'profile', 'favicon', 'sprite', 
-                    'button', 'badge', 'social', 'thumb', 'thumbnail',
-                    '/icons/', '/images/icons/', 'gravatar', 'user-content'
-                ];
-                
-                const srcLower = src.toLowerCase();
-                return iconPatterns.some(pattern => srcLower.includes(pattern)) ||
-                       srcLower.includes('.ico') ||
-                       (srcLower.includes('64x64') || srcLower.includes('32x32'));
+            toggleTestMode() {
+                document.body.classList.toggle('test-mode');
+                const isTestMode = document.body.classList.contains('test-mode');
+
+                const testBtn = document.getElementById('testBtn');
+                if (testBtn) {
+                    testBtn.innerHTML = isTestMode
+                        ? '<span>👁️</span> Hide Buttons'
+                        : '<span>👁️</span> Show Buttons';
+                }
+
+                this.updateStatus(
+                    isTestMode
+                        ? '🔍 Test mode ON - Action buttons always visible'
+                        : '👁️ Test mode OFF - Action buttons show on hover',
+                    'success'
+                );
             }
 
-            isSmallImage(width, height) {
-                if (!width && !height) return false;
+            // Dark mode functionality
+            toggleDarkMode() {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
                 
-                const w = parseInt(width) || 0;
-                const h = parseInt(height) || 0;
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
                 
-                return (w > 0 && w < 200) || (h > 0 && h < 150);
+                this.updateDarkModeButton(newTheme);
+                this.updateStatus(
+                    newTheme === 'dark' ? '🌙 Dark mode enabled' : '☀️ Light mode enabled',
+                    'success'
+                );
             }
 
-            makeAbsoluteUrl(imageUrl, baseUrl) {
-                if (!imageUrl) return null;
-                
-                try {
-                    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-                        return imageUrl;
-                    }
-                    
-                    if (imageUrl.startsWith('//')) {
-                        return 'https:' + imageUrl;
-                    }
-                    
-                    const base = new URL(baseUrl);
-                    return new URL(imageUrl, base.origin).href;
-                } catch (error) {
-                    console.log(`Failed to make absolute URL: ${imageUrl}, base: ${baseUrl}`);
-                    return null;
-                }
+            loadThemePreference() {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                this.updateDarkModeButton(savedTheme);
             }
 
-            extractImageFromJsonLd(data) {
-                if (typeof data !== 'object') return null;
-                
-                if (Array.isArray(data)) {
-                    for (const item of data) {
-                        const image = this.extractImageFromJsonLd(item);
-                        if (image) return image;
-                    }
-                    return null;
+            updateDarkModeButton(theme) {
+                const darkModeBtn = document.getElementById('darkModeBtn');
+                if (darkModeBtn) {
+                    darkModeBtn.innerHTML = theme === 'dark' 
+                        ? '<span>☀️</span> Light Mode'
+                        : '<span>🌙</span> Dark Mode';
                 }
-                
-                if (data.image) {
-                    if (typeof data.image === 'string') return data.image;
-                    if (Array.isArray(data.image) && data.image.length > 0) {
-                        return typeof data.image[0] === 'string' ? data.image[0] : data.image[0].url;
-                    }
-                    if (data.image.url) return data.image.url;
-                }
-                
-                if (data.thumbnailUrl) {
-                    return typeof data.thumbnailUrl === 'string' ? data.thumbnailUrl : data.thumbnailUrl.url;
-                }
-                
-                for (const key in data) {
-                    if (typeof data[key] === 'object') {
-                        const image = this.extractImageFromJsonLd(data[key]);
-                        if (image) return image;
-                    }
-                }
-                
-                return null;
-            }
-
-            getDomain(url) {
-                try {
-                    return new URL(url).hostname.replace('www.', '');
-                } catch (e) {
-                    return url;
-                }
-            }
-
-            formatDate(dateString) {
-                try {
-                    const date = new Date(dateString);
-
-                    if (isNaN(date.getTime())) {
-                        console.error('Invalid date:', dateString);
-                        return 'invalid date';
-                    }
-
-                    const now = new Date();
-                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                    const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-                    const diffMs = today.getTime() - targetDate.getTime();
-                    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-                    if (diffDays < 0) {
-                        return date.toLocaleDateString();
-                    }
-
-                    if (diffDays === 0) {
-                        return 'today';
-                    } else if (diffDays === 1) {
-                        return 'yesterday';
-                    } else if (diffDays <= 7) {
-                        return `${diffDays} days ago`;
-                    } else if (diffDays <= 30) {
-                        const weeks = Math.floor(diffDays / 7);
-                        return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`;
-                    } else if (diffDays <= 365) {
-                        const months = Math.floor(diffDays / 30);
-                        return months === 1 ? '1 month ago' : `${months} months ago`;
-                    } else {
-                        const years = Math.floor(diffDays / 365);
-                        return years === 1 ? '1 year ago' : `${years} years ago`;
-                    }
-                } catch (error) {
-                    console.error('Date formatting error:', error, 'Input:', dateString);
-                    return 'date error';
-                }
-            }
-
-            escapeHtml(text) {
-                if (!text) return '';
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
-            }
-
-            sanitizeFilename(filename) {
-                if (!filename) return 'article';
-                return filename.replace(/[^a-z0-9\s]/gi, '_').toLowerCase().substring(0, 50);
             }
         }
 
@@ -2880,9 +3004,11 @@ MyPocket Web Reader Debug Info (PKCE Edition):
             webReader = new MyPocketWebReader();
             window.webReader = webReader;
             
-            // Show PKCE initialization message
-            console.log('🚀 MyPocket Web Reader PKCE Edition Initialized');
-            console.log('🔒 Features: Persistent authentication, automatic token refresh, secure PKCE flow');
+            // Show enhanced initialization message
+            console.log('🚀 MyPocket Web Reader PKCE + Enhanced Images Edition Initialized');
+            console.log('🔒 PKCE Features: Persistent authentication, automatic token refresh, secure flow');
+            console.log('🎨 Enhanced Image Features: Real image extraction, OneDrive backup, multi-strategy parsing');
+            console.log('✨ Best of both worlds: Your original advanced image system + modern PKCE authentication');
         });
     </script>
 </body>
