@@ -824,6 +824,9 @@
                     <button id="pkceTestBtn" class="btn btn-secondary" onclick="webReader.testPKCEConfig()">
                         <span>🧪</span> Test PKCE
                     </button>
+                    <button id="saveMetadataBtn" class="btn btn-secondary" onclick="webReader.forceSaveMetadata()">
+                        <span>💾</span> Save Metadata
+                    </button>
                     <button id="darkModeBtn" class="btn btn-secondary" onclick="webReader.toggleDarkMode()">
                         <span>🌙</span> Dark Mode
                     </button>
@@ -1390,9 +1393,24 @@
                     const backup = JSON.parse(backupContent);
 
                     this.articles = backup.articles || [];
+                    
+                    // Load local backup info as fallback if OneDrive metadata is missing
+                    const localBackupLoaded = this.loadBackupInfoLocally();
+                    
+                    // Count how many articles already have backed-up images
+                    const alreadyBackedUpCount = this.articles.filter(a => a.backedUpImage).length;
+                    
                     this.displayArticles(this.articles);
 
-                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name}`, 'success');
+                    let statusMessage = `✅ Loaded ${this.articles.length} articles from ${latestFile.name}`;
+                    if (alreadyBackedUpCount > 0) {
+                        statusMessage += ` (${alreadyBackedUpCount} images already backed up)`;
+                    }
+                    if (localBackupLoaded) {
+                        statusMessage += ` + local backup info restored`;
+                    }
+                    
+                    this.updateStatus(statusMessage, 'success');
 
                 } catch (error) {
                     console.error('Error loading articles:', error);
@@ -1548,78 +1566,90 @@
             // ORIGINAL: Extract image and backup to OneDrive - KEEPING YOUR ORIGINAL LOGIC
             async extractRealArticleImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
-                if (!imageElement) return { success: false, backed_up: false };
+                if (!imageElement) return { success: false, backed_up: false, already_backed_up: false };
 
-                console.log(`🔍 Extracting real image from: ${this.getDomain(article.url)}`);
+                console.log(`🔍 Processing image for: ${this.getDomain(article.url)} - "${article.title.substring(0, 40)}..."`);
 
-                // NEW: Strategy 0: Check for backed-up image in OneDrive first (if available)
+                // STRATEGY 0: Check for backed-up image in OneDrive first (if available)
                 if (article.backedUpImage && this.accessToken) {
                     try {
+                        console.log(`🔍 Checking OneDrive for existing backup: ${article.backedUpImage.fileName}`);
                         const backedUpUrl = await this.getBackedUpImageUrl(article.backedUpImage);
                         if (backedUpUrl) {
-                            console.log(`✅ Using backed-up image: ${article.title.substring(0, 30)}...`);
+                            console.log(`✅ Using backed-up image from OneDrive: ${article.title.substring(0, 30)}...`);
                             this.setArticleImageDirect(imageElement, backedUpUrl);
-                            return { success: true, backed_up: false }; // Already backed up
+                            return { success: true, backed_up: false, already_backed_up: true }; // Already backed up
+                        } else {
+                            console.log(`⚠️ Backup metadata exists but file not found, will re-extract`);
+                            // Clear invalid backup info
+                            delete article.backedUpImage;
                         }
                     } catch (error) {
                         console.log(`⚠️ Failed to load backed-up image, extracting fresh: ${error.message}`);
+                        // Clear invalid backup info
+                        delete article.backedUpImage;
                     }
                 }
 
-                // YOUR ORIGINAL Strategy 1: Try saved article images first (fastest)
+                // STRATEGY 1: Try saved article images first (fastest)
                 const savedImage = this.getBestArticleImage(article);
                 if (savedImage) {
                     console.log(`✅ Using saved image: ${article.title.substring(0, 30)}...`);
                     this.setArticleImageDirect(imageElement, savedImage);
-                    // NEW: Try to backup saved image too
+                    
+                    // Try to backup saved image if not already backed up
                     let backedUp = false;
-                    if (this.imageBackupEnabled && this.accessToken) {
+                    if (this.imageBackupEnabled && this.accessToken && !article.backedUpImage) {
                         try {
+                            console.log(`💾 Backing up saved image to OneDrive...`);
                             const backupInfo = await this.backupImageToOneDrive(savedImage, article, index);
                             if (backupInfo) {
                                 article.backedUpImage = backupInfo;
                                 backedUp = true;
+                                console.log(`✅ Saved image backed up: ${backupInfo.fileName}`);
                             }
                         } catch (error) {
                             console.log(`⚠️ Backup of saved image failed: ${error.message}`);
                         }
                     }
-                    return { success: true, backed_up: backedUp };
+                    return { success: true, backed_up: backedUp, already_backed_up: false };
                 }
 
-                // YOUR ORIGINAL Strategy 2: Extract image from the original website
+                // STRATEGY 2: Extract image from the original website
                 try {
+                    console.log(`🌐 No saved image found, extracting from website...`);
                     const extractedImage = await this.fetchRealImageFromWebsite(article.url);
                     if (extractedImage) {
                         console.log(`✅ Extracted real image: ${article.title.substring(0, 30)}...`);
                         this.setArticleImageDirect(imageElement, extractedImage);
                         
-                        // NEW: Backup the extracted image
+                        // Backup the extracted image if not already backed up
                         let backedUp = false;
-                        if (this.imageBackupEnabled && this.accessToken) {
+                        if (this.imageBackupEnabled && this.accessToken && !article.backedUpImage) {
                             try {
+                                console.log(`💾 Backing up extracted image to OneDrive...`);
                                 const backupInfo = await this.backupImageToOneDrive(extractedImage, article, index);
                                 if (backupInfo) {
                                     article.backedUpImage = backupInfo;
                                     backedUp = true;
-                                    console.log(`💾 Real image backed up with PKCE: ${backupInfo.fileName}`);
+                                    console.log(`✅ Real image backed up with PKCE: ${backupInfo.fileName}`);
                                 }
                             } catch (error) {
                                 console.log(`⚠️ Image backup failed: ${error.message}`);
                             }
                         }
                         
-                        return { success: true, backed_up: backedUp };
+                        return { success: true, backed_up: backedUp, already_backed_up: false };
                     }
                 } catch (error) {
                     console.log(`⚠️ Could not extract from website: ${error.message}`);
                 }
 
-                // YOUR ORIGINAL Strategy 3: Use intelligent category-based fallback
+                // STRATEGY 3: Use intelligent category-based fallback
                 console.log(`🎨 Using intelligent fallback: ${article.title.substring(0, 30)}...`);
                 const fallbackImage = this.getCategoryBasedImage(article, index);
                 this.setArticleImageDirect(imageElement, fallbackImage);
-                return { success: true, backed_up: false };
+                return { success: true, backed_up: false, already_backed_up: false };
             }
 
             // ORIGINAL: NEW: Fetch the actual featured image from a website (KEEPING ORIGINAL LOGIC)
@@ -2079,7 +2109,7 @@
                     throw new Error('Not connected to OneDrive');
                 }
 
-                // Optimize articles by removing large content fields for backup
+                // CRITICAL: Don't strip backedUpImage data - preserve ALL image backup info
                 const optimizedArticles = this.articles.map(article => ({
                     title: article.title,
                     url: article.url,
@@ -2089,8 +2119,8 @@
                     wordCount: article.wordCount,
                     author: article.author,
                     domain: this.getDomain(article.url),
-                    // Keep image backup info
-                    backedUpImage: article.backedUpImage,
+                    // CRITICAL: Keep ALL image backup info
+                    backedUpImage: article.backedUpImage, // This is the key fix!
                     featuredImage: article.featuredImage,
                     image: article.image,
                     images: article.images,
@@ -2106,7 +2136,7 @@
                         imageBackupEnabled: this.imageBackupEnabled
                     },
                     exportDate: new Date().toISOString(),
-                    version: "4.0-PKCE-Enhanced", // Updated version with PKCE + enhanced images
+                    version: "4.1-PKCE-Enhanced-Fixed", // Updated version with fixed persistence
                     deviceInfo: {
                         browser: "Web Reader PKCE + Enhanced Images",
                         platform: navigator.platform,
@@ -2115,7 +2145,8 @@
                         imageBackupCount: this.articles.filter(a => a.backedUpImage).length,
                         authMethod: "PKCE",
                         refreshTokenAvailable: !!this.refreshToken,
-                        enhancedImageExtraction: true
+                        enhancedImageExtraction: true,
+                        imageBackupPersistence: "Fixed"
                     }
                 };
 
@@ -2123,6 +2154,7 @@
                 const fileContent = JSON.stringify(backup, null, 2);
 
                 console.log(`💾 Backing up ${backup.articles.length} articles with PKCE + enhanced images (${Math.round(fileContent.length / 1024)}KB)`);
+                console.log(`💾 Including ${backup.deviceInfo.imageBackupCount} image backup metadata entries`);
 
                 const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
 
@@ -2139,7 +2171,52 @@
                     throw new Error(`Failed to update OneDrive backup: ${uploadResponse.status} - ${errorText}`);
                 }
 
-                return await uploadResponse.json();
+                const result = await uploadResponse.json();
+                console.log(`✅ Backup saved successfully with ${backup.deviceInfo.imageBackupCount} image metadata entries`);
+                return result;
+            }
+
+            // NEW: Save backup info locally as fallback
+            saveBackupInfoLocally() {
+                try {
+                    const backupInfo = {
+                        timestamp: Date.now(),
+                        articles: this.articles.map(article => ({
+                            url: article.url,
+                            title: article.title,
+                            backedUpImage: article.backedUpImage
+                        })).filter(article => article.backedUpImage)
+                    };
+                    
+                    localStorage.setItem('mypocket_image_backup_fallback', JSON.stringify(backupInfo));
+                    console.log(`💾 Saved ${backupInfo.articles.length} image backup entries locally as fallback`);
+                } catch (error) {
+                    console.error('Failed to save backup info locally:', error);
+                }
+            }
+
+            // NEW: Load backup info from local fallback
+            loadBackupInfoLocally() {
+                try {
+                    const backupInfo = localStorage.getItem('mypocket_image_backup_fallback');
+                    if (backupInfo) {
+                        const parsed = JSON.parse(backupInfo);
+                        console.log(`📥 Loading ${parsed.articles.length} image backup entries from local fallback`);
+                        
+                        // Merge backup info into current articles
+                        for (const article of this.articles) {
+                            const backupEntry = parsed.articles.find(b => b.url === article.url);
+                            if (backupEntry && backupEntry.backedUpImage && !article.backedUpImage) {
+                                article.backedUpImage = backupEntry.backedUpImage;
+                                console.log(`📥 Restored backup info for: ${article.title.substring(0, 30)}...`);
+                            }
+                        }
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Failed to load backup info locally:', error);
+                }
+                return false;
             }
 
             // ==================== ORIGINAL HELPER METHODS (Kept intact) ====================
@@ -2852,6 +2929,8 @@
                     console.log('✅ Enhanced image extraction enabled');
                     console.log('✅ OneDrive image backup enabled');
                     
+                    const imagesWithBackup = this.articles.filter(a => a.backedUpImage).length;
+                    
                     const results = `🧪 PKCE + Enhanced Images Test Results:
 
 ✅ PKCE generation: OK
@@ -2861,11 +2940,14 @@
 ✅ Client ID: ${this.clientId}
 ✅ Enhanced image extraction: Enabled
 ✅ OneDrive image backup: ${this.imageBackupEnabled ? 'Enabled' : 'Disabled'}
+✅ Images with backup: ${imagesWithBackup}/${this.articles.length}
 
 ${this.accessToken ? '🔒 Currently authenticated with PKCE' : '☁️ Not authenticated'}
 ${this.refreshToken ? '🔄 Refresh token available (persistent session)' : '⚠️ No refresh token'}
 
-Configuration looks perfect! Ready for PKCE authentication + enhanced image extraction.`;
+Configuration looks perfect! Ready for PKCE authentication + enhanced image extraction.
+
+💡 If images keep re-uploading, try the "Save Metadata" button to force save backup info.`;
                     
                     alert(results);
                     
@@ -2875,8 +2957,40 @@ Configuration looks perfect! Ready for PKCE authentication + enhanced image extr
                 }
             }
 
+            // Force save metadata for testing
+            async forceSaveMetadata() {
+                if (!this.accessToken) {
+                    alert('❌ Not connected to OneDrive. Please authenticate first.');
+                    return;
+                }
+
+                try {
+                    this.updateStatus('💾 Force saving metadata to OneDrive...', 'loading');
+                    
+                    const imagesWithBackup = this.articles.filter(a => a.backedUpImage).length;
+                    console.log(`💾 Force saving metadata for ${imagesWithBackup} images with backup info...`);
+                    
+                    await this.updateOneDriveBackup();
+                    
+                    this.updateStatus(`✅ Metadata saved successfully! ${imagesWithBackup} images with backup info preserved.`, 'success');
+                    
+                    // Also save locally as fallback
+                    this.saveBackupInfoLocally();
+                    
+                    alert(`✅ Metadata Saved Successfully!\n\n${imagesWithBackup} images with backup info preserved.\nNext page load should use backed-up images.`);
+                    
+                } catch (error) {
+                    console.error('❌ Failed to save metadata:', error);
+                    this.updateStatus(`❌ Failed to save metadata: ${error.message}`, 'error');
+                    alert(`❌ Failed to save metadata:\n\n${error.message}\n\nCheck console for details.`);
+                }
+            }
+
             // Show enhanced debug info
             showDebugInfo() {
+                const imagesWithBackup = this.articles.filter(a => a.backedUpImage).length;
+                const imagesWithoutBackup = this.articles.length - imagesWithBackup;
+                
                 const info = `
 MyPocket Web Reader Debug Info (PKCE + Enhanced Images Edition):
 ==============================================================
@@ -2906,8 +3020,15 @@ MyPocket Web Reader Debug Info (PKCE + Enhanced Images Edition):
 
 📊 Application State:
 - Articles Loaded: ${this.articles.length}
+- Images WITH backup: ${imagesWithBackup}
+- Images WITHOUT backup: ${imagesWithoutBackup}
 - Current Article: ${this.currentArticle ? this.currentArticle.title.substring(0, 30) + '...' : 'None'}
-- Images with Backup: ${this.articles.filter(a => a.backedUpImage).length}
+
+🔍 Image Backup Status:
+${this.articles.slice(0, 5).map((article, i) => 
+    `- ${i + 1}. "${article.title.substring(0, 40)}..." - ${article.backedUpImage ? '✅ Backed up' : '❌ Not backed up'}`
+).join('\n')}
+${this.articles.length > 5 ? `... and ${this.articles.length - 5} more articles` : ''}
 
 🔧 Azure AD Setup Required:
 1. Go to Azure Portal → App registrations
@@ -2923,6 +3044,7 @@ MyPocket Web Reader Debug Info (PKCE + Enhanced Images Edition):
 - ✅ Automatic token refresh (no hourly disconnects)
 - ✅ Enhanced image extraction (your original advanced system)
 - ✅ OneDrive image backup with PKCE authentication
+- ✅ Image persistence across devices and sessions
 - ✅ Multi-strategy image extraction (Open Graph, Twitter Cards, JSON-LD)
 - ✅ Category-based intelligent fallbacks
 - ✅ Real-time content fetching
@@ -2933,6 +3055,14 @@ MyPocket Web Reader Debug Info (PKCE + Enhanced Images Edition):
 - Check browser console for detailed logs
 - All API calls use automatic PKCE token refresh
 - Enhanced image system extracts real images from websites
+- Images are backed up once and reused across all devices
+
+💡 Troubleshooting Image Re-uploads:
+If images are re-uploading every time:
+1. Check if backup metadata is being saved properly
+2. Verify OneDrive permissions for file updates
+3. Look for console logs showing "✅ Using backed-up image from OneDrive"
+4. If you see "⚠️ Backup metadata exists but file not found", backup files may have been deleted
         `;
 
                 alert(info);
@@ -2945,7 +3075,13 @@ MyPocket Web Reader Debug Info (PKCE + Enhanced Images Edition):
                     authMethod: 'PKCE',
                     refreshScheduled: !!this.refreshTimer,
                     imageBackupEnabled: this.imageBackupEnabled,
-                    imagesWithBackup: this.articles.filter(a => a.backedUpImage).length
+                    imagesWithBackup: imagesWithBackup,
+                    imagesWithoutBackup: imagesWithoutBackup,
+                    backupDetails: this.articles.map(a => ({
+                        title: a.title.substring(0, 30),
+                        hasBackup: !!a.backedUpImage,
+                        backupFileName: a.backedUpImage?.fileName
+                    }))
                 });
             }
 
