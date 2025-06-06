@@ -1141,9 +1141,14 @@
                     token_type: tokens.token_type || 'Bearer'
                 };
 
-                const encrypted = btoa(JSON.stringify(tokenData));
-                localStorage.setItem('mypocket_pkce_tokens', encrypted);
-                console.log('💾 Tokens saved with expiry:', new Date(tokenData.expires_at));
+                try {
+                    const encrypted = btoa(JSON.stringify(tokenData));
+                    localStorage.setItem('mypocket_pkce_tokens', encrypted);
+                    console.log('💾 Tokens saved with expiry:', new Date(tokenData.expires_at));
+                } catch (error) {
+                    console.error('❌ Failed to save tokens:', error);
+                    this.updateStatus('⚠️ Failed to save authentication tokens', 'error');
+                }
             }
 
             loadStoredTokens() {
@@ -1411,10 +1416,32 @@
                 console.log(`✅ Image backup status saved for: ${article.title.substring(0, 30)}...`);
             }
 
-            // FIXED: Generate consistent cache key for articles
+            // FIXED: Generate consistent cache key for articles with proper encoding
             getImageCacheKey(article) {
-                // Use URL as the primary key since it's unique and persistent
-                return btoa(article.url).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
+                try {
+                    // FIXED: Properly encode URLs that may contain non-ASCII characters
+                    const encodedUrl = encodeURIComponent(article.url);
+                    // Create a hash-like key using the encoded URL
+                    let hash = 0;
+                    for (let i = 0; i < encodedUrl.length; i++) {
+                        const char = encodedUrl.charCodeAt(i);
+                        hash = ((hash << 5) - hash) + char;
+                        hash = hash & hash; // Convert to 32-bit integer
+                    }
+                    // Convert to positive string and pad
+                    const key = Math.abs(hash).toString(36).padStart(8, '0').substring(0, 32);
+                    console.log(`🔑 Generated cache key for URL: ${article.url.substring(0, 50)}... -> ${key}`);
+                    return key;
+                } catch (error) {
+                    console.error('❌ Error generating cache key:', error);
+                    // Fallback: use a simple hash of the URL
+                    const fallbackKey = Math.abs(article.url.split('').reduce((a, b) => {
+                        a = ((a << 5) - a) + b.charCodeAt(0);
+                        return a & a;
+                    }, 0)).toString(36).substring(0, 32);
+                    console.log(`🔄 Using fallback cache key: ${fallbackKey}`);
+                    return fallbackKey;
+                }
             }
 
             // FIXED: Schedule metadata save with debouncing
@@ -1567,17 +1594,22 @@
                 let restoredCount = 0;
                 
                 for (const article of this.articles) {
-                    const backupStatus = this.getImageBackupStatus(article);
-                    if (backupStatus && !article.backedUpImage) {
-                        article.backedUpImage = {
-                            fileName: backupStatus.fileName,
-                            fileId: backupStatus.fileId,
-                            uploadDate: backupStatus.uploadDate,
-                            originalUrl: backupStatus.originalUrl,
-                            size: backupStatus.size,
-                            authMethod: backupStatus.authMethod || 'PKCE'
-                        };
-                        restoredCount++;
+                    try {
+                        const backupStatus = this.getImageBackupStatus(article);
+                        if (backupStatus && !article.backedUpImage) {
+                            article.backedUpImage = {
+                                fileName: backupStatus.fileName,
+                                fileId: backupStatus.fileId,
+                                uploadDate: backupStatus.uploadDate,
+                                originalUrl: backupStatus.originalUrl,
+                                size: backupStatus.size,
+                                authMethod: backupStatus.authMethod || 'PKCE'
+                            };
+                            restoredCount++;
+                        }
+                    } catch (error) {
+                        console.error(`❌ Error restoring backup info for article: ${article.title}`, error);
+                        // Continue with next article
                     }
                 }
                 
@@ -1714,37 +1746,42 @@
                 console.log(`🔍 Processing: ${this.getDomain(article.url)} - "${article.title.substring(0, 40)}..."`);
 
                 // FIXED: Check cache first
-                const cachedBackup = this.getImageBackupStatus(article);
-                if (cachedBackup || article.backedUpImage) {
-                    const backupInfo = cachedBackup || article.backedUpImage;
-                    
-                    if (this.accessToken) {
-                        try {
-                            console.log(`🔍 Checking cached backup: ${backupInfo.fileName}`);
-                            const backedUpUrl = await this.getBackedUpImageUrl(backupInfo);
-                            if (backedUpUrl) {
-                                console.log(`✅ Using cached backup: ${article.title.substring(0, 30)}...`);
-                                this.setArticleImageDirect(imageElement, backedUpUrl);
-                                
-                                if (backupIndicator) {
-                                    backupIndicator.textContent = '✅ Cached';
-                                    backupIndicator.className = 'backup-indicator backed-up show';
+                try {
+                    const cachedBackup = this.getImageBackupStatus(article);
+                    if (cachedBackup || article.backedUpImage) {
+                        const backupInfo = cachedBackup || article.backedUpImage;
+                        
+                        if (this.accessToken) {
+                            try {
+                                console.log(`🔍 Checking cached backup: ${backupInfo.fileName}`);
+                                const backedUpUrl = await this.getBackedUpImageUrl(backupInfo);
+                                if (backedUpUrl) {
+                                    console.log(`✅ Using cached backup: ${article.title.substring(0, 30)}...`);
+                                    this.setArticleImageDirect(imageElement, backedUpUrl);
+                                    
+                                    if (backupIndicator) {
+                                        backupIndicator.textContent = '✅ Cached';
+                                        backupIndicator.className = 'backup-indicator backed-up show';
+                                    }
+                                    
+                                    return { success: true, backed_up: false, from_cache: true };
+                                } else {
+                                    console.log(`⚠️ Cached backup file not found, will re-extract`);
+                                    // Remove invalid cache entry
+                                    this.imageBackupCache.delete(this.getImageCacheKey(article));
+                                    delete article.backedUpImage;
                                 }
-                                
-                                return { success: true, backed_up: false, from_cache: true };
-                            } else {
-                                console.log(`⚠️ Cached backup file not found, will re-extract`);
+                            } catch (error) {
+                                console.log(`⚠️ Failed to load cached backup: ${error.message}`);
                                 // Remove invalid cache entry
                                 this.imageBackupCache.delete(this.getImageCacheKey(article));
                                 delete article.backedUpImage;
                             }
-                        } catch (error) {
-                            console.log(`⚠️ Failed to load cached backup: ${error.message}`);
-                            // Remove invalid cache entry
-                            this.imageBackupCache.delete(this.getImageCacheKey(article));
-                            delete article.backedUpImage;
                         }
                     }
+                } catch (error) {
+                    console.error(`❌ Error checking cache for article: ${article.title}`, error);
+                    // Continue with extraction
                 }
 
                 // Update indicator to show processing
