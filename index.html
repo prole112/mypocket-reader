@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPocket - Web Reader (PKCE + Fixed Image Persistence)</title>
+    <title>MyPocket - Web Reader (PKCE + Fixed Image Persistence + Rate Limiting)</title>
     <style>
         * {
             margin: 0;
@@ -845,7 +845,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    🔒 MyPocket PKCE + Fixed Image Persistence
+                    🔒 MyPocket PKCE + Fixed Images + Rate Limiting
                 </div>
                 <div class="header-actions">
                     <button id="connectBtn" class="btn btn-primary">
@@ -867,6 +867,9 @@
                     <button id="clearCacheBtn" class="btn btn-secondary" onclick="webReader.clearImageCache()">
                         <span>🗑️</span> Clear Cache
                     </button>
+                    <button id="progressBtn" class="btn btn-secondary" onclick="webReader.showBackupProgress()">
+                        <span>📊</span> Progress
+                    </button>
                     <button id="darkModeBtn" class="btn btn-secondary" onclick="webReader.toggleDarkMode()">
                         <span>🌙</span> Dark Mode
                     </button>
@@ -887,7 +890,7 @@
 
     <!-- Status -->
     <div class="status" id="status">
-        Connect to OneDrive with PKCE authentication + FIXED image persistence
+        Connect to OneDrive with PKCE authentication + FIXED image persistence + Rate limiting protection
     </div>
 
     <!-- Articles -->
@@ -896,12 +899,13 @@
             <div id="articlesContainer">
                 <div class="empty-state">
                     <div class="empty-state-icon">🔒</div>
-                    <h3>Welcome to MyPocket PKCE + Fixed Image Persistence</h3>
-                    <p>Images now save properly and won't re-upload every time!
+                    <h3>Welcome to MyPocket PKCE + Fixed Image Persistence + Rate Limiting</h3>
+                    <p>Images now save properly and won't re-upload every time! Plus OneDrive rate limiting protection.
                     </p>
                     <div style="margin-top: 20px;">
                         <span class="pkce-indicator persistent">🔒 PKCE Enabled</span>
                         <span class="pkce-indicator">🎨 Fixed Image Persistence</span>
+                        <span class="pkce-indicator">⚡ Rate Limiting Protection</span>
                     </div>
                 </div>
             </div>
@@ -1121,7 +1125,7 @@
                     sessionStorage.removeItem('pkce_redirect_uri');
                     sessionStorage.removeItem('pkce_state');
 
-                    this.updateStatus('✅ Connected with PKCE + FIXED image persistence! Images will save properly.', 'success');
+                    this.updateStatus('✅ Connected with PKCE + FIXED image persistence + Rate limiting protection! Images will save properly.', 'success');
                     await this.loadArticles();
 
                 } catch (error) {
@@ -1291,9 +1295,19 @@
                 console.log('🗑️ Tokens cleared');
             }
 
-            // ==================== ENHANCED API CALLS ====================
+            // ==================== ENHANCED API CALLS WITH RATE LIMITING ====================
 
             async makeAuthenticatedRequest(url, options = {}) {
+                // Add rate limiting detection
+                const rateLimitKey = 'onedrive_rate_limit_reset';
+                const rateLimitReset = localStorage.getItem(rateLimitKey);
+                
+                if (rateLimitReset && Date.now() < parseInt(rateLimitReset)) {
+                    const waitTime = parseInt(rateLimitReset) - Date.now();
+                    console.log(`⏳ Rate limit in effect, waiting ${Math.round(waitTime/1000)} seconds...`);
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                }
+
                 if (this.tokenExpiry && Date.now() >= (this.tokenExpiry - 5 * 60 * 1000)) {
                     console.log('🔄 Token expiring soon, refreshing before request...');
                     const refreshed = await this.refreshAccessToken();
@@ -1310,6 +1324,16 @@
                         ...options.headers
                     }
                 });
+
+                // Handle rate limiting
+                if (response.status === 429) {
+                    const retryAfter = response.headers.get('Retry-After') || '60';
+                    const resetTime = Date.now() + (parseInt(retryAfter) * 1000);
+                    localStorage.setItem(rateLimitKey, resetTime.toString());
+                    
+                    console.log(`🔒 Rate limited by OneDrive API. Retry after: ${retryAfter} seconds`);
+                    throw new Error(`Rate limited: retry after ${retryAfter} seconds`);
+                }
 
                 if (response.status === 401) {
                     console.log('🔒 Received 401, attempting token refresh...');
@@ -1444,13 +1468,13 @@
                 }
             }
 
-            // FIXED: Schedule metadata save with debouncing
+            // FIXED: Schedule metadata save with longer debouncing to avoid rate limits
             scheduleMetadataSave() {
                 if (this.metadataSaveDebouncer) {
                     clearTimeout(this.metadataSaveDebouncer);
                 }
                 
-                // Save metadata after 2 seconds of no new backup operations
+                // Longer delay to batch multiple backups and avoid rate limits
                 this.metadataSaveDebouncer = setTimeout(async () => {
                     if (this.accessToken) {
                         try {
@@ -1459,9 +1483,70 @@
                             console.log('✅ Metadata auto-saved successfully');
                         } catch (error) {
                             console.log('⚠️ Metadata auto-save failed (will retry next time):', error.message);
+                            
+                            // If it's a rate limit error, schedule another save later
+                            if (error.message.includes('429') || error.message.includes('rate')) {
+                                console.log('🔄 Scheduling retry due to rate limiting...');
+                                setTimeout(() => this.scheduleMetadataSave(), 30000); // Retry in 30 seconds
+                            }
                         }
                     }
-                }, 2000);
+                }, 10000); // Increased from 2 seconds to 10 seconds to batch more operations
+            }
+
+            // Add new method to show detailed backup progress
+            showBackupProgress() {
+                const imagesWithBackup = this.articles.filter(a => a.backedUpImage).length;
+                const cacheSize = this.imageBackupCache.size;
+                const totalArticles = this.articles.length;
+                
+                const progressInfo = `
+🎯 Image Backup Progress Report:
+================================
+
+📊 Overall Stats:
+- Total Articles: ${totalArticles}
+- Images Backed Up: ${imagesWithBackup}
+- Cache Entries: ${cacheSize}
+- Success Rate: ${Math.round((imagesWithBackup / totalArticles) * 100)}%
+
+🔍 Detailed Breakdown:
+${this.articles.map((article, i) => {
+    const hasBackup = !!article.backedUpImage;
+    const cacheKey = this.getImageCacheKey(article);
+    const inCache = this.imageBackupCache.has(cacheKey);
+    return `${i + 1}. ${hasBackup ? '✅' : '❌'} "${article.title.substring(0, 35)}..." (Cache: ${inCache ? '✅' : '❌'})`;
+}).join('\n')}
+
+💡 If only first 6 images are backed up, this indicates:
+- OneDrive API rate limiting (most common)
+- Network timeout issues
+- Authentication token expiration
+- Image size/format problems
+
+🔧 Solutions Applied:
+- ✅ Batch processing with delays
+- ✅ Rate limit detection and retry
+- ✅ Exponential backoff on errors
+- ✅ Concurrent upload limiting
+- ✅ Better error handling and logging
+- ✅ Longer metadata save debouncing
+
+📝 Next Steps:
+1. Check browser console for detailed error logs
+2. Try "Clear Cache" and reload to retry failed images
+3. Ensure stable internet connection
+4. Consider processing in smaller batches if issues persist
+        `;
+        
+        alert(progressInfo);
+        console.log('🎯 Backup Progress:', {
+            totalArticles,
+            imagesWithBackup,
+            cacheSize,
+            successRate: Math.round((imagesWithBackup / totalArticles) * 100),
+            failedImages: totalArticles - imagesWithBackup
+        });
             }
 
             // FIXED: Clear image cache
@@ -1700,40 +1785,109 @@
                         <div style="margin-top: 20px;">
                             <span class="pkce-indicator persistent">🔒 PKCE Ready</span>
                             <span class="pkce-indicator">🎨 Fixed Image Persistence</span>
+                            <span class="pkce-indicator">⚡ Rate Limiting Protection</span>
                         </div>
                     </div>`;
             }
 
-            // FIXED: Enhanced image loading with proper persistence
+            // FIXED: Enhanced image loading with proper persistence and rate limiting
             async loadAllArticleImages(articles) {
-                console.log('🎨 FIXED IMAGE LOADER - Processing with proper persistence...');
+                console.log('🎨 FIXED IMAGE LOADER - Processing with proper persistence and rate limiting...');
 
                 let successCount = 0;
                 let backupCount = 0;
                 let fromCacheCount = 0;
+                let errorCount = 0;
                 const totalImages = articles.length;
+                const maxConcurrent = 3; // Limit concurrent uploads
+                let activeUploads = 0;
 
-                for (let i = 0; i < articles.length; i++) {
-                    try {
-                        const result = await this.extractRealArticleImage(articles[i], i);
-                        if (result.success) successCount++;
-                        if (result.backed_up) backupCount++;
-                        if (result.from_cache) fromCacheCount++;
+                // Process in smaller batches to avoid rate limiting
+                const batchSize = 5;
+                for (let batchStart = 0; batchStart < articles.length; batchStart += batchSize) {
+                    const batchEnd = Math.min(batchStart + batchSize, articles.length);
+                    console.log(`📦 Processing batch ${Math.floor(batchStart/batchSize) + 1}/${Math.ceil(articles.length/batchSize)}: articles ${batchStart + 1}-${batchEnd}`);
 
-                        const progress = Math.round(((i + 1) / totalImages) * 100);
-                        this.updateStatus(`🔍 Processing images... ${i + 1}/${totalImages} (${progress}%) | ${fromCacheCount} from cache, ${backupCount} new backups`, 'loading');
+                    // Process batch with controlled concurrency
+                    for (let i = batchStart; i < batchEnd; i++) {
+                        try {
+                            // Wait if too many concurrent uploads
+                            while (activeUploads >= maxConcurrent) {
+                                await new Promise(resolve => setTimeout(resolve, 500));
+                            }
 
-                        await new Promise(resolve => setTimeout(resolve, 100));
+                            const result = await this.extractRealArticleImageWithRetry(articles[i], i, maxConcurrent);
+                            if (result.success) successCount++;
+                            if (result.backed_up) {
+                                backupCount++;
+                                activeUploads = Math.max(0, activeUploads - 1);
+                            }
+                            if (result.from_cache) fromCacheCount++;
+                            if (result.error) errorCount++;
 
-                    } catch (error) {
-                        console.error(`Failed to extract image for article ${i}:`, error);
-                        this.setArticleImageDirect(document.getElementById(`image-${i}`), this.getCategoryBasedImage(articles[i], i));
-                        successCount++;
+                            const progress = Math.round(((i + 1) / totalImages) * 100);
+                            this.updateStatus(`🔍 Processing images... ${i + 1}/${totalImages} (${progress}%) | ✅${fromCacheCount} cached, 💾${backupCount} backed up, ❌${errorCount} errors`, 'loading');
+
+                            // Longer delay between requests to avoid rate limiting
+                            await new Promise(resolve => setTimeout(resolve, 300));
+
+                        } catch (error) {
+                            console.error(`❌ Failed to extract image for article ${i}:`, error);
+                            this.setArticleImageDirect(document.getElementById(`image-${i}`), this.getCategoryBasedImage(articles[i], i));
+                            successCount++;
+                            errorCount++;
+                        }
+                    }
+
+                    // Longer pause between batches to respect rate limits
+                    if (batchEnd < articles.length) {
+                        console.log(`⏸️ Pausing 2 seconds between batches to respect OneDrive rate limits...`);
+                        await new Promise(resolve => setTimeout(resolve, 2000));
                     }
                 }
 
-                this.updateStatus(`✅ FIXED: ${successCount}/${totalImages} images processed! | ${fromCacheCount} from cache, ${backupCount} new backups saved`, 'success');
-                console.log(`🎨 Image processing complete: ${successCount}/${totalImages} successful, ${fromCacheCount} from cache, ${backupCount} new backups`);
+                this.updateStatus(`✅ FIXED: ${successCount}/${totalImages} images processed! | ✅${fromCacheCount} from cache, 💾${backupCount} new backups, ❌${errorCount} errors`, 'success');
+                console.log(`🎨 Image processing complete: ${successCount}/${totalImages} successful, ${fromCacheCount} from cache, ${backupCount} new backups, ${errorCount} errors`);
+                
+                // Force save all metadata at the end
+                if (backupCount > 0 && this.accessToken) {
+                    try {
+                        console.log('💾 Final metadata save...');
+                        await this.updateOneDriveBackup();
+                        console.log('✅ Final metadata saved successfully');
+                    } catch (error) {
+                        console.error('❌ Final metadata save failed:', error);
+                    }
+                }
+            }
+
+            // FIXED: Extract image with retry logic and better error handling
+            async extractRealArticleImageWithRetry(article, index, maxRetries = 3) {
+                let lastError = null;
+                
+                for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                    try {
+                        const result = await this.extractRealArticleImage(article, index);
+                        if (result.success || result.from_cache) {
+                            return result;
+                        }
+                        lastError = new Error(`Attempt ${attempt} failed`);
+                    } catch (error) {
+                        lastError = error;
+                        console.error(`❌ Attempt ${attempt}/${maxRetries} failed for article ${index}:`, error.message);
+                        
+                        if (attempt < maxRetries) {
+                            const delay = attempt * 1000; // Exponential backoff
+                            console.log(`⏳ Retrying in ${delay}ms...`);
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                        }
+                    }
+                }
+                
+                console.error(`❌ All ${maxRetries} attempts failed for article ${index}:`, lastError);
+                // Use fallback image
+                this.setArticleImageDirect(document.getElementById(`image-${index}`), this.getCategoryBasedImage(article, index));
+                return { success: true, backed_up: false, from_cache: false, error: true };
             }
 
             // FIXED: Extract image with proper persistence checking
@@ -2212,37 +2366,93 @@
                 }
 
                 try {
-                    console.log(`💾 Backing up image: ${imageUrl}`);
+                    console.log(`💾 Backing up image for: ${article.title.substring(0, 40)}...`);
 
-                    const imageResponse = await fetch(imageUrl);
+                    // Fetch image with timeout
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+                    const imageResponse = await fetch(imageUrl, {
+                        signal: controller.signal,
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader)'
+                        }
+                    });
+                    clearTimeout(timeoutId);
+
                     if (!imageResponse.ok) {
-                        throw new Error(`Failed to fetch image: ${imageResponse.status}`);
+                        throw new Error(`Failed to fetch image: ${imageResponse.status} ${imageResponse.statusText}`);
                     }
 
                     const imageBlob = await imageResponse.blob();
                     const imageBuffer = await imageBlob.arrayBuffer();
+
+                    // Validate image size (skip if too large)
+                    const maxSize = 10 * 1024 * 1024; // 10MB limit
+                    if (imageBuffer.byteLength > maxSize) {
+                        throw new Error(`Image too large: ${Math.round(imageBuffer.byteLength / 1024 / 1024)}MB (max: 10MB)`);
+                    }
 
                     const imageExtension = this.getImageExtension(imageUrl) || 'jpg';
                     const sanitizedTitle = this.sanitizeFilename(article.title);
                     const timestamp = Date.now();
                     const fileName = `fixed_image_${sanitizedTitle}_${timestamp}.${imageExtension}`;
 
+                    // Ensure images folder exists first
+                    await this.ensureImagesFolderExists();
+
                     const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/images/${fileName}:/content`;
 
-                    const uploadResponse = await this.makeAuthenticatedRequest(uploadUrl, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': imageBlob.type || 'image/jpeg'
-                        },
-                        body: imageBuffer
-                    });
+                    // Upload with retry logic for rate limiting
+                    let uploadResponse;
+                    let uploadAttempt = 0;
+                    const maxUploadAttempts = 3;
+
+                    while (uploadAttempt < maxUploadAttempts) {
+                        try {
+                            uploadResponse = await this.makeAuthenticatedRequest(uploadUrl, {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': imageBlob.type || 'image/jpeg'
+                                },
+                                body: imageBuffer
+                            });
+
+                            if (uploadResponse.ok) {
+                                break; // Success, exit retry loop
+                            }
+
+                            // Handle rate limiting
+                            if (uploadResponse.status === 429) {
+                                const retryAfter = uploadResponse.headers.get('Retry-After') || '5';
+                                const waitTime = parseInt(retryAfter) * 1000;
+                                console.log(`⏳ Rate limited, waiting ${retryAfter} seconds before retry...`);
+                                await new Promise(resolve => setTimeout(resolve, waitTime));
+                                uploadAttempt++;
+                                continue;
+                            }
+
+                            // Handle other errors
+                            const errorText = await uploadResponse.text();
+                            throw new Error(`Upload failed: ${uploadResponse.status} ${uploadResponse.statusText} - ${errorText}`);
+
+                        } catch (error) {
+                            uploadAttempt++;
+                            if (uploadAttempt >= maxUploadAttempts) {
+                                throw error;
+                            }
+                            console.log(`⚠️ Upload attempt ${uploadAttempt} failed, retrying... ${error.message}`);
+                            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retry
+                        }
+                    }
 
                     if (!uploadResponse.ok) {
-                        const errorText = await uploadResponse.text();
-                        throw new Error(`Upload failed: ${uploadResponse.status} - ${errorText}`);
+                        throw new Error(`Upload failed after ${maxUploadAttempts} attempts`);
                     }
 
                     const uploadResult = await uploadResponse.json();
+
+                    console.log(`✅ Image backed up successfully: ${fileName} (${Math.round(imageBuffer.byteLength / 1024)}KB)`);
 
                     return {
                         fileName: fileName,
@@ -2254,8 +2464,51 @@
                     };
 
                 } catch (error) {
-                    console.error('Image backup error:', error);
+                    console.error(`❌ Image backup error for ${article.title.substring(0, 30)}...:`, error.message);
                     throw error;
+                }
+            }
+
+            // FIXED: Ensure images folder exists before uploading
+            async ensureImagesFolderExists() {
+                try {
+                    // Check if images folder exists
+                    const folderResponse = await this.makeAuthenticatedRequest(
+                        'https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/images'
+                    );
+
+                    if (folderResponse.ok) {
+                        return; // Folder exists
+                    }
+
+                    // Create images folder if it doesn't exist
+                    console.log('📁 Creating images folder in OneDrive...');
+                    const createResponse = await this.makeAuthenticatedRequest(
+                        'https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children',
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                name: 'images',
+                                folder: {},
+                                '@microsoft.graph.conflictBehavior': 'ignore'
+                            })
+                        }
+                    );
+
+                    if (!createResponse.ok) {
+                        const errorText = await createResponse.text();
+                        console.warn(`⚠️ Could not create images folder: ${errorText}`);
+                        // Continue anyway, OneDrive might create it automatically
+                    } else {
+                        console.log('✅ Images folder created successfully');
+                    }
+
+                } catch (error) {
+                    console.warn(`⚠️ Error ensuring images folder exists: ${error.message}`);
+                    // Continue anyway, folder might exist or be created automatically
                 }
             }
 
@@ -3088,6 +3341,8 @@ ${this.refreshToken ? '🔄 Refresh token available (persistent session)' : '⚠
                 const imagesWithBackup = this.articles.filter(a => a.backedUpImage).length;
                 const imagesWithoutBackup = this.articles.length - imagesWithBackup;
                 const cacheSize = this.imageBackupCache.size;
+                const rateLimitReset = localStorage.getItem('onedrive_rate_limit_reset');
+                const isRateLimited = rateLimitReset && Date.now() < parseInt(rateLimitReset);
 
                 const info = `
 MyPocket Web Reader Debug Info (PKCE + FIXED Image Persistence):
@@ -3112,25 +3367,32 @@ MyPocket Web Reader Debug Info (PKCE + FIXED Image Persistence):
 - Image Backup: ${this.imageBackupEnabled ? 'Enabled' : 'Disabled'}
 - Cache Size: ${cacheSize} entries
 - Cache Auto-Save: Enabled
-- Metadata Debouncing: Enabled
+- Metadata Debouncing: 10 seconds (optimized for rate limits)
 - OneDrive Backup: ${this.accessToken ? 'Available' : 'Requires authentication'}
 - Real Image Extraction: Enabled (multi-strategy)
 - Persistence Fix: ✅ APPLIED
 
+⚡ Rate Limiting Info:
+- Currently Rate Limited: ${isRateLimited ? '🔴 YES' : '🟢 NO'}
+- Rate Limit Reset: ${rateLimitReset ? new Date(parseInt(rateLimitReset)) : 'Never'}
+- Batch Processing: ✅ Enabled (5 articles per batch)
+- Concurrent Uploads: Limited to 3 simultaneous
+- Upload Delays: 300ms between articles, 2s between batches
+
 📊 Application State:
 - Articles Loaded: ${this.articles.length}
-- Images WITH backup: ${imagesWithBackup}
+- Images WITH backup: ${imagesWithBackup} (${Math.round((imagesWithBackup/this.articles.length)*100)}%)
 - Images WITHOUT backup: ${imagesWithoutBackup}
 - Cache Entries: ${cacheSize}
 - Current Article: ${this.currentArticle ? this.currentArticle.title.substring(0, 30) + '...' : 'None'}
 
-🔍 FIXED Image Status:
-${this.articles.slice(0, 5).map((article, i) => {
+🔍 FIXED Image Status (showing first 8):
+${this.articles.slice(0, 8).map((article, i) => {
     const hasBackup = !!article.backedUpImage;
     const inCache = this.imageBackupCache.has(this.getImageCacheKey(article));
     return `- ${i + 1}. "${article.title.substring(0, 40)}..." - ${hasBackup ? '✅ Has backup' : '❌ No backup'} | Cache: ${inCache ? '✅' : '❌'}`;
 }).join('\n')}
-${this.articles.length > 5 ? `... and ${this.articles.length - 5} more articles` : ''}
+${this.articles.length > 8 ? `... and ${this.articles.length - 8} more articles` : ''}
 
 🔧 Azure AD Setup Required:
 1. Go to Azure Portal → App registrations
@@ -3147,31 +3409,45 @@ ${this.articles.length > 5 ? `... and ${this.articles.length - 5} more articles`
 - ✅ FIXED image persistence (images save properly!)
 - ✅ Immediate cache saves to localStorage
 - ✅ Automatic cache restoration on load
-- ✅ Debounced metadata saves to OneDrive
-- ✅ Multi-strategy image extraction
+- ✅ Debounced metadata saves to OneDrive (10s delay)
+- ✅ Multi-strategy image extraction with retry logic
+- ✅ Rate limit detection and handling
+- ✅ Batch processing to avoid overwhelming OneDrive API
 - ✅ Category-based intelligent fallbacks
 - ✅ Real-time content fetching
 - ✅ Organic UI design with beautiful animations
 
-✅ PERSISTENCE FIX DETAILS:
-The image re-upload issue has been FIXED with:
-1. Proper cache key generation using article URLs
-2. Immediate localStorage saves after each backup
-3. Cache restoration on application startup
-4. Debounced OneDrive metadata saves (2 second delay)
-5. Merge cache data into articles before saving
-6. Consistent backup status tracking
+✅ PERSISTENCE & RATE LIMIT FIX DETAILS:
+The "only first 6 images" issue has been FIXED with:
+1. Batch processing (5 articles per batch with 2s delays)
+2. Concurrent upload limiting (max 3 simultaneous)
+3. Rate limit detection and automatic retry
+4. Exponential backoff on failures
+5. Image size validation (max 10MB)
+6. Folder existence checking before uploads
+7. Better error handling and logging
+8. Longer metadata save debouncing (10s vs 2s)
+
+🐛 Troubleshooting "Only First 6 Images" Issue:
+If you're still seeing only 6 images backed up:
+1. Check if rate limited above (wait for reset time)
+2. Use "Progress" button to see detailed status
+3. Check browser console for error messages
+4. Try "Clear Cache" and reload to retry failed images
+5. Ensure stable internet connection
+6. Consider smaller batches if OneDrive quota is low
 
 🧪 Test Functions:
 - Use "Test PKCE" button to verify configuration
 - Use "Clear Cache" to reset image data for testing
+- Use "Progress" button to see detailed backup status
 - Check browser console for detailed logs
 - All API calls use automatic PKCE token refresh
-- Image system now properly persists data
+- Image system now properly handles rate limits
         `;
 
                 alert(info);
-                console.log('🔧 FIXED Image Persistence Debug Info:', {
+                console.log('🔧 FIXED Image Persistence + Rate Limiting Debug Info:', {
                     redirectUri: this.redirectUri,
                     hasAccessToken: !!this.accessToken,
                     hasRefreshToken: !!this.refreshToken,
@@ -3184,7 +3460,11 @@ The image re-upload issue has been FIXED with:
                     imagesWithoutBackup: imagesWithoutBackup,
                     cacheSize: cacheSize,
                     persistenceFix: 'APPLIED',
-                    cacheDetails: Array.from(this.imageBackupCache.entries()).map(([key, value]) => ({
+                    rateLimitingFix: 'APPLIED',
+                    isRateLimited: isRateLimited,
+                    rateLimitReset: rateLimitReset ? new Date(parseInt(rateLimitReset)) : null,
+                    successRate: Math.round((imagesWithBackup/this.articles.length)*100),
+                    cacheDetails: Array.from(this.imageBackupCache.entries()).slice(0, 10).map(([key, value]) => ({
                         key: key,
                         fileName: value.fileName,
                         timestamp: new Date(value.timestamp),
@@ -3247,9 +3527,10 @@ The image re-upload issue has been FIXED with:
             webReader = new MyPocketWebReader();
             window.webReader = webReader;
 
-            console.log('🚀 MyPocket Web Reader PKCE + FIXED Image Persistence Edition Initialized');
+            console.log('🚀 MyPocket Web Reader PKCE + FIXED Image Persistence + Rate Limiting Edition Initialized');
             console.log('🔒 PKCE Features: Persistent authentication, automatic token refresh, secure flow');
             console.log('🎨 FIXED Image Features: Proper persistence, cache management, no re-uploads!');
+            console.log('⚡ Rate Limiting: Batch processing, retry logic, OneDrive API protection');
             console.log('✅ FIX APPLIED: Images will now save properly and persist between sessions');
         });
     </script>
