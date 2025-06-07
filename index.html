@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPocket - Web Reader (INSTANT Display + FULL OneDrive Integration + PKCE + Smart Backup)</title>
+    <title>MyPocket - Web Reader (INSTANT Display + FULL OneDrive Integration + PKCE)</title>
     <style>
         * {
             margin: 0;
@@ -417,10 +417,6 @@
             background: rgba(255, 87, 34, 0.9);
         }
 
-        .backup-indicator.skipped {
-            background: rgba(108, 117, 125, 0.9);
-        }
-
         /* Compact content area with organic feel */
         .article-content {
             padding: 20px;
@@ -726,12 +722,6 @@
             border-color: rgba(255, 193, 7, 0.2);
         }
 
-        .feature-indicator.smart {
-            background: rgba(138, 43, 226, 0.1);
-            color: #8a2be2;
-            border-color: rgba(138, 43, 226, 0.2);
-        }
-
         /* Responsive */
         @media (max-width: 768px) {
             .container {
@@ -869,7 +859,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    🚀 MyPocket - COMPLETE + Smart Backup
+                    🚀 MyPocket - INSTANT + OneDrive Complete
                 </div>
                 <div class="header-actions">
                     <button id="connectBtn" class="btn btn-primary">
@@ -914,7 +904,7 @@
 
     <!-- Status -->
     <div class="status" id="status">
-        Connect to OneDrive with PKCE authentication + INSTANT display + FULL OneDrive integration + Smart backup (no re-uploads)
+        Connect to OneDrive with PKCE authentication + INSTANT display + FULL OneDrive backup integration
     </div>
 
     <!-- Articles -->
@@ -923,14 +913,13 @@
             <div id="articlesContainer">
                 <div class="empty-state">
                     <div class="empty-state-icon">🚀</div>
-                    <h3>Welcome to MyPocket - Complete Edition + Smart Backup</h3>
-                    <p>INSTANT image display + FULL OneDrive integration + Real content fetching + Smart backup (no re-uploads)!</p>
+                    <h3>Welcome to MyPocket - Complete Edition</h3>
+                    <p>INSTANT image display + FULL OneDrive integration + Real content fetching!</p>
                     <div style="margin-top: 20px;">
                         <span class="feature-indicator persistent">🔒 PKCE Enabled</span>
                         <span class="feature-indicator instant">⚡ INSTANT Display</span>
                         <span class="feature-indicator">☁️ OneDrive Backup</span>
                         <span class="feature-indicator">🌐 Content Fetching</span>
-                        <span class="feature-indicator smart">🧠 Smart Backup</span>
                     </div>
                 </div>
             </div>
@@ -965,7 +954,7 @@
             constructor() {
                 this.clientId = '436e8796-8c40-47c3-9ad5-b8882f3ef7f7';
                 this.redirectUri = this.getRedirectUri();
-                console.log('🚀 COMPLETE EDITION + SMART BACKUP Redirect URI:', this.redirectUri);
+                console.log('🚀 COMPLETE EDITION Redirect URI:', this.redirectUri);
 
                 // PKCE & Token Management
                 this.accessToken = null;
@@ -984,9 +973,6 @@
                 this.preloadedImages = new Map(); // Blob URLs for instant display
                 this.imageBackupCache = new Map(); // OneDrive backup tracking
                 this.metadataSaveDebouncer = null; // OneDrive backup debouncer
-
-                // NEW: Smart backup tracking to prevent re-uploads
-                this.uploadedImages = new Map(); // Track what's already uploaded to OneDrive
 
                 this.init();
             }
@@ -1008,7 +994,6 @@
                 // HYBRID: Initialize both systems
                 await this.initImageDatabase(); // For INSTANT display
                 this.loadImageBackupCache(); // For OneDrive tracking
-                this.loadUploadedImagesCache(); // NEW: For smart backup
 
                 this.checkAuthFromURL();
                 this.loadStoredTokens();
@@ -1027,7 +1012,7 @@
             }
 
             // ==================== HYBRID IMAGE SYSTEM ====================
-            // INSTANT Display (IndexedDB) + OneDrive Backup (Cloud Storage) + SMART BACKUP (No Re-uploads)
+            // INSTANT Display (IndexedDB) + OneDrive Backup (Cloud Storage)
 
             async initImageDatabase() {
                 return new Promise((resolve, reject) => {
@@ -1087,44 +1072,12 @@
                 }
             }
 
-            // NEW: Load smart backup tracking to prevent re-uploads
-            loadUploadedImagesCache() {
-                try {
-                    const uploadedData = localStorage.getItem('mypocket_uploaded_images');
-                    if (uploadedData) {
-                        const parsed = JSON.parse(uploadedData);
-                        this.uploadedImages = new Map(parsed.entries || []);
-                        console.log(`🧠 Loaded ${this.uploadedImages.size} uploaded image records`);
-                    } else {
-                        this.uploadedImages = new Map();
-                    }
-                } catch (error) {
-                    console.error('❌ Uploaded images cache load failed:', error);
-                    this.uploadedImages = new Map();
-                }
-            }
-
-            // NEW: Save smart backup tracking
-            saveUploadedImagesCache() {
-                try {
-                    const uploadedData = {
-                        entries: Array.from(this.uploadedImages.entries()),
-                        timestamp: Date.now(),
-                        version: '1.0-SMART'
-                    };
-                    localStorage.setItem('mypocket_uploaded_images', JSON.stringify(uploadedData));
-                    console.log(`🧠 Saved ${this.uploadedImages.size} uploaded image records`);
-                } catch (error) {
-                    console.error('❌ Uploaded images cache save failed:', error);
-                }
-            }
-
             saveImageBackupCache() {
                 try {
                     const cacheData = {
                         entries: Array.from(this.imageBackupCache.entries()),
                         timestamp: Date.now(),
-                        version: '3.0-HYBRID-SMART'
+                        version: '3.0-HYBRID'
                     };
 
                     localStorage.setItem('mypocket_hybrid_backup_cache', JSON.stringify(cacheData));
@@ -1217,23 +1170,6 @@
                     console.error('❌ Key generation error:', error);
                     const titleKey = article.title.substring(0, 30).replace(/[^a-z0-9]/g, '_').toLowerCase();
                     return `hybrid_fallback_${titleKey}_${Date.now()}`;
-                }
-            }
-
-            // NEW: Generate a unique image fingerprint for smart backup tracking
-            getImageFingerprint(imageUrl, article) {
-                try {
-                    // Create a unique fingerprint based on URL and article info
-                    const combined = `${imageUrl}_${article.title}_${this.getDomain(article.url)}`;
-                    let hash = 0;
-                    for (let i = 0; i < combined.length; i++) {
-                        const char = combined.charCodeAt(i);
-                        hash = ((hash << 5) - hash) + char;
-                        hash = hash & hash;
-                    }
-                    return `img_${Math.abs(hash).toString(36)}`;
-                } catch (error) {
-                    return `img_fallback_${Date.now()}`;
                 }
             }
 
@@ -1425,7 +1361,7 @@
                     sessionStorage.removeItem('pkce_redirect_uri');
                     sessionStorage.removeItem('pkce_state');
 
-                    this.updateStatus('🚀 Connected! INSTANT display + FULL OneDrive integration + Smart backup active.', 'success');
+                    this.updateStatus('🚀 Connected! INSTANT display + FULL OneDrive integration active.', 'success');
                     await this.loadArticles();
 
                 } catch (error) {
@@ -1670,9 +1606,9 @@
                     connectIcon.textContent = '🚀';
 
                     if (this.refreshToken) {
-                        connectText.textContent = 'Connected (Complete + Smart)';
+                        connectText.textContent = 'Connected (Complete)';
                         connectBtn.style.background = 'rgba(39, 174, 96, 0.9)';
-                        connectBtn.title = 'Persistent PKCE + INSTANT display + OneDrive backup + Smart backup (no re-uploads)';
+                        connectBtn.title = 'Persistent PKCE + INSTANT display + OneDrive backup';
                     } else {
                         connectText.textContent = 'Connected';
                         connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
@@ -1684,7 +1620,7 @@
                     connectIcon.textContent = '☁️';
                     connectText.textContent = 'Connect OneDrive';
                     connectBtn.style.background = 'rgba(255,255,255,0.2)';
-                    connectBtn.title = 'Connect with PKCE + INSTANT + OneDrive + Smart backup';
+                    connectBtn.title = 'Connect with PKCE + INSTANT + OneDrive';
                     refreshBtn.style.display = 'none';
                 }
             }
@@ -1743,19 +1679,15 @@
                     }).length;
 
                     const oneDriveBackups = this.articles.filter(a => a.backedUpImage).length;
-                    const uploadedImages = this.uploadedImages.size;
 
                     this.displayArticles(this.articles);
 
-                    let statusMessage = `🚀 COMPLETE + SMART: Loaded ${this.articles.length} articles`;
+                    let statusMessage = `🚀 COMPLETE: Loaded ${this.articles.length} articles`;
                     if (instantImages > 0) {
                         statusMessage += ` (${instantImages} INSTANT)`;
                     }
                     if (oneDriveBackups > 0) {
                         statusMessage += ` (${oneDriveBackups} OneDrive backups)`;
-                    }
-                    if (uploadedImages > 0) {
-                        statusMessage += ` (${uploadedImages} smart tracked)`;
                     }
 
                     this.updateStatus(statusMessage, 'success');
@@ -1796,7 +1728,7 @@
                 console.log(`☁️ Restored ${restoredCount} OneDrive backup entries to articles`);
             }
 
-            // HYBRID: Enhanced displayArticles with both INSTANT + OneDrive status + SMART BACKUP
+            // HYBRID: Enhanced displayArticles with both INSTANT + OneDrive status
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1810,12 +1742,7 @@
                     const hasInstantImage = this.preloadedImages.has(cacheKey);
                     const hasOneDriveBackup = !!article.backedUpImage;
 
-                    // NEW: Check if image is already uploaded to prevent re-upload
-                    const imageFingerprint = this.getBestArticleImage(article) ? 
-                        this.getImageFingerprint(this.getBestArticleImage(article), article) : null;
-                    const alreadyUploaded = imageFingerprint ? this.uploadedImages.has(imageFingerprint) : false;
-
-                    // Determine status priority: INSTANT > OneDrive > Processing/Skip
+                    // Determine status priority: INSTANT > OneDrive > Processing
                     let statusText, statusClass;
                     if (hasInstantImage) {
                         statusText = '⚡ INSTANT';
@@ -1823,9 +1750,6 @@
                     } else if (hasOneDriveBackup) {
                         statusText = '☁️ OneDrive';
                         statusClass = 'backed-up';
-                    } else if (alreadyUploaded) {
-                        statusText = '🧠 Smart Skip';
-                        statusClass = 'skipped';
                     } else {
                         statusText = '🔄 Processing';
                         statusClass = 'processing';
@@ -1855,7 +1779,7 @@
                                 ">
                                     <div style="text-align: center;">
                                         <div style="font-size: 1.5em; margin-bottom: 5px;">🚀</div>
-                                        <div style="font-size: 0.8em;">${hasOneDriveBackup ? 'Loading backup...' : (alreadyUploaded ? 'Smart skipping...' : 'Processing...')}</div>
+                                        <div style="font-size: 0.8em;">${hasOneDriveBackup ? 'Loading backup...' : 'Processing...'}</div>
                                     </div>
                                 </div>
                             `}
@@ -1905,7 +1829,6 @@
                             <span class="feature-indicator instant">⚡ INSTANT Display</span>
                             <span class="feature-indicator">☁️ OneDrive Backup</span>
                             <span class="feature-indicator">🌐 Content Fetching</span>
-                            <span class="feature-indicator smart">🧠 Smart Backup</span>
                         </div>
                     </div>`;
             }
@@ -1946,12 +1869,11 @@
                 }
             }
 
-            // Process new images (not instant, not OneDrive backed up) with SMART BACKUP
+            // Process new images (not instant, not OneDrive backed up)
             async processNewImages(articles) {
-                console.log('🔄 Processing new images with SMART BACKUP...');
+                console.log('🔄 Processing new images...');
 
                 let processedCount = 0;
-                let skippedCount = 0;
 
                 for (let i = 0; i < articles.length; i++) {
                     const article = articles[i];
@@ -1984,15 +1906,11 @@
                         }
                     }
 
-                    // Process new image with SMART BACKUP
+                    // Process new image
                     try {
-                        const result = await this.processNewImageWithSmartBackup(article, i);
+                        const result = await this.processNewImage(article, i);
                         if (result.success) {
-                            if (result.skipped) {
-                                skippedCount++;
-                            } else {
-                                processedCount++;
-                            }
+                            processedCount++;
                         }
 
                         // Delay between processing
@@ -2003,17 +1921,17 @@
                     }
                 }
 
-                this.updateStatus(`🚀 COMPLETE + SMART processing! ${processedCount} images handled, ${skippedCount} smart-skipped.`, 'success');
+                this.updateStatus(`🚀 COMPLETE processing! ${processedCount} images handled.`, 'success');
             }
 
-            // NEW: Process a single new image with SMART BACKUP (no re-uploads)
-            async processNewImageWithSmartBackup(article, index) {
+            // Process a single new image with HYBRID storage
+            async processNewImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
                 const indicator = document.getElementById(`backup-${index}`);
 
                 if (!imageElement) return { success: false };
 
-                console.log(`🔄 Processing new image with smart backup: ${article.title.substring(0, 40)}...`);
+                console.log(`🔄 Processing new image: ${article.title.substring(0, 40)}...`);
 
                 try {
                     // Get image URL
@@ -2025,33 +1943,6 @@
 
                     if (!imageUrl) {
                         imageUrl = this.getCategoryBasedImage(article, index);
-                    }
-
-                    // NEW: Check if we've already uploaded this image
-                    const imageFingerprint = this.getImageFingerprint(imageUrl, article);
-                    const alreadyUploaded = this.uploadedImages.has(imageFingerprint);
-
-                    if (alreadyUploaded) {
-                        console.log(`🧠 Smart skip: Image already uploaded for ${article.title.substring(0, 30)}...`);
-                        
-                        // Still display the image, but don't re-upload
-                        imageElement.innerHTML = `
-                            <img src="${imageUrl}" 
-                                 alt="Article image" 
-                                 style="
-                                    width: 100%;
-                                    height: 100%;
-                                    object-fit: cover;
-                                    border-radius: inherit;
-                                 ">
-                        `;
-
-                        if (indicator) {
-                            indicator.textContent = '🧠 Smart Skip';
-                            indicator.className = 'backup-indicator skipped show';
-                        }
-
-                        return { success: true, skipped: true };
                     }
 
                     // Download image as blob for INSTANT storage
@@ -2092,33 +1983,22 @@
                             indicator.className = 'backup-indicator instant show';
                         }
 
-                        // ALSO backup to OneDrive (if connected and not already uploaded)
+                        // ALSO backup to OneDrive (if connected)
                         if (this.imageBackupEnabled && this.accessToken) {
                             try {
-                                console.log(`☁️ Also backing up to OneDrive (first time)...`);
+                                console.log(`☁️ Also backing up to OneDrive...`);
                                 const backupInfo = await this.backupImageToOneDrive(imageUrl, article, index);
                                 if (backupInfo) {
                                     this.setImageBackupStatus(article, backupInfo);
-                                    
-                                    // NEW: Mark as uploaded to prevent future re-uploads
-                                    this.uploadedImages.set(imageFingerprint, {
-                                        fileName: backupInfo.fileName,
-                                        fileId: backupInfo.fileId,
-                                        uploadDate: backupInfo.uploadDate,
-                                        imageUrl: imageUrl,
-                                        articleTitle: article.title.substring(0, 50)
-                                    });
-                                    this.saveUploadedImagesCache();
-                                    
-                                    console.log(`☁️ OneDrive backup complete + smart tracked: ${backupInfo.fileName}`);
+                                    console.log(`☁️ OneDrive backup complete: ${backupInfo.fileName}`);
                                 }
                             } catch (error) {
                                 console.log(`⚠️ OneDrive backup failed: ${error.message}`);
                             }
                         }
 
-                        console.log(`✅ HYBRID + SMART processing complete: ${article.title.substring(0, 30)}...`);
-                        return { success: true, skipped: false };
+                        console.log(`✅ HYBRID processing complete: ${article.title.substring(0, 30)}...`);
+                        return { success: true };
                     }
 
                 } catch (error) {
@@ -2143,7 +2023,7 @@
                     indicator.className = 'backup-indicator show';
                 }
 
-                return { success: true, skipped: false };
+                return { success: true };
             }
 
             // Download image as blob for local storage
@@ -2268,7 +2148,7 @@
                         uploadDate: new Date().toISOString(),
                         originalUrl: imageUrl,
                         size: imageBuffer.byteLength,
-                        authMethod: 'PKCE-HYBRID-SMART'
+                        authMethod: 'PKCE-HYBRID'
                     };
 
                 } catch (error) {
@@ -2354,7 +2234,7 @@
                             uploadDate: cachedBackup.uploadDate,
                             originalUrl: cachedBackup.originalUrl,
                             size: cachedBackup.size,
-                            authMethod: cachedBackup.authMethod || 'PKCE-HYBRID-SMART'
+                            authMethod: cachedBackup.authMethod || 'PKCE-HYBRID'
                         };
                     }
                 }
@@ -2380,28 +2260,27 @@
                         imageBackupEnabled: this.imageBackupEnabled
                     },
                     exportDate: new Date().toISOString(),
-                    version: "6.0-HYBRID-COMPLETE-SMART",
+                    version: "6.0-HYBRID-COMPLETE",
                     deviceInfo: {
-                        browser: "Web Reader HYBRID Edition + Smart Backup",
+                        browser: "Web Reader HYBRID Edition",
                         platform: navigator.platform,
                         timestamp: Date.now(),
                         articleCount: this.articles.length,
                         instantImages: this.preloadedImages.size,
                         oneDriveBackups: this.articles.filter(a => a.backedUpImage).length,
                         cacheSize: this.imageBackupCache.size,
-                        smartTracked: this.uploadedImages.size,
                         authMethod: "PKCE",
                         refreshTokenAvailable: !!this.refreshToken,
-                        features: ["INSTANT_DISPLAY", "ONEDRIVE_BACKUP", "CONTENT_FETCHING", "REAL_TIME_EXTRACTION", "SMART_BACKUP"],
-                        systemType: "HYBRID-SMART"
+                        features: ["INSTANT_DISPLAY", "ONEDRIVE_BACKUP", "CONTENT_FETCHING", "REAL_TIME_EXTRACTION"],
+                        systemType: "HYBRID"
                     }
                 };
 
-                const fileName = `mypocket-backup-hybrid-smart-${new Date().toISOString().split('T')[0]}.json`;
+                const fileName = `mypocket-backup-hybrid-${new Date().toISOString().split('T')[0]}.json`;
                 const fileContent = JSON.stringify(backup, null, 2);
 
-                console.log(`☁️ Saving HYBRID + SMART backup: ${backup.articles.length} articles (${Math.round(fileContent.length / 1024)}KB)`);
-                console.log(`☁️ Features: ${backup.deviceInfo.instantImages} instant + ${backup.deviceInfo.oneDriveBackups} OneDrive backups + ${backup.deviceInfo.smartTracked} smart tracked`);
+                console.log(`☁️ Saving HYBRID backup: ${backup.articles.length} articles (${Math.round(fileContent.length / 1024)}KB)`);
+                console.log(`☁️ Features: ${backup.deviceInfo.instantImages} instant + ${backup.deviceInfo.oneDriveBackups} OneDrive backups`);
 
                 const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
 
@@ -2419,7 +2298,7 @@
                 }
 
                 const result = await uploadResponse.json();
-                console.log(`☁️ HYBRID + SMART backup saved successfully`);
+                console.log(`☁️ HYBRID backup saved successfully`);
                 return result;
             }
 
@@ -2925,7 +2804,7 @@
                                     Loading from ${this.getDomain(article.url)}
                                 </p>
                                 <p style="font-size: 0.8em; color: var(--text-secondary);">
-                                    INSTANT images + OneDrive backup + Real-time content + Smart backup...
+                                    INSTANT images + OneDrive backup + Real-time content...
                                 </p>
                             </div>
                         `;
@@ -2935,7 +2814,7 @@
                         if (fetchedContent && fetchedContent.trim()) {
                             content = fetchedContent;
                             console.log('✅ Successfully fetched article content');
-                            this.updateStatus('✅ Article content loaded with HYBRID + SMART system!', 'success');
+                            this.updateStatus('✅ Article content loaded with HYBRID system!', 'success');
                         } else {
                             throw new Error('No content extracted from fetched page');
                         }
@@ -3082,7 +2961,7 @@
                         content = `
                             <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                                 <p style="margin: 0; font-size: 0.9em;">
-                                    <strong>📡 Content fetched with HYBRID + SMART system</strong><br>
+                                    <strong>📡 Content fetched with HYBRID system</strong><br>
                                     This article content was retrieved in real-time from <a href="${url}" target="_blank" style="color: #1976d2;">${this.getDomain(url)}</a>
                                 </p>
                             </div>
@@ -3103,7 +2982,6 @@
             getFallbackContent(article, errorMessage) {
                 const instantImages = this.preloadedImages.size;
                 const oneDriveBackups = this.articles.filter(a => a.backedUpImage).length;
-                const smartTracked = this.uploadedImages.size;
 
                 return `
                     <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -3129,14 +3007,13 @@
                         </div>
                         
                         <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                            <p><strong>🚀 HYBRID + SMART System Status:</strong></p>
-                            <p style="font-size: 0.9em;">⚡ INSTANT images + ☁️ OneDrive backup + 🌐 Real-time fetching + 🧠 Smart backup</p>
+                            <p><strong>🚀 HYBRID System Status:</strong></p>
+                            <p style="font-size: 0.9em;">⚡ INSTANT images + ☁️ OneDrive backup + 🌐 Real-time fetching</p>
                             <p style="font-size: 0.8em;">
                                 INSTANT Images: ${instantImages} | 
                                 OneDrive Backups: ${oneDriveBackups} | 
-                                Smart Tracked: ${smartTracked} |
                                 Refresh Token: ${this.refreshToken ? 'Available' : 'Not available'} |
-                                System: HYBRID + SMART Complete
+                                System: HYBRID Complete
                             </p>
                         </div>
                         
@@ -3150,11 +3027,11 @@
                             <summary style="cursor: pointer; color: #666;">Technical Details</summary>
                             <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
                                 Error: ${errorMessage}<br>
-                                Auth Method: PKCE (HYBRID + SMART Edition)<br>
-                                Image System: INSTANT display + OneDrive backup + Smart tracking<br>
+                                Auth Method: PKCE (HYBRID Edition)<br>
+                                Image System: INSTANT display + OneDrive backup<br>
                                 Content Fetching: Multi-proxy with real-time extraction<br>
-                                Cache Entries: ${instantImages} instant + ${oneDriveBackups} OneDrive + ${smartTracked} smart tracked<br>
-                                Features: Complete HYBRID + SMART system active (no re-uploads)
+                                Cache Entries: ${instantImages} instant + ${oneDriveBackups} OneDrive<br>
+                                Features: Complete HYBRID system active
                             </p>
                         </details>
                     </div>
@@ -3226,14 +3103,6 @@
                         this.imageBackupCache.delete(cacheKey);
                         this.saveImageBackupCache();
 
-                        // Clean up smart tracking
-                        const imageUrl = this.getBestArticleImage(article);
-                        if (imageUrl) {
-                            const imageFingerprint = this.getImageFingerprint(imageUrl, article);
-                            this.uploadedImages.delete(imageFingerprint);
-                            this.saveUploadedImagesCache();
-                        }
-
                         this.articles.splice(index, 1);
 
                         if (this.accessToken) {
@@ -3271,7 +3140,6 @@
             createArticleHTML(article) {
                 const instantImages = this.preloadedImages.size;
                 const oneDriveBackups = this.articles.filter(a => a.backedUpImage).length;
-                const smartTracked = this.uploadedImages.size;
 
                 return `<!DOCTYPE html>
 <html lang="en">
@@ -3352,15 +3220,6 @@
             display: inline-block;
             margin: 10px 0;
         }
-        .smart-badge {
-            background: #f3e5f5;
-            color: #4a148c;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 0.8em;
-            display: inline-block;
-            margin: 10px 0;
-        }
     </style>
 </head>
 <body>
@@ -3374,21 +3233,20 @@
             <div class="system-badge">🔒 PKCE Authentication</div>
             <div class="instant-badge">⚡ INSTANT Display System</div>
             <div class="feature-badge">☁️ OneDrive Backup Integration</div>
-            <div class="smart-badge">🧠 Smart Backup (No Re-uploads)</div>
         </div>
     </div>
     <div class="content">
         ${article.content || article.excerpt || 'Content not available'}
     </div>
     <div class="footer">
-        <p><strong>✨ Exported from MyPocket Web Reader (HYBRID Complete + Smart Backup Edition)</strong></p>
+        <p><strong>✨ Exported from MyPocket Web Reader (HYBRID Complete Edition)</strong></p>
         <p>Original URL: <a href="${article.url}" style="color: #ee5a24;">${article.url}</a></p>
         <p>Export Date: ${new Date().toLocaleDateString()}</p>
         <p>Authentication: PKCE (Authorization Code Flow with Proof Key for Code Exchange)</p>
-        <p>Image System: HYBRID - INSTANT display (${instantImages}) + OneDrive backup (${oneDriveBackups}) + Smart tracking (${smartTracked})</p>
+        <p>Image System: HYBRID - INSTANT display (${instantImages}) + OneDrive backup (${oneDriveBackups})</p>
         <p>Content System: Real-time fetching with multi-proxy support</p>
-        <p>Session: Persistent with auto-refresh | Features: Complete integration + Smart backup (no re-uploads)</p>
-        <p>Technology: IndexedDB + OneDrive + CORS proxies + Category fallbacks + Smart upload tracking</p>
+        <p>Session: Persistent with auto-refresh | Features: Complete integration</p>
+        <p>Technology: IndexedDB + OneDrive + CORS proxies + Category fallbacks</p>
     </div>
 </body>
 </html>`;
@@ -3413,18 +3271,16 @@
             showBackupProgress() {
                 const instantImages = this.preloadedImages.size;
                 const oneDriveBackups = this.articles.filter(a => a.backedUpImage).length;
-                const smartTracked = this.uploadedImages.size;
                 const totalArticles = this.articles.length;
 
                 const progressInfo = `
-🚀 HYBRID + SMART System Progress Report:
-========================================
+🚀 HYBRID System Progress Report:
+=================================
 
 📊 Overall Stats:
 - Total Articles: ${totalArticles}
 - ⚡ INSTANT Images: ${instantImages}
 - ☁️ OneDrive Backups: ${oneDriveBackups}
-- 🧠 Smart Tracked: ${smartTracked}
 - Combined Coverage: ${Math.round(((instantImages + oneDriveBackups) / totalArticles) * 100)}%
 
 🔍 Detailed Status:
@@ -3432,21 +3288,15 @@ ${this.articles.map((article, i) => {
                     const cacheKey = this.getImageCacheKey(article);
                     const hasInstant = this.preloadedImages.has(cacheKey);
                     const hasOneDrive = !!article.backedUpImage;
-                    const imageUrl = this.getBestArticleImage(article);
-                    const isSmartTracked = imageUrl ? this.uploadedImages.has(this.getImageFingerprint(imageUrl, article)) : false;
-                    
                     let status = '🔄 Processing';
                     if (hasInstant) status = '⚡ INSTANT';
                     else if (hasOneDrive) status = '☁️ OneDrive';
-                    else if (isSmartTracked) status = '🧠 Smart Skipped';
-                    
                     return `${i + 1}. ${status} "${article.title.substring(0, 35)}..."`;
                 }).join('\n')}
 
-🚀 HYBRID + SMART SYSTEM FEATURES:
+🚀 HYBRID SYSTEM FEATURES:
 - ✅ INSTANT display via IndexedDB + blob URLs
 - ✅ OneDrive cloud backup for persistence
-- ✅ Smart backup tracking (no re-uploads)
 - ✅ Real-time content fetching with multi-proxy
 - ✅ Advanced image extraction strategies
 - ✅ Category-based intelligent fallbacks
@@ -3454,21 +3304,20 @@ ${this.articles.map((article, i) => {
 - ✅ Rate limiting protection and retry logic
 - ✅ Full export functionality with metadata
 
-⚡ PERFORMANCE + EFFICIENCY GUARANTEE:
+⚡ PERFORMANCE GUARANTEE:
 - INSTANT images appear immediately (0ms load time)
 - OneDrive backups provide cloud persistence
-- Smart tracking prevents unnecessary re-uploads
 - Real-time content fetching for full articles
-- Complete system integration with no duplicates
+- Complete system integration with all features
 
-This is the COMPLETE HYBRID + SMART solution!
+This is the COMPLETE HYBRID solution!
                 `;
 
                 alert(progressInfo);
             }
 
             async clearImageCache() {
-                if (confirm('Clear ALL image data?\n\nThis will remove:\n- INSTANT images (IndexedDB)\n- OneDrive backup cache\n- Smart upload tracking\n- All locally stored image data\n\nImages will need to be re-processed.')) {
+                if (confirm('Clear ALL image data?\n\nThis will remove:\n- INSTANT images (IndexedDB)\n- OneDrive backup cache\n- All locally stored image data\n\nImages will need to be re-processed.')) {
                     // Clear INSTANT IndexedDB
                     if (this.db) {
                         const transaction = this.db.transaction(['instant_images'], 'readwrite');
@@ -3484,17 +3333,15 @@ This is the COMPLETE HYBRID + SMART solution!
                     // Clear all caches
                     this.preloadedImages.clear();
                     this.imageBackupCache.clear();
-                    this.uploadedImages.clear();
                     localStorage.removeItem('mypocket_hybrid_backup_cache');
-                    localStorage.removeItem('mypocket_uploaded_images');
 
                     // Clear from articles
                     this.articles.forEach(article => {
                         delete article.backedUpImage;
                     });
 
-                    console.log('🗑️ HYBRID + SMART image cache cleared');
-                    this.updateStatus('🗑️ All image data cleared. HYBRID + SMART system will re-process images.', 'success');
+                    console.log('🗑️ HYBRID image cache cleared');
+                    this.updateStatus('🗑️ All image data cleared. HYBRID system will re-process images.', 'success');
 
                     if (this.articles.length > 0) {
                         this.displayArticles(this.articles);
@@ -3505,32 +3352,29 @@ This is the COMPLETE HYBRID + SMART solution!
             async testPKCEConfig() {
                 const instantImages = this.preloadedImages.size;
                 const oneDriveBackups = this.articles.filter(a => a.backedUpImage).length;
-                const smartTracked = this.uploadedImages.size;
 
-                const results = `🧪 HYBRID + SMART System Test Results:
+                const results = `🧪 HYBRID System Test Results:
 
 ✅ PKCE authentication: Available
 ✅ Redirect URI: ${this.redirectUri}
 ✅ Client ID: ${this.clientId}
 ✅ ⚡ INSTANT display: ${this.db ? 'Enabled' : 'Not available'} (${instantImages} images)
 ✅ ☁️ OneDrive backup: ${this.accessToken ? 'Connected' : 'Requires auth'} (${oneDriveBackups} backups)
-✅ 🧠 Smart tracking: Enabled (${smartTracked} tracked, prevents re-uploads)
 ✅ 🌐 Content fetching: Multi-proxy system ready
 ✅ IndexedDB: ${this.db ? 'Connected' : 'Not available'}
 
 ${this.accessToken ? '🔒 Currently authenticated with PKCE' : '☁️ Not authenticated'}
 ${this.refreshToken ? '🔄 Persistent session with auto-refresh' : '⚠️ No refresh token'}
 
-🚀 HYBRID + SMART SYSTEM COMPLETE:
+🚀 HYBRID SYSTEM COMPLETE:
 - INSTANT image display for zero-load-time experience
 - OneDrive cloud backup for persistence across devices  
-- Smart upload tracking prevents duplicate uploads
 - Real-time content fetching from any website
 - Advanced image extraction with intelligent fallbacks
 - Complete PKCE authentication with token refresh
 - Full export functionality with rich metadata
 
-This is the COMPLETE solution with smart backup optimization!`;
+This is the COMPLETE solution combining all features!`;
 
                 alert(results);
             }
@@ -3538,19 +3382,17 @@ This is the COMPLETE solution with smart backup optimization!`;
             showDebugInfo() {
                 const instantImages = this.preloadedImages.size;
                 const oneDriveBackups = this.articles.filter(a => a.backedUpImage).length;
-                const smartTracked = this.uploadedImages.size;
                 const totalArticles = this.articles.length;
                 const rateLimitReset = localStorage.getItem('onedrive_rate_limit_reset');
                 const isRateLimited = rateLimitReset && Date.now() < parseInt(rateLimitReset);
 
                 const info = `
-MyPocket Web Reader Debug Info (HYBRID Complete + Smart Backup Edition):
-========================================================================
+MyPocket Web Reader Debug Info (HYBRID Complete Edition):
+=========================================================
 
-🚀 HYBRID + SMART Image System:
+🚀 HYBRID Image System:
 - ⚡ INSTANT Display: IndexedDB + blob URLs (${instantImages} images)
 - ☁️ OneDrive Backup: Cloud storage + metadata (${oneDriveBackups} backups)
-- 🧠 Smart Tracking: Upload prevention (${smartTracked} tracked)
 - 🌐 Content Fetching: Multi-proxy real-time extraction
 - Combined Coverage: ${Math.round(((instantImages + oneDriveBackups) / totalArticles) * 100)}%
 
@@ -3558,7 +3400,6 @@ MyPocket Web Reader Debug Info (HYBRID Complete + Smart Backup Edition):
 - Articles Loaded: ${totalArticles}
 - ⚡ INSTANT Images: ${instantImages}
 - ☁️ OneDrive Backups: ${oneDriveBackups} 
-- 🧠 Smart Tracked: ${smartTracked}
 - Processing Required: ${totalArticles - Math.max(instantImages, oneDriveBackups)}
 
 🔐 PKCE Authentication:
@@ -3582,13 +3423,12 @@ MyPocket Web Reader Debug Info (HYBRID Complete + Smart Backup Edition):
 
 💾 Storage Systems:
 - IndexedDB: ${this.db ? '✅ Connected' : '❌ Not available'}
-- localStorage: ✅ OneDrive cache + Smart tracking
+- localStorage: ✅ OneDrive cache
 - Memory: ✅ Blob URLs for instant display
 
-🚀 HYBRID + SMART FEATURES ACTIVE:
+🚀 HYBRID FEATURES ACTIVE:
 - ✅ INSTANT image display (0ms load time)
 - ✅ OneDrive cloud backup and sync
-- ✅ Smart upload tracking (prevents re-uploads)
 - ✅ Real-time article content fetching
 - ✅ Advanced website image extraction
 - ✅ PKCE authentication with auto-refresh
@@ -3598,11 +3438,11 @@ MyPocket Web Reader Debug Info (HYBRID Complete + Smart Backup Edition):
 - ✅ Dark mode and responsive design
 - ✅ Search and filtering capabilities
 
-This is the COMPLETE HYBRID + SMART solution with ALL features + no duplicate uploads!
+This is the COMPLETE HYBRID solution with ALL features!
                 `;
 
                 alert(info);
-                console.log('🚀 HYBRID + SMART Debug Info:', {
+                console.log('🚀 HYBRID Debug Info:', {
                     redirectUri: this.redirectUri,
                     hasAccessToken: !!this.accessToken,
                     hasRefreshToken: !!this.refreshToken,
@@ -3610,10 +3450,9 @@ This is the COMPLETE HYBRID + SMART solution with ALL features + no duplicate up
                     articlesCount: totalArticles,
                     instantImages: instantImages,
                     oneDriveBackups: oneDriveBackups,
-                    smartTracked: smartTracked,
                     authMethod: 'PKCE',
-                    systemType: 'HYBRID-COMPLETE-SMART',
-                    features: ['INSTANT_DISPLAY', 'ONEDRIVE_BACKUP', 'SMART_TRACKING', 'CONTENT_FETCHING', 'REAL_TIME_EXTRACTION'],
+                    systemType: 'HYBRID-COMPLETE',
+                    features: ['INSTANT_DISPLAY', 'ONEDRIVE_BACKUP', 'CONTENT_FETCHING', 'REAL_TIME_EXTRACTION'],
                     isRateLimited: isRateLimited,
                     hasIndexedDB: !!this.db,
                     combinedCoverage: Math.round(((instantImages + oneDriveBackups) / totalArticles) * 100)
@@ -3674,13 +3513,12 @@ This is the COMPLETE HYBRID + SMART solution with ALL features + no duplicate up
             webReader = new MyPocketWebReader();
             window.webReader = webReader;
 
-            console.log('🚀 MyPocket Web Reader HYBRID Complete + Smart Backup Edition Initialized');
+            console.log('🚀 MyPocket Web Reader HYBRID Complete Edition Initialized');
             console.log('🔒 PKCE Features: Persistent authentication, automatic token refresh, secure flow');
             console.log('⚡ INSTANT Features: IndexedDB storage, blob URLs, zero-load-time display');
             console.log('☁️ OneDrive Features: Cloud backup, metadata sync, persistent storage');
-            console.log('🧠 Smart Features: Upload tracking, duplicate prevention, bandwidth optimization');
             console.log('🌐 Content Features: Real-time fetching, multi-proxy, advanced extraction');
-            console.log('✅ HYBRID + SMART COMPLETE: ALL features integrated with smart backup optimization!');
+            console.log('✅ HYBRID COMPLETE: ALL features integrated in one system!');
         });
     </script>
 </body>
