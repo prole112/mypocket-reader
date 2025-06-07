@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPocket - Immediate Display (No Processing States)</title>
+    <title>MyPocket - Smart Web Fetching + Local Cache</title>
     <style>
         * {
             margin: 0;
@@ -670,7 +670,7 @@
             border-color: rgba(0, 123, 255, 0.2);
         }
 
-        .feature-indicator.instant {
+        .feature-indicator.smart {
             background: rgba(255, 193, 7, 0.1);
             color: #ff6b00;
             border-color: rgba(255, 193, 7, 0.2);
@@ -799,7 +799,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    🚀 MyPocket - Immediate Display
+                    🌐 MyPocket - Smart Web Fetching
                 </div>
                 <div class="header-actions">
                     <button id="connectBtn" class="btn btn-primary">
@@ -838,7 +838,7 @@
 
     <!-- Status -->
     <div class="status" id="status">
-        Connect to OneDrive for immediate image display + persistent backup
+        Smart web fetching + local cache + selective OneDrive backup
     </div>
 
     <!-- Articles -->
@@ -846,14 +846,14 @@
         <div class="container">
             <div id="articlesContainer">
                 <div class="empty-state">
-                    <div class="empty-state-icon">🚀</div>
-                    <h3>Welcome to MyPocket - Immediate Display</h3>
-                    <p>Images appear instantly when available. No processing states!</p>
+                    <div class="empty-state-icon">🌐</div>
+                    <h3>Welcome to MyPocket - Smart Web Fetching</h3>
+                    <p>Fetches from original websites, caches locally, backs up once to OneDrive!</p>
                     <div style="margin-top: 20px;">
                         <span class="feature-indicator persistent">🔒 PKCE Enabled</span>
-                        <span class="feature-indicator instant">⚡ Immediate Display</span>
-                        <span class="feature-indicator">☁️ OneDrive Backup</span>
-                        <span class="feature-indicator">🌐 Content Fetching</span>
+                        <span class="feature-indicator smart">🌐 Smart Fetching</span>
+                        <span class="feature-indicator">💾 Local Cache</span>
+                        <span class="feature-indicator">☁️ Smart Backup</span>
                     </div>
                 </div>
             </div>
@@ -888,7 +888,7 @@
             constructor() {
                 this.clientId = '436e8796-8c40-47c3-9ad5-b8882f3ef7f7';
                 this.redirectUri = this.getRedirectUri();
-                console.log('🚀 IMMEDIATE DISPLAY Redirect URI:', this.redirectUri);
+                console.log('🌐 SMART WEB FETCHING Redirect URI:', this.redirectUri);
 
                 // PKCE & Token Management
                 this.accessToken = null;
@@ -901,10 +901,10 @@
                 this.articles = [];
                 this.currentArticle = null;
 
-                // SIMPLIFIED SYSTEM: Immediate display with background caching
-                this.db = null; // IndexedDB for background caching
-                this.imageCache = new Map(); // Image URLs ready for immediate display
-                this.backupCache = new Map(); // OneDrive backup tracking
+                // SMART CACHING SYSTEM
+                this.db = null; // IndexedDB for local image storage
+                this.imageCache = new Map(); // URL cache for immediate lookup
+                this.backupStatus = new Map(); // OneDrive backup tracking (to avoid re-uploads)
 
                 this.init();
             }
@@ -923,7 +923,7 @@
             async init() {
                 this.setupEventListeners();
                 await this.initImageDatabase();
-                this.loadImageCache();
+                this.loadCaches();
                 this.checkAuthFromURL();
                 this.loadStoredTokens();
                 this.loadThemePreference();
@@ -937,70 +937,70 @@
                 document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
             }
 
-            // ==================== SIMPLIFIED IMAGE SYSTEM ====================
-            // Focus: Immediate display, background caching
+            // ==================== SMART CACHING SYSTEM ====================
 
             async initImageDatabase() {
                 return new Promise((resolve, reject) => {
-                    console.log('⚡ Initializing image database...');
+                    console.log('💾 Initializing smart cache database...');
 
-                    const request = indexedDB.open('MyPocketImages', 1);
+                    const request = indexedDB.open('MyPocketSmartCache', 1);
 
                     request.onerror = () => {
-                        console.error('❌ Failed to initialize image database');
+                        console.error('❌ Failed to initialize cache database');
                         reject(request.error);
                     };
 
                     request.onsuccess = () => {
                         this.db = request.result;
-                        console.log('✅ Image database initialized');
+                        console.log('✅ Smart cache database initialized');
                         resolve();
                     };
 
                     request.onupgradeneeded = (event) => {
                         const db = event.target.result;
 
-                        if (!db.objectStoreNames.contains('images')) {
-                            const imageStore = db.createObjectStore('images', { keyPath: 'id' });
+                        if (!db.objectStoreNames.contains('cached_images')) {
+                            const imageStore = db.createObjectStore('cached_images', { keyPath: 'id' });
                             imageStore.createIndex('articleKey', 'articleKey', { unique: false });
                             imageStore.createIndex('timestamp', 'timestamp', { unique: false });
+                            imageStore.createIndex('source', 'source', { unique: false });
                         }
 
-                        console.log('✅ Image database schema created');
+                        console.log('✅ Smart cache database schema created');
                     };
                 });
             }
 
-            loadImageCache() {
+            loadCaches() {
                 try {
-                    const cacheData = localStorage.getItem('mypocket_image_cache');
+                    const cacheData = localStorage.getItem('mypocket_smart_cache');
                     if (cacheData) {
                         const parsed = JSON.parse(cacheData);
                         this.imageCache = new Map(parsed.images || []);
-                        this.backupCache = new Map(parsed.backups || []);
-                        console.log(`📦 Loaded ${this.imageCache.size} cached images`);
+                        this.backupStatus = new Map(parsed.backups || []);
+                        console.log(`📦 Loaded cache: ${this.imageCache.size} URLs, ${this.backupStatus.size} backups`);
                     }
                 } catch (error) {
                     console.error('❌ Cache load failed:', error);
                     this.imageCache = new Map();
-                    this.backupCache = new Map();
+                    this.backupStatus = new Map();
                 }
             }
 
-            saveImageCache() {
+            saveCaches() {
                 try {
                     const cacheData = {
                         images: Array.from(this.imageCache.entries()),
-                        backups: Array.from(this.backupCache.entries()),
+                        backups: Array.from(this.backupStatus.entries()),
                         timestamp: Date.now()
                     };
-                    localStorage.setItem('mypocket_image_cache', JSON.stringify(cacheData));
+                    localStorage.setItem('mypocket_smart_cache', JSON.stringify(cacheData));
                 } catch (error) {
                     console.error('❌ Cache save failed:', error);
                 }
             }
 
-            // Get consistent cache key
+            // Generate consistent cache key
             getImageCacheKey(article) {
                 try {
                     const url = new URL(article.url);
@@ -1012,10 +1012,10 @@
                         hash = hash & hash;
                     }
                     const titleHash = article.title.substring(0, 20).toLowerCase().replace(/[^a-z0-9]/g, '');
-                    return `img_${Math.abs(hash).toString(36)}_${titleHash}`;
+                    return `smart_${Math.abs(hash).toString(36)}_${titleHash}`;
                 } catch (error) {
                     const titleKey = article.title.substring(0, 30).replace(/[^a-z0-9]/g, '_').toLowerCase();
-                    return `img_fallback_${titleKey}_${Date.now()}`;
+                    return `smart_fallback_${titleKey}_${Date.now()}`;
                 }
             }
 
@@ -1155,7 +1155,7 @@
                     sessionStorage.removeItem('pkce_redirect_uri');
                     sessionStorage.removeItem('pkce_state');
 
-                    this.updateStatus('🚀 Connected! Immediate display active.', 'success');
+                    this.updateStatus('🌐 Connected! Smart web fetching active.', 'success');
                     await this.loadArticles();
 
                 } catch (error) {
@@ -1177,7 +1177,7 @@
 
                 try {
                     const encrypted = btoa(JSON.stringify(tokenData));
-                    localStorage.setItem('mypocket_tokens', encrypted);
+                    localStorage.setItem('mypocket_smart_tokens', encrypted);
                     console.log('💾 Tokens saved with expiry:', new Date(tokenData.expires_at));
                 } catch (error) {
                     console.error('❌ Failed to save tokens:', error);
@@ -1187,7 +1187,7 @@
 
             loadStoredTokens() {
                 try {
-                    const encrypted = localStorage.getItem('mypocket_tokens');
+                    const encrypted = localStorage.getItem('mypocket_smart_tokens');
                     if (!encrypted) {
                         console.log('📭 No stored tokens found');
                         return false;
@@ -1312,7 +1312,7 @@
             }
 
             clearTokens() {
-                localStorage.removeItem('mypocket_tokens');
+                localStorage.removeItem('mypocket_smart_tokens');
                 this.accessToken = null;
                 this.refreshToken = null;
                 this.tokenExpiry = null;
@@ -1379,16 +1379,16 @@
                 const refreshBtn = document.getElementById('refreshBtn');
 
                 if (connected) {
-                    connectIcon.textContent = '🚀';
+                    connectIcon.textContent = '🌐';
                     connectText.textContent = 'Connected';
                     connectBtn.style.background = 'rgba(39, 174, 96, 0.9)';
-                    connectBtn.title = 'PKCE + Immediate display + OneDrive backup';
+                    connectBtn.title = 'PKCE + Smart web fetching + Local cache + OneDrive backup';
                     refreshBtn.style.display = 'inline-flex';
                 } else {
                     connectIcon.textContent = '☁️';
                     connectText.textContent = 'Connect OneDrive';
                     connectBtn.style.background = 'rgba(255,255,255,0.2)';
-                    connectBtn.title = 'Connect with PKCE + Immediate display';
+                    connectBtn.title = 'Connect with PKCE + Smart fetching';
                     refreshBtn.style.display = 'none';
                 }
             }
@@ -1439,9 +1439,9 @@
                     this.articles = backup.articles || [];
 
                     this.displayArticles(this.articles);
-                    this.processImagesInBackground();
+                    this.processImagesSmartly();
 
-                    this.updateStatus(`🚀 Loaded ${this.articles.length} articles with immediate display!`, 'success');
+                    this.updateStatus(`🌐 Loaded ${this.articles.length} articles with smart web fetching!`, 'success');
 
                 } catch (error) {
                     console.error('Error loading articles:', error);
@@ -1449,7 +1449,7 @@
                 }
             }
 
-            // ==================== SIMPLIFIED DISPLAY LOGIC ====================
+            // ==================== SMART IMAGE PROCESSING ====================
 
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
@@ -1463,7 +1463,7 @@
                     return `
                     <div class="article-card" data-index="${index}">
                         <div class="article-image" id="image-${index}">
-                            <!-- Image will be set immediately when available -->
+                            <!-- Smart image will be set based on cache/web/fallback -->
                         </div>
                         <div class="article-content" onclick="webReader.openReader(${index})">
                             <h2 class="article-title">${this.escapeHtml(article.title)}</h2>
@@ -1493,40 +1493,69 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
 
-                // Immediately set images for all articles
-                this.setAllImagesImmediately(articles);
+                // Set initial images immediately
+                this.setInitialImages(articles);
             }
 
-            // KEY IMPROVEMENT: Set all images immediately, no processing states
-            setAllImagesImmediately(articles) {
-                console.log('⚡ Setting images immediately...');
+            async setInitialImages(articles) {
+                console.log('🚀 Setting initial images...');
 
                 for (let i = 0; i < articles.length; i++) {
                     const article = articles[i];
                     const imageElement = document.getElementById(`image-${i}`);
                     const cacheKey = this.getImageCacheKey(article);
 
-                    // Check if we have a cached image URL
+                    // 1. Check local cache first
                     let imageUrl = this.imageCache.get(cacheKey);
 
-                    // If no cached URL, try to get one from article data
+                    // 2. Check if we have a cached blob in IndexedDB
+                    if (!imageUrl && this.db) {
+                        const cachedBlob = await this.getCachedImageBlob(cacheKey);
+                        if (cachedBlob) {
+                            imageUrl = URL.createObjectURL(cachedBlob);
+                            this.imageCache.set(cacheKey, imageUrl);
+                        }
+                    }
+
+                    // 3. Try article's saved image data
                     if (!imageUrl) {
                         imageUrl = this.getBestArticleImage(article);
                     }
 
-                    // If still no URL, use category-based fallback
+                    // 4. Use category-based fallback
                     if (!imageUrl) {
                         imageUrl = this.getCategoryBasedImage(article, i);
                     }
 
                     // Set image immediately
                     if (imageElement && imageUrl) {
-                        this.setImageImmediately(imageElement, imageUrl, cacheKey);
+                        this.setImageImmediately(imageElement, imageUrl);
                     }
                 }
             }
 
-            setImageImmediately(imageElement, imageUrl, cacheKey) {
+            async getCachedImageBlob(cacheKey) {
+                if (!this.db) return null;
+
+                try {
+                    const transaction = this.db.transaction(['cached_images'], 'readonly');
+                    const store = transaction.objectStore('cached_images');
+
+                    return new Promise((resolve, reject) => {
+                        const request = store.get(cacheKey);
+                        request.onsuccess = () => {
+                            const result = request.result;
+                            resolve(result ? result.imageBlob : null);
+                        };
+                        request.onerror = () => reject(request.error);
+                    });
+                } catch (error) {
+                    console.error('Error getting cached image blob:', error);
+                    return null;
+                }
+            }
+
+            setImageImmediately(imageElement, imageUrl) {
                 imageElement.innerHTML = `
                     <img src="${imageUrl}" 
                          alt="Article image" 
@@ -1537,9 +1566,7 @@
                             border-radius: inherit;
                             transition: opacity 0.3s ease;
                          "
-                         onload="
-                            this.style.opacity='1';
-                         " 
+                         onload="this.style.opacity='1';" 
                          onerror="
                             const fallback = webReader.getCategoryBasedImage({url: '${imageUrl}'}, Math.floor(Math.random() * 10));
                             if (this.src !== fallback) {
@@ -1547,107 +1574,119 @@
                             }
                          ">
                 `;
-
-                // Cache the URL for future use
-                this.imageCache.set(cacheKey, imageUrl);
             }
 
-            // Background processing - no UI updates, just caching
-            async processImagesInBackground() {
-                console.log('🔄 Background image processing started...');
+            // SMART PROCESSING: Fetch from web + Cache locally + Backup to OneDrive (once)
+            async processImagesSmartly() {
+                console.log('🌐 Starting smart image processing...');
 
-                // Process images in the background without showing any status
                 for (let i = 0; i < this.articles.length; i++) {
                     const article = this.articles[i];
                     const cacheKey = this.getImageCacheKey(article);
 
-                    // Skip if already cached
+                    // Skip if we already have this cached locally
                     if (this.imageCache.has(cacheKey)) {
                         continue;
                     }
 
                     try {
-                        // Try to get a better image in the background
-                        const betterImageUrl = await this.fetchBetterImageInBackground(article);
+                        // Try to fetch from original website
+                        const webImageUrl = await this.fetchImageFromWebsite(article.url);
                         
-                        if (betterImageUrl) {
-                            // Update cache
-                            this.imageCache.set(cacheKey, betterImageUrl);
-                            
-                            // Update the displayed image if it's not a fallback
-                            const imageElement = document.getElementById(`image-${i}`);
-                            const currentImg = imageElement?.querySelector('img');
-                            
-                            if (currentImg && !currentImg.src.includes('images.unsplash.com')) {
-                                // Only update if current image is not already good
-                                this.setImageImmediately(imageElement, betterImageUrl, cacheKey);
-                            }
+                        if (webImageUrl && this.isValidImageUrl(webImageUrl)) {
+                            console.log(`🌐 Fetched from web: ${webImageUrl}`);
 
-                            // Backup to OneDrive if connected
-                            if (this.accessToken) {
-                                this.backupImageToOneDrive(betterImageUrl, article).catch(error => {
-                                    console.log('⚠️ Background backup failed:', error.message);
+                            // Download and cache locally
+                            const imageBlob = await this.downloadImageAsBlob(webImageUrl);
+                            
+                            if (imageBlob) {
+                                // Cache in IndexedDB
+                                await this.cacheImageLocally(cacheKey, imageBlob, {
+                                    title: article.title,
+                                    url: article.url,
+                                    originalImageUrl: webImageUrl,
+                                    source: 'web',
+                                    timestamp: Date.now()
                                 });
+
+                                // Create blob URL for immediate use
+                                const blobUrl = URL.createObjectURL(imageBlob);
+                                this.imageCache.set(cacheKey, blobUrl);
+
+                                // Update the displayed image
+                                const imageElement = document.getElementById(`image-${i}`);
+                                if (imageElement) {
+                                    this.setImageImmediately(imageElement, blobUrl);
+                                }
+
+                                // Backup to OneDrive (only if not already backed up)
+                                if (this.accessToken && !this.backupStatus.has(cacheKey)) {
+                                    this.backupImageToOneDrive(webImageUrl, article, cacheKey).catch(error => {
+                                        console.log('⚠️ Background backup failed:', error.message);
+                                    });
+                                }
                             }
                         }
 
-                        // Small delay to avoid overwhelming the system
-                        await new Promise(resolve => setTimeout(resolve, 500));
+                        // Small delay to avoid overwhelming websites
+                        await new Promise(resolve => setTimeout(resolve, 1000));
 
                     } catch (error) {
-                        console.log(`⚠️ Background processing failed for article ${i}:`, error.message);
+                        console.log(`⚠️ Smart processing failed for article ${i}:`, error.message);
                     }
                 }
 
-                // Save cache after processing
-                this.saveImageCache();
-                console.log('✅ Background image processing completed');
+                // Save caches after processing
+                this.saveCaches();
+                console.log('✅ Smart image processing completed');
             }
 
-            async fetchBetterImageInBackground(article) {
+            async fetchImageFromWebsite(url) {
                 try {
-                    // Try to extract a real image from the website
-                    const extractedImageUrl = await this.fetchRealImageFromWebsite(article.url);
-                    
-                    if (extractedImageUrl && this.isValidImageUrl(extractedImageUrl)) {
-                        return extractedImageUrl;
+                    console.log(`🌐 Fetching from website: ${url}`);
+
+                    // Try AllOrigins proxy first
+                    try {
+                        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                        const response = await fetch(proxyUrl);
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            const html = data.contents;
+
+                            if (html && html.length > 1000) {
+                                const extractedImageUrl = this.parseHTMLForBestImage(html, url);
+                                if (extractedImageUrl) {
+                                    return extractedImageUrl;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`AllOrigins failed: ${error.message}`);
                     }
+
+                    // Try CORS proxy as fallback
+                    try {
+                        const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                        const response = await fetch(corsProxyUrl);
+
+                        if (response.ok) {
+                            const html = await response.text();
+                            if (html && html.length > 1000) {
+                                const extractedImageUrl = this.parseHTMLForBestImage(html, url);
+                                if (extractedImageUrl) {
+                                    return extractedImageUrl;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`CORS proxy failed: ${error.message}`);
+                    }
+
+                    throw new Error('All proxy methods failed');
+
                 } catch (error) {
-                    console.log('Background fetch failed:', error.message);
-                }
-
-                return null;
-            }
-
-            async fetchRealImageFromWebsite(url) {
-                try {
-                    console.log(`🌐 Background fetching: ${url}`);
-
-                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-                    const response = await fetch(proxyUrl);
-
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch webpage');
-                    }
-
-                    const data = await response.json();
-                    const html = data.contents;
-
-                    if (!html || html.length < 500) {
-                        throw new Error('No substantial HTML content received');
-                    }
-
-                    const extractedImageUrl = this.parseHTMLForBestImage(html, url);
-
-                    if (extractedImageUrl) {
-                        console.log(`🎯 Background found image: ${extractedImageUrl}`);
-                        return extractedImageUrl;
-                    }
-
-                    throw new Error('No suitable image found in webpage');
-
-                } catch (error) {
-                    console.log(`❌ Background extraction failed: ${error.message}`);
+                    console.log(`❌ Website fetch failed: ${error.message}`);
                     throw error;
                 }
             }
@@ -1708,28 +1747,91 @@
                 }
             }
 
-            async backupImageToOneDrive(imageUrl, article) {
+            async downloadImageAsBlob(imageUrl) {
+                try {
+                    const response = await fetch(imageUrl, {
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Smart Fetcher)'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to download image: ${response.status}`);
+                    }
+
+                    const blob = await response.blob();
+
+                    if (!blob.type.startsWith('image/')) {
+                        throw new Error('Downloaded content is not an image');
+                    }
+
+                    return blob;
+                } catch (error) {
+                    console.error('Failed to download image as blob:', error);
+                    return null;
+                }
+            }
+
+            async cacheImageLocally(cacheKey, imageBlob, metadata) {
+                if (!this.db) return false;
+
+                try {
+                    const transaction = this.db.transaction(['cached_images'], 'readwrite');
+                    const store = transaction.objectStore('cached_images');
+
+                    const imageData = {
+                        id: cacheKey,
+                        articleKey: cacheKey,
+                        imageBlob: imageBlob,
+                        metadata: metadata,
+                        timestamp: Date.now(),
+                        size: imageBlob.size
+                    };
+
+                    await new Promise((resolve, reject) => {
+                        const request = store.put(imageData);
+                        request.onsuccess = () => resolve();
+                        request.onerror = () => reject(request.error);
+                    });
+
+                    console.log(`💾 Locally cached: ${metadata.title.substring(0, 30)}...`);
+                    return true;
+                } catch (error) {
+                    console.error('❌ Failed to cache image locally:', error);
+                    return false;
+                }
+            }
+
+            async backupImageToOneDrive(imageUrl, article, cacheKey) {
                 if (!this.accessToken) {
                     throw new Error('Not connected to OneDrive');
                 }
 
+                // Check if already backed up to avoid re-uploading
+                if (this.backupStatus.has(cacheKey)) {
+                    console.log('☁️ Already backed up, skipping upload');
+                    return;
+                }
+
                 try {
+                    console.log(`☁️ Backing up to OneDrive: ${article.title.substring(0, 40)}...`);
+
                     const imageResponse = await fetch(imageUrl);
                     if (!imageResponse.ok) {
-                        throw new Error(`Failed to fetch image: ${imageResponse.status}`);
+                        throw new Error(`Failed to fetch image for backup: ${imageResponse.status}`);
                     }
 
                     const imageBlob = await imageResponse.blob();
                     const imageBuffer = await imageBlob.arrayBuffer();
 
                     if (imageBuffer.byteLength > 10 * 1024 * 1024) {
-                        throw new Error(`Image too large: ${Math.round(imageBuffer.byteLength / 1024 / 1024)}MB`);
+                        throw new Error(`Image too large for backup: ${Math.round(imageBuffer.byteLength / 1024 / 1024)}MB`);
                     }
 
                     const imageExtension = this.getImageExtension(imageUrl) || 'jpg';
                     const sanitizedTitle = this.sanitizeFilename(article.title);
                     const timestamp = Date.now();
-                    const fileName = `image_${sanitizedTitle}_${timestamp}.${imageExtension}`;
+                    const fileName = `smart_${sanitizedTitle}_${timestamp}.${imageExtension}`;
 
                     await this.ensureImagesFolderExists();
 
@@ -1744,13 +1846,13 @@
                     });
 
                     if (!uploadResponse.ok) {
-                        throw new Error(`Upload failed: ${uploadResponse.status}`);
+                        throw new Error(`OneDrive upload failed: ${uploadResponse.status}`);
                     }
 
                     const uploadResult = await uploadResponse.json();
                     
-                    const cacheKey = this.getImageCacheKey(article);
-                    this.backupCache.set(cacheKey, {
+                    // Mark as backed up to prevent re-uploading
+                    this.backupStatus.set(cacheKey, {
                         fileName: fileName,
                         fileId: uploadResult.id,
                         uploadDate: new Date().toISOString(),
@@ -1758,11 +1860,13 @@
                         size: imageBuffer.byteLength
                     });
 
-                    console.log(`☁️ Background backup successful: ${fileName}`);
+                    this.saveCaches(); // Save backup status
+
+                    console.log(`☁️ OneDrive backup successful: ${fileName}`);
                     return uploadResult;
 
                 } catch (error) {
-                    console.error(`❌ Background backup error: ${error.message}`);
+                    console.error(`❌ OneDrive backup error: ${error.message}`);
                     throw error;
                 }
             }
@@ -1805,14 +1909,14 @@
                 const container = document.getElementById('articlesContainer');
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">🚀</div>
+                        <div class="empty-state-icon">🌐</div>
                         <h3>No articles found</h3>
                         <p>Use the MyPocket browser extension to save articles, then refresh this page.</p>
                         <div style="margin-top: 20px;">
                             <span class="feature-indicator persistent">🔒 PKCE Ready</span>
-                            <span class="feature-indicator instant">⚡ Immediate Display</span>
-                            <span class="feature-indicator">☁️ OneDrive Backup</span>
-                            <span class="feature-indicator">🌐 Content Fetching</span>
+                            <span class="feature-indicator smart">🌐 Smart Fetching</span>
+                            <span class="feature-indicator">💾 Local Cache</span>
+                            <span class="feature-indicator">☁️ Smart Backup</span>
                         </div>
                     </div>`;
             }
@@ -2119,7 +2223,7 @@
                         content = `
                             <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                                 <p style="margin: 0; font-size: 0.9em;">
-                                    <strong>📡 Content fetched in real-time</strong><br>
+                                    <strong>🌐 Content fetched from original website</strong><br>
                                     Retrieved from <a href="${url}" target="_blank" style="color: #1976d2;">${this.getDomain(url)}</a>
                                 </p>
                             </div>
@@ -2193,11 +2297,18 @@
                     try {
                         const cacheKey = this.getImageCacheKey(article);
 
-                        // Clean up caches
+                        // Clean up all caches
                         this.imageCache.delete(cacheKey);
-                        this.backupCache.delete(cacheKey);
-                        this.saveImageCache();
+                        this.backupStatus.delete(cacheKey);
 
+                        // Clean up IndexedDB
+                        if (this.db) {
+                            const transaction = this.db.transaction(['cached_images'], 'readwrite');
+                            const store = transaction.objectStore('cached_images');
+                            store.delete(cacheKey);
+                        }
+
+                        this.saveCaches();
                         this.articles.splice(index, 1);
                         this.displayArticles(this.articles);
 
@@ -2284,9 +2395,10 @@
         ${article.content || article.excerpt || 'Content not available'}
     </div>
     <div class="footer">
-        <p><strong>✨ Exported from MyPocket Web Reader (Immediate Display)</strong></p>
+        <p><strong>🌐 Exported from MyPocket Web Reader (Smart Web Fetching)</strong></p>
         <p>Original URL: <a href="${article.url}">${article.url}</a></p>
         <p>Export Date: ${new Date().toLocaleDateString()}</p>
+        <p>Fetching: Original websites + Local cache + Smart OneDrive backup</p>
     </div>
 </body>
 </html>`;
@@ -2309,20 +2421,20 @@
             // ==================== DEBUG & UTILITY METHODS ====================
 
             async clearImageCache() {
-                if (confirm('Clear all image cache data?')) {
+                if (confirm('Clear all cached image data?')) {
                     // Clear IndexedDB
                     if (this.db) {
-                        const transaction = this.db.transaction(['images'], 'readwrite');
-                        const store = transaction.objectStore('images');
+                        const transaction = this.db.transaction(['cached_images'], 'readwrite');
+                        const store = transaction.objectStore('cached_images');
                         store.clear();
                     }
 
                     // Clear memory caches
                     this.imageCache.clear();
-                    this.backupCache.clear();
-                    localStorage.removeItem('mypocket_image_cache');
+                    this.backupStatus.clear();
+                    localStorage.removeItem('mypocket_smart_cache');
 
-                    this.updateStatus('🗑️ Image cache cleared. Will reload fresh images.', 'success');
+                    this.updateStatus('🗑️ Image cache cleared. Will re-fetch from websites.', 'success');
 
                     if (this.articles.length > 0) {
                         this.displayArticles(this.articles);
@@ -2332,13 +2444,13 @@
 
             showDebugInfo() {
                 const info = `
-MyPocket Web Reader Debug Info (Immediate Display):
-==================================================
+MyPocket Web Reader Debug Info (Smart Web Fetching):
+===================================================
 
 📊 Application State:
 - Articles Loaded: ${this.articles.length}
-- Cached Images: ${this.imageCache.size}
-- OneDrive Backups: ${this.backupCache.size}
+- Cached Image URLs: ${this.imageCache.size}
+- OneDrive Backups: ${this.backupStatus.size}
 
 🔐 PKCE Authentication:
 - Connected: ${!!this.accessToken}
@@ -2348,18 +2460,18 @@ MyPocket Web Reader Debug Info (Immediate Display):
 💾 Storage:
 - IndexedDB: ${this.db ? '✅ Connected' : '❌ Not available'}
 - Image Cache: ${this.imageCache.size} entries
-- Backup Cache: ${this.backupCache.size} entries
+- Backup Status: ${this.backupStatus.size} entries
 
-🚀 IMMEDIATE DISPLAY FEATURES:
-- ✅ Images appear instantly when available
-- ✅ No processing states or delays
-- ✅ Background improvement of images
-- ✅ OneDrive cloud backup
+🌐 SMART WEB FETCHING FEATURES:
+- ✅ Fetches images from original websites
+- ✅ Caches locally to avoid re-downloading
+- ✅ Backs up to OneDrive only once (no re-uploads)
+- ✅ Smart duplicate detection
 - ✅ Real-time content fetching
 - ✅ PKCE authentication
 - ✅ Category-based intelligent fallbacks
 
-This system prioritizes immediate display over processing states!
+This system combines web fetching + local caching + smart cloud backup!
                 `;
 
                 alert(info);
@@ -2419,12 +2531,15 @@ This system prioritizes immediate display over processing states!
             webReader = new MyPocketWebReader();
             window.webReader = webReader;
 
-            console.log('🚀 MyPocket Web Reader Immediate Display Edition Initialized');
-            console.log('⚡ Key Feature: Images appear immediately, no processing states!');
-            console.log('🔒 PKCE authentication with persistent sessions');
-            console.log('☁️ Background image improvement and OneDrive backup');
-            console.log('🌐 Real-time content fetching with fallbacks');
-            console.log('✅ SIMPLIFIED: Immediate display prioritized!');
+            console.log('🌐 MyPocket Web Reader Smart Web Fetching Edition Initialized');
+            console.log('🔑 Key Features:');
+            console.log('  • Fetches images from original websites (like old code)');
+            console.log('  • Caches locally so no re-downloading needed');
+            console.log('  • Backs up to OneDrive only once (no re-uploads)');
+            console.log('  • Smart duplicate detection and cache management');
+            console.log('  • PKCE authentication with persistent sessions');
+            console.log('  • Real-time content fetching with fallbacks');
+            console.log('✅ SMART SYSTEM: Web fetching + Local cache + Smart backup!');
         });
     </script>
 </body>
