@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPocket - True Instant Images</title>
+    <title>MyPocket - Original Images + Instant</title>
     <style>
         * {
             margin: 0;
@@ -826,7 +826,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    ⚡ MyPocket - True Instant Images
+                    ⚡ MyPocket - Original Images + Instant
                 </div>
                 <div class="header-actions">
                     <button id="connectBtn" class="btn btn-primary">
@@ -871,7 +871,7 @@
 
     <!-- Status -->
     <div class="status" id="status">
-        Connect to OneDrive for instant image display - no processing delays!
+        Connect to OneDrive for the same great image experience - just instant!
     </div>
 
     <!-- Articles -->
@@ -1102,29 +1102,51 @@
             // ==================== INSTANT IMAGE DISPLAY SYSTEM ====================
 
             getInstantImageUrl(article) {
-                const key = this.getImageCacheKey(article);
+                // Use EXACTLY the same logic as the original code, just return immediately
                 
-                // Priority 1: Article's own saved images (preserve original behavior)
-                const bestArticleImage = this.getBestArticleImage(article);
-                if (bestArticleImage) {
-                    // Cache it for next time
-                    this.cacheImageUrl(article, bestArticleImage, 'article');
-                    return bestArticleImage;
+                // Priority 1: Article's saved images (ORIGINAL BEHAVIOR)
+                if (article.images && article.images.length > 0) {
+                    let bestImage = article.images[0];
+
+                    for (const img of article.images) {
+                        if (img.width && img.height) {
+                            if (img.width >= 300 && img.height >= 150) {
+                                bestImage = img;
+                                break;
+                            }
+                        }
+                    }
+
+                    const imageUrl = bestImage.src || bestImage.url || bestImage;
+                    if (imageUrl) return imageUrl;
                 }
 
-                // Priority 2: OneDrive cache (only if we have an exact match)
-                const oneDriveEntry = this.oneDriveImageCache.get(key);
-                if (oneDriveEntry && oneDriveEntry.url) {
-                    return oneDriveEntry.url;
+                // Priority 2: Featured image (ORIGINAL BEHAVIOR)
+                if (article.featuredImage) {
+                    return article.featuredImage;
                 }
 
-                // Priority 3: Direct URL cache (fast access)
+                // Priority 3: Article image field (ORIGINAL BEHAVIOR)
+                if (article.image) {
+                    return article.image;
+                }
+
+                // Priority 4: Extract from content (ORIGINAL BEHAVIOR)
+                if (article.content) {
+                    const imgMatch = article.content.match(/<img[^>]+src="([^"]+)"/i);
+                    if (imgMatch && imgMatch[1]) {
+                        return imgMatch[1];
+                    }
+                }
+
+                // Priority 5: URL cache (only for extracted images)
+                const key = this.getImageCacheKey(article);
                 const urlEntry = this.imageUrlCache.get(key);
                 if (urlEntry && urlEntry.url) {
                     return urlEntry.url;
                 }
 
-                // Priority 4: Fallback category image
+                // Priority 6: Category fallback (ORIGINAL BEHAVIOR)
                 return this.getCategoryBasedImage(article, 0);
             }
 
@@ -1640,20 +1662,16 @@
 
                     this.articles = backup.articles || [];
 
-                    // ENHANCED: Restore backup info from all caches
+                    // ENHANCED: Restore backup info from backup cache only (not OneDrive images)
                     this.restoreBackupInfoToArticles();
-
-                    // Load OneDrive images for instant display
-                    await this.loadOneDriveImages();
 
                     this.displayArticles(this.articles);
 
                     const urlCacheCount = this.imageUrlCache.size;
-                    const oneDriveCacheCount = this.oneDriveImageCache.size;
 
-                    let statusMessage = `✅ Loaded ${this.articles.length} articles with instant images!`;
-                    if (urlCacheCount > 0 || oneDriveCacheCount > 0) {
-                        statusMessage += ` [${urlCacheCount} cached, ${oneDriveCacheCount} OneDrive]`;
+                    let statusMessage = `✅ Loaded ${this.articles.length} articles with correct images!`;
+                    if (urlCacheCount > 0) {
+                        statusMessage += ` [${urlCacheCount} cached]`;
                     }
 
                     this.updateStatus(statusMessage, 'success');
@@ -1825,35 +1843,35 @@
             }
 
             async silentlyImproveImages(articles) {
-                // Silently load OneDrive images first (with exact matching only)
-                if (this.accessToken) {
-                    await this.loadOneDriveImages();
-                }
+                // Don't load OneDrive images - this was causing random assignments
+                // Instead, just do background extraction and backup like the original
 
-                // Silently replace images only if we have better versions with confident matches
                 for (let i = 0; i < articles.length; i++) {
                     try {
                         const article = articles[i];
                         const imgElement = document.querySelector(`#image-${i} img`);
                         if (!imgElement) continue;
 
+                        // Only try to extract better images if we're showing a fallback
                         const currentSrc = imgElement.src;
-                        const newImageUrl = this.getInstantImageUrl(article);
+                        const isFallback = this.isCategoryBasedImage(currentSrc);
                         
-                        // Only replace if:
-                        // 1. We have a different image URL
-                        // 2. The new image is not a fallback (category-based)
-                        // 3. We're confident it belongs to this article
-                        if (newImageUrl && 
-                            newImageUrl !== currentSrc && 
-                            !this.isCategoryBasedImage(newImageUrl)) {
-                            
-                            // Silently replace the image
-                            imgElement.src = newImageUrl;
-                            console.log(`🔄 Silently improved image for: ${article.title.substring(0, 30)}...`);
+                        if (isFallback) {
+                            // Try to extract real image from website (ORIGINAL BEHAVIOR)
+                            try {
+                                const extractedImage = await this.extractRealImageForArticle(article);
+                                if (extractedImage && extractedImage !== currentSrc) {
+                                    imgElement.src = extractedImage;
+                                    // Cache for next time
+                                    this.cacheImageUrl(article, extractedImage, 'extracted');
+                                    console.log(`🔍 Extracted real image for: ${article.title.substring(0, 30)}...`);
+                                }
+                            } catch (error) {
+                                console.log(`Image extraction failed for ${article.title}: ${error.message}`);
+                            }
                         }
 
-                        // Silent background backup if needed (preserve original behavior)
+                        // Background backup (ORIGINAL BEHAVIOR)
                         if (this.imageBackupEnabled && this.accessToken && !article.backedUpImage) {
                             const imageToBackup = this.getBestImageForBackup(article);
                             if (imageToBackup) {
@@ -1863,17 +1881,15 @@
                                         this.setImageBackupStatus(article, backupInfo);
                                     }
                                 } catch (backupError) {
-                                    // Silent failure - don't show user
                                     console.log(`Silent backup failed for article ${i}: ${backupError.message}`);
                                 }
                             }
                         }
 
                         // Small delay to prevent overwhelming
-                        await new Promise(resolve => setTimeout(resolve, 100));
+                        await new Promise(resolve => setTimeout(resolve, 200));
 
                     } catch (error) {
-                        // Silent failure - continue with other images
                         console.error(`Silent improvement failed for article ${i}:`, error);
                     }
                 }
@@ -1885,18 +1901,47 @@
             }
 
             getBestImageForBackup(article) {
-                // Priority order for backup
-                const bestArticleImage = this.getBestArticleImage(article);
-                if (bestArticleImage) {
-                    return bestArticleImage;
+                // Use the same priority as getInstantImageUrl for consistency
+                
+                // Priority 1: Article's saved images
+                if (article.images && article.images.length > 0) {
+                    let bestImage = article.images[0];
+                    for (const img of article.images) {
+                        if (img.width && img.height && img.width >= 300 && img.height >= 150) {
+                            bestImage = img;
+                            break;
+                        }
+                    }
+                    const imageUrl = bestImage.src || bestImage.url || bestImage;
+                    if (imageUrl) return imageUrl;
+                }
+
+                // Priority 2: Featured image
+                if (article.featuredImage) {
+                    return article.featuredImage;
+                }
+
+                // Priority 3: Article image field
+                if (article.image) {
+                    return article.image;
+                }
+
+                // Priority 4: Extract from content
+                if (article.content) {
+                    const imgMatch = article.content.match(/<img[^>]+src="([^"]+)"/i);
+                    if (imgMatch && imgMatch[1]) {
+                        return imgMatch[1];
+                    }
+                }
+
+                // Priority 5: URL cache
+                const key = this.getImageCacheKey(article);
+                const urlEntry = this.imageUrlCache.get(key);
+                if (urlEntry && urlEntry.url) {
+                    return urlEntry.url;
                 }
                 
-                const instantResult = this.getInstantImageUrl(article);
-                if (instantResult.type !== 'fallback') {
-                    return instantResult.url;
-                }
-                
-                return null;
+                return null; // Don't backup category fallback images
             }
 
             async extractRealImageForArticle(article) {
@@ -3099,7 +3144,7 @@
             // ==================== DEBUG & TEST METHODS ====================
 
             async testPKCEConfig() {
-                console.log('🧪 Testing PKCE + True Instant Images Configuration...');
+                console.log('🧪 Testing PKCE + Original Images + Instant Configuration...');
 
                 try {
                     const codeChallenge = await this.generatePKCE();
@@ -3132,38 +3177,38 @@
                     const oneDriveCacheSize = this.oneDriveImageCache.size;
                     const backupCacheSize = this.imageBackupCache.size;
 
-                    const results = `🧪 PKCE + True Instant Images Test Results:
+                    const results = `🧪 PKCE + Original Images + Instant Test Results:
 
 ✅ PKCE generation: OK
 ✅ Redirect URI: ${this.redirectUri}
 ✅ Auth URL: Generated successfully
 ✅ Web Crypto API: Available
 ✅ Client ID: ${this.clientId}
-✅ True instant images: Enabled
+✅ Original image logic: Enabled
 ✅ URL cache: ${urlCacheSize} entries
-✅ OneDrive cache: ${oneDriveCacheSize} entries
 ✅ Backup cache: ${backupCacheSize} entries
 ✅ Articles with backups: ${imagesWithBackup}/${this.articles.length}
 
 ${this.accessToken ? '🔒 Currently authenticated with PKCE' : '☁️ Not authenticated'}
 ${this.refreshToken ? '🔄 Refresh token available (persistent session)' : '⚠️ No refresh token'}
 
-⚡ TRUE INSTANT: Zero processing delays - images appear immediately!
+⚡ ORIGINAL + INSTANT: Same images as before, just instant display!
 
-💡 Key improvements:
-- NO status indicators (processing, cached, etc.)
-- Images display instantly from OneDrive/cache
-- Silent background improvements
-- Zero user-visible processing
-- All original features preserved
+💡 Key approach:
+- Uses EXACT same image logic as your original code
+- Article images, featured images, content extraction
+- NO OneDrive image loading (prevents random assignment)
+- OneDrive used only for backup, not display
+- Instant display with zero processing delays
 
-🎯 How it works:
-1. Articles load with immediate fallback images
-2. OneDrive images replace them instantly if available
-3. Background improvements happen silently
-4. User sees instant display with no delays
+🎯 Image priority (same as original):
+1. Article's saved images (article.images)
+2. Featured image (article.featuredImage)  
+3. Article image field (article.image)
+4. Content extraction (<img> tags)
+5. Smart category fallbacks
 
-✅ PERFECT: No more "processing" states - just instant images!`;
+✅ PERFECT: Your exact image logic + instant display!`;
 
                     alert(results);
 
@@ -3354,12 +3399,12 @@ The "processing" and "cached" delays have been eliminated!
             webReader = new MyPocketWebReader();
             window.webReader = webReader;
 
-            console.log('🚀 MyPocket Web Reader - True Instant Images Edition Initialized');
-            console.log('⚡ Images: Display immediately with ZERO processing delays');
+            console.log('🚀 MyPocket Web Reader - Original Images + Instant Display');
+            console.log('⚡ Images: Original extraction logic with instant display');
             console.log('🔒 PKCE: Persistent authentication with auto-refresh');
-            console.log('🎨 OneDrive: Priority loading from your saved images');
+            console.log('🎨 Display: Same images as before, just instantly');
             console.log('📱 Complete: All original functionality preserved');
-            console.log('✅ NO PROCESSING STATES: Images appear instantly!');
+            console.log('✅ FIXED: Original image behavior + zero processing delays!');
         });
     </script>
 </body>
