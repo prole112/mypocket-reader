@@ -1925,9 +1925,9 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
 
-                // OPTIMIZED: Display instant images first, then process new ones
+                // OPTIMIZED: Display instant images first, then process new ones (YOUR ORIGINAL FLOW)
                 this.displayInstantImages(articles);
-                this.processNewImagesOptimized(articles);
+                this.processNewImagesOptimized(articles); // Using optimized version of your original method
             }
 
             displayEmptyState() {
@@ -1984,175 +1984,342 @@
             }
 
             // ==================== OPTIMIZED IMAGE PROCESSING ====================
-            // MAJOR OPTIMIZATION: Parallel processing with smart batching and compression
+            // KEEPING ORIGINAL FETCHING MECHANISM + ADDING PERFORMANCE OPTIMIZATIONS
 
+            // Process new images (YOUR ORIGINAL METHOD with optimizations)
             async processNewImagesOptimized(articles) {
-                console.log('🚀 Starting OPTIMIZED image processing...');
+                console.log('🚀 Processing new images with OPTIMIZED performance...');
 
+                let processedCount = 0;
                 const unprocessedArticles = [];
-                
+
+                // OPTIMIZATION: First, identify what needs processing and skip already cached
                 for (let i = 0; i < articles.length; i++) {
                     const article = articles[i];
                     const cacheKey = this.getImageCacheKey(article);
-                    
-                    // Skip if already instant or already uploaded
+
+                    // Skip if already instant
                     if (this.preloadedImages.has(cacheKey)) {
                         continue;
                     }
-                    
-                    // OPTIMIZATION: Check if already uploaded to prevent re-upload
-                    const alreadyUploaded = await this.isAlreadyUploaded(cacheKey);
-                    if (alreadyUploaded) {
-                        console.log(`✅ Skipping already uploaded: ${article.title.substring(0, 30)}...`);
-                        continue;
+
+                    // Try to load from OneDrive backup first (YOUR ORIGINAL LOGIC)
+                    if (article.backedUpImage && this.accessToken) {
+                        try {
+                            const oneDriveUrl = await this.getBackedUpImageUrl(article.backedUpImage);
+                            if (oneDriveUrl) {
+                                console.log(`☁️ Loading from OneDrive backup: ${article.title.substring(0, 30)}...`);
+                                this.setArticleImageDirect(document.getElementById(`image-${i}`), oneDriveUrl);
+
+                                const indicator = document.getElementById(`backup-${i}`);
+                                if (indicator) {
+                                    indicator.textContent = '☁️ OneDrive';
+                                    indicator.className = 'backup-indicator backed-up show';
+                                }
+
+                                processedCount++;
+                                continue;
+                            }
+                        } catch (error) {
+                            console.log(`⚠️ OneDrive backup load failed: ${error.message}`);
+                        }
                     }
-                    
+
+                    // Add to processing queue
                     unprocessedArticles.push({ article, index: i });
                 }
 
                 if (unprocessedArticles.length === 0) {
-                    console.log('✅ All images already processed (OPTIMIZED)');
-                    this.updateStatus('🚀 All images already optimized and ready!', 'success');
+                    console.log('✅ All images already processed');
+                    this.updateStatus(`🚀 All images ready! ${processedCount} loaded from cache.`, 'success');
                     return;
                 }
 
-                console.log(`📊 OPTIMIZED processing ${unprocessedArticles.length} images with parallel batching...`);
+                console.log(`📊 Processing ${unprocessedArticles.length} new images with parallel optimization...`);
 
-                // Process in batches to avoid overwhelming OneDrive API
+                // OPTIMIZATION: Process in parallel batches instead of sequential
                 for (let i = 0; i < unprocessedArticles.length; i += this.batchSize) {
                     const batch = unprocessedArticles.slice(i, i + this.batchSize);
-                    console.log(`🔄 OPTIMIZED batch ${Math.floor(i / this.batchSize) + 1}/${Math.ceil(unprocessedArticles.length / this.batchSize)}`);
+                    console.log(`🔄 Batch ${Math.floor(i / this.batchSize) + 1}/${Math.ceil(unprocessedArticles.length / this.batchSize)}`);
                     
-                    // Process batch in parallel (up to maxConcurrentUploads)
-                    await this.processBatchParallel(batch);
+                    // Process batch in parallel
+                    const batchPromises = batch.map(({ article, index }) => 
+                        this.uploadSemaphore.acquire().then(async (release) => {
+                            try {
+                                const result = await this.processNewImage(article, index);
+                                if (result.success) {
+                                    processedCount++;
+                                }
+                                return result;
+                            } finally {
+                                release();
+                            }
+                        })
+                    );
+
+                    await Promise.allSettled(batchPromises);
                     
-                    // Small delay between batches to respect rate limits
+                    // OPTIMIZATION: Reduced delay between batches
                     if (i + this.batchSize < unprocessedArticles.length) {
-                        await new Promise(resolve => setTimeout(resolve, 200)); // Reduced from 1000ms
+                        await new Promise(resolve => setTimeout(resolve, 100)); // Reduced from 500ms
                     }
                 }
 
-                const instantImages = this.preloadedImages.size;
-                const oneDriveBackups = this.articles.filter(a => a.backedUpImage).length;
-                
-                this.updateStatus(`🚀 OPTIMIZED processing complete! ${instantImages} instant + ${oneDriveBackups} OneDrive backups.`, 'success');
+                this.updateStatus(`🚀 OPTIMIZED processing complete! ${processedCount} images processed.`, 'success');
             }
 
-            // Process batch with controlled parallelism
-            async processBatchParallel(batch) {
-                const promises = batch.map(async ({ article, index }) => {
-                    return this.uploadSemaphore.acquire().then(async (release) => {
-                        try {
-                            await this.processImageOptimized(article, index);
-                        } catch (error) {
-                            console.error(`❌ Failed to process image for article ${index}:`, error);
-                        } finally {
-                            release();
-                        }
-                    });
-                });
-
-                await Promise.allSettled(promises);
-            }
-
-            // OPTIMIZATION: Process single image with compression and smart caching
-            async processImageOptimized(article, index) {
-                const startTime = Date.now();
-                console.log(`⚡ OPTIMIZED processing: ${article.title.substring(0, 40)}...`);
-
+            // Process a single new image with HYBRID storage (YOUR ORIGINAL METHOD with optimizations)
+            async processNewImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
                 const indicator = document.getElementById(`backup-${index}`);
 
                 if (!imageElement) return { success: false };
 
+                console.log(`🔄 Processing new image: ${article.title.substring(0, 40)}...`);
+
                 try {
-                    // 1. Get image URL (fast local operation)
+                    // Get image URL (YOUR ORIGINAL LOGIC)
                     let imageUrl = this.getBestArticleImage(article);
+
                     if (!imageUrl) {
                         imageUrl = await this.fetchRealImageFromWebsite(article.url);
                     }
+
                     if (!imageUrl) {
                         imageUrl = this.getCategoryBasedImage(article, index);
                     }
 
-                    // 2. Download image with timeout
-                    const originalBlob = await this.downloadImageBlobOptimized(imageUrl);
-                    if (!originalBlob) {
-                        throw new Error('Failed to download image');
+                    // OPTIMIZATION: Download image as blob for INSTANT storage
+                    const imageBlob = await this.downloadImageAsBlob(imageUrl);
+                    if (imageBlob) {
+                        const cacheKey = this.getImageCacheKey(article);
+                        const metadata = {
+                            title: article.title,
+                            url: article.url,
+                            originalImageUrl: imageUrl,
+                            processedAt: new Date().toISOString()
+                        };
+
+                        // Store for INSTANT display (YOUR ORIGINAL LOGIC)
+                        await this.storeInstantImageData(cacheKey, imageBlob, metadata);
+
+                        // Create blob URL for immediate display (YOUR ORIGINAL LOGIC)
+                        const blobUrl = URL.createObjectURL(imageBlob);
+                        this.preloadedImages.set(cacheKey, {
+                            blobUrl: blobUrl,
+                            metadata: metadata
+                        });
+
+                        // Display immediately (YOUR ORIGINAL LOGIC)
+                        imageElement.innerHTML = `
+                            <img src="${blobUrl}" 
+                                 alt="Article image" 
+                                 style="
+                                    width: 100%;
+                                    height: 100%;
+                                    object-fit: cover;
+                                    border-radius: inherit;
+                                 ">
+                        `;
+
+                        if (indicator) {
+                            indicator.textContent = '⚡ INSTANT';
+                            indicator.className = 'backup-indicator instant show';
+                        }
+
+                        // OPTIMIZATION: ALSO backup to OneDrive (if connected) - but compress first
+                        if (this.imageBackupEnabled && this.accessToken) {
+                            try {
+                                console.log(`☁️ Also backing up to OneDrive...`);
+                                
+                                // OPTIMIZATION: Compress before upload for faster upload
+                                const compressedBlob = await this.compressImageOptimized(imageBlob);
+                                const backupInfo = await this.backupImageToOneDrive(blobUrl, article, index, compressedBlob);
+                                if (backupInfo) {
+                                    this.setImageBackupStatus(article, backupInfo);
+                                    console.log(`☁️ OneDrive backup complete: ${backupInfo.fileName}`);
+                                }
+                            } catch (error) {
+                                console.log(`⚠️ OneDrive backup failed: ${error.message}`);
+                            }
+                        }
+
+                        console.log(`✅ HYBRID processing complete: ${article.title.substring(0, 30)}...`);
+                        return { success: true };
                     }
-
-                    const cacheKey = this.getImageCacheKey(article);
-
-                    // 3. Store for INSTANT display (use original for quality)
-                    await this.storeInstantImage(cacheKey, originalBlob, article, imageUrl);
-
-                    // 4. OPTIMIZATION: Compress for OneDrive upload
-                    const compressedBlob = await this.compressImageOptimized(originalBlob);
-                    
-                    // 5. Upload compressed version to OneDrive (background, don't wait)
-                    if (compressedBlob && this.accessToken) {
-                        this.uploadToOneDriveOptimized(compressedBlob, article, imageUrl, cacheKey)
-                            .catch(error => console.log(`⚠️ Background OneDrive upload failed: ${error.message}`));
-                    }
-
-                    const processingTime = Date.now() - startTime;
-                    console.log(`✅ OPTIMIZED processing complete: ${processingTime}ms`);
-
-                    return { success: true, processingTime };
 
                 } catch (error) {
-                    console.error(`❌ OPTIMIZED processing failed: ${error.message}`);
-                    
-                    // Fallback image
-                    const fallbackUrl = this.getCategoryBasedImage(article, index);
-                    this.setArticleImageDirect(imageElement, fallbackUrl);
-
-                    if (indicator) {
-                        indicator.textContent = '🎨 Fallback';
-                        indicator.className = 'backup-indicator show';
-                    }
-
-                    return { success: false, error: error.message };
+                    console.error(`❌ Error processing image: ${error.message}`);
                 }
+
+                // Fallback image (YOUR ORIGINAL LOGIC)
+                const fallbackUrl = this.getCategoryBasedImage(article, index);
+                imageElement.innerHTML = `
+                    <img src="${fallbackUrl}" 
+                         alt="Article image" 
+                         style="
+                            width: 100%;
+                            height: 100%;
+                            object-fit: cover;
+                            border-radius: inherit;
+                         ">
+                `;
+
+                if (indicator) {
+                    indicator.textContent = '🎨 Fallback';
+                    indicator.className = 'backup-indicator show';
+                }
+
+                return { success: true };
             }
 
-            // OPTIMIZATION: Download with timeout and better error handling
-            async downloadImageBlobOptimized(imageUrl, timeout = 8000) {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), timeout);
-
+            // OPTIMIZATION: Download image as blob for local storage (YOUR ORIGINAL METHOD with timeout)
+            async downloadImageAsBlob(imageUrl) {
                 try {
+                    // OPTIMIZATION: Add timeout to prevent hanging
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
                     const response = await fetch(imageUrl, {
                         signal: controller.signal,
                         headers: {
-                            'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Optimized)',
-                            'Cache-Control': 'no-cache'
+                            'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader OPTIMIZED)'
                         }
                     });
 
                     clearTimeout(timeoutId);
 
                     if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
+                        throw new Error(`Failed to download image: ${response.status}`);
                     }
 
                     const blob = await response.blob();
-                    
+
                     if (!blob.type.startsWith('image/')) {
                         throw new Error('Downloaded content is not an image');
                     }
 
                     return blob;
                 } catch (error) {
-                    clearTimeout(timeoutId);
-                    if (error.name === 'AbortError') {
-                        throw new Error('Download timeout');
+                    console.error('Failed to download image as blob:', error);
+                    return null;
+                }
+            }
+
+            // OPTIMIZATION: Modified backup method to accept compressed blob
+            async backupImageToOneDrive(imageUrl, article, index, compressedBlob = null) {
+                if (!this.accessToken) {
+                    throw new Error('Not connected to OneDrive');
+                }
+
+                try {
+                    console.log(`☁️ Backing up to OneDrive: ${article.title.substring(0, 40)}...`);
+
+                    let imageBlob = compressedBlob;
+                    
+                    // If no compressed blob provided, download and compress
+                    if (!imageBlob) {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+                        const imageResponse = await fetch(imageUrl, {
+                            signal: controller.signal,
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader OPTIMIZED)'
+                            }
+                        });
+                        clearTimeout(timeoutId);
+
+                        if (!imageResponse.ok) {
+                            throw new Error(`Failed to fetch image: ${imageResponse.status} ${imageResponse.statusText}`);
+                        }
+
+                        const originalBlob = await imageResponse.blob();
+                        // OPTIMIZATION: Compress before upload
+                        imageBlob = await this.compressImageOptimized(originalBlob);
                     }
+
+                    const imageBuffer = await imageBlob.arrayBuffer();
+
+                    const maxSize = 10 * 1024 * 1024; // 10MB limit
+                    if (imageBuffer.byteLength > maxSize) {
+                        throw new Error(`Image too large: ${Math.round(imageBuffer.byteLength / 1024 / 1024)}MB (max: 10MB)`);
+                    }
+
+                    const imageExtension = this.getImageExtension(imageUrl) || 'jpg';
+                    const sanitizedTitle = this.sanitizeFilename(article.title);
+                    const timestamp = Date.now();
+                    const fileName = `optimized_image_${sanitizedTitle}_${timestamp}.${imageExtension}`;
+
+                    // Ensure images folder exists
+                    await this.ensureImagesFolderExists();
+
+                    const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/images/${fileName}:/content`;
+
+                    let uploadResponse;
+                    let uploadAttempt = 0;
+                    const maxUploadAttempts = 3;
+
+                    while (uploadAttempt < maxUploadAttempts) {
+                        try {
+                            uploadResponse = await this.makeAuthenticatedRequest(uploadUrl, {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': imageBlob.type || 'image/jpeg'
+                                },
+                                body: imageBuffer
+                            });
+
+                            if (uploadResponse.ok) {
+                                break;
+                            }
+
+                            if (uploadResponse.status === 429) {
+                                const retryAfter = uploadResponse.headers.get('Retry-After') || '5';
+                                const waitTime = parseInt(retryAfter) * 1000;
+                                console.log(`⏳ Rate limited, waiting ${retryAfter} seconds before retry...`);
+                                await new Promise(resolve => setTimeout(resolve, waitTime));
+                                uploadAttempt++;
+                                continue;
+                            }
+
+                            const errorText = await uploadResponse.text();
+                            throw new Error(`Upload failed: ${uploadResponse.status} ${uploadResponse.statusText} - ${errorText}`);
+
+                        } catch (error) {
+                            uploadAttempt++;
+                            if (uploadAttempt >= maxUploadAttempts) {
+                                throw error;
+                            }
+                            console.log(`⚠️ Upload attempt ${uploadAttempt} failed, retrying... ${error.message}`);
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+                        }
+                    }
+
+                    if (!uploadResponse.ok) {
+                        throw new Error(`Upload failed after ${maxUploadAttempts} attempts`);
+                    }
+
+                    const uploadResult = await uploadResponse.json();
+
+                    console.log(`☁️ OneDrive backup successful: ${fileName} (${Math.round(imageBuffer.byteLength / 1024)}KB)`);
+
+                    return {
+                        fileName: fileName,
+                        fileId: uploadResult.id,
+                        uploadDate: new Date().toISOString(),
+                        originalUrl: imageUrl,
+                        size: imageBuffer.byteLength,
+                        authMethod: 'PKCE-OPTIMIZED'
+                    };
+
+                } catch (error) {
+                    console.error(`❌ OneDrive backup error for ${article.title.substring(0, 30)}...:`, error.message);
                     throw error;
                 }
             }
 
-            // OPTIMIZATION: Client-side image compression
+            // OPTIMIZATION: Client-side image compression (ADDED OPTIMIZATION)
             async compressImageOptimized(blob) {
                 if (!this.compressionEnabled || blob.size <= this.maxImageSize) {
                     return blob;
@@ -2205,118 +2372,6 @@
                 } catch (error) {
                     console.error('❌ Compression failed:', error);
                     return blob; // Return original on error
-                }
-            }
-
-            // OPTIMIZATION: Store instant image with immediate UI update
-            async storeInstantImage(cacheKey, imageBlob, article, imageUrl) {
-                const metadata = {
-                    title: article.title,
-                    url: article.url,
-                    originalImageUrl: imageUrl,
-                    processedAt: new Date().toISOString(),
-                    size: imageBlob.size,
-                    method: 'optimized'
-                };
-
-                // Store in IndexedDB
-                await this.storeInstantImageData(cacheKey, imageBlob, metadata);
-
-                // Create blob URL for immediate display
-                const blobUrl = URL.createObjectURL(imageBlob);
-                this.preloadedImages.set(cacheKey, {
-                    blobUrl: blobUrl,
-                    metadata: metadata
-                });
-
-                // Update UI immediately
-                this.updateArticleImageUI(article, blobUrl);
-            }
-
-            // OPTIMIZATION: Background OneDrive upload (non-blocking) with smart caching
-            async uploadToOneDriveOptimized(imageBlob, article, imageUrl, cacheKey) {
-                try {
-                    console.log(`☁️ OPTIMIZED OneDrive upload: ${article.title.substring(0, 40)}...`);
-
-                    // Convert blob to buffer
-                    const imageBuffer = await imageBlob.arrayBuffer();
-                    
-                    // Generate filename
-                    const imageExtension = this.getImageExtension(imageUrl) || 'jpg';
-                    const sanitizedTitle = this.sanitizeFilename(article.title);
-                    const timestamp = Date.now();
-                    const fileName = `optimized_${sanitizedTitle}_${timestamp}.${imageExtension}`;
-
-                    // Ensure folder exists (cached check)
-                    await this.ensureImagesFolderExists();
-
-                    // Upload with retry logic
-                    const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/images/${fileName}:/content`;
-                    
-                    const uploadResponse = await this.makeAuthenticatedRequest(uploadUrl, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': imageBlob.type || 'image/jpeg'
-                        },
-                        body: imageBuffer
-                    });
-
-                    if (!uploadResponse.ok) {
-                        throw new Error(`Upload failed: ${uploadResponse.status}`);
-                    }
-
-                    const uploadResult = await uploadResponse.json();
-
-                    // Update backup status
-                    const backupInfo = {
-                        fileName: fileName,
-                        fileId: uploadResult.id,
-                        uploadDate: new Date().toISOString(),
-                        originalUrl: imageUrl,
-                        size: imageBuffer.byteLength,
-                        method: 'optimized-async'
-                    };
-
-                    this.setImageBackupStatus(article, backupInfo);
-                    
-                    // OPTIMIZATION: Store upload status to prevent re-upload
-                    await this.storeUploadStatus(cacheKey, backupInfo);
-                    
-                    console.log(`☁️ OPTIMIZED background upload complete: ${fileName}`);
-
-                } catch (error) {
-                    console.error(`❌ OPTIMIZED background upload failed: ${error.message}`);
-                    // Don't throw - this is a background operation
-                }
-            }
-
-            // Update UI immediately for instant feedback
-            updateArticleImageUI(article, blobUrl) {
-                const articleIndex = this.articles.indexOf(article);
-                if (articleIndex >= 0) {
-                    const imageElement = document.getElementById(`image-${articleIndex}`);
-                    const indicator = document.getElementById(`backup-${articleIndex}`);
-
-                    if (imageElement) {
-                        imageElement.innerHTML = `
-                            <img src="${blobUrl}" 
-                                 alt="Article image" 
-                                 style="
-                                    width: 100%;
-                                    height: 100%;
-                                    object-fit: cover;
-                                    border-radius: inherit;
-                                    opacity: 0;
-                                    transition: opacity 0.3s ease;
-                                 "
-                                 onload="this.style.opacity='1'">
-                        `;
-                    }
-
-                    if (indicator) {
-                        indicator.textContent = '⚡ INSTANT';
-                        indicator.className = 'backup-indicator instant show';
-                    }
                 }
             }
 
