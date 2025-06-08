@@ -722,14 +722,14 @@
                 <div class="empty-state">
                     <div class="empty-state-icon">💾</div>
                     <h3>Welcome to MyPocket Permanent Storage</h3>
-                    <p>Upload images <strong>once to OneDrive</strong>, then they load <strong>instantly forever</strong>!</p>
+                    <p><strong>Extracts real images from websites</strong> and stores them <strong>permanently in OneDrive</strong>!</p>
                     <div style="margin-top: 20px;">
                         <span class="storage-indicator permanent">💾 Permanent Storage</span>
-                        <span class="storage-indicator">⚡ Instant Loading</span>
+                        <span class="storage-indicator">🌐 Real Image Extraction</span>
                         <span class="storage-indicator">🔒 PKCE Secure</span>
                     </div>
                     <div style="margin-top: 15px; font-size: 0.9em; color: var(--text-secondary);">
-                        <p>First visit: Upload images to OneDrive (one time setup)</p>
+                        <p>First visit: Extract and upload real images to OneDrive (one time)</p>
                         <p>Every visit after: Load instantly from OneDrive URLs</p>
                     </div>
                 </div>
@@ -1023,15 +1023,26 @@
                     // Process batch in parallel
                     const batchPromises = batch.map(async (article) => {
                         try {
-                            // Get the best image for this article
+                            console.log(`🔍 Extracting real image for: ${article.title.substring(0, 40)}...`);
+                            
+                            // Priority 1: Try to get saved image from article data
                             let imageUrl = this.webReader.getBestArticleImage(article);
                             
-                            if (!imageUrl) {
-                                // Try to extract from website
+                            if (imageUrl) {
+                                console.log(`📋 Using saved image from article data`);
+                            } else {
+                                // Priority 2: Extract real image from website
+                                console.log(`🌐 No saved image, extracting from website: ${article.url}`);
                                 try {
                                     imageUrl = await this.webReader.fetchRealImageFromWebsite(article.url);
-                                } catch (error) {
-                                    // Use category-based fallback
+                                    if (imageUrl) {
+                                        console.log(`✅ Successfully extracted real image from website`);
+                                    }
+                                } catch (extractionError) {
+                                    console.log(`⚠️ Website extraction failed: ${extractionError.message}`);
+                                    
+                                    // Priority 3: Only use category fallback as last resort
+                                    console.log(`🎨 Using category-based fallback as last resort`);
                                     imageUrl = this.webReader.getCategoryBasedImage(article, i);
                                 }
                             }
@@ -1042,7 +1053,7 @@
                                 successCount++;
                                 console.log(`✅ Permanent storage created for: ${article.title.substring(0, 40)}...`);
                             } else {
-                                throw new Error('No image URL available');
+                                throw new Error('No image URL available after all extraction attempts');
                             }
                             
                         } catch (error) {
@@ -1689,8 +1700,21 @@ ${needStorageCount > 0 ? `\n💡 Tip: Click "Build Storage" to upload the remain
                             // ⚠️ Need to create permanent storage for this article
                             console.log(`🔄 No permanent storage for: ${article.title.substring(0, 30)}...`);
                             
-                            // Use temporary image for now
-                            const tempImage = this.getBestArticleImage(article) || this.getCategoryBasedImage(article, i);
+                            // Try to get real image for temporary display
+                            let tempImage = this.getBestArticleImage(article);
+                            
+                            if (!tempImage) {
+                                // Try to extract real image from website for temporary display
+                                try {
+                                    console.log(`🌐 Extracting real image for temporary display: ${article.title.substring(0, 30)}...`);
+                                    tempImage = await this.fetchRealImageFromWebsite(article.url);
+                                    console.log(`✅ Got real image for temporary display`);
+                                } catch (error) {
+                                    console.log(`⚠️ Real extraction failed, using category fallback: ${error.message}`);
+                                    tempImage = this.getCategoryBasedImage(article, i);
+                                }
+                            }
+                            
                             this.setArticleImageDirect(imageElement, tempImage);
                             
                             if (statusElement) {
@@ -1718,7 +1742,7 @@ ${needStorageCount > 0 ? `\n💡 Tip: Click "Build Storage" to upload the remain
                 }
                 
                 this.updateStatus(
-                    `💾 Images loaded: ${permanentLoaded} permanent, ${temporaryLoaded} temporary${temporaryLoaded > 0 ? ' (click Build Storage to make permanent)' : ''}`,
+                    `🌐 Images loaded: ${permanentLoaded} permanent, ${temporaryLoaded} real/temporary${temporaryLoaded > 0 ? ' (click Build Storage to extract and store permanently)' : ''}`,
                     'success'
                 );
             }
@@ -1758,9 +1782,12 @@ ${needStorageCount > 0 ? `\n💡 Tip: Click "Build Storage" to upload the remain
                 }
             }
 
-            // Image extraction helpers
+            // FULL IMAGE EXTRACTION CAPABILITIES RESTORED
             async fetchRealImageFromWebsite(url) {
                 try {
+                    console.log(`🌐 Extracting real image from: ${url}`);
+
+                    // Try multiple proxy methods for better success rate
                     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
                     const response = await fetch(proxyUrl);
 
@@ -1775,11 +1802,24 @@ ${needStorageCount > 0 ? `\n💡 Tip: Click "Build Storage" to upload the remain
                         throw new Error('No substantial HTML content received');
                     }
 
-                    return this.parseHTMLForBestImage(html, url);
+                    const extractedImageUrl = this.parseHTMLForBestImage(html, url);
+
+                    if (extractedImageUrl) {
+                        console.log(`🎯 Found real image: ${extractedImageUrl}`);
+                        return extractedImageUrl;
+                    }
+
+                    throw new Error('No suitable image found in webpage');
 
                 } catch (error) {
                     console.log(`❌ Website extraction failed: ${error.message}`);
-                    throw error;
+
+                    try {
+                        return await this.tryAlternativeImageExtraction(url);
+                    } catch (altError) {
+                        console.log(`❌ Alternative extraction failed: ${altError.message}`);
+                        throw error;
+                    }
                 }
             }
 
@@ -1788,28 +1828,64 @@ ${needStorageCount > 0 ? `\n💡 Tip: Click "Build Storage" to upload the remain
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
 
-                    // Try Open Graph image first
+                    // Strategy 1: Open Graph image
                     const ogImage = doc.querySelector('meta[property="og:image"]');
                     if (ogImage) {
                         const imageUrl = this.makeAbsoluteUrl(ogImage.getAttribute('content'), baseUrl);
                         if (this.isValidImageUrl(imageUrl)) {
+                            console.log(`🎯 Found Open Graph image: ${imageUrl}`);
                             return imageUrl;
                         }
                     }
 
-                    // Try Twitter card image
+                    // Strategy 2: Twitter card image
                     const twitterImage = doc.querySelector('meta[name="twitter:image"], meta[property="twitter:image"]');
                     if (twitterImage) {
                         const imageUrl = this.makeAbsoluteUrl(twitterImage.getAttribute('content'), baseUrl);
                         if (this.isValidImageUrl(imageUrl)) {
+                            console.log(`🎯 Found Twitter card image: ${imageUrl}`);
                             return imageUrl;
                         }
                     }
 
-                    // Try first substantial image
+                    // Strategy 3: Featured image selectors
+                    const featuredSelectors = [
+                        '.featured-image img',
+                        '.hero-image img',
+                        '.post-thumbnail img',
+                        '.article-image img',
+                        '.entry-image img',
+                        '.wp-post-image',
+                        'article img:first-of-type',
+                        '.content img:first-of-type',
+                        '.post-content img:first-of-type'
+                    ];
+
+                    for (const selector of featuredSelectors) {
+                        const img = doc.querySelector(selector);
+                        if (img) {
+                            const src = img.getAttribute('src') || img.getAttribute('data-src') || img.getAttribute('data-lazy-src');
+                            if (src) {
+                                const imageUrl = this.makeAbsoluteUrl(src, baseUrl);
+                                if (this.isValidImageUrl(imageUrl) && !this.isIconOrLogo(src)) {
+                                    console.log(`🎯 Found featured image: ${imageUrl}`);
+                                    return imageUrl;
+                                }
+                            }
+                        }
+                    }
+
+                    // Strategy 4: First substantial content image
                     const allImages = Array.from(doc.querySelectorAll('img')).filter(img => {
                         const src = img.getAttribute('src') || img.getAttribute('data-src');
-                        return src && !this.isIconOrLogo(src);
+                        const width = img.getAttribute('width') || img.style.width;
+                        const height = img.getAttribute('height') || img.style.height;
+
+                        return src &&
+                            !this.isIconOrLogo(src) &&
+                            !this.isSmallImage(width, height) &&
+                            !src.includes('avatar') &&
+                            !src.includes('profile');
                     });
 
                     for (const img of allImages) {
@@ -1817,11 +1893,31 @@ ${needStorageCount > 0 ? `\n💡 Tip: Click "Build Storage" to upload the remain
                         if (src) {
                             const imageUrl = this.makeAbsoluteUrl(src, baseUrl);
                             if (this.isValidImageUrl(imageUrl)) {
+                                console.log(`🎯 Found content image: ${imageUrl}`);
                                 return imageUrl;
                             }
                         }
                     }
 
+                    // Strategy 5: JSON-LD structured data
+                    const jsonLdScripts = doc.querySelectorAll('script[type="application/ld+json"]');
+                    for (const script of jsonLdScripts) {
+                        try {
+                            const data = JSON.parse(script.textContent);
+                            const image = this.extractImageFromJsonLd(data);
+                            if (image) {
+                                const imageUrl = this.makeAbsoluteUrl(image, baseUrl);
+                                if (this.isValidImageUrl(imageUrl)) {
+                                    console.log(`🎯 Found JSON-LD image: ${imageUrl}`);
+                                    return imageUrl;
+                                }
+                            }
+                        } catch (e) {
+                            // Ignore malformed JSON-LD
+                        }
+                    }
+
+                    console.log(`❌ No suitable image found in HTML`);
                     return null;
 
                 } catch (error) {
@@ -1830,16 +1926,164 @@ ${needStorageCount > 0 ? `\n💡 Tip: Click "Build Storage" to upload the remain
                 }
             }
 
-            getBestArticleImage(article) {
-                if (article.images && article.images.length > 0) {
-                    const bestImage = article.images.find(img => 
-                        img.width >= 300 && img.height >= 150
-                    ) || article.images[0];
-                    
-                    return bestImage.src || bestImage.url || bestImage;
+            extractImageFromJsonLd(data) {
+                if (typeof data !== 'object') return null;
+
+                if (Array.isArray(data)) {
+                    for (const item of data) {
+                        const image = this.extractImageFromJsonLd(item);
+                        if (image) return image;
+                    }
+                    return null;
                 }
 
-                return article.featuredImage || article.image || null;
+                if (data.image) {
+                    if (typeof data.image === 'string') return data.image;
+                    if (Array.isArray(data.image) && data.image.length > 0) {
+                        return typeof data.image[0] === 'string' ? data.image[0] : data.image[0].url;
+                    }
+                    if (data.image.url) return data.image.url;
+                }
+
+                if (data.thumbnailUrl) {
+                    return typeof data.thumbnailUrl === 'string' ? data.thumbnailUrl : data.thumbnailUrl.url;
+                }
+
+                for (const key in data) {
+                    if (typeof data[key] === 'object') {
+                        const image = this.extractImageFromJsonLd(data[key]);
+                        if (image) return image;
+                    }
+                }
+
+                return null;
+            }
+
+            async tryAlternativeImageExtraction(url) {
+                try {
+                    // Try alternative CORS proxy
+                    const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                    const response = await fetch(corsProxyUrl);
+
+                    if (response.ok) {
+                        const html = await response.text();
+                        const extractedImage = this.parseHTMLForBestImage(html, url);
+                        if (extractedImage) return extractedImage;
+                    }
+                } catch (error) {
+                    console.log(`CORS proxy failed: ${error.message}`);
+                }
+
+                // Try URL-based guessing for specific domains
+                const guessedImage = this.guessImageFromUrl(url);
+                if (guessedImage) return guessedImage;
+
+                throw new Error('All alternative extraction methods failed');
+            }
+
+            guessImageFromUrl(url) {
+                const domain = this.getDomain(url).toLowerCase();
+
+                // Medium articles
+                if (domain.includes('medium.com')) {
+                    const match = url.match(/\/([a-f0-9]+)$/);
+                    if (match) {
+                        return `https://miro.medium.com/max/1400/1*${match[1]}.png`;
+                    }
+                }
+
+                // GitHub repositories
+                if (domain.includes('github.com')) {
+                    const pathMatch = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+                    if (pathMatch) {
+                        return `https://opengraph.githubassets.com/1/${pathMatch[1]}/${pathMatch[2]}`;
+                    }
+                }
+
+                // YouTube videos
+                if (domain.includes('youtube.com') || domain.includes('youtu.be')) {
+                    const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
+                    if (videoIdMatch) {
+                        return `https://img.youtube.com/vi/${videoIdMatch[1]}/maxresdefault.jpg`;
+                    }
+                }
+
+                return null;
+            }
+
+            isSmallImage(width, height) {
+                if (!width && !height) return false;
+
+                const w = parseInt(width) || 0;
+                const h = parseInt(height) || 0;
+
+                return (w > 0 && w < 200) || (h > 0 && h < 150);
+            }
+
+            getBestArticleImage(article) {
+                // Strategy 1: Check article.images array for best quality image
+                if (article.images && article.images.length > 0) {
+                    // Find image with good dimensions (prefer larger images)
+                    let bestImage = article.images.find(img => 
+                        img.width >= 400 && img.height >= 200
+                    );
+                    
+                    // If no large image found, find medium-sized image
+                    if (!bestImage) {
+                        bestImage = article.images.find(img => 
+                            img.width >= 300 && img.height >= 150
+                        );
+                    }
+                    
+                    // Fall back to first image if no sized image found
+                    if (!bestImage) {
+                        bestImage = article.images[0];
+                    }
+                    
+                    if (bestImage) {
+                        const imageUrl = bestImage.src || bestImage.url || bestImage.href || bestImage;
+                        if (typeof imageUrl === 'string' && this.isValidImageUrl(imageUrl)) {
+                            console.log(`📋 Found best image from article.images: ${imageUrl}`);
+                            return imageUrl;
+                        }
+                    }
+                }
+
+                // Strategy 2: Check featuredImage
+                if (article.featuredImage && this.isValidImageUrl(article.featuredImage)) {
+                    console.log(`📋 Found featured image: ${article.featuredImage}`);
+                    return article.featuredImage;
+                }
+
+                // Strategy 3: Check image field
+                if (article.image && this.isValidImageUrl(article.image)) {
+                    console.log(`📋 Found article image: ${article.image}`);
+                    return article.image;
+                }
+
+                // Strategy 4: Extract from article content/HTML
+                if (article.content) {
+                    const imgMatch = article.content.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i);
+                    if (imgMatch && imgMatch[1]) {
+                        const contentImageUrl = imgMatch[1];
+                        if (this.isValidImageUrl(contentImageUrl) && !this.isIconOrLogo(contentImageUrl)) {
+                            console.log(`📋 Found image in article content: ${contentImageUrl}`);
+                            return contentImageUrl;
+                        }
+                    }
+                }
+
+                // Strategy 5: Check other possible image fields
+                const imageFields = ['heroImage', 'thumbnail', 'cover', 'banner', 'leadImage'];
+                for (const field of imageFields) {
+                    if (article[field] && this.isValidImageUrl(article[field])) {
+                        console.log(`📋 Found image in ${field}: ${article[field]}`);
+                        return article[field];
+                    }
+                }
+
+                console.log(`📋 No saved image found in article data for: ${article.title?.substring(0, 30)}...`);
+                return null;
             }
 
             getCategoryBasedImage(article, index) {
@@ -2053,12 +2297,23 @@ MyPocket Permanent Storage Debug Info:
 └── mypocket-backup-*.json (article data)
 
 🔧 How it works:
-1. Images uploaded ONCE to PermanentImages folder
-2. OneDrive URLs saved in permanent-image-map.json
-3. Future visits load directly from OneDrive URLs
-4. Zero processing time for existing images
+1. Extracts REAL images from article websites using multiple strategies
+2. Optimizes and uploads images ONCE to PermanentImages folder  
+3. OneDrive URLs saved in permanent-image-map.json
+4. Future visits load directly from OneDrive URLs
+5. Zero processing time for existing images
+
+🌐 Image Extraction Methods:
+- Open Graph meta tags (og:image)
+- Twitter Card images  
+- Featured image selectors (.featured-image, .hero-image, etc.)
+- First substantial content images (filters out icons/logos)
+- JSON-LD structured data
+- Domain-specific URL guessing (Medium, GitHub, YouTube)
+- Article data (saved images, featuredImage, etc.)
 
 💡 Benefits:
+- ✅ Extracts real images from websites (not generic ones!)
 - ✅ Upload once, use forever
 - ✅ Instant loading on future visits
 - ✅ No bandwidth waste on re-uploads
