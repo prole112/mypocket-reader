@@ -1943,24 +1943,49 @@
                 console.log('☁️ Loading backed up images from OneDrive...');
                 let loadedCount = 0;
                 
-                // For each article that has a backup, get its OneDrive download URL
-                for (const article of this.articles) {
-                    const backupStatus = this.getImageBackupStatus(article);
-                    if (backupStatus && backupStatus.fileId) {
-                        try {
-                            const downloadUrl = await this.getBackedUpImageUrl(backupStatus);
-                            if (downloadUrl) {
-                                this.cacheImageUrl(article, downloadUrl, 'onedrive');
-                                loadedCount++;
-                                console.log(`☁️ Loaded backup for: ${article.title.substring(0, 30)}...`);
+                // Get the complete list of backup files in OneDrive
+                try {
+                    const listResponse = await this.makeAuthenticatedRequest(
+                        'https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/images:/children'
+                    );
+
+                    if (!listResponse.ok) {
+                        console.log('⚠️ OneDrive images folder not accessible');
+                        return 0;
+                    }
+
+                    const imageFiles = await listResponse.json();
+                    console.log(`📁 Found ${imageFiles.value.length} files in OneDrive images folder`);
+
+                    // For each article with backup metadata, find its file and get download URL
+                    for (const article of this.articles) {
+                        const backupStatus = this.getImageBackupStatus(article);
+                        if (backupStatus && backupStatus.fileName) {
+                            // Find the matching file in OneDrive by filename
+                            const matchingFile = imageFiles.value.find(file => 
+                                file.name === backupStatus.fileName
+                            );
+
+                            if (matchingFile) {
+                                const downloadUrl = matchingFile['@microsoft.graph.downloadUrl'];
+                                if (downloadUrl) {
+                                    this.cacheImageUrl(article, downloadUrl, 'onedrive');
+                                    loadedCount++;
+                                    console.log(`☁️ Loaded backup: ${backupStatus.fileName} -> ${article.title.substring(0, 30)}...`);
+                                } else {
+                                    console.log(`⚠️ No download URL for: ${backupStatus.fileName}`);
+                                }
+                            } else {
+                                console.log(`⚠️ Backup file not found in OneDrive: ${backupStatus.fileName}`);
                             }
-                        } catch (error) {
-                            console.log(`⚠️ Failed to load backup for ${article.title}: ${error.message}`);
                         }
                     }
+
+                } catch (error) {
+                    console.error('❌ Error loading OneDrive backups:', error);
                 }
 
-                console.log(`☁️ Loaded ${loadedCount} backed up images from OneDrive`);
+                console.log(`☁️ Successfully loaded ${loadedCount} backed up images from OneDrive`);
                 return loadedCount;
             }
 
@@ -2273,7 +2298,8 @@
                 }
 
                 try {
-                    console.log(`💾 Backing up image: ${imageUrl}`);
+                    console.log(`💾 Backing up image for: ${article.title.substring(0, 40)}...`);
+                    console.log(`💾 Image URL: ${imageUrl}`);
 
                     const imageResponse = await fetch(imageUrl);
                     if (!imageResponse.ok) {
@@ -2285,8 +2311,13 @@
 
                     const imageExtension = this.getImageExtension(imageUrl) || 'jpg';
                     const sanitizedTitle = this.sanitizeFilename(article.title);
+                    const domain = this.getDomain(article.url).replace(/[^a-z0-9]/gi, '');
                     const timestamp = Date.now();
-                    const fileName = `complete_image_${sanitizedTitle}_${timestamp}.${imageExtension}`;
+                    
+                    // Create a unique but identifiable filename
+                    const fileName = `${domain}_${sanitizedTitle}_${timestamp}.${imageExtension}`;
+
+                    console.log(`💾 Backup filename: ${fileName}`);
 
                     const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/images/${fileName}:/content`;
 
@@ -2304,11 +2335,13 @@
                     }
 
                     const uploadResult = await uploadResponse.json();
+                    console.log(`✅ Backup successful: ${fileName}`);
 
-                    // Cache the OneDrive URL for instant access
+                    // Cache the OneDrive URL immediately for this article
                     const oneDriveUrl = uploadResult['@microsoft.graph.downloadUrl'];
                     if (oneDriveUrl) {
                         this.cacheImageUrl(article, oneDriveUrl, 'onedrive');
+                        console.log(`✅ OneDrive URL cached for instant access`);
                     }
 
                     return {
@@ -2317,11 +2350,13 @@
                         uploadDate: new Date().toISOString(),
                         originalUrl: imageUrl,
                         size: imageBuffer.byteLength,
-                        authMethod: 'PKCE-Complete'
+                        authMethod: 'PKCE-Real-Images',
+                        articleTitle: article.title.substring(0, 50),
+                        articleUrl: article.url
                     };
 
                 } catch (error) {
-                    console.error('Image backup error:', error);
+                    console.error(`❌ Image backup error for ${article.title}:`, error);
                     throw error;
                 }
             }
