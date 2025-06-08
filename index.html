@@ -155,6 +155,15 @@
             gap: 6px;
             transition: all 0.2s ease;
             white-space: nowrap;
+            /* Ensure buttons are always enabled by default */
+            pointer-events: auto;
+            opacity: 1;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            pointer-events: none;
         }
 
         .btn-primary {
@@ -163,7 +172,7 @@
             border: 2px solid rgba(255, 255, 255, 0.3);
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             background: rgba(255, 255, 255, 0.3);
             transform: translateY(-1px);
         }
@@ -174,7 +183,7 @@
             border: 2px solid var(--border);
         }
 
-        .btn-secondary:hover {
+        .btn-secondary:hover:not(:disabled) {
             background: var(--border);
             transform: translateY(-1px);
         }
@@ -185,7 +194,7 @@
             border: 2px solid rgba(39, 174, 96, 0.3);
         }
 
-        .btn-permanent:hover {
+        .btn-permanent:hover:not(:disabled) {
             background: rgba(39, 174, 96, 1);
             transform: translateY(-1px);
         }
@@ -686,16 +695,16 @@
                     <button id="buildStorageBtn" class="btn btn-permanent" style="display: none;">
                         <span>🚀</span> Fast Build
                     </button>
-                    <button id="speedSettingsBtn" class="btn btn-secondary" onclick="webReader.showSpeedSettings()">
+                    <button id="speedSettingsBtn" class="btn btn-secondary">
                         <span>⚡</span> Speed
                     </button>
-                    <button id="storageStatsBtn" class="btn btn-secondary" onclick="webReader.showStorageStats()">
+                    <button id="storageStatsBtn" class="btn btn-secondary">
                         <span>📊</span> Stats
                     </button>
-                    <button id="debugBtn" class="btn btn-secondary" onclick="webReader.showDebugInfo()">
+                    <button id="debugBtn" class="btn btn-secondary">
                         <span>🔧</span> Debug
                     </button>
-                    <button id="darkModeBtn" class="btn btn-secondary" onclick="webReader.toggleDarkMode()">
+                    <button id="darkModeBtn" class="btn btn-secondary">
                         <span>🌙</span> Dark
                     </button>
                 </div>
@@ -1175,11 +1184,12 @@
                 // Application state
                 this.articles = [];
                 this.currentArticle = null;
+                this.initialized = false;
 
                 // Permanent Image Storage
                 this.permanentStorage = new PermanentImageStorage(this);
 
-                this.init();
+                this.safeInit();
             }
 
             getRedirectUri() {
@@ -1188,20 +1198,96 @@
                 return baseUrl.startsWith('http') ? baseUrl : window.location.origin + window.location.pathname;
             }
 
-            init() {
+            // Safe initialization with error handling
+            async safeInit() {
+                try {
+                    console.log('🔄 Initializing MyPocket...');
+                    
+                    // Ensure DOM is ready
+                    if (document.readyState === 'loading') {
+                        await new Promise(resolve => {
+                            document.addEventListener('DOMContentLoaded', resolve);
+                        });
+                    }
+
+                    await this.init();
+                    this.initialized = true;
+                    console.log('✅ MyPocket initialized successfully');
+                    
+                } catch (error) {
+                    console.error('❌ Initialization error:', error);
+                    this.updateStatus(`❌ Initialization failed: ${error.message}`, 'error');
+                    // Still try to set up basic functionality
+                    this.setupEventListeners();
+                }
+            }
+
+            async init() {
                 this.setupEventListeners();
-                this.checkAuthFromURL();
+                await this.checkAuthFromURL();
                 this.loadStoredTokens();
                 this.loadThemePreference();
             }
 
             setupEventListeners() {
-                document.getElementById('connectBtn').addEventListener('click', () => this.authenticate());
-                document.getElementById('refreshBtn').addEventListener('click', () => this.loadArticles());
-                document.getElementById('buildStorageBtn').addEventListener('click', () => this.buildPermanentStorageForAllImages());
-                document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
-                document.getElementById('closeReader').addEventListener('click', () => this.closeReader());
-                document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
+                try {
+                    // Ensure elements exist before adding listeners
+                    const connectBtn = document.getElementById('connectBtn');
+                    const refreshBtn = document.getElementById('refreshBtn');
+                    const buildStorageBtn = document.getElementById('buildStorageBtn');
+                    const speedSettingsBtn = document.getElementById('speedSettingsBtn');
+                    const storageStatsBtn = document.getElementById('storageStatsBtn');
+                    const debugBtn = document.getElementById('debugBtn');
+                    const darkModeBtn = document.getElementById('darkModeBtn');
+                    const searchInput = document.getElementById('searchInput');
+                    const closeReader = document.getElementById('closeReader');
+                    const openOriginal = document.getElementById('openOriginal');
+
+                    if (connectBtn) {
+                        connectBtn.addEventListener('click', () => this.authenticate());
+                    }
+                    
+                    if (refreshBtn) {
+                        refreshBtn.addEventListener('click', () => this.loadArticles());
+                    }
+                    
+                    if (buildStorageBtn) {
+                        buildStorageBtn.addEventListener('click', () => this.buildPermanentStorageForAllImages());
+                    }
+                    
+                    if (speedSettingsBtn) {
+                        speedSettingsBtn.addEventListener('click', () => this.showSpeedSettings());
+                    }
+                    
+                    if (storageStatsBtn) {
+                        storageStatsBtn.addEventListener('click', () => this.showStorageStats());
+                    }
+                    
+                    if (debugBtn) {
+                        debugBtn.addEventListener('click', () => this.showDebugInfo());
+                    }
+                    
+                    if (darkModeBtn) {
+                        darkModeBtn.addEventListener('click', () => this.toggleDarkMode());
+                    }
+                    
+                    if (searchInput) {
+                        searchInput.addEventListener('input', (e) => this.searchArticles(e.target.value));
+                    }
+                    
+                    if (closeReader) {
+                        closeReader.addEventListener('click', () => this.closeReader());
+                    }
+                    
+                    if (openOriginal) {
+                        openOriginal.addEventListener('click', () => this.openOriginal());
+                    }
+
+                    console.log('✅ Event listeners set up successfully');
+                    
+                } catch (error) {
+                    console.error('❌ Error setting up event listeners:', error);
+                }
             }
 
             // ==================== PKCE AUTHENTICATION ====================
@@ -1501,8 +1587,10 @@
                 }
 
                 const buildBtn = document.getElementById('buildStorageBtn');
-                buildBtn.disabled = true;
-                buildBtn.innerHTML = '<span>🚀</span> Building...';
+                if (buildBtn) {
+                    buildBtn.disabled = true;
+                    buildBtn.innerHTML = '<span>🚀</span> Building...';
+                }
 
                 try {
                     this.showProgress(0);
@@ -1534,8 +1622,10 @@
                     console.error('❌ Failed to build permanent storage:', error);
                     this.updateStatus(`❌ Failed to build permanent storage: ${error.message}`, 'error');
                 } finally {
-                    buildBtn.disabled = false;
-                    buildBtn.innerHTML = '<span>🚀</span> Fast Build';
+                    if (buildBtn) {
+                        buildBtn.disabled = false;
+                        buildBtn.innerHTML = '<span>🚀</span> Fast Build';
+                    }
                 }
             }
 
@@ -1589,53 +1679,6 @@ The system prioritizes speed while maintaining high image quality for the majori
             }
 
             showStorageStats() {
-                const info = `⚡ SPEED OPTIMIZATION SETTINGS
-
-Current Configuration:
-🚀 Batch Size: 8 articles (parallel processing)
-🔍 Extraction Timeout: 15 seconds per article  
-💾 Upload Batch: 3 images at once
-⏱️ Batch Delay: 200ms (between upload batches)
-🎯 Extraction Timeout: 8s for temporary images
-
-🚀 Speed Optimizations Active:
-✅ Parallel image extraction (5 concurrent)
-✅ Progressive loading (permanent first, temporary second)
-✅ Multiple extraction methods racing each other
-✅ Optimized batch processing (8 vs 3 articles)
-✅ Reduced delays (200ms vs 1000ms)
-✅ Extraction timeouts (prevent hanging)
-✅ Immediate fallback display
-
-⚡ Performance Improvements:
-- Permanent images: Load instantly (0.1s)
-- Temporary images: 3-5x faster extraction  
-- Build process: 2-3x faster completion
-- UI responsiveness: Progressive updates
-- Memory usage: Optimized batch processing
-
-💡 Tips for Maximum Speed:
-1. Use fast internet connection (50+ Mbps)
-2. Close other browser tabs during build
-3. Build during off-peak hours (2-6 AM)
-4. Let permanent storage complete once
-5. Future visits will be instant!
-
-📊 Expected Performance:
-- 100 articles: ~5-8 minutes (vs 15-20 minutes)
-- 1000 articles: ~30-45 minutes (vs 1.5-2 hours)  
-- 3148 articles: ~45-75 minutes (vs 2-3 hours)
-
-🎯 Speed vs Quality Trade-offs:
-- Extraction timeout prevents hanging on slow sites
-- Parallel processing may occasionally miss some images
-- Failed extractions fall back to category images
-- Overall success rate: ~85-90% (vs 95% sequential)
-
-The system prioritizes speed while maintaining high image quality for the majority of articles.`;
-
-                alert(info);
-            }
                 const stats = this.permanentStorage.getStats();
                 const totalArticles = this.articles.length;
                 const permanentCount = this.articles.filter(a => this.permanentStorage.hasPermanentImage(a.url)).length;
@@ -1685,8 +1728,10 @@ ${needStorageCount > 0 ? `\n💡 Tip: Click "Build Storage" to extract real imag
 
             updateStatus(message, type = '') {
                 const status = document.getElementById('status');
-                status.textContent = message;
-                status.className = `status ${type}`;
+                if (status) {
+                    status.textContent = message;
+                    status.className = `status ${type}`;
+                }
             }
 
             updateConnectionStatus(connected) {
@@ -1697,19 +1742,25 @@ ${needStorageCount > 0 ? `\n💡 Tip: Click "Build Storage" to extract real imag
                 const buildStorageBtn = document.getElementById('buildStorageBtn');
 
                 if (connected) {
-                    connectIcon.textContent = '💾';
-                    connectText.textContent = 'Connected';
-                    connectBtn.style.background = 'rgba(39, 174, 96, 0.9)';
-                    connectBtn.title = 'Connected with permanent storage';
-                    refreshBtn.style.display = 'inline-flex';
-                    buildStorageBtn.style.display = 'inline-flex';
+                    if (connectIcon) connectIcon.textContent = '💾';
+                    if (connectText) connectText.textContent = 'Connected';
+                    if (connectBtn) {
+                        connectBtn.style.background = 'rgba(39, 174, 96, 0.9)';
+                        connectBtn.title = 'Connected with permanent storage';
+                        connectBtn.disabled = false;
+                    }
+                    if (refreshBtn) refreshBtn.style.display = 'inline-flex';
+                    if (buildStorageBtn) buildStorageBtn.style.display = 'inline-flex';
                 } else {
-                    connectIcon.textContent = '☁️';
-                    connectText.textContent = 'Connect';
-                    connectBtn.style.background = 'rgba(255,255,255,0.2)';
-                    connectBtn.title = 'Connect to access permanent storage';
-                    refreshBtn.style.display = 'none';
-                    buildStorageBtn.style.display = 'none';
+                    if (connectIcon) connectIcon.textContent = '☁️';
+                    if (connectText) connectText.textContent = 'Connect';
+                    if (connectBtn) {
+                        connectBtn.style.background = 'rgba(255,255,255,0.2)';
+                        connectBtn.title = 'Connect to access permanent storage';
+                        connectBtn.disabled = false;
+                    }
+                    if (refreshBtn) refreshBtn.style.display = 'none';
+                    if (buildStorageBtn) buildStorageBtn.style.display = 'none';
                 }
             }
 
@@ -1768,6 +1819,7 @@ ${needStorageCount > 0 ? `\n💡 Tip: Click "Build Storage" to extract real imag
 
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
+                if (!container) return;
 
                 if (articles.length === 0) {
                     this.displayEmptyState();
@@ -1984,6 +2036,8 @@ ${needStorageCount > 0 ? `\n💡 Tip: Click "Build Storage" to extract real imag
 
             displayEmptyState() {
                 const container = document.getElementById('articlesContainer');
+                if (!container) return;
+                
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">💾</div>
@@ -2650,14 +2704,38 @@ MyPocket Permanent Storage Debug Info:
             }
         }
 
+        // Global initialization
         let webReader;
-        document.addEventListener('DOMContentLoaded', () => {
-            webReader = new MyPocketWebReader();
-            window.webReader = webReader;
+        
+        // Safe DOM ready function
+        function domReady(fn) {
+            if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                setTimeout(fn, 1);
+            } else {
+                document.addEventListener('DOMContentLoaded', fn);
+            }
+        }
 
-            console.log('🚀 MyPocket SPEED OPTIMIZED Edition Initialized');
-            console.log('💾 Extract real images from websites and store permanently in OneDrive!');
-            console.log('⚡ 3-5x faster loading with parallel processing and progressive enhancement!');
+        // Initialize when DOM is ready
+        domReady(() => {
+            try {
+                console.log('🔄 Starting MyPocket initialization...');
+                webReader = new MyPocketWebReader();
+                window.webReader = webReader; // Make globally accessible for onclick handlers
+                
+                console.log('🚀 MyPocket SPEED OPTIMIZED Edition Initialized');
+                console.log('💾 Extract real images from websites and store permanently in OneDrive!');
+                console.log('⚡ 3-5x faster loading with parallel processing and progressive enhancement!');
+                
+            } catch (error) {
+                console.error('❌ Failed to initialize MyPocket:', error);
+                // Try to show error to user
+                const status = document.getElementById('status');
+                if (status) {
+                    status.textContent = `❌ Initialization failed: ${error.message}`;
+                    status.className = 'status error';
+                }
+            }
         });
     </script>
 </body>
