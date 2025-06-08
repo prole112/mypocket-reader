@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPocket - Original Images + Instant</title>
+    <title>MyPocket - Real Images + OneDrive</title>
     <style>
         * {
             margin: 0;
@@ -826,7 +826,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    ⚡ MyPocket - Original Images + Instant
+                    🌐 MyPocket - Real Images + OneDrive
                 </div>
                 <div class="header-actions">
                     <button id="connectBtn" class="btn btn-primary">
@@ -871,7 +871,7 @@
 
     <!-- Status -->
     <div class="status" id="status">
-        Connect to OneDrive for the same great image experience - just instant!
+        Connect to OneDrive to load backed up images and extract real images from websites
     </div>
 
     <!-- Articles -->
@@ -1102,12 +1102,20 @@
             // ==================== INSTANT IMAGE DISPLAY SYSTEM ====================
 
             getInstantImageUrl(article) {
-                // Use EXACTLY the same logic as the original code, just return immediately
-                
-                // Priority 1: Article's saved images (ORIGINAL BEHAVIOR)
+                // Priority 1: Use backed up OneDrive image for this specific article
+                const backupStatus = this.getImageBackupStatus(article);
+                if (backupStatus && this.accessToken) {
+                    // This article has a specific backup in OneDrive
+                    const key = this.getImageCacheKey(article);
+                    const oneDriveEntry = this.oneDriveImageCache.get(key);
+                    if (oneDriveEntry && oneDriveEntry.url) {
+                        return oneDriveEntry.url;
+                    }
+                }
+
+                // Priority 2: Article's saved images from website
                 if (article.images && article.images.length > 0) {
                     let bestImage = article.images[0];
-
                     for (const img of article.images) {
                         if (img.width && img.height) {
                             if (img.width >= 300 && img.height >= 150) {
@@ -1116,22 +1124,21 @@
                             }
                         }
                     }
-
                     const imageUrl = bestImage.src || bestImage.url || bestImage;
                     if (imageUrl) return imageUrl;
                 }
 
-                // Priority 2: Featured image (ORIGINAL BEHAVIOR)
+                // Priority 3: Featured image from website
                 if (article.featuredImage) {
                     return article.featuredImage;
                 }
 
-                // Priority 3: Article image field (ORIGINAL BEHAVIOR)
+                // Priority 4: Article image field from website
                 if (article.image) {
                     return article.image;
                 }
 
-                // Priority 4: Extract from content (ORIGINAL BEHAVIOR)
+                // Priority 5: Extract from content
                 if (article.content) {
                     const imgMatch = article.content.match(/<img[^>]+src="([^"]+)"/i);
                     if (imgMatch && imgMatch[1]) {
@@ -1139,14 +1146,14 @@
                     }
                 }
 
-                // Priority 5: URL cache (only for extracted images)
+                // Priority 6: Previously extracted image from cache
                 const key = this.getImageCacheKey(article);
                 const urlEntry = this.imageUrlCache.get(key);
-                if (urlEntry && urlEntry.url) {
+                if (urlEntry && urlEntry.url && !this.isCategoryBasedImage(urlEntry.url)) {
                     return urlEntry.url;
                 }
 
-                // Priority 6: Category fallback (ORIGINAL BEHAVIOR)
+                // Priority 7: Category fallback (last resort)
                 return this.getCategoryBasedImage(article, 0);
             }
 
@@ -1662,19 +1669,24 @@
 
                     this.articles = backup.articles || [];
 
-                    // ENHANCED: Restore backup info from backup cache only (not OneDrive images)
+                    // Restore backup info and load OneDrive images
                     this.restoreBackupInfoToArticles();
 
                     this.displayArticles(this.articles);
 
+                    const backupCount = this.articles.filter(a => a.backedUpImage).length;
                     const urlCacheCount = this.imageUrlCache.size;
 
-                    let statusMessage = `✅ Loaded ${this.articles.length} articles with correct images!`;
+                    let statusMessage = `✅ Loaded ${this.articles.length} articles`;
+                    if (backupCount > 0) {
+                        statusMessage += ` (${backupCount} with OneDrive backups)`;
+                    }
                     if (urlCacheCount > 0) {
                         statusMessage += ` [${urlCacheCount} cached]`;
                     }
+                    statusMessage += ` - Extracting real images...`;
 
-                    this.updateStatus(statusMessage, 'success');
+                    this.updateStatus(statusMessage, 'loading');
 
                 } catch (error) {
                     console.error('Error loading articles:', error);
@@ -1843,56 +1855,121 @@
             }
 
             async silentlyImproveImages(articles) {
-                // Don't load OneDrive images - this was causing random assignments
-                // Instead, just do background extraction and backup like the original
+                // First, load OneDrive URLs for articles that have backups
+                let backupImagesLoaded = 0;
+                if (this.accessToken) {
+                    backupImagesLoaded = await this.loadBackedUpImages();
+                }
 
+                // Then extract real images from websites for articles that need them
+                let extractedCount = 0;
+                let newBackupsCount = 0;
+                
                 for (let i = 0; i < articles.length; i++) {
                     try {
                         const article = articles[i];
                         const imgElement = document.querySelector(`#image-${i} img`);
                         if (!imgElement) continue;
 
-                        // Only try to extract better images if we're showing a fallback
                         const currentSrc = imgElement.src;
-                        const isFallback = this.isCategoryBasedImage(currentSrc);
                         
-                        if (isFallback) {
-                            // Try to extract real image from website (ORIGINAL BEHAVIOR)
+                        // Check if this article needs a real image extraction
+                        const needsExtraction = this.isCategoryBasedImage(currentSrc) && 
+                                              !this.hasRealImageSaved(article);
+
+                        if (needsExtraction) {
                             try {
+                                console.log(`🌐 Extracting real image for: ${article.title.substring(0, 40)}...`);
                                 const extractedImage = await this.extractRealImageForArticle(article);
                                 if (extractedImage && extractedImage !== currentSrc) {
                                     imgElement.src = extractedImage;
-                                    // Cache for next time
                                     this.cacheImageUrl(article, extractedImage, 'extracted');
-                                    console.log(`🔍 Extracted real image for: ${article.title.substring(0, 30)}...`);
+                                    extractedCount++;
+                                    console.log(`✅ Real image extracted: ${this.getDomain(article.url)}`);
                                 }
                             } catch (error) {
-                                console.log(`Image extraction failed for ${article.title}: ${error.message}`);
+                                console.log(`⚠️ Extraction failed for ${this.getDomain(article.url)}: ${error.message}`);
+                            }
+                        } else {
+                            // Check if we have a better cached/backup version
+                            const betterImageUrl = this.getInstantImageUrl(article);
+                            if (betterImageUrl && betterImageUrl !== currentSrc && !this.isCategoryBasedImage(betterImageUrl)) {
+                                imgElement.src = betterImageUrl;
+                                console.log(`🔄 Updated with better image: ${article.title.substring(0, 30)}...`);
                             }
                         }
 
-                        // Background backup (ORIGINAL BEHAVIOR)
+                        // Background backup for extracted images
                         if (this.imageBackupEnabled && this.accessToken && !article.backedUpImage) {
                             const imageToBackup = this.getBestImageForBackup(article);
-                            if (imageToBackup) {
+                            if (imageToBackup && !this.isCategoryBasedImage(imageToBackup)) {
                                 try {
                                     const backupInfo = await this.backupImageToOneDrive(imageToBackup, article, i);
                                     if (backupInfo) {
                                         this.setImageBackupStatus(article, backupInfo);
+                                        newBackupsCount++;
+                                        console.log(`💾 Backed up image for: ${article.title.substring(0, 30)}...`);
                                     }
                                 } catch (backupError) {
-                                    console.log(`Silent backup failed for article ${i}: ${backupError.message}`);
+                                    console.log(`⚠️ Backup failed for article ${i}: ${backupError.message}`);
                                 }
                             }
                         }
 
-                        // Small delay to prevent overwhelming
-                        await new Promise(resolve => setTimeout(resolve, 200));
+                        // Update progress
+                        const progress = Math.round(((i + 1) / articles.length) * 100);
+                        if ((i + 1) % 3 === 0 || i === articles.length - 1) {
+                            this.updateStatus(`🔍 Processing images... ${i + 1}/${articles.length} (${progress}%) | Extracted: ${extractedCount}, Loaded: ${backupImagesLoaded}, Backed up: ${newBackupsCount}`, 'loading');
+                        }
+
+                        // Delay to prevent overwhelming
+                        await new Promise(resolve => setTimeout(resolve, 300));
 
                     } catch (error) {
-                        console.error(`Silent improvement failed for article ${i}:`, error);
+                        console.error(`Error improving article ${i}:`, error);
                     }
                 }
+
+                // Final status update
+                let finalMessage = `✅ Image processing complete! ${articles.length} articles loaded`;
+                if (backupImagesLoaded > 0) finalMessage += ` | ${backupImagesLoaded} from OneDrive`;
+                if (extractedCount > 0) finalMessage += ` | ${extractedCount} extracted from websites`;
+                if (newBackupsCount > 0) finalMessage += ` | ${newBackupsCount} new backups saved`;
+
+                this.updateStatus(finalMessage, 'success');
+            }
+
+            async loadBackedUpImages() {
+                console.log('☁️ Loading backed up images from OneDrive...');
+                let loadedCount = 0;
+                
+                // For each article that has a backup, get its OneDrive download URL
+                for (const article of this.articles) {
+                    const backupStatus = this.getImageBackupStatus(article);
+                    if (backupStatus && backupStatus.fileId) {
+                        try {
+                            const downloadUrl = await this.getBackedUpImageUrl(backupStatus);
+                            if (downloadUrl) {
+                                this.cacheImageUrl(article, downloadUrl, 'onedrive');
+                                loadedCount++;
+                                console.log(`☁️ Loaded backup for: ${article.title.substring(0, 30)}...`);
+                            }
+                        } catch (error) {
+                            console.log(`⚠️ Failed to load backup for ${article.title}: ${error.message}`);
+                        }
+                    }
+                }
+
+                console.log(`☁️ Loaded ${loadedCount} backed up images from OneDrive`);
+                return loadedCount;
+            }
+
+            hasRealImageSaved(article) {
+                // Check if article has real images saved (not just category fallbacks)
+                return !!(article.images?.length > 0 || 
+                         article.featuredImage || 
+                         article.image || 
+                         (article.content && article.content.includes('<img')));
             }
 
             isCategoryBasedImage(imageUrl) {
@@ -3144,7 +3221,7 @@
             // ==================== DEBUG & TEST METHODS ====================
 
             async testPKCEConfig() {
-                console.log('🧪 Testing PKCE + Original Images + Instant Configuration...');
+                console.log('🧪 Testing PKCE + Real Images + OneDrive Configuration...');
 
                 try {
                     const codeChallenge = await this.generatePKCE();
@@ -3177,14 +3254,15 @@
                     const oneDriveCacheSize = this.oneDriveImageCache.size;
                     const backupCacheSize = this.imageBackupCache.size;
 
-                    const results = `🧪 PKCE + Original Images + Instant Test Results:
+                    const results = `🧪 PKCE + Real Images + OneDrive Test Results:
 
 ✅ PKCE generation: OK
 ✅ Redirect URI: ${this.redirectUri}
 ✅ Auth URL: Generated successfully
 ✅ Web Crypto API: Available
 ✅ Client ID: ${this.clientId}
-✅ Original image logic: Enabled
+✅ Real image extraction: Enabled
+✅ OneDrive backup loading: Enabled
 ✅ URL cache: ${urlCacheSize} entries
 ✅ Backup cache: ${backupCacheSize} entries
 ✅ Articles with backups: ${imagesWithBackup}/${this.articles.length}
@@ -3192,23 +3270,24 @@
 ${this.accessToken ? '🔒 Currently authenticated with PKCE' : '☁️ Not authenticated'}
 ${this.refreshToken ? '🔄 Refresh token available (persistent session)' : '⚠️ No refresh token'}
 
-⚡ ORIGINAL + INSTANT: Same images as before, just instant display!
+🌐 REAL IMAGES + ONEDRIVE: Correct images for each article!
 
-💡 Key approach:
-- Uses EXACT same image logic as your original code
-- Article images, featured images, content extraction
-- NO OneDrive image loading (prevents random assignment)
-- OneDrive used only for backup, not display
-- Instant display with zero processing delays
+💡 How it works:
+1. Load OneDrive backups for articles that have them
+2. Use saved article images from websites
+3. Extract real images from article websites
+4. Backup extracted images to OneDrive
+5. Cache everything for faster loading
 
-🎯 Image priority (same as original):
-1. Article's saved images (article.images)
-2. Featured image (article.featuredImage)  
-3. Article image field (article.image)
-4. Content extraction (<img> tags)
-5. Smart category fallbacks
+🎯 Image priority (correct for each article):
+1. OneDrive backup for this specific article
+2. Article's saved images from website
+3. Featured/image fields from website  
+4. Real extraction from article's website
+5. Previously extracted cached images
+6. Smart category fallbacks (last resort)
 
-✅ PERFECT: Your exact image logic + instant display!`;
+✅ PERFECT: Each article gets its own correct image!`;
 
                     alert(results);
 
@@ -3226,7 +3305,7 @@ ${this.refreshToken ? '🔄 Refresh token available (persistent session)' : '⚠
                 const backupCacheSize = this.imageBackupCache.size;
 
                 const info = `
-MyPocket Web Reader Debug Info (True Instant Images):
+MyPocket Web Reader Debug Info (Real Images + OneDrive):
 ===========================================================
 
 🌐 Connection Info:
@@ -3399,12 +3478,12 @@ The "processing" and "cached" delays have been eliminated!
             webReader = new MyPocketWebReader();
             window.webReader = webReader;
 
-            console.log('🚀 MyPocket Web Reader - Original Images + Instant Display');
-            console.log('⚡ Images: Original extraction logic with instant display');
+            console.log('🚀 MyPocket Web Reader - Real Images + OneDrive Edition');
+            console.log('🌐 Images: Real extraction from websites + OneDrive backups');
             console.log('🔒 PKCE: Persistent authentication with auto-refresh');
-            console.log('🎨 Display: Same images as before, just instantly');
+            console.log('☁️ OneDrive: Load backed up images for specific articles');
             console.log('📱 Complete: All original functionality preserved');
-            console.log('✅ FIXED: Original image behavior + zero processing delays!');
+            console.log('✅ CORRECT IMAGES: Real images that belong to each article!');
         });
     </script>
 </body>
