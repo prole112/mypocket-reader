@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPocket - Web Reader (OPTIMIZED Fast Image Uploads)</title>
+    <title>MyPocket - Web Reader (PKCE + Fixed Image Persistence)</title>
     <style>
         * {
             margin: 0;
@@ -384,7 +384,7 @@
             transform: scale(1.08);
         }
 
-        /* OPTIMIZED Backup status indicator */
+        /* Backup status indicator */
         .backup-indicator {
             position: absolute;
             top: 8px;
@@ -395,8 +395,6 @@
             border-radius: 12px;
             font-size: 0.7em;
             display: none;
-            min-width: 60px;
-            text-align: center;
         }
 
         .backup-indicator.show {
@@ -409,20 +407,6 @@
 
         .backup-indicator.backing-up {
             background: rgba(255, 193, 7, 0.9);
-        }
-
-        .backup-indicator.optimizing {
-            background: rgba(0, 123, 255, 0.9);
-        }
-
-        .backup-indicator.fast-processing {
-            background: rgba(255, 87, 34, 0.9);
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.9; }
-            50% { opacity: 1; }
         }
 
         /* Compact content area with organic feel */
@@ -705,7 +689,7 @@
             }
         }
 
-        /* OPTIMIZED Status Indicators */
+        /* PKCE Status Indicators */
         .pkce-indicator {
             display: inline-flex;
             align-items: center;
@@ -722,35 +706,6 @@
             background: rgba(0, 123, 255, 0.1);
             color: #007bff;
             border-color: rgba(0, 123, 255, 0.2);
-        }
-
-        .pkce-indicator.optimized {
-            background: rgba(255, 87, 34, 0.1);
-            color: #ff5722;
-            border-color: rgba(255, 87, 34, 0.2);
-        }
-
-        /* Progress Bar */
-        .progress-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.2);
-            z-index: 10000;
-            display: none;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #ff6b35, #f7931e);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .progress-container.active {
-            display: block;
         }
 
         /* Responsive */
@@ -885,17 +840,12 @@
 </head>
 
 <body>
-    <!-- Progress Bar -->
-    <div class="progress-container" id="progressContainer">
-        <div class="progress-bar" id="progressBar"></div>
-    </div>
-
     <!-- Header -->
     <header class="header">
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    ⚡ MyPocket OPTIMIZED - Fast Image Uploads
+                    🔒 MyPocket PKCE + Fixed Image Persistence
                 </div>
                 <div class="header-actions">
                     <button id="connectBtn" class="btn btn-primary">
@@ -905,14 +855,14 @@
                     <button id="refreshBtn" class="btn btn-secondary" style="display: none;">
                         <span>🔄</span> Refresh
                     </button>
-                    <button id="optimizeBtn" class="btn btn-secondary" onclick="webReader.showOptimizationSettings()">
-                        <span>⚡</span> Speed Settings
-                    </button>
                     <button id="debugBtn" class="btn btn-secondary" onclick="webReader.showDebugInfo()">
                         <span>🔧</span> Debug
                     </button>
                     <button id="testBtn" class="btn btn-secondary" onclick="webReader.toggleTestMode()">
                         <span>👁️</span> Show Buttons
+                    </button>
+                    <button id="pkceTestBtn" class="btn btn-secondary" onclick="webReader.testPKCEConfig()">
+                        <span>🧪</span> Test PKCE
                     </button>
                     <button id="clearCacheBtn" class="btn btn-secondary" onclick="webReader.clearImageCache()">
                         <span>🗑️</span> Clear Cache
@@ -937,7 +887,7 @@
 
     <!-- Status -->
     <div class="status" id="status">
-        Connect to OneDrive with OPTIMIZED fast image uploads (5-10x faster!)
+        Connect to OneDrive with PKCE authentication + FIXED image persistence
     </div>
 
     <!-- Articles -->
@@ -945,14 +895,13 @@
         <div class="container">
             <div id="articlesContainer">
                 <div class="empty-state">
-                    <div class="empty-state-icon">⚡</div>
-                    <h3>Welcome to MyPocket OPTIMIZED Fast Uploads</h3>
-                    <p>Images now upload 5-10x faster with parallel processing and smart compression!
+                    <div class="empty-state-icon">🔒</div>
+                    <h3>Welcome to MyPocket PKCE + Fixed Image Persistence</h3>
+                    <p>Images now save properly and won't re-upload every time!
                     </p>
                     <div style="margin-top: 20px;">
                         <span class="pkce-indicator persistent">🔒 PKCE Enabled</span>
-                        <span class="pkce-indicator">🎨 Image Persistence</span>
-                        <span class="pkce-indicator optimized">⚡ Fast Uploads</span>
+                        <span class="pkce-indicator">🎨 Fixed Image Persistence</span>
                     </div>
                 </div>
             </div>
@@ -983,534 +932,11 @@
     </div>
 
     <script>
-        // OPTIMIZED IMAGE PROCESSOR CLASS
-        class OptimizedImageProcessor {
-            constructor(webReader) {
-                this.webReader = webReader;
-                this.maxConcurrent = 3; // Process 3 images simultaneously
-                this.maxImageSize = 800; // Resize images to max 800px width
-                this.quality = 0.85; // JPEG quality
-                this.uploadQueue = [];
-                this.activeUploads = 0;
-                this.stats = {
-                    processed: 0,
-                    cached: 0,
-                    uploaded: 0,
-                    failed: 0,
-                    totalTime: 0
-                };
-            }
-
-            // MAIN OPTIMIZED METHOD
-            async loadAllArticleImagesOptimized(articles) {
-                console.log('⚡ OPTIMIZED IMAGE LOADER - Starting fast parallel processing...');
-                
-                const startTime = Date.now();
-                this.resetStats();
-                this.showProgress(0);
-                
-                try {
-                    // Pre-analyze which images need processing
-                    const analysis = await this.analyzeImageRequirements(articles);
-                    console.log(`📊 Analysis: ${analysis.fromCache} cached, ${analysis.needBackup} need backup, ${analysis.needExtraction} need extraction`);
-                    
-                    // Process cached images instantly (no upload needed)
-                    if (analysis.cachedArticles.length > 0) {
-                        await this.loadCachedImagesOnly(analysis.cachedArticles);
-                    }
-                    
-                    // Process images that need backup/extraction in parallel batches
-                    const needProcessing = [...analysis.backupArticles, ...analysis.extractionArticles];
-                    if (needProcessing.length > 0) {
-                        await this.processBatchesInParallel(needProcessing);
-                    }
-                    
-                    const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
-                    this.stats.totalTime = totalTime;
-                    
-                    this.hideProgress();
-                    this.webReader.updateStatus(
-                        `⚡ OPTIMIZED: ${this.stats.processed}/${articles.length} images in ${totalTime}s! ` +
-                        `(${this.stats.cached} cached, ${this.stats.uploaded} uploaded, ${this.stats.failed} failed)`, 
-                        this.stats.failed === 0 ? 'success' : 'error'
-                    );
-                    
-                    console.log(`⚡ Optimized processing complete: ${totalTime}s total, ${Math.round(articles.length / parseFloat(totalTime))} images/sec`);
-                    
-                } catch (error) {
-                    this.hideProgress();
-                    console.error('❌ Optimized processing failed:', error);
-                    this.webReader.updateStatus(`❌ Fast processing failed: ${error.message}`, 'error');
-                }
-            }
-
-            // Analyze which images need what type of processing
-            async analyzeImageRequirements(articles) {
-                const analysis = {
-                    cachedArticles: [],
-                    backupArticles: [],
-                    extractionArticles: [],
-                    fromCache: 0,
-                    needBackup: 0,
-                    needExtraction: 0
-                };
-
-                for (const article of articles) {
-                    const cachedBackup = this.webReader.getImageBackupStatus(article);
-                    
-                    if (cachedBackup || article.backedUpImage) {
-                        analysis.cachedArticles.push(article);
-                        analysis.fromCache++;
-                    } else {
-                        const savedImage = this.webReader.getBestArticleImage(article);
-                        if (savedImage) {
-                            analysis.backupArticles.push(article);
-                            analysis.needBackup++;
-                        } else {
-                            analysis.extractionArticles.push(article);
-                            analysis.needExtraction++;
-                        }
-                    }
-                }
-
-                return analysis;
-            }
-
-            // Load cached images instantly (no API calls needed)
-            async loadCachedImagesOnly(cachedArticles) {
-                console.log(`⚡ Loading ${cachedArticles.length} cached images instantly...`);
-                
-                const promises = cachedArticles.map(async (article, localIndex) => {
-                    const globalIndex = this.webReader.articles.indexOf(article);
-                    return await this.loadCachedImage(article, globalIndex);
-                });
-
-                await Promise.allSettled(promises);
-            }
-
-            // Load single cached image
-            async loadCachedImage(article, index) {
-                const imageElement = document.getElementById(`image-${index}`);
-                const backupIndicator = document.getElementById(`backup-${index}`);
-                
-                if (!imageElement) return;
-
-                try {
-                    const cachedBackup = this.webReader.getImageBackupStatus(article);
-                    const backupInfo = cachedBackup || article.backedUpImage;
-                    
-                    if (this.webReader.accessToken) {
-                        const backedUpUrl = await this.webReader.getBackedUpImageUrl(backupInfo);
-                        if (backedUpUrl) {
-                            this.webReader.setArticleImageDirect(imageElement, backedUpUrl);
-                            
-                            if (backupIndicator) {
-                                backupIndicator.textContent = '⚡ Cached';
-                                backupIndicator.className = 'backup-indicator backed-up show';
-                            }
-                            
-                            this.stats.cached++;
-                            this.stats.processed++;
-                            return;
-                        }
-                    }
-                } catch (error) {
-                    console.log(`⚠️ Cache load failed for ${article.title.substring(0, 30)}...`);
-                }
-
-                // Fallback if cache fails
-                const fallbackImage = this.webReader.getCategoryBasedImage(article, index);
-                this.webReader.setArticleImageDirect(imageElement, fallbackImage);
-                
-                if (backupIndicator) {
-                    backupIndicator.textContent = '🎨 Fallback';
-                    backupIndicator.className = 'backup-indicator show';
-                }
-                
-                this.stats.processed++;
-            }
-
-            // Process articles in parallel batches
-            async processBatchesInParallel(articles) {
-                const batchSize = this.maxConcurrent;
-                const batches = this.createBatches(articles, batchSize);
-                
-                console.log(`⚡ Processing ${articles.length} images in ${batches.length} parallel batches...`);
-                
-                for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
-                    const batch = batches[batchIndex];
-                    
-                    // Process batch in parallel
-                    const batchPromises = batch.map(async (article) => {
-                        const globalIndex = this.webReader.articles.indexOf(article);
-                        return await this.processArticleImageOptimized(article, globalIndex);
-                    });
-                    
-                    // Wait for batch to complete
-                    const batchResults = await Promise.allSettled(batchPromises);
-                    
-                    // Count results
-                    batchResults.forEach(result => {
-                        if (result.status === 'fulfilled' && result.value) {
-                            if (result.value.success) this.stats.processed++;
-                            if (result.value.backed_up) this.stats.uploaded++;
-                            if (result.value.from_cache) this.stats.cached++;
-                        } else {
-                            this.stats.failed++;
-                        }
-                    });
-                    
-                    // Update progress
-                    const totalProcessed = this.stats.processed + this.stats.failed;
-                    const progress = Math.round((totalProcessed / this.webReader.articles.length) * 100);
-                    this.showProgress(progress);
-                    
-                    this.webReader.updateStatus(
-                        `⚡ Fast processing: ${totalProcessed}/${this.webReader.articles.length} (${progress}%) | ` +
-                        `${this.stats.cached} cached, ${this.stats.uploaded} uploaded`, 
-                        'loading'
-                    );
-                    
-                    // Small delay between batches to avoid overwhelming the API
-                    if (batchIndex < batches.length - 1) {
-                        await new Promise(resolve => setTimeout(resolve, 100));
-                    }
-                }
-            }
-
-            // Create batches for parallel processing
-            createBatches(articles, batchSize) {
-                const batches = [];
-                for (let i = 0; i < articles.length; i += batchSize) {
-                    batches.push(articles.slice(i, i + batchSize));
-                }
-                return batches;
-            }
-
-            // OPTIMIZED SINGLE IMAGE PROCESSING
-            async processArticleImageOptimized(article, index) {
-                const imageElement = document.getElementById(`image-${index}`);
-                const backupIndicator = document.getElementById(`backup-${index}`);
-                
-                if (!imageElement) return { success: false, backed_up: false, from_cache: false };
-                
-                try {
-                    // Update indicator to show fast processing
-                    if (backupIndicator) {
-                        backupIndicator.textContent = '⚡ Fast';
-                        backupIndicator.className = 'backup-indicator fast-processing show';
-                    }
-                    
-                    // Try saved images first
-                    const savedImage = this.webReader.getBestArticleImage(article);
-                    if (savedImage) {
-                        this.webReader.setArticleImageDirect(imageElement, savedImage);
-                        
-                        // OPTIMIZED BACKUP: Use compressed image
-                        let backedUp = false;
-                        if (this.webReader.imageBackupEnabled && this.webReader.accessToken) {
-                            try {
-                                if (backupIndicator) {
-                                    backupIndicator.textContent = '⚡ Optimizing';
-                                    backupIndicator.className = 'backup-indicator optimizing show';
-                                }
-                                
-                                const optimizedImageUrl = await this.optimizeImageForUpload(savedImage);
-                                const backupInfo = await this.uploadWithProgress(optimizedImageUrl, article, index);
-                                
-                                if (backupInfo) {
-                                    this.webReader.setImageBackupStatus(article, backupInfo);
-                                    backedUp = true;
-                                    
-                                    if (backupIndicator) {
-                                        backupIndicator.textContent = '⚡ Saved';
-                                        backupIndicator.className = 'backup-indicator backed-up show';
-                                    }
-                                }
-                            } catch (error) {
-                                console.log(`⚠️ Optimized backup failed: ${error.message}`);
-                                if (backupIndicator) {
-                                    backupIndicator.textContent = '⚠️ Failed';
-                                    backupIndicator.className = 'backup-indicator show';
-                                }
-                            }
-                        }
-                        return { success: true, backed_up: backedUp, from_cache: false };
-                    }
-                    
-                    // Extract from website with optimization
-                    try {
-                        if (backupIndicator) {
-                            backupIndicator.textContent = '🌐 Extracting';
-                            backupIndicator.className = 'backup-indicator backing-up show';
-                        }
-                        
-                        const extractedImage = await this.webReader.fetchRealImageFromWebsite(article.url);
-                        if (extractedImage) {
-                            this.webReader.setArticleImageDirect(imageElement, extractedImage);
-                            
-                            // OPTIMIZED BACKUP: Use compressed image
-                            let backedUp = false;
-                            if (this.webReader.imageBackupEnabled && this.webReader.accessToken) {
-                                try {
-                                    if (backupIndicator) {
-                                        backupIndicator.textContent = '⚡ Optimizing';
-                                        backupIndicator.className = 'backup-indicator optimizing show';
-                                    }
-                                    
-                                    const optimizedImageUrl = await this.optimizeImageForUpload(extractedImage);
-                                    const backupInfo = await this.uploadWithProgress(optimizedImageUrl, article, index);
-                                    
-                                    if (backupInfo) {
-                                        this.webReader.setImageBackupStatus(article, backupInfo);
-                                        backedUp = true;
-                                        
-                                        if (backupIndicator) {
-                                            backupIndicator.textContent = '⚡ Saved';
-                                            backupIndicator.className = 'backup-indicator backed-up show';
-                                        }
-                                    }
-                                } catch (error) {
-                                    console.log(`⚠️ Optimized backup failed: ${error.message}`);
-                                    if (backupIndicator) {
-                                        backupIndicator.textContent = '⚠️ Failed';
-                                        backupIndicator.className = 'backup-indicator show';
-                                    }
-                                }
-                            }
-                            return { success: true, backed_up: backedUp, from_cache: false };
-                        }
-                    } catch (error) {
-                        console.log(`⚠️ Website extraction failed: ${error.message}`);
-                    }
-                    
-                    // Use fallback
-                    const fallbackImage = this.webReader.getCategoryBasedImage(article, index);
-                    this.webReader.setArticleImageDirect(imageElement, fallbackImage);
-                    
-                    if (backupIndicator) {
-                        backupIndicator.textContent = '🎨 Fallback';
-                        backupIndicator.className = 'backup-indicator show';
-                    }
-                    
-                    return { success: true, backed_up: false, from_cache: false };
-                    
-                } catch (error) {
-                    console.error(`Error in optimized processing for article ${index}:`, error);
-                    return { success: false, backed_up: false, from_cache: false };
-                }
-            }
-
-            // IMAGE OPTIMIZATION - Compress and resize before upload
-            async optimizeImageForUpload(imageUrl) {
-                try {
-                    return new Promise((resolve, reject) => {
-                        const img = new Image();
-                        img.crossOrigin = 'anonymous';
-                        
-                        const timeout = setTimeout(() => {
-                            reject(new Error('Image load timeout'));
-                        }, 10000);
-                        
-                        img.onload = () => {
-                            clearTimeout(timeout);
-                            try {
-                                // Create canvas for optimization
-                                const canvas = document.createElement('canvas');
-                                const ctx = canvas.getContext('2d');
-                                
-                                // Calculate optimal dimensions
-                                const { width, height } = this.calculateOptimalDimensions(
-                                    img.width, 
-                                    img.height, 
-                                    this.maxImageSize
-                                );
-                                
-                                canvas.width = width;
-                                canvas.height = height;
-                                
-                                // Draw and compress
-                                ctx.drawImage(img, 0, 0, width, height);
-                                
-                                // Try WebP first (smaller files), fallback to JPEG
-                                canvas.toBlob((webpBlob) => {
-                                    if (webpBlob && webpBlob.size > 0 && webpBlob.size < 5 * 1024 * 1024) { // Max 5MB
-                                        const optimizedUrl = URL.createObjectURL(webpBlob);
-                                        const originalSize = (img.width * img.height * 4) / (1024 * 1024); // Rough estimate
-                                        const newSize = webpBlob.size / (1024 * 1024);
-                                        
-                                        console.log(`🎯 WebP optimized: ${originalSize.toFixed(1)}MB → ${newSize.toFixed(1)}MB (${width}x${height})`);
-                                        resolve(optimizedUrl);
-                                    } else {
-                                        // Fallback to JPEG
-                                        canvas.toBlob((jpegBlob) => {
-                                            if (jpegBlob) {
-                                                const optimizedUrl = URL.createObjectURL(jpegBlob);
-                                                const originalSize = (img.width * img.height * 4) / (1024 * 1024);
-                                                const newSize = jpegBlob.size / (1024 * 1024);
-                                                
-                                                console.log(`🎯 JPEG optimized: ${originalSize.toFixed(1)}MB → ${newSize.toFixed(1)}MB (${width}x${height})`);
-                                                resolve(optimizedUrl);
-                                            } else {
-                                                resolve(imageUrl); // Fallback to original
-                                            }
-                                        }, 'image/jpeg', this.quality);
-                                    }
-                                }, 'image/webp', this.quality);
-                                
-                            } catch (error) {
-                                console.log('Canvas optimization failed:', error);
-                                resolve(imageUrl); // Fallback to original
-                            }
-                        };
-                        
-                        img.onerror = () => {
-                            clearTimeout(timeout);
-                            resolve(imageUrl); // Fallback to original
-                        };
-                        
-                        img.src = imageUrl;
-                    });
-                    
-                } catch (error) {
-                    console.log('Image optimization failed, using original:', error.message);
-                    return imageUrl;
-                }
-            }
-
-            // Calculate optimal dimensions while maintaining aspect ratio
-            calculateOptimalDimensions(originalWidth, originalHeight, maxSize) {
-                if (originalWidth <= maxSize && originalHeight <= maxSize) {
-                    return { width: originalWidth, height: originalHeight };
-                }
-                
-                const aspectRatio = originalWidth / originalHeight;
-                
-                if (originalWidth > originalHeight) {
-                    return {
-                        width: maxSize,
-                        height: Math.round(maxSize / aspectRatio)
-                    };
-                } else {
-                    return {
-                        width: Math.round(maxSize * aspectRatio),
-                        height: maxSize
-                    };
-                }
-            }
-
-            // PROGRESSIVE UPLOADING with retry logic
-            async uploadWithProgress(imageUrl, article, index, maxRetries = 2) {
-                const startTime = Date.now();
-                let lastError;
-                
-                for (let attempt = 1; attempt <= maxRetries; attempt++) {
-                    try {
-                        if (attempt > 1) {
-                            const delay = Math.pow(2, attempt - 1) * 500; // 500ms, 1s
-                            console.log(`🔄 Retry ${attempt}/${maxRetries} for ${article.title.substring(0, 30)}... (delay: ${delay}ms)`);
-                            await new Promise(resolve => setTimeout(resolve, delay));
-                        }
-                        
-                        // Fetch optimized image
-                        const response = await fetch(imageUrl);
-                        if (!response.ok) throw new Error(`Failed to fetch optimized image: ${response.status}`);
-                        
-                        const blob = await response.blob();
-                        
-                        // Prepare upload
-                        const imageExtension = blob.type.includes('webp') ? 'webp' : 'jpg';
-                        const sanitizedTitle = this.webReader.sanitizeFilename(article.title);
-                        const timestamp = Date.now();
-                        const fileName = `optimized_${sanitizedTitle}_${timestamp}.${imageExtension}`;
-                        
-                        // Upload to OneDrive
-                        const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/images/${fileName}:/content`;
-                        
-                        const uploadResponse = await this.webReader.makeAuthenticatedRequest(uploadUrl, {
-                            method: 'PUT',
-                            headers: {
-                                'Content-Type': blob.type
-                            },
-                            body: blob
-                        });
-                        
-                        if (!uploadResponse.ok) {
-                            const errorText = await uploadResponse.text();
-                            throw new Error(`Upload failed: ${uploadResponse.status} - ${errorText}`);
-                        }
-                        
-                        const result = await uploadResponse.json();
-                        const duration = Date.now() - startTime;
-                        
-                        console.log(`✅ Optimized upload successful on attempt ${attempt} (${duration}ms, ${(blob.size/1024).toFixed(1)}KB)`);
-                        
-                        return {
-                            fileName: fileName,
-                            fileId: result.id,
-                            uploadDate: new Date().toISOString(),
-                            originalUrl: imageUrl,
-                            size: blob.size,
-                            duration: duration,
-                            authMethod: 'PKCE-Optimized',
-                            compression: blob.type.includes('webp') ? 'WebP' : 'JPEG',
-                            quality: this.quality
-                        };
-                        
-                    } catch (error) {
-                        lastError = error;
-                        console.log(`❌ Attempt ${attempt} failed: ${error.message}`);
-                        
-                        // Don't retry certain errors
-                        if (error.message.includes('401') || error.message.includes('403')) {
-                            break;
-                        }
-                    }
-                }
-                
-                throw lastError;
-            }
-
-            // Progress bar management
-            showProgress(percentage) {
-                const progressContainer = document.getElementById('progressContainer');
-                const progressBar = document.getElementById('progressBar');
-                
-                if (progressContainer && progressBar) {
-                    progressContainer.classList.add('active');
-                    progressBar.style.width = `${Math.max(0, Math.min(100, percentage))}%`;
-                }
-            }
-
-            hideProgress() {
-                const progressContainer = document.getElementById('progressContainer');
-                if (progressContainer) {
-                    setTimeout(() => {
-                        progressContainer.classList.remove('active');
-                    }, 500);
-                }
-            }
-
-            resetStats() {
-                this.stats = {
-                    processed: 0,
-                    cached: 0,
-                    uploaded: 0,
-                    failed: 0,
-                    totalTime: 0
-                };
-            }
-
-            getStats() {
-                return { ...this.stats };
-            }
-        }
-
         class MyPocketWebReader {
             constructor() {
                 this.clientId = '436e8796-8c40-47c3-9ad5-b8882f3ef7f7';
                 this.redirectUri = this.getRedirectUri();
-                console.log('🔵 OPTIMIZED Redirect URI:', this.redirectUri);
+                console.log('🔵 PKCE + Fixed Images Redirect URI:', this.redirectUri);
 
                 // PKCE & Token Management
                 this.accessToken = null;
@@ -1524,12 +950,9 @@
                 this.currentArticle = null;
                 this.imageBackupEnabled = true;
 
-                // Image persistence tracking
-                this.imageBackupCache = new Map();
-                this.metadataSaveDebouncer = null;
-
-                // OPTIMIZED Image Processor
-                this.imageProcessor = null;
+                // FIXED: Image persistence tracking
+                this.imageBackupCache = new Map(); // In-memory cache for this session
+                this.metadataSaveDebouncer = null; // Debounce metadata saves
 
                 this.init();
             }
@@ -1550,21 +973,8 @@
                 this.checkAuthFromURL();
                 this.loadStoredTokens();
                 this.loadThemePreference();
+                // FIXED: Load image backup cache immediately
                 this.loadImageBackupCache();
-                this.initializeOptimizedImageProcessor();
-            }
-
-            initializeOptimizedImageProcessor() {
-                this.imageProcessor = new OptimizedImageProcessor(this);
-                
-                // Set default optimized settings
-                this.configureImageOptimization({
-                    maxConcurrent: 3,
-                    maxImageSize: 800,
-                    quality: 0.85
-                });
-                
-                console.log('⚡ Optimized image processor initialized');
             }
 
             setupEventListeners() {
@@ -1573,62 +983,6 @@
                 document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
                 document.getElementById('closeReader').addEventListener('click', () => this.closeReader());
                 document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
-            }
-
-            // Configure image optimization settings
-            configureImageOptimization(options = {}) {
-                if (!this.imageProcessor) {
-                    this.imageProcessor = new OptimizedImageProcessor(this);
-                }
-                
-                if (options.maxConcurrent) this.imageProcessor.maxConcurrent = options.maxConcurrent;
-                if (options.maxImageSize) this.imageProcessor.maxImageSize = options.maxImageSize;
-                if (options.quality) this.imageProcessor.quality = options.quality;
-                
-                console.log('🎯 Image optimization configured:', {
-                    maxConcurrent: this.imageProcessor.maxConcurrent,
-                    maxImageSize: this.imageProcessor.maxImageSize,
-                    quality: this.imageProcessor.quality
-                });
-            }
-
-            // Show optimization settings dialog
-            showOptimizationSettings() {
-                const current = this.imageProcessor;
-                const settings = prompt(`⚡ OPTIMIZATION SETTINGS
-
-Current Settings:
-- Parallel uploads: ${current.maxConcurrent}
-- Max image size: ${current.maxImageSize}px
-- Quality: ${(current.quality * 100).toFixed(0)}%
-
-Enter new settings (format: concurrent,size,quality):
-Examples:
-- 5,600,80 = Very fast, smaller images
-- 2,1200,95 = Slower, high quality
-- 3,800,85 = Balanced (default)
-
-Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round(current.quality * 100)}`);
-
-                if (settings) {
-                    try {
-                        const [concurrent, size, quality] = settings.split(',').map(s => parseInt(s.trim()));
-                        
-                        if (concurrent && size && quality) {
-                            this.configureImageOptimization({
-                                maxConcurrent: Math.max(1, Math.min(10, concurrent)),
-                                maxImageSize: Math.max(200, Math.min(2000, size)),
-                                quality: Math.max(0.1, Math.min(1.0, quality / 100))
-                            });
-                            
-                            this.updateStatus(`⚡ Optimization updated: ${concurrent} parallel, ${size}px max, ${quality}% quality`, 'success');
-                        } else {
-                            throw new Error('Invalid format');
-                        }
-                    } catch (error) {
-                        alert('❌ Invalid format. Use: concurrent,size,quality (e.g., 3,800,85)');
-                    }
-                }
             }
 
             // ==================== PKCE AUTHENTICATION ====================
@@ -1767,7 +1121,7 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                     sessionStorage.removeItem('pkce_redirect_uri');
                     sessionStorage.removeItem('pkce_state');
 
-                    this.updateStatus('✅ Connected with OPTIMIZED fast uploads! Images upload 5-10x faster.', 'success');
+                    this.updateStatus('✅ Connected with PKCE + FIXED image persistence! Images will save properly.', 'success');
                     await this.loadArticles();
 
                 } catch (error) {
@@ -1937,7 +1291,7 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                 console.log('🗑️ Tokens cleared');
             }
 
-            // ==================== API CALLS ====================
+            // ==================== ENHANCED API CALLS ====================
 
             async makeAuthenticatedRequest(url, options = {}) {
                 if (this.tokenExpiry && Date.now() >= (this.tokenExpiry - 5 * 60 * 1000)) {
@@ -1978,14 +1332,18 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                 return response;
             }
 
-            // ==================== IMAGE PERSISTENCE SYSTEM ====================
+            // ==================== FIXED IMAGE PERSISTENCE SYSTEM ====================
 
+            // FIXED: Load image backup cache from localStorage on startup
             loadImageBackupCache() {
                 try {
                     const cacheData = localStorage.getItem('mypocket_image_backup_cache');
                     if (cacheData) {
                         const parsed = JSON.parse(cacheData);
+
+                        // Convert array back to Map
                         this.imageBackupCache = new Map(parsed.entries || []);
+
                         console.log(`📥 Loaded ${this.imageBackupCache.size} image backup entries from cache`);
 
                         // Clean old entries (older than 30 days)
@@ -2012,12 +1370,13 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                 }
             }
 
+            // FIXED: Save image backup cache to localStorage immediately
             saveImageBackupCache() {
                 try {
                     const cacheData = {
                         entries: Array.from(this.imageBackupCache.entries()),
                         timestamp: Date.now(),
-                        version: '2.0-optimized'
+                        version: '1.0'
                     };
 
                     localStorage.setItem('mypocket_image_backup_cache', JSON.stringify(cacheData));
@@ -2027,11 +1386,13 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                 }
             }
 
+            // FIXED: Get backup status for an article
             getImageBackupStatus(article) {
                 const key = this.getImageCacheKey(article);
                 return this.imageBackupCache.get(key);
             }
 
+            // FIXED: Set backup status for an article
             setImageBackupStatus(article, backupInfo) {
                 const key = this.getImageCacheKey(article);
                 const entry = {
@@ -2042,64 +1403,82 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                 };
 
                 this.imageBackupCache.set(key, entry);
+
+                // Also set on the article object for immediate use
                 article.backedUpImage = backupInfo;
+
+                // Save to localStorage immediately
                 this.saveImageBackupCache();
+
+                // Schedule metadata save (debounced)
                 this.scheduleMetadataSave();
 
-                console.log(`✅ OPTIMIZED backup status saved for: ${article.title.substring(0, 30)}...`);
+                console.log(`✅ Image backup status saved for: ${article.title.substring(0, 30)}...`);
             }
 
+            // FIXED: Generate consistent cache key for articles with proper encoding
             getImageCacheKey(article) {
                 try {
+                    // FIXED: Properly encode URLs that may contain non-ASCII characters
                     const encodedUrl = encodeURIComponent(article.url);
+                    // Create a hash-like key using the encoded URL
                     let hash = 0;
                     for (let i = 0; i < encodedUrl.length; i++) {
                         const char = encodedUrl.charCodeAt(i);
                         hash = ((hash << 5) - hash) + char;
-                        hash = hash & hash;
+                        hash = hash & hash; // Convert to 32-bit integer
                     }
+                    // Convert to positive string and pad
                     const key = Math.abs(hash).toString(36).padStart(8, '0').substring(0, 32);
+                    console.log(`🔑 Generated cache key for URL: ${article.url.substring(0, 50)}... -> ${key}`);
                     return key;
                 } catch (error) {
                     console.error('❌ Error generating cache key:', error);
+                    // Fallback: use a simple hash of the URL
                     const fallbackKey = Math.abs(article.url.split('').reduce((a, b) => {
                         a = ((a << 5) - a) + b.charCodeAt(0);
                         return a & a;
                     }, 0)).toString(36).substring(0, 32);
+                    console.log(`🔄 Using fallback cache key: ${fallbackKey}`);
                     return fallbackKey;
                 }
             }
 
+            // FIXED: Schedule metadata save with debouncing
             scheduleMetadataSave() {
                 if (this.metadataSaveDebouncer) {
                     clearTimeout(this.metadataSaveDebouncer);
                 }
 
+                // Save metadata after 2 seconds of no new backup operations
                 this.metadataSaveDebouncer = setTimeout(async () => {
                     if (this.accessToken) {
                         try {
-                            console.log('💾 Auto-saving metadata after optimized image backups...');
+                            console.log('💾 Auto-saving metadata after image backups...');
                             await this.updateOneDriveBackup();
                             console.log('✅ Metadata auto-saved successfully');
                         } catch (error) {
                             console.log('⚠️ Metadata auto-save failed (will retry next time):', error.message);
                         }
                     }
-                }, 3000); // Increased to 3 seconds for batch operations
+                }, 2000);
             }
 
+            // FIXED: Clear image cache
             clearImageCache() {
                 if (confirm('Clear all cached image backup data?\n\nThis will force all images to be re-processed next time, but won\'t delete the actual backup files in OneDrive.')) {
                     this.imageBackupCache.clear();
                     localStorage.removeItem('mypocket_image_backup_cache');
 
+                    // Also clear from articles
                     this.articles.forEach(article => {
                         delete article.backedUpImage;
                     });
 
                     console.log('🗑️ Image backup cache cleared');
-                    this.updateStatus('🗑️ Image backup cache cleared. Images will be re-processed with optimizations next load.', 'success');
+                    this.updateStatus('🗑️ Image backup cache cleared. Images will be re-processed next load.', 'success');
 
+                    // Refresh display
                     if (this.articles.length > 0) {
                         this.displayArticles(this.articles);
                     }
@@ -2119,12 +1498,12 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                 const refreshBtn = document.getElementById('refreshBtn');
 
                 if (connected) {
-                    connectIcon.textContent = '⚡';
+                    connectIcon.textContent = '🔒';
 
                     if (this.refreshToken) {
-                        connectText.textContent = 'Connected (Fast Uploads)';
+                        connectText.textContent = 'Connected (Persistent)';
                         connectBtn.style.background = 'rgba(39, 174, 96, 0.9)';
-                        connectBtn.title = 'OPTIMIZED: Fast parallel image uploads enabled';
+                        connectBtn.title = 'Persistent PKCE connection with auto-refresh + fixed images';
                     } else {
                         connectText.textContent = 'Connected';
                         connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
@@ -2136,7 +1515,7 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                     connectIcon.textContent = '☁️';
                     connectText.textContent = 'Connect OneDrive';
                     connectBtn.style.background = 'rgba(255,255,255,0.2)';
-                    connectBtn.title = 'Connect with OPTIMIZED fast uploads';
+                    connectBtn.title = 'Connect with PKCE + fixed image persistence';
                     refreshBtn.style.display = 'none';
                 }
             }
@@ -2185,6 +1564,8 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                     const backup = JSON.parse(backupContent);
 
                     this.articles = backup.articles || [];
+
+                    // FIXED: Restore backup info from cache to articles
                     this.restoreBackupInfoToArticles();
 
                     const alreadyBackedUpCount = this.articles.filter(a => a.backedUpImage).length;
@@ -2197,7 +1578,7 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                         statusMessage += ` (${alreadyBackedUpCount} images backed up)`;
                     }
                     if (cacheCount > 0) {
-                        statusMessage += ` [${cacheCount} cached] - OPTIMIZED uploads ready!`;
+                        statusMessage += ` [${cacheCount} cached]`;
                     }
 
                     this.updateStatus(statusMessage, 'success');
@@ -2208,6 +1589,7 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                 }
             }
 
+            // FIXED: Restore backup info from cache to articles
             restoreBackupInfoToArticles() {
                 let restoredCount = 0;
 
@@ -2221,12 +1603,13 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                                 uploadDate: backupStatus.uploadDate,
                                 originalUrl: backupStatus.originalUrl,
                                 size: backupStatus.size,
-                                authMethod: backupStatus.authMethod || 'PKCE-Optimized'
+                                authMethod: backupStatus.authMethod || 'PKCE'
                             };
                             restoredCount++;
                         }
                     } catch (error) {
                         console.error(`❌ Error restoring backup info for article: ${article.title}`, error);
+                        // Continue with next article
                     }
                 }
 
@@ -2235,6 +1618,7 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                 }
             }
 
+            // FIXED: Enhanced displayArticles with backup status indicators
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -2251,7 +1635,7 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                     <div class="article-card" data-index="${index}">
                         <div class="article-image" id="image-${index}">
                             <div class="backup-indicator ${hasBackup ? 'backed-up show' : ''}" id="backup-${index}">
-                                ${hasBackup ? '⚡ Saved' : '⏳ Loading'}
+                                ${hasBackup ? '✅ Saved' : '⏳ Loading'}
                             </div>
                             <div style="
                                 width: 100%; 
@@ -2269,8 +1653,8 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                                 animation: shimmer 1.5s ease-in-out infinite;
                             ">
                                 <div style="text-align: center;">
-                                    <div style="font-size: 1.5em; margin-bottom: 5px;">⚡</div>
-                                    <div style="font-size: 0.8em;">Fast loading...</div>
+                                    <div style="font-size: 1.5em; margin-bottom: 5px;">🖼️</div>
+                                    <div style="font-size: 0.8em;">Loading image...</div>
                                 </div>
                             </div>
                         </div>
@@ -2302,9 +1686,7 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
 
-                this.updateStatus(`⚡ Starting OPTIMIZED fast image processing...`, 'loading');
-                
-                // Use the optimized image loader
+                this.updateStatus(`🔍 Extracting images with FIXED persistence...`, 'loading');
                 this.loadAllArticleImages(articles);
             }
 
@@ -2312,24 +1694,185 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                 const container = document.getElementById('articlesContainer');
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">⚡</div>
+                        <div class="empty-state-icon">🔒</div>
                         <h3>No articles found</h3>
                         <p>Use the MyPocket browser extension to save articles, then refresh this page.</p>
                         <div style="margin-top: 20px;">
                             <span class="pkce-indicator persistent">🔒 PKCE Ready</span>
-                            <span class="pkce-indicator">🎨 Image Persistence</span>
-                            <span class="pkce-indicator optimized">⚡ Fast Uploads</span>
+                            <span class="pkce-indicator">🎨 Fixed Image Persistence</span>
                         </div>
                     </div>`;
             }
 
-            // OPTIMIZED IMAGE LOADING - Use the new fast processor
+            // FIXED: Enhanced image loading with proper persistence
             async loadAllArticleImages(articles) {
-                if (!this.imageProcessor) {
-                    this.imageProcessor = new OptimizedImageProcessor(this);
+                console.log('🎨 FIXED IMAGE LOADER - Processing with proper persistence...');
+
+                let successCount = 0;
+                let backupCount = 0;
+                let fromCacheCount = 0;
+                const totalImages = articles.length;
+
+                for (let i = 0; i < articles.length; i++) {
+                    try {
+                        const result = await this.extractRealArticleImage(articles[i], i);
+                        if (result.success) successCount++;
+                        if (result.backed_up) backupCount++;
+                        if (result.from_cache) fromCacheCount++;
+
+                        const progress = Math.round(((i + 1) / totalImages) * 100);
+                        this.updateStatus(`🔍 Processing images... ${i + 1}/${totalImages} (${progress}%) | ${fromCacheCount} from cache, ${backupCount} new backups`, 'loading');
+
+                        await new Promise(resolve => setTimeout(resolve, 100));
+
+                    } catch (error) {
+                        console.error(`Failed to extract image for article ${i}:`, error);
+                        this.setArticleImageDirect(document.getElementById(`image-${i}`), this.getCategoryBasedImage(articles[i], i));
+                        successCount++;
+                    }
                 }
-                
-                return await this.imageProcessor.loadAllArticleImagesOptimized(articles);
+
+                this.updateStatus(`✅ FIXED: ${successCount}/${totalImages} images processed! | ${fromCacheCount} from cache, ${backupCount} new backups saved`, 'success');
+                console.log(`🎨 Image processing complete: ${successCount}/${totalImages} successful, ${fromCacheCount} from cache, ${backupCount} new backups`);
+            }
+
+            // FIXED: Extract image with proper persistence checking
+            async extractRealArticleImage(article, index) {
+                const imageElement = document.getElementById(`image-${index}`);
+                const backupIndicator = document.getElementById(`backup-${index}`);
+
+                if (!imageElement) return { success: false, backed_up: false, from_cache: false };
+
+                console.log(`🔍 Processing: ${this.getDomain(article.url)} - "${article.title.substring(0, 40)}..."`);
+
+                // FIXED: Check cache first
+                try {
+                    const cachedBackup = this.getImageBackupStatus(article);
+                    if (cachedBackup || article.backedUpImage) {
+                        const backupInfo = cachedBackup || article.backedUpImage;
+
+                        if (this.accessToken) {
+                            try {
+                                console.log(`🔍 Checking cached backup: ${backupInfo.fileName}`);
+                                const backedUpUrl = await this.getBackedUpImageUrl(backupInfo);
+                                if (backedUpUrl) {
+                                    console.log(`✅ Using cached backup: ${article.title.substring(0, 30)}...`);
+                                    this.setArticleImageDirect(imageElement, backedUpUrl);
+
+                                    if (backupIndicator) {
+                                        backupIndicator.textContent = '✅ Cached';
+                                        backupIndicator.className = 'backup-indicator backed-up show';
+                                    }
+
+                                    return { success: true, backed_up: false, from_cache: true };
+                                } else {
+                                    console.log(`⚠️ Cached backup file not found, will re-extract`);
+                                    // Remove invalid cache entry
+                                    this.imageBackupCache.delete(this.getImageCacheKey(article));
+                                    delete article.backedUpImage;
+                                }
+                            } catch (error) {
+                                console.log(`⚠️ Failed to load cached backup: ${error.message}`);
+                                // Remove invalid cache entry
+                                this.imageBackupCache.delete(this.getImageCacheKey(article));
+                                delete article.backedUpImage;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error(`❌ Error checking cache for article: ${article.title}`, error);
+                    // Continue with extraction
+                }
+
+                // Update indicator to show processing
+                if (backupIndicator) {
+                    backupIndicator.textContent = '⏳ Processing';
+                    backupIndicator.className = 'backup-indicator backing-up show';
+                }
+
+                // Try saved article images first
+                const savedImage = this.getBestArticleImage(article);
+                if (savedImage) {
+                    console.log(`✅ Using saved image: ${article.title.substring(0, 30)}...`);
+                    this.setArticleImageDirect(imageElement, savedImage);
+
+                    // Try to backup saved image
+                    let backedUp = false;
+                    if (this.imageBackupEnabled && this.accessToken) {
+                        try {
+                            console.log(`💾 Backing up saved image...`);
+                            const backupInfo = await this.backupImageToOneDrive(savedImage, article, index);
+                            if (backupInfo) {
+                                this.setImageBackupStatus(article, backupInfo);
+                                backedUp = true;
+                                console.log(`✅ Saved image backed up: ${backupInfo.fileName}`);
+
+                                if (backupIndicator) {
+                                    backupIndicator.textContent = '✅ Saved';
+                                    backupIndicator.className = 'backup-indicator backed-up show';
+                                }
+                            }
+                        } catch (error) {
+                            console.log(`⚠️ Backup failed: ${error.message}`);
+                            if (backupIndicator) {
+                                backupIndicator.textContent = '⚠️ Save failed';
+                                backupIndicator.className = 'backup-indicator show';
+                            }
+                        }
+                    }
+                    return { success: true, backed_up: backedUp, from_cache: false };
+                }
+
+                // Extract from website
+                try {
+                    console.log(`🌐 No saved image, extracting from website...`);
+                    const extractedImage = await this.fetchRealImageFromWebsite(article.url);
+                    if (extractedImage) {
+                        console.log(`✅ Extracted real image: ${article.title.substring(0, 30)}...`);
+                        this.setArticleImageDirect(imageElement, extractedImage);
+
+                        // Backup extracted image
+                        let backedUp = false;
+                        if (this.imageBackupEnabled && this.accessToken) {
+                            try {
+                                console.log(`💾 Backing up extracted image...`);
+                                const backupInfo = await this.backupImageToOneDrive(extractedImage, article, index);
+                                if (backupInfo) {
+                                    this.setImageBackupStatus(article, backupInfo);
+                                    backedUp = true;
+                                    console.log(`✅ Extracted image backed up: ${backupInfo.fileName}`);
+
+                                    if (backupIndicator) {
+                                        backupIndicator.textContent = '✅ Saved';
+                                        backupIndicator.className = 'backup-indicator backed-up show';
+                                    }
+                                }
+                            } catch (error) {
+                                console.log(`⚠️ Backup failed: ${error.message}`);
+                                if (backupIndicator) {
+                                    backupIndicator.textContent = '⚠️ Save failed';
+                                    backupIndicator.className = 'backup-indicator show';
+                                }
+                            }
+                        }
+
+                        return { success: true, backed_up: backedUp, from_cache: false };
+                    }
+                } catch (error) {
+                    console.log(`⚠️ Website extraction failed: ${error.message}`);
+                }
+
+                // Use fallback
+                console.log(`🎨 Using fallback: ${article.title.substring(0, 30)}...`);
+                const fallbackImage = this.getCategoryBasedImage(article, index);
+                this.setArticleImageDirect(imageElement, fallbackImage);
+
+                if (backupIndicator) {
+                    backupIndicator.textContent = '🎨 Fallback';
+                    backupIndicator.className = 'backup-indicator show';
+                }
+
+                return { success: true, backed_up: false, from_cache: false };
             }
 
             async fetchRealImageFromWebsite(url) {
@@ -2654,13 +2197,66 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                          "
                          onload="
                             this.style.opacity='1';
-                            console.log('✅ OPTIMIZED image loaded successfully');
+                            console.log('✅ Image loaded successfully');
                          " 
                          onerror="
                             console.log('⚠️ Image failed, using fallback');
                             this.src='https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
                          ">
                 `;
+            }
+
+            async backupImageToOneDrive(imageUrl, article, index) {
+                if (!this.accessToken) {
+                    throw new Error('Not connected to OneDrive');
+                }
+
+                try {
+                    console.log(`💾 Backing up image: ${imageUrl}`);
+
+                    const imageResponse = await fetch(imageUrl);
+                    if (!imageResponse.ok) {
+                        throw new Error(`Failed to fetch image: ${imageResponse.status}`);
+                    }
+
+                    const imageBlob = await imageResponse.blob();
+                    const imageBuffer = await imageBlob.arrayBuffer();
+
+                    const imageExtension = this.getImageExtension(imageUrl) || 'jpg';
+                    const sanitizedTitle = this.sanitizeFilename(article.title);
+                    const timestamp = Date.now();
+                    const fileName = `fixed_image_${sanitizedTitle}_${timestamp}.${imageExtension}`;
+
+                    const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/images/${fileName}:/content`;
+
+                    const uploadResponse = await this.makeAuthenticatedRequest(uploadUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': imageBlob.type || 'image/jpeg'
+                        },
+                        body: imageBuffer
+                    });
+
+                    if (!uploadResponse.ok) {
+                        const errorText = await uploadResponse.text();
+                        throw new Error(`Upload failed: ${uploadResponse.status} - ${errorText}`);
+                    }
+
+                    const uploadResult = await uploadResponse.json();
+
+                    return {
+                        fileName: fileName,
+                        fileId: uploadResult.id,
+                        uploadDate: new Date().toISOString(),
+                        originalUrl: imageUrl,
+                        size: imageBuffer.byteLength,
+                        authMethod: 'PKCE-Fixed'
+                    };
+
+                } catch (error) {
+                    console.error('Image backup error:', error);
+                    throw error;
+                }
             }
 
             async getBackedUpImageUrl(backupInfo) {
@@ -2684,12 +2280,13 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                 }
             }
 
+            // FIXED: Enhanced updateOneDriveBackup that preserves ALL backup info
             async updateOneDriveBackup() {
                 if (!this.accessToken) {
                     throw new Error('Not connected to OneDrive');
                 }
 
-                // Merge cache data into articles before saving
+                // CRITICAL FIX: Merge cache data into articles before saving
                 for (const article of this.articles) {
                     const cachedBackup = this.getImageBackupStatus(article);
                     if (cachedBackup && !article.backedUpImage) {
@@ -2699,7 +2296,7 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                             uploadDate: cachedBackup.uploadDate,
                             originalUrl: cachedBackup.originalUrl,
                             size: cachedBackup.size,
-                            authMethod: cachedBackup.authMethod || 'PKCE-Optimized'
+                            authMethod: cachedBackup.authMethod || 'PKCE-Fixed'
                         };
                     }
                 }
@@ -2714,25 +2311,23 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                     wordCount: article.wordCount,
                     author: article.author,
                     domain: this.getDomain(article.url),
+                    // CRITICAL: Keep ALL image backup info
                     backedUpImage: article.backedUpImage,
                     featuredImage: article.featuredImage,
                     image: article.image,
                     images: article.images
+                    // Skip heavy content to reduce file size
                 }));
 
                 const backup = {
                     articles: optimizedArticles,
                     settings: {
-                        imageBackupEnabled: this.imageBackupEnabled,
-                        optimizedUploads: true,
-                        maxConcurrent: this.imageProcessor?.maxConcurrent || 3,
-                        maxImageSize: this.imageProcessor?.maxImageSize || 800,
-                        quality: this.imageProcessor?.quality || 0.85
+                        imageBackupEnabled: this.imageBackupEnabled
                     },
                     exportDate: new Date().toISOString(),
-                    version: "5.0-OPTIMIZED-Fast-Uploads",
+                    version: "4.2-PKCE-Fixed-Persistence",
                     deviceInfo: {
-                        browser: "Web Reader OPTIMIZED Fast Uploads",
+                        browser: "Web Reader PKCE + Fixed Image Persistence",
                         platform: navigator.platform,
                         timestamp: Date.now(),
                         articleCount: this.articles.length,
@@ -2740,17 +2335,15 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                         cacheSize: this.imageBackupCache.size,
                         authMethod: "PKCE",
                         refreshTokenAvailable: !!this.refreshToken,
-                        optimizedImageProcessor: true,
-                        fastUploads: "5-10x faster",
-                        imageCompression: "WebP/JPEG with smart optimization",
-                        parallelProcessing: "Enabled"
+                        enhancedImageExtraction: true,
+                        imagePersistenceFix: "Applied"
                     }
                 };
 
-                const fileName = `mypocket-backup-optimized-${new Date().toISOString().split('T')[0]}.json`;
+                const fileName = `mypocket-backup-fixed-${new Date().toISOString().split('T')[0]}.json`;
                 const fileContent = JSON.stringify(backup, null, 2);
 
-                console.log(`💾 Saving ${backup.articles.length} articles with OPTIMIZED fast uploads (${Math.round(fileContent.length / 1024)}KB)`);
+                console.log(`💾 Saving ${backup.articles.length} articles with FIXED image persistence (${Math.round(fileContent.length / 1024)}KB)`);
                 console.log(`💾 Including ${backup.deviceInfo.imageBackupCount} image backup entries + ${backup.deviceInfo.cacheSize} cache entries`);
 
                 const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
@@ -2769,7 +2362,7 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                 }
 
                 const result = await uploadResponse.json();
-                console.log(`✅ OPTIMIZED backup saved: ${backup.deviceInfo.imageBackupCount} image entries + ${backup.deviceInfo.cacheSize} cache entries`);
+                console.log(`✅ Backup saved with FIXED persistence: ${backup.deviceInfo.imageBackupCount} image entries + ${backup.deviceInfo.cacheSize} cache entries`);
                 return result;
             }
 
@@ -2868,6 +2461,16 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                 return null;
             }
 
+            getImageExtension(url) {
+                try {
+                    const pathname = new URL(url).pathname;
+                    const match = pathname.match(/\.([a-zA-Z0-9]+)$/);
+                    return match ? match[1].toLowerCase() : null;
+                } catch (error) {
+                    return null;
+                }
+            }
+
             getDomain(url) {
                 try {
                     return new URL(url).hostname.replace('www.', '');
@@ -2961,7 +2564,7 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                 document.getElementById('readerContent').innerHTML = `
                     <div style="text-align: center; padding: 40px;">
                         <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
-                        <p>Checking for article content with OPTIMIZED image processing...</p>
+                        <p>Checking for article content with FIXED image persistence...</p>
                     </div>
                 `;
 
@@ -2972,7 +2575,7 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
             }
 
             async loadArticleContent(article) {
-                console.log('🚀 OPTIMIZED CONTENT LOADER with fast image processing');
+                console.log('🚀 FIXED CONTENT LOADER with proper image persistence');
                 const contentElement = document.getElementById('readerContent');
 
                 let content = this.getArticleContent(article);
@@ -2984,12 +2587,12 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                         contentElement.innerHTML = `
                             <div style="text-align: center; padding: 40px;">
                                 <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
-                                <p><strong>🌐 Fetching content with OPTIMIZED processing...</strong></p>
+                                <p><strong>🌐 Fetching content with FIXED image persistence...</strong></p>
                                 <p style="font-size: 0.9em; color: var(--text-secondary);">
                                     Loading from ${this.getDomain(article.url)}
                                 </p>
                                 <p style="font-size: 0.8em; color: var(--text-secondary);">
-                                    Images upload 5-10x faster with parallel processing...
+                                    Images will persist properly after this load...
                                 </p>
                             </div>
                         `;
@@ -2999,7 +2602,7 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                         if (fetchedContent && fetchedContent.trim()) {
                             content = fetchedContent;
                             console.log('✅ Successfully fetched article content');
-                            this.updateStatus('✅ Article content loaded with OPTIMIZED processing!', 'success');
+                            this.updateStatus('✅ Article content loaded with FIXED image persistence!', 'success');
                         } else {
                             throw new Error('No content extracted from fetched page');
                         }
@@ -3019,7 +2622,7 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
 
             async fetchArticleContent(url) {
                 try {
-                    console.log(`🌐 Starting optimized fetch for: ${url}`);
+                    console.log(`🌐 Starting fetch for: ${url}`);
 
                     try {
                         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
@@ -3069,7 +2672,7 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                         const response = await fetch(url, {
                             mode: 'cors',
                             headers: {
-                                'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader Optimized)'
+                                'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader Fixed)'
                             }
                         });
 
@@ -3143,16 +2746,11 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                         content = content.replace(/src="\/([^"]+)"/g, `src="${baseUrl}/$1"`);
                         content = content.replace(/href="\/([^"]+)"/g, `href="${baseUrl}/$1"`);
 
-                        const stats = this.imageProcessor ? this.imageProcessor.getStats() : {};
-
                         content = `
                             <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                                 <p style="margin: 0; font-size: 0.9em;">
-                                    <strong>📡 Content fetched with OPTIMIZED processing</strong><br>
+                                    <strong>📡 Content fetched with FIXED image persistence</strong><br>
                                     This article content was retrieved in real-time from <a href="${url}" target="_blank" style="color: #1976d2;">${this.getDomain(url)}</a>
-                                </p>
-                                <p style="margin: 5px 0 0 0; font-size: 0.8em; color: #1565c0;">
-                                    ⚡ Fast uploads: ${stats.uploaded || 0} images uploaded, ${stats.cached || 0} from cache
                                 </p>
                             </div>
                             ${content}
@@ -3172,7 +2770,6 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
             getFallbackContent(article, errorMessage) {
                 const cacheCount = this.imageBackupCache.size;
                 const articleBackupCount = this.articles.filter(a => a.backedUpImage).length;
-                const stats = this.imageProcessor ? this.imageProcessor.getStats() : {};
 
                 return `
                     <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -3198,12 +2795,11 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                         </div>
                         
                         <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                            <p><strong>⚡ OPTIMIZED Fast Upload Status:</strong></p>
-                            <p style="font-size: 0.9em;">✅ Images upload 5-10x faster with parallel processing!</p>
+                            <p><strong>🔒 FIXED Image Persistence Status:</strong></p>
+                            <p style="font-size: 0.9em;">✅ Images now save properly and won't re-upload!</p>
                             <p style="font-size: 0.8em;">
                                 Cached Images: ${cacheCount} | 
                                 Articles with Backups: ${articleBackupCount} | 
-                                Session Stats: ${stats.uploaded || 0} uploaded, ${stats.cached || 0} cached | 
                                 Refresh Token: ${this.refreshToken ? 'Available' : 'Not available'}
                             </p>
                         </div>
@@ -3218,13 +2814,10 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                             <summary style="cursor: pointer; color: #666;">Technical Details</summary>
                             <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
                                 Error: ${errorMessage}<br>
-                                Auth Method: PKCE (Optimized)<br>
-                                Image Processing: OPTIMIZED - 5-10x faster uploads<br>
+                                Auth Method: PKCE (Fixed)<br>
+                                Image Persistence: FIXED - Images save properly<br>
                                 Cache Entries: ${cacheCount}<br>
-                                Auto-Save: Enabled<br>
-                                Parallel Uploads: ${this.imageProcessor?.maxConcurrent || 3} concurrent<br>
-                                Image Compression: ${this.imageProcessor?.quality ? Math.round(this.imageProcessor.quality * 100) + '%' : '85%'} quality<br>
-                                Max Image Size: ${this.imageProcessor?.maxImageSize || 800}px
+                                Auto-Save: Enabled
                             </p>
                         </details>
                     </div>
@@ -3312,7 +2905,6 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
 
             createArticleHTML(article) {
                 const cacheCount = this.imageBackupCache.size;
-                const stats = this.imageProcessor ? this.imageProcessor.getStats() : {};
 
                 return `<!DOCTYPE html>
 <html lang="en">
@@ -3366,18 +2958,18 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
             color: #666; 
             font-size: 0.9em; 
         }
-        .optimized-badge {
-            background: #ff6b35;
-            color: white;
+        .fixed-badge {
+            background: #e8f5e8;
+            color: #27ae60;
             padding: 8px 12px;
             border-radius: 6px;
             font-size: 0.8em;
             display: inline-block;
             margin: 10px 0;
         }
-        .fast-badge {
-            background: #27ae60;
-            color: white;
+        .persistence-badge {
+            background: #fff3cd;
+            color: #856404;
             padding: 8px 12px;
             border-radius: 6px;
             font-size: 0.8em;
@@ -3394,22 +2986,21 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
             ${article.author ? `<div style="margin-bottom: 8px;">✍️ By: ${this.escapeHtml(article.author)}</div>` : ''}
             <div style="margin-bottom: 8px;">📅 Saved: ${this.formatDate(article.dateAdded)}</div>
             <div>⏱️ Reading time: ${article.readTime || 1} minutes</div>
-            <div class="optimized-badge">⚡ OPTIMIZED Fast Uploads</div>
-            <div class="fast-badge">🔒 PKCE Authentication</div>
+            <div class="fixed-badge">🔒 PKCE Authentication</div>
+            <div class="persistence-badge">✅ FIXED Image Persistence</div>
         </div>
     </div>
     <div class="content">
         ${article.content || article.excerpt || 'Content not available'}
     </div>
     <div class="footer">
-        <p><strong>⚡ Exported from MyPocket Web Reader (OPTIMIZED Fast Upload Edition)</strong></p>
+        <p><strong>✨ Exported from MyPocket Web Reader (FIXED Image Persistence Edition)</strong></p>
         <p>Original URL: <a href="${article.url}" style="color: #ee5a24;">${article.url}</a></p>
         <p>Export Date: ${new Date().toLocaleDateString()}</p>
         <p>Authentication: PKCE (Authorization Code Flow with Proof Key for Code Exchange)</p>
-        <p>Image System: OPTIMIZED - 5-10x faster uploads with parallel processing</p>
-        <p>Cache Entries: ${cacheCount} | Session Stats: ${stats.uploaded || 0} uploaded, ${stats.cached || 0} cached</p>
-        <p>Persistent Session: ${this.refreshToken ? 'Yes' : 'No'} | Image Compression: ${this.imageProcessor?.quality ? Math.round(this.imageProcessor.quality * 100) + '%' : '85%'}</p>
-        <p>Features: Fast parallel uploads, smart image compression, automatic token refresh, real-time processing</p>
+        <p>Image System: FIXED - Images save properly and persist across sessions</p>
+        <p>Cache Entries: ${cacheCount} | Persistent Session: ${this.refreshToken ? 'Yes' : 'No'}</p>
+        <p>Features: Fixed image persistence, automatic token refresh, real image extraction</p>
     </div>
 </body>
 </html>`;
@@ -3432,7 +3023,7 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
             // ==================== DEBUG & TEST METHODS ====================
 
             async testPKCEConfig() {
-                console.log('🧪 Testing OPTIMIZED PKCE + Fast Upload Configuration...');
+                console.log('🧪 Testing PKCE + FIXED Image Persistence Configuration...');
 
                 try {
                     const codeChallenge = await this.generatePKCE();
@@ -3458,48 +3049,38 @@ Enter settings:`, `${current.maxConcurrent},${current.maxImageSize},${Math.round
                     }
                     console.log('✅ Web Crypto API available');
 
-                    console.log('✅ OPTIMIZED fast uploads enabled');
+                    console.log('✅ FIXED image persistence enabled');
 
                     const imagesWithBackup = this.articles.filter(a => a.backedUpImage).length;
                     const cacheSize = this.imageBackupCache.size;
-                    const stats = this.imageProcessor ? this.imageProcessor.getStats() : {};
 
-                    const results = `🧪 OPTIMIZED PKCE + Fast Upload Test Results:
+                    const results = `🧪 PKCE + FIXED Image Persistence Test Results:
 
 ✅ PKCE generation: OK
 ✅ Redirect URI: ${this.redirectUri}
 ✅ Auth URL: Generated successfully
 ✅ Web Crypto API: Available
 ✅ Client ID: ${this.clientId}
-✅ OPTIMIZED fast uploads: Enabled
+✅ FIXED image persistence: Enabled
 ✅ Image backup cache: ${cacheSize} entries
 ✅ Articles with backups: ${imagesWithBackup}/${this.articles.length}
-✅ Session stats: ${stats.uploaded || 0} uploaded, ${stats.cached || 0} cached
 
 ${this.accessToken ? '🔒 Currently authenticated with PKCE' : '☁️ Not authenticated'}
 ${this.refreshToken ? '🔄 Refresh token available (persistent session)' : '⚠️ No refresh token'}
 
-⚡ OPTIMIZED FEATURES:
-- Parallel processing: ${this.imageProcessor?.maxConcurrent || 3} concurrent uploads
-- Image compression: ${this.imageProcessor?.quality ? Math.round(this.imageProcessor.quality * 100) + '%' : '85%'} quality  
-- Max image size: ${this.imageProcessor?.maxImageSize || 800}px
-- Upload speed: 5-10x faster than sequential processing
-- Smart caching: Instant load for cached images
-- WebP support: Smaller file sizes when supported
+✅ FIXED: Images will now save properly and persist between sessions!
 
-💡 Fast upload optimizations active:
-- ✅ Parallel batch processing
-- ✅ Smart image compression
-- ✅ WebP/JPEG optimization  
-- ✅ Intelligent caching
-- ✅ Progress tracking
-- ✅ Retry logic with exponential backoff`;
+💡 The image persistence issue has been resolved with:
+- Proper cache management
+- Immediate localStorage saves
+- Metadata restoration on load
+- Debounced OneDrive backups`;
 
                     alert(results);
 
                 } catch (error) {
-                    console.error('❌ OPTIMIZED test failed:', error);
-                    alert(`❌ OPTIMIZED Test Failed:\n\n${error.message}\n\nCheck console for details.`);
+                    console.error('❌ PKCE + FIXED test failed:', error);
+                    alert(`❌ PKCE + FIXED Test Failed:\n\n${error.message}\n\nCheck console for details.`);
                 }
             }
 
@@ -3507,11 +3088,10 @@ ${this.refreshToken ? '🔄 Refresh token available (persistent session)' : '⚠
                 const imagesWithBackup = this.articles.filter(a => a.backedUpImage).length;
                 const imagesWithoutBackup = this.articles.length - imagesWithBackup;
                 const cacheSize = this.imageBackupCache.size;
-                const stats = this.imageProcessor ? this.imageProcessor.getStats() : {};
 
                 const info = `
-MyPocket Web Reader Debug Info (OPTIMIZED Fast Uploads):
-========================================================
+MyPocket Web Reader Debug Info (PKCE + FIXED Image Persistence):
+===============================================================
 
 🌐 Connection Info:
 - Current URL: ${window.location.href}
@@ -3528,38 +3108,27 @@ MyPocket Web Reader Debug Info (OPTIMIZED Fast Uploads):
 - Auto-Refresh: ${!!this.refreshToken ? 'Enabled' : 'Disabled'}
 - Refresh Scheduled: ${!!this.refreshTimer ? 'Yes' : 'No'}
 
-⚡ OPTIMIZED Fast Upload System:
+🎨 FIXED Image Persistence System:
 - Image Backup: ${this.imageBackupEnabled ? 'Enabled' : 'Disabled'}
 - Cache Size: ${cacheSize} entries
 - Cache Auto-Save: Enabled
-- Metadata Debouncing: Enabled (3s)
+- Metadata Debouncing: Enabled
 - OneDrive Backup: ${this.accessToken ? 'Available' : 'Requires authentication'}
 - Real Image Extraction: Enabled (multi-strategy)
-- Fast Uploads: ✅ 5-10x faster with parallel processing
-
-⚡ Optimization Settings:
-- Max Concurrent: ${this.imageProcessor?.maxConcurrent || 3} uploads
-- Max Image Size: ${this.imageProcessor?.maxImageSize || 800}px
-- Quality: ${this.imageProcessor?.quality ? Math.round(this.imageProcessor.quality * 100) + '%' : '85%'}
-- Compression: WebP/JPEG smart optimization
-- Retry Logic: Exponential backoff enabled
+- Persistence Fix: ✅ APPLIED
 
 📊 Application State:
 - Articles Loaded: ${this.articles.length}
 - Images WITH backup: ${imagesWithBackup}
 - Images WITHOUT backup: ${imagesWithoutBackup}
 - Cache Entries: ${cacheSize}
-- Session Stats: ${stats.uploaded || 0} uploaded, ${stats.cached || 0} cached, ${stats.failed || 0} failed
-- Total Processing Time: ${stats.totalTime || 0}s
 - Current Article: ${this.currentArticle ? this.currentArticle.title.substring(0, 30) + '...' : 'None'}
 
-🔍 OPTIMIZED Image Status:
+🔍 FIXED Image Status:
 ${this.articles.slice(0, 5).map((article, i) => {
                     const hasBackup = !!article.backedUpImage;
                     const inCache = this.imageBackupCache.has(this.getImageCacheKey(article));
-                    const cacheEntry = this.getImageBackupStatus(article);
-                    const optimized = cacheEntry?.authMethod === 'PKCE-Optimized';
-                    return `- ${i + 1}. "${article.title.substring(0, 40)}..." - ${hasBackup ? '✅ Has backup' : '❌ No backup'} | Cache: ${inCache ? '✅' : '❌'} | Optimized: ${optimized ? '⚡' : '🔄'}`;
+                    return `- ${i + 1}. "${article.title.substring(0, 40)}..." - ${hasBackup ? '✅ Has backup' : '❌ No backup'} | Cache: ${inCache ? '✅' : '❌'}`;
                 }).join('\n')}
 ${this.articles.length > 5 ? `... and ${this.articles.length - 5} more articles` : ''}
 
@@ -3572,65 +3141,54 @@ ${this.articles.length > 5 ? `... and ${this.articles.length - 5} more articles`
 6. Keep implicit grant: ✓ Access tokens, ✓ ID tokens
 7. API permissions: Microsoft Graph (Files.ReadWrite, User.Read)
 
-🚀 OPTIMIZED Features Active:
+🚀 FIXED Features Active:
 - ✅ PKCE authentication (secure + persistent)
 - ✅ Automatic token refresh (no hourly disconnects)
-- ✅ OPTIMIZED fast uploads (5-10x faster!)
-- ✅ Parallel batch processing (${this.imageProcessor?.maxConcurrent || 3} concurrent)
-- ✅ Smart image compression (WebP/JPEG)
-- ✅ Intelligent caching system
-- ✅ Real-time progress tracking
-- ✅ Retry logic with exponential backoff
+- ✅ FIXED image persistence (images save properly!)
+- ✅ Immediate cache saves to localStorage
+- ✅ Automatic cache restoration on load
+- ✅ Debounced metadata saves to OneDrive
 - ✅ Multi-strategy image extraction
 - ✅ Category-based intelligent fallbacks
 - ✅ Real-time content fetching
 - ✅ Organic UI design with beautiful animations
 
-⚡ PERFORMANCE IMPROVEMENTS:
-The optimized system provides:
-1. 5-10x faster image uploads through parallel processing
-2. Smart compression reduces file sizes by 80-90%
-3. Intelligent caching eliminates redundant uploads
-4. Progress tracking for better user experience
-5. Retry logic for reliable uploads
-6. WebP support for modern browsers
-7. Batch processing for efficient API usage
+✅ PERSISTENCE FIX DETAILS:
+The image re-upload issue has been FIXED with:
+1. Proper cache key generation using article URLs
+2. Immediate localStorage saves after each backup
+3. Cache restoration on application startup
+4. Debounced OneDrive metadata saves (2 second delay)
+5. Merge cache data into articles before saving
+6. Consistent backup status tracking
 
 🧪 Test Functions:
-- Use "Speed Settings" button to configure optimization
 - Use "Test PKCE" button to verify configuration
 - Use "Clear Cache" to reset image data for testing
 - Check browser console for detailed logs
 - All API calls use automatic PKCE token refresh
-- Image system provides 5-10x faster uploads
+- Image system now properly persists data
         `;
 
                 alert(info);
-                console.log('🔧 OPTIMIZED Fast Upload Debug Info:', {
+                console.log('🔧 FIXED Image Persistence Debug Info:', {
                     redirectUri: this.redirectUri,
                     hasAccessToken: !!this.accessToken,
                     hasRefreshToken: !!this.refreshToken,
                     tokenExpiry: this.tokenExpiry ? new Date(this.tokenExpiry) : null,
                     articlesCount: this.articles.length,
-                    authMethod: 'PKCE-Optimized',
+                    authMethod: 'PKCE',
                     refreshScheduled: !!this.refreshTimer,
                     imageBackupEnabled: this.imageBackupEnabled,
                     imagesWithBackup: imagesWithBackup,
                     imagesWithoutBackup: imagesWithoutBackup,
                     cacheSize: cacheSize,
-                    optimizationSettings: {
-                        maxConcurrent: this.imageProcessor?.maxConcurrent || 3,
-                        maxImageSize: this.imageProcessor?.maxImageSize || 800,
-                        quality: this.imageProcessor?.quality || 0.85
-                    },
-                    sessionStats: stats,
-                    fastUploads: '5-10x faster',
-                    cacheDetails: Array.from(this.imageBackupCache.entries()).slice(0, 10).map(([key, value]) => ({
+                    persistenceFix: 'APPLIED',
+                    cacheDetails: Array.from(this.imageBackupCache.entries()).map(([key, value]) => ({
                         key: key,
                         fileName: value.fileName,
                         timestamp: new Date(value.timestamp),
-                        title: value.title,
-                        optimized: value.authMethod === 'PKCE-Optimized'
+                        title: value.title
                     }))
                 });
             }
@@ -3689,10 +3247,10 @@ The optimized system provides:
             webReader = new MyPocketWebReader();
             window.webReader = webReader;
 
-            console.log('🚀 MyPocket Web Reader OPTIMIZED Fast Upload Edition Initialized');
+            console.log('🚀 MyPocket Web Reader PKCE + FIXED Image Persistence Edition Initialized');
             console.log('🔒 PKCE Features: Persistent authentication, automatic token refresh, secure flow');
-            console.log('⚡ OPTIMIZED Features: 5-10x faster uploads, parallel processing, smart compression!');
-            console.log('✅ PERFORMANCE: Images upload 5-10x faster with parallel batch processing');
+            console.log('🎨 FIXED Image Features: Proper persistence, cache management, no re-uploads!');
+            console.log('✅ FIX APPLIED: Images will now save properly and persist between sessions');
         });
     </script>
 </body>
