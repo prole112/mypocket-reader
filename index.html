@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPocket - Web Reader (OPTIMIZED: INSTANT Display + FULL OneDrive Integration + PKCE)</title>
+    <title>MyPocket - Web Reader (INSTANT Display + FULL OneDrive Integration + PKCE)</title>
     <style>
         * {
             margin: 0;
@@ -384,7 +384,7 @@
             transform: scale(1.08);
         }
 
-        /* OPTIMIZED status indicators */
+        /* INSTANT + OneDrive status indicator */
         .backup-indicator {
             position: absolute;
             top: 8px;
@@ -415,10 +415,6 @@
 
         .backup-indicator.processing {
             background: rgba(255, 87, 34, 0.9);
-        }
-
-        .backup-indicator.optimized {
-            background: rgba(138, 43, 226, 0.9);
         }
 
         /* Compact content area with organic feel */
@@ -701,7 +697,7 @@
             }
         }
 
-        /* OPTIMIZED Indicators */
+        /* INSTANT + OneDrive Indicators */
         .feature-indicator {
             display: inline-flex;
             align-items: center;
@@ -724,12 +720,6 @@
             background: rgba(255, 193, 7, 0.1);
             color: #ff6b00;
             border-color: rgba(255, 193, 7, 0.2);
-        }
-
-        .feature-indicator.optimized {
-            background: rgba(138, 43, 226, 0.1);
-            color: #8a2be2;
-            border-color: rgba(138, 43, 226, 0.2);
         }
 
         /* Responsive */
@@ -869,7 +859,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    🚀 MyPocket - OPTIMIZED Complete
+                    🚀 MyPocket - INSTANT + OneDrive Complete
                 </div>
                 <div class="header-actions">
                     <button id="connectBtn" class="btn btn-primary">
@@ -914,7 +904,7 @@
 
     <!-- Status -->
     <div class="status" id="status">
-        Connect to OneDrive with PKCE authentication + OPTIMIZED INSTANT display + FULL OneDrive backup integration
+        Connect to OneDrive with PKCE authentication + INSTANT display + FULL OneDrive backup integration
     </div>
 
     <!-- Articles -->
@@ -923,13 +913,12 @@
             <div id="articlesContainer">
                 <div class="empty-state">
                     <div class="empty-state-icon">🚀</div>
-                    <h3>Welcome to MyPocket - OPTIMIZED Complete Edition</h3>
-                    <p>OPTIMIZED INSTANT image display + FULL OneDrive integration + Real content fetching!</p>
+                    <h3>Welcome to MyPocket - Complete Edition</h3>
+                    <p>INSTANT image display + FULL OneDrive integration + Real content fetching!</p>
                     <div style="margin-top: 20px;">
                         <span class="feature-indicator persistent">🔒 PKCE Enabled</span>
                         <span class="feature-indicator instant">⚡ INSTANT Display</span>
                         <span class="feature-indicator">☁️ OneDrive Backup</span>
-                        <span class="feature-indicator optimized">🚀 OPTIMIZED Processing</span>
                         <span class="feature-indicator">🌐 Content Fetching</span>
                     </div>
                 </div>
@@ -965,7 +954,7 @@
             constructor() {
                 this.clientId = '436e8796-8c40-47c3-9ad5-b8882f3ef7f7';
                 this.redirectUri = this.getRedirectUri();
-                console.log('🚀 OPTIMIZED COMPLETE EDITION Redirect URI:', this.redirectUri);
+                console.log('🚀 COMPLETE EDITION Redirect URI:', this.redirectUri);
 
                 // PKCE & Token Management
                 this.accessToken = null;
@@ -979,7 +968,7 @@
                 this.currentArticle = null;
                 this.imageBackupEnabled = true;
 
-                // HYBRID SYSTEM: INSTANT Display + OneDrive Backup (keeping your exact original)
+                // HYBRID SYSTEM: INSTANT Display + OneDrive Backup
                 this.db = null; // IndexedDB for INSTANT display
                 this.preloadedImages = new Map(); // Blob URLs for instant display
                 this.imageBackupCache = new Map(); // OneDrive backup tracking
@@ -1022,8 +1011,8 @@
                 document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
             }
 
-            // ==================== OPTIMIZED HYBRID IMAGE SYSTEM ====================
-            // INSTANT Display (IndexedDB) + OneDrive Backup (Cloud Storage) + SMART CACHING
+            // ==================== HYBRID IMAGE SYSTEM ====================
+            // INSTANT Display (IndexedDB) + OneDrive Backup (Cloud Storage)
 
             async initImageDatabase() {
                 return new Promise((resolve, reject) => {
@@ -1198,8 +1187,7 @@
                     timestamp: Date.now(),
                     url: article.url,
                     title: article.title.substring(0, 50),
-                    cacheKey: key,
-                    method: 'optimized'
+                    cacheKey: key
                 };
 
                 this.imageBackupCache.set(key, entry);
@@ -1208,10 +1196,10 @@
                 const saveSuccess = this.saveImageBackupCache();
 
                 if (saveSuccess) {
-                    console.log(`☁️ OPTIMIZED backup status saved for: ${article.title.substring(0, 30)}...`);
+                    console.log(`☁️ OneDrive backup status saved for: ${article.title.substring(0, 30)}...`);
                     this.scheduleMetadataSaveImmediate();
                 } else {
-                    console.error(`❌ Failed to save backup status for: ${article.title.substring(0, 30)}...`);
+                    console.error(`❌ Failed to save OneDrive backup status for: ${article.title.substring(0, 30)}...`);
                 }
             }
 
@@ -1632,7 +1620,7 @@
                     connectIcon.textContent = '☁️';
                     connectText.textContent = 'Connect OneDrive';
                     connectBtn.style.background = 'rgba(255,255,255,0.2)';
-                    connectBtn.title = 'Connect with PKCE + OPTIMIZED + OneDrive';
+                    connectBtn.title = 'Connect with PKCE + INSTANT + OneDrive';
                     refreshBtn.style.display = 'none';
                 }
             }
@@ -1728,7 +1716,7 @@
                                 uploadDate: backupStatus.uploadDate,
                                 originalUrl: backupStatus.originalUrl,
                                 size: backupStatus.size,
-                                authMethod: backupStatus.authMethod || 'PKCE-OPTIMIZED'
+                                authMethod: backupStatus.authMethod || 'PKCE'
                             };
                             restoredCount++;
                         }
@@ -1740,7 +1728,7 @@
                 console.log(`☁️ Restored ${restoredCount} OneDrive backup entries to articles`);
             }
 
-            // OPTIMIZED: Enhanced displayArticles with both INSTANT + OneDrive status
+            // HYBRID: Enhanced displayArticles with both INSTANT + OneDrive status
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1763,7 +1751,7 @@
                         statusText = '☁️ OneDrive';
                         statusClass = 'backed-up';
                     } else {
-                        statusText = '🚀 Processing';
+                        statusText = '🔄 Processing';
                         statusClass = 'processing';
                     }
 
@@ -1791,7 +1779,7 @@
                                 ">
                                     <div style="text-align: center;">
                                         <div style="font-size: 1.5em; margin-bottom: 5px;">🚀</div>
-                                        <div style="font-size: 0.8em;">${hasOneDriveBackup ? 'Loading backup...' : 'OPTIMIZED processing...'}</div>
+                                        <div style="font-size: 0.8em;">${hasOneDriveBackup ? 'Loading backup...' : 'Processing...'}</div>
                                     </div>
                                 </div>
                             `}
@@ -1824,9 +1812,9 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
 
-                // HYBRID: Display instant images first, then process new ones (YOUR ORIGINAL FLOW)
+                // HYBRID: Display instant images first, then process new ones
                 this.displayInstantImages(articles);
-                this.processNewImages(articles); // Using your exact original method
+                this.processNewImages(articles);
             }
 
             displayEmptyState() {
@@ -1840,7 +1828,6 @@
                             <span class="feature-indicator persistent">🔒 PKCE Ready</span>
                             <span class="feature-indicator instant">⚡ INSTANT Display</span>
                             <span class="feature-indicator">☁️ OneDrive Backup</span>
-                            <span class="feature-indicator optimized">🚀 OPTIMIZED Processing</span>
                             <span class="feature-indicator">🌐 Content Fetching</span>
                         </div>
                     </div>`;
@@ -1882,7 +1869,7 @@
                 }
             }
 
-            // Process new images (not instant, not OneDrive backed up) - YOUR EXACT ORIGINAL METHOD
+            // Process new images (not instant, not OneDrive backed up)
             async processNewImages(articles) {
                 console.log('🔄 Processing new images...');
 
@@ -1926,8 +1913,8 @@
                             processedCount++;
                         }
 
-                        // OPTIMIZATION: Reduced delay between processing
-                        await new Promise(resolve => setTimeout(resolve, 100)); // Reduced from 500ms
+                        // Delay between processing
+                        await new Promise(resolve => setTimeout(resolve, 500));
 
                     } catch (error) {
                         console.error(`❌ Failed to process image for article ${i}:`, error);
@@ -1937,7 +1924,7 @@
                 this.updateStatus(`🚀 COMPLETE processing! ${processedCount} images handled.`, 'success');
             }
 
-            // Process a single new image with HYBRID storage - YOUR EXACT ORIGINAL METHOD
+            // Process a single new image with HYBRID storage
             async processNewImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
                 const indicator = document.getElementById(`backup-${index}`);
@@ -2039,7 +2026,7 @@
                 return { success: true };
             }
 
-            // Download image as blob for local storage - YOUR EXACT ORIGINAL METHOD
+            // Download image as blob for local storage
             async downloadImageAsBlob(imageUrl) {
                 try {
                     const response = await fetch(imageUrl, {
@@ -2065,7 +2052,7 @@
                 }
             }
 
-            // FULL OneDrive backup to cloud storage - YOUR EXACT ORIGINAL METHOD
+            // FULL OneDrive backup to cloud storage
             async backupImageToOneDrive(imageUrl, article, index) {
                 if (!this.accessToken) {
                     throw new Error('Not connected to OneDrive');
@@ -2170,62 +2157,6 @@
                 }
             }
 
-            // OPTIMIZATION: Client-side image compression (OPTIONAL - not used in original flow)
-            async compressImageOptimized(blob) {
-                if (!this.compressionEnabled || blob.size <= this.maxImageSize) {
-                    return blob;
-                }
-
-                try {
-                    return new Promise((resolve, reject) => {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        const img = new Image();
-
-                        img.onload = () => {
-                            // Calculate new dimensions (max 1200px width)
-                            const maxWidth = 1200;
-                            const maxHeight = 800;
-                            let { width, height } = img;
-
-                            if (width > maxWidth) {
-                                height = (height * maxWidth) / width;
-                                width = maxWidth;
-                            }
-                            if (height > maxHeight) {
-                                width = (width * maxHeight) / height;
-                                height = maxHeight;
-                            }
-
-                            canvas.width = width;
-                            canvas.height = height;
-
-                            // Draw and compress
-                            ctx.drawImage(img, 0, 0, width, height);
-                            
-                            canvas.toBlob(
-                                (compressedBlob) => {
-                                    if (compressedBlob && compressedBlob.size < blob.size) {
-                                        console.log(`🗜️ Compressed: ${Math.round(blob.size/1024)}KB → ${Math.round(compressedBlob.size/1024)}KB`);
-                                        resolve(compressedBlob);
-                                    } else {
-                                        resolve(blob); // Use original if compression didn't help
-                                    }
-                                },
-                                'image/jpeg',
-                                0.85 // 85% quality
-                            );
-                        };
-
-                        img.onerror = () => reject(new Error('Image compression failed'));
-                        img.src = URL.createObjectURL(blob);
-                    });
-                } catch (error) {
-                    console.error('❌ Compression failed:', error);
-                    return blob; // Return original on error
-                }
-            }
-
             // Ensure images folder exists in OneDrive
             async ensureImagesFolderExists() {
                 try {
@@ -2303,7 +2234,7 @@
                             uploadDate: cachedBackup.uploadDate,
                             originalUrl: cachedBackup.originalUrl,
                             size: cachedBackup.size,
-                            authMethod: cachedBackup.authMethod || 'PKCE-OPTIMIZED'
+                            authMethod: cachedBackup.authMethod || 'PKCE-HYBRID'
                         };
                     }
                 }
@@ -2326,15 +2257,12 @@
                 const backup = {
                     articles: optimizedArticles,
                     settings: {
-                        imageBackupEnabled: this.imageBackupEnabled,
-                        compressionEnabled: this.compressionEnabled,
-                        maxConcurrentUploads: this.maxConcurrentUploads,
-                        batchSize: this.batchSize
+                        imageBackupEnabled: this.imageBackupEnabled
                     },
                     exportDate: new Date().toISOString(),
-                    version: "7.0-OPTIMIZED-COMPLETE",
+                    version: "6.0-HYBRID-COMPLETE",
                     deviceInfo: {
-                        browser: "Web Reader OPTIMIZED Edition",
+                        browser: "Web Reader HYBRID Edition",
                         platform: navigator.platform,
                         timestamp: Date.now(),
                         articleCount: this.articles.length,
@@ -2343,23 +2271,15 @@
                         cacheSize: this.imageBackupCache.size,
                         authMethod: "PKCE",
                         refreshTokenAvailable: !!this.refreshToken,
-                        features: ["OPTIMIZED_PROCESSING", "INSTANT_DISPLAY", "ONEDRIVE_BACKUP", "CONTENT_FETCHING", "REAL_TIME_EXTRACTION", "IMAGE_COMPRESSION", "PARALLEL_PROCESSING"],
-                        systemType: "OPTIMIZED-COMPLETE",
-                        optimization: {
-                            parallelProcessing: true,
-                            imageCompression: this.compressionEnabled,
-                            smartCaching: true,
-                            backgroundUploads: true,
-                            preventDuplicates: true,
-                            maxConcurrentUploads: this.maxConcurrentUploads
-                        }
+                        features: ["INSTANT_DISPLAY", "ONEDRIVE_BACKUP", "CONTENT_FETCHING", "REAL_TIME_EXTRACTION"],
+                        systemType: "HYBRID"
                     }
                 };
 
-                const fileName = `mypocket-backup-optimized-${new Date().toISOString().split('T')[0]}.json`;
+                const fileName = `mypocket-backup-hybrid-${new Date().toISOString().split('T')[0]}.json`;
                 const fileContent = JSON.stringify(backup, null, 2);
 
-                console.log(`☁️ Saving OPTIMIZED backup: ${backup.articles.length} articles (${Math.round(fileContent.length / 1024)}KB)`);
+                console.log(`☁️ Saving HYBRID backup: ${backup.articles.length} articles (${Math.round(fileContent.length / 1024)}KB)`);
                 console.log(`☁️ Features: ${backup.deviceInfo.instantImages} instant + ${backup.deviceInfo.oneDriveBackups} OneDrive backups`);
 
                 const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
@@ -2378,7 +2298,7 @@
                 }
 
                 const result = await uploadResponse.json();
-                console.log(`☁️ OPTIMIZED backup saved successfully`);
+                console.log(`☁️ HYBRID backup saved successfully`);
                 return result;
             }
 
@@ -2856,7 +2776,7 @@
                 document.getElementById('readerContent').innerHTML = `
                     <div style="text-align: center; padding: 40px;">
                         <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
-                        <p>Checking for article content with OPTIMIZED system...</p>
+                        <p>Checking for article content with HYBRID system...</p>
                     </div>
                 `;
 
@@ -2867,7 +2787,7 @@
             }
 
             async loadArticleContent(article) {
-                console.log('🚀 OPTIMIZED CONTENT LOADER with real-time fetching');
+                console.log('🚀 HYBRID CONTENT LOADER with real-time fetching');
                 const contentElement = document.getElementById('readerContent');
 
                 let content = this.getArticleContent(article);
@@ -2879,12 +2799,12 @@
                         contentElement.innerHTML = `
                             <div style="text-align: center; padding: 40px;">
                                 <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
-                                <p><strong>🌐 Fetching content with OPTIMIZED system...</strong></p>
+                                <p><strong>🌐 Fetching content with HYBRID system...</strong></p>
                                 <p style="font-size: 0.9em; color: var(--text-secondary);">
                                     Loading from ${this.getDomain(article.url)}
                                 </p>
                                 <p style="font-size: 0.8em; color: var(--text-secondary);">
-                                    OPTIMIZED images + OneDrive backup + Real-time content...
+                                    INSTANT images + OneDrive backup + Real-time content...
                                 </p>
                             </div>
                         `;
@@ -2894,7 +2814,7 @@
                         if (fetchedContent && fetchedContent.trim()) {
                             content = fetchedContent;
                             console.log('✅ Successfully fetched article content');
-                            this.updateStatus('✅ Article content loaded with OPTIMIZED system!', 'success');
+                            this.updateStatus('✅ Article content loaded with HYBRID system!', 'success');
                         } else {
                             throw new Error('No content extracted from fetched page');
                         }
@@ -2964,7 +2884,7 @@
                         const response = await fetch(url, {
                             mode: 'cors',
                             headers: {
-                                'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader OPTIMIZED)'
+                                'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader HYBRID)'
                             }
                         });
 
@@ -3041,7 +2961,7 @@
                         content = `
                             <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                                 <p style="margin: 0; font-size: 0.9em;">
-                                    <strong>📡 Content fetched with OPTIMIZED system</strong><br>
+                                    <strong>📡 Content fetched with HYBRID system</strong><br>
                                     This article content was retrieved in real-time from <a href="${url}" target="_blank" style="color: #1976d2;">${this.getDomain(url)}</a>
                                 </p>
                             </div>
@@ -3087,13 +3007,13 @@
                         </div>
                         
                         <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                            <p><strong>🚀 OPTIMIZED System Status:</strong></p>
-                            <p style="font-size: 0.9em;">⚡ OPTIMIZED images + ☁️ OneDrive backup + 🌐 Real-time fetching</p>
+                            <p><strong>🚀 HYBRID System Status:</strong></p>
+                            <p style="font-size: 0.9em;">⚡ INSTANT images + ☁️ OneDrive backup + 🌐 Real-time fetching</p>
                             <p style="font-size: 0.8em;">
                                 INSTANT Images: ${instantImages} | 
                                 OneDrive Backups: ${oneDriveBackups} | 
                                 Refresh Token: ${this.refreshToken ? 'Available' : 'Not available'} |
-                                System: OPTIMIZED Complete
+                                System: HYBRID Complete
                             </p>
                         </div>
                         
@@ -3107,12 +3027,11 @@
                             <summary style="cursor: pointer; color: #666;">Technical Details</summary>
                             <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
                                 Error: ${errorMessage}<br>
-                                Auth Method: PKCE (OPTIMIZED Edition)<br>
-                                Image System: OPTIMIZED display + OneDrive backup<br>
+                                Auth Method: PKCE (HYBRID Edition)<br>
+                                Image System: INSTANT display + OneDrive backup<br>
                                 Content Fetching: Multi-proxy with real-time extraction<br>
                                 Cache Entries: ${instantImages} instant + ${oneDriveBackups} OneDrive<br>
-                                Features: Complete OPTIMIZED system active<br>
-                                Processing: Parallel batching with compression
+                                Features: Complete HYBRID system active
                             </p>
                         </details>
                     </div>
@@ -3301,15 +3220,6 @@
             display: inline-block;
             margin: 10px 0;
         }
-        .optimized-badge {
-            background: #e2e3f1;
-            color: #5a6bb4;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 0.8em;
-            display: inline-block;
-            margin: 10px 0;
-        }
     </style>
 </head>
 <body>
@@ -3323,22 +3233,20 @@
             <div class="system-badge">🔒 PKCE Authentication</div>
             <div class="instant-badge">⚡ INSTANT Display System</div>
             <div class="feature-badge">☁️ OneDrive Backup Integration</div>
-            <div class="optimized-badge">🚀 OPTIMIZED Processing</div>
         </div>
     </div>
     <div class="content">
         ${article.content || article.excerpt || 'Content not available'}
     </div>
     <div class="footer">
-        <p><strong>✨ Exported from MyPocket Web Reader (OPTIMIZED Complete Edition)</strong></p>
+        <p><strong>✨ Exported from MyPocket Web Reader (HYBRID Complete Edition)</strong></p>
         <p>Original URL: <a href="${article.url}" style="color: #ee5a24;">${article.url}</a></p>
         <p>Export Date: ${new Date().toLocaleDateString()}</p>
         <p>Authentication: PKCE (Authorization Code Flow with Proof Key for Code Exchange)</p>
-        <p>Image System: OPTIMIZED - INSTANT display (${instantImages}) + OneDrive backup (${oneDriveBackups})</p>
+        <p>Image System: HYBRID - INSTANT display (${instantImages}) + OneDrive backup (${oneDriveBackups})</p>
         <p>Content System: Real-time fetching with multi-proxy support</p>
         <p>Session: Persistent with auto-refresh | Features: Complete integration</p>
         <p>Technology: IndexedDB + OneDrive + CORS proxies + Category fallbacks</p>
-        <p>Optimization: Parallel processing + Image compression + Smart caching + Background uploads</p>
     </div>
 </body>
 </html>`;
@@ -3366,7 +3274,7 @@
                 const totalArticles = this.articles.length;
 
                 const progressInfo = `
-🚀 OPTIMIZED System Progress Report:
+🚀 HYBRID System Progress Report:
 =================================
 
 📊 Overall Stats:
@@ -3380,13 +3288,13 @@ ${this.articles.map((article, i) => {
                     const cacheKey = this.getImageCacheKey(article);
                     const hasInstant = this.preloadedImages.has(cacheKey);
                     const hasOneDrive = !!article.backedUpImage;
-                    let status = '🚀 Processing';
+                    let status = '🔄 Processing';
                     if (hasInstant) status = '⚡ INSTANT';
                     else if (hasOneDrive) status = '☁️ OneDrive';
                     return `${i + 1}. ${status} "${article.title.substring(0, 35)}..."`;
                 }).join('\n')}
 
-🚀 OPTIMIZED SYSTEM FEATURES:
+🚀 HYBRID SYSTEM FEATURES:
 - ✅ INSTANT display via IndexedDB + blob URLs
 - ✅ OneDrive cloud backup for persistence
 - ✅ Real-time content fetching with multi-proxy
@@ -3395,20 +3303,14 @@ ${this.articles.map((article, i) => {
 - ✅ PKCE authentication with auto-refresh
 - ✅ Rate limiting protection and retry logic
 - ✅ Full export functionality with metadata
-- ✅ PARALLEL processing (${this.maxConcurrentUploads} concurrent)
-- ✅ IMAGE COMPRESSION (${this.compressionEnabled ? 'enabled' : 'disabled'})
-- ✅ SMART CACHING to prevent re-uploads
-- ✅ BACKGROUND UPLOADS for instant UI updates
 
 ⚡ PERFORMANCE GUARANTEE:
 - INSTANT images appear immediately (0ms load time)
 - OneDrive backups provide cloud persistence
 - Real-time content fetching for full articles
-- Parallel processing for 3-5x faster speeds
-- Image compression reduces upload time by 60-80%
-- Smart caching prevents duplicate uploads
+- Complete system integration with all features
 
-This is the COMPLETE OPTIMIZED solution!
+This is the COMPLETE HYBRID solution!
                 `;
 
                 alert(progressInfo);
@@ -3451,7 +3353,7 @@ This is the COMPLETE OPTIMIZED solution!
                 const instantImages = this.preloadedImages.size;
                 const oneDriveBackups = this.articles.filter(a => a.backedUpImage).length;
 
-                const results = `🧪 OPTIMIZED System Test Results:
+                const results = `🧪 HYBRID System Test Results:
 
 ✅ PKCE authentication: Available
 ✅ Redirect URI: ${this.redirectUri}
@@ -3464,19 +3366,15 @@ This is the COMPLETE OPTIMIZED solution!
 ${this.accessToken ? '🔒 Currently authenticated with PKCE' : '☁️ Not authenticated'}
 ${this.refreshToken ? '🔄 Persistent session with auto-refresh' : '⚠️ No refresh token'}
 
-🚀 OPTIMIZED SYSTEM COMPLETE:
+🚀 HYBRID SYSTEM COMPLETE:
 - INSTANT image display for zero-load-time experience
 - OneDrive cloud backup for persistence across devices  
 - Real-time content fetching from any website
 - Advanced image extraction with intelligent fallbacks
 - Complete PKCE authentication with token refresh
 - Full export functionality with rich metadata
-- PARALLEL processing (${this.maxConcurrentUploads} concurrent uploads)
-- IMAGE COMPRESSION (reduces size by 60-80%)
-- SMART CACHING (prevents duplicate uploads)
-- BACKGROUND UPLOADS (instant UI updates)
 
-This is the COMPLETE OPTIMIZED solution with 5-10x faster processing!`;
+This is the COMPLETE solution combining all features!`;
 
                 alert(results);
             }
@@ -3489,10 +3387,10 @@ This is the COMPLETE OPTIMIZED solution with 5-10x faster processing!`;
                 const isRateLimited = rateLimitReset && Date.now() < parseInt(rateLimitReset);
 
                 const info = `
-MyPocket Web Reader Debug Info (OPTIMIZED Complete Edition):
+MyPocket Web Reader Debug Info (HYBRID Complete Edition):
 =========================================================
 
-🚀 OPTIMIZED Image System:
+🚀 HYBRID Image System:
 - ⚡ INSTANT Display: IndexedDB + blob URLs (${instantImages} images)
 - ☁️ OneDrive Backup: Cloud storage + metadata (${oneDriveBackups} backups)
 - 🌐 Content Fetching: Multi-proxy real-time extraction
@@ -3528,16 +3426,7 @@ MyPocket Web Reader Debug Info (OPTIMIZED Complete Edition):
 - localStorage: ✅ OneDrive cache
 - Memory: ✅ Blob URLs for instant display
 
-🚀 OPTIMIZED PERFORMANCE FEATURES:
-- Parallel Processing: ✅ ${this.maxConcurrentUploads} concurrent uploads
-- Image Compression: ✅ ${this.compressionEnabled ? 'Enabled' : 'Disabled'}
-- Smart Caching: ✅ Prevents duplicate uploads
-- Background Uploads: ✅ Instant UI updates
-- Batch Processing: ✅ ${this.batchSize} images per batch
-- Upload Status Tracking: ✅ IndexedDB-based
-- Rate Limit Protection: ✅ Automatic handling
-
-🚀 OPTIMIZED FEATURES ACTIVE:
+🚀 HYBRID FEATURES ACTIVE:
 - ✅ INSTANT image display (0ms load time)
 - ✅ OneDrive cloud backup and sync
 - ✅ Real-time article content fetching
@@ -3548,16 +3437,12 @@ MyPocket Web Reader Debug Info (OPTIMIZED Complete Edition):
 - ✅ Full export functionality with metadata
 - ✅ Dark mode and responsive design
 - ✅ Search and filtering capabilities
-- ✅ PARALLEL processing (3-5x faster)
-- ✅ IMAGE COMPRESSION (60-80% size reduction)
-- ✅ SMART CACHING (no duplicate uploads)
-- ✅ BACKGROUND UPLOADS (instant UI)
 
-This is the COMPLETE OPTIMIZED solution with ALL features!
+This is the COMPLETE HYBRID solution with ALL features!
                 `;
 
                 alert(info);
-                console.log('🚀 OPTIMIZED Debug Info:', {
+                console.log('🚀 HYBRID Debug Info:', {
                     redirectUri: this.redirectUri,
                     hasAccessToken: !!this.accessToken,
                     hasRefreshToken: !!this.refreshToken,
@@ -3566,17 +3451,11 @@ This is the COMPLETE OPTIMIZED solution with ALL features!
                     instantImages: instantImages,
                     oneDriveBackups: oneDriveBackups,
                     authMethod: 'PKCE',
-                    systemType: 'OPTIMIZED-COMPLETE',
-                    features: ['OPTIMIZED_PROCESSING', 'INSTANT_DISPLAY', 'ONEDRIVE_BACKUP', 'CONTENT_FETCHING', 'REAL_TIME_EXTRACTION'],
+                    systemType: 'HYBRID-COMPLETE',
+                    features: ['INSTANT_DISPLAY', 'ONEDRIVE_BACKUP', 'CONTENT_FETCHING', 'REAL_TIME_EXTRACTION'],
                     isRateLimited: isRateLimited,
                     hasIndexedDB: !!this.db,
-                    combinedCoverage: Math.round(((instantImages + oneDriveBackups) / totalArticles) * 100),
-                    optimization: {
-                        maxConcurrentUploads: this.maxConcurrentUploads,
-                        compressionEnabled: this.compressionEnabled,
-                        batchSize: this.batchSize,
-                        maxImageSize: this.maxImageSize
-                    }
+                    combinedCoverage: Math.round(((instantImages + oneDriveBackups) / totalArticles) * 100)
                 });
             }
 
@@ -3634,12 +3513,12 @@ This is the COMPLETE OPTIMIZED solution with ALL features!
             webReader = new MyPocketWebReader();
             window.webReader = webReader;
 
-            console.log('🚀 MyPocket Web Reader Complete Edition Initialized');
+            console.log('🚀 MyPocket Web Reader HYBRID Complete Edition Initialized');
             console.log('🔒 PKCE Features: Persistent authentication, automatic token refresh, secure flow');
             console.log('⚡ INSTANT Features: IndexedDB storage, blob URLs, zero-load-time display');
             console.log('☁️ OneDrive Features: Cloud backup, metadata sync, persistent storage');
             console.log('🌐 Content Features: Real-time fetching, multi-proxy, advanced extraction');
-            console.log('✅ COMPLETE: ALL features integrated with your original processing logic!');
+            console.log('✅ HYBRID COMPLETE: ALL features integrated in one system!');
         });
     </script>
 </body>
