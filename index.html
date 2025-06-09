@@ -961,36 +961,6 @@
     </div>
 
     <script>
-        // Semaphore for controlling concurrent operations
-        class Semaphore {
-            constructor(count) {
-                this.count = count;
-                this.waiting = [];
-            }
-
-            acquire() {
-                return new Promise((resolve) => {
-                    if (this.count > 0) {
-                        this.count--;
-                        resolve(() => this.release());
-                    } else {
-                        this.waiting.push(() => {
-                            this.count--;
-                            resolve(() => this.release());
-                        });
-                    }
-                });
-            }
-
-            release() {
-                this.count++;
-                if (this.waiting.length > 0) {
-                    const next = this.waiting.shift();
-                    next();
-                }
-            }
-        }
-
         class MyPocketWebReader {
             constructor() {
                 this.clientId = '436e8796-8c40-47c3-9ad5-b8882f3ef7f7';
@@ -1009,18 +979,11 @@
                 this.currentArticle = null;
                 this.imageBackupEnabled = true;
 
-                // OPTIMIZED HYBRID SYSTEM: INSTANT Display + OneDrive Backup
+                // HYBRID SYSTEM: INSTANT Display + OneDrive Backup (keeping your exact original)
                 this.db = null; // IndexedDB for INSTANT display
                 this.preloadedImages = new Map(); // Blob URLs for instant display
                 this.imageBackupCache = new Map(); // OneDrive backup tracking
                 this.metadataSaveDebouncer = null; // OneDrive backup debouncer
-
-                // OPTIMIZATION SETTINGS
-                this.maxConcurrentUploads = 3; // Process 3 images simultaneously
-                this.compressionEnabled = true;
-                this.maxImageSize = 1024 * 1024; // 1MB after compression
-                this.batchSize = 5; // Process in batches to avoid overwhelming OneDrive
-                this.uploadSemaphore = new Semaphore(this.maxConcurrentUploads);
 
                 this.init();
             }
@@ -1064,40 +1027,31 @@
 
             async initImageDatabase() {
                 return new Promise((resolve, reject) => {
-                    console.log('⚡ Initializing OPTIMIZED image database...');
+                    console.log('⚡ Initializing INSTANT image database...');
 
-                    const request = indexedDB.open('MyPocketOptimizedImages', 2);
+                    const request = indexedDB.open('MyPocketInstantImages', 1);
 
                     request.onerror = () => {
-                        console.error('❌ Failed to initialize optimized image database');
+                        console.error('❌ Failed to initialize instant image database');
                         reject(request.error);
                     };
 
                     request.onsuccess = () => {
                         this.db = request.result;
-                        console.log('✅ OPTIMIZED image database initialized');
+                        console.log('✅ INSTANT image database initialized');
                         resolve();
                     };
 
                     request.onupgradeneeded = (event) => {
                         const db = event.target.result;
 
-                        // INSTANT images store
                         if (!db.objectStoreNames.contains('instant_images')) {
                             const imageStore = db.createObjectStore('instant_images', { keyPath: 'id' });
                             imageStore.createIndex('articleKey', 'articleKey', { unique: false });
                             imageStore.createIndex('timestamp', 'timestamp', { unique: false });
                         }
 
-                        // OPTIMIZATION: OneDrive upload tracking store
-                        if (!db.objectStoreNames.contains('upload_status')) {
-                            const uploadStore = db.createObjectStore('upload_status', { keyPath: 'id' });
-                            uploadStore.createIndex('articleKey', 'articleKey', { unique: false });
-                            uploadStore.createIndex('uploadDate', 'uploadDate', { unique: false });
-                            uploadStore.createIndex('status', 'status', { unique: false });
-                        }
-
-                        console.log('✅ OPTIMIZED database schema created');
+                        console.log('✅ INSTANT image database schema created');
                     };
                 });
             }
@@ -1105,7 +1059,7 @@
             // OneDrive backup cache (from original system)
             loadImageBackupCache() {
                 try {
-                    const cacheData = localStorage.getItem('mypocket_optimized_backup_cache');
+                    const cacheData = localStorage.getItem('mypocket_hybrid_backup_cache');
                     if (cacheData) {
                         const parsed = JSON.parse(cacheData);
 
@@ -1118,7 +1072,7 @@
                             }
                         }
 
-                        console.log(`☁️ Loaded ${this.imageBackupCache.size} OneDrive backup entries (OPTIMIZED)`);
+                        console.log(`☁️ Loaded ${this.imageBackupCache.size} OneDrive backup entries`);
                     } else {
                         console.log('📭 No OneDrive backup cache found');
                         this.imageBackupCache = new Map();
@@ -1134,68 +1088,14 @@
                     const cacheData = {
                         entries: Array.from(this.imageBackupCache.entries()),
                         timestamp: Date.now(),
-                        version: '4.0-OPTIMIZED'
+                        version: '3.0-HYBRID'
                     };
 
-                    localStorage.setItem('mypocket_optimized_backup_cache', JSON.stringify(cacheData));
-                    console.log(`☁️ Saved ${this.imageBackupCache.size} OneDrive backup entries (OPTIMIZED)`);
+                    localStorage.setItem('mypocket_hybrid_backup_cache', JSON.stringify(cacheData));
+                    console.log(`☁️ Saved ${this.imageBackupCache.size} OneDrive backup entries`);
                     return true;
                 } catch (error) {
                     console.error('❌ OneDrive backup cache save failed:', error);
-                    return false;
-                }
-            }
-
-            // OPTIMIZATION: Store upload status in IndexedDB to prevent re-uploads
-            async storeUploadStatus(articleKey, uploadInfo) {
-                if (!this.db) return false;
-
-                try {
-                    const transaction = this.db.transaction(['upload_status'], 'readwrite');
-                    const store = transaction.objectStore('upload_status');
-
-                    const uploadData = {
-                        id: articleKey,
-                        articleKey: articleKey,
-                        fileName: uploadInfo.fileName,
-                        fileId: uploadInfo.fileId,
-                        uploadDate: uploadInfo.uploadDate,
-                        status: 'uploaded',
-                        size: uploadInfo.size,
-                        method: 'optimized'
-                    };
-
-                    await new Promise((resolve, reject) => {
-                        const request = store.put(uploadData);
-                        request.onsuccess = () => resolve();
-                        request.onerror = () => reject(request.error);
-                    });
-
-                    console.log(`✅ Upload status stored for: ${articleKey}`);
-                    return true;
-                } catch (error) {
-                    console.error('❌ Failed to store upload status:', error);
-                    return false;
-                }
-            }
-
-            // OPTIMIZATION: Check if already uploaded to prevent duplicates
-            async isAlreadyUploaded(articleKey) {
-                if (!this.db) return false;
-
-                try {
-                    const transaction = this.db.transaction(['upload_status'], 'readonly');
-                    const store = transaction.objectStore('upload_status');
-
-                    const uploadStatus = await new Promise((resolve, reject) => {
-                        const request = store.get(articleKey);
-                        request.onsuccess = () => resolve(request.result);
-                        request.onerror = () => reject(request.error);
-                    });
-
-                    return !!uploadStatus && uploadStatus.status === 'uploaded';
-                } catch (error) {
-                    console.error('❌ Failed to check upload status:', error);
                     return false;
                 }
             }
@@ -1214,8 +1114,7 @@
                         imageBlob: imageBlob,
                         metadata: metadata,
                         timestamp: Date.now(),
-                        size: imageBlob.size,
-                        method: 'optimized'
+                        size: imageBlob.size
                     };
 
                     await new Promise((resolve, reject) => {
@@ -1224,7 +1123,7 @@
                         request.onerror = () => reject(request.error);
                     });
 
-                    console.log(`⚡ OPTIMIZED instant image stored for: ${metadata.title}`);
+                    console.log(`⚡ INSTANT image stored for: ${metadata.title}`);
                     return true;
                 } catch (error) {
                     console.error('❌ Failed to store instant image:', error);
@@ -1237,7 +1136,7 @@
                 if (!this.db) return;
 
                 try {
-                    console.log('⚡ Preloading OPTIMIZED instant images...');
+                    console.log('⚡ Preloading INSTANT images...');
 
                     const transaction = this.db.transaction(['instant_images'], 'readonly');
                     const store = transaction.objectStore('instant_images');
@@ -1254,7 +1153,7 @@
                             });
                         }
 
-                        console.log(`⚡ Preloaded ${allImages.length} OPTIMIZED instant images`);
+                        console.log(`⚡ Preloaded ${allImages.length} INSTANT images`);
                     };
                 } catch (error) {
                     console.error('❌ Failed to preload instant images:', error);
@@ -1275,13 +1174,13 @@
                     }
 
                     const titleHash = article.title.substring(0, 20).toLowerCase().replace(/[^a-z0-9]/g, '');
-                    const key = `optimized_${Math.abs(hash).toString(36)}_${titleHash}`;
+                    const key = `hybrid_${Math.abs(hash).toString(36)}_${titleHash}`;
 
                     return key;
                 } catch (error) {
                     console.error('❌ Key generation error:', error);
                     const titleKey = article.title.substring(0, 30).replace(/[^a-z0-9]/g, '_').toLowerCase();
-                    return `optimized_fallback_${titleKey}_${Date.now()}`;
+                    return `hybrid_fallback_${titleKey}_${Date.now()}`;
                 }
             }
 
@@ -1474,7 +1373,7 @@
                     sessionStorage.removeItem('pkce_redirect_uri');
                     sessionStorage.removeItem('pkce_state');
 
-                    this.updateStatus('🚀 Connected! OPTIMIZED instant display + FULL OneDrive integration active.', 'success');
+                    this.updateStatus('🚀 Connected! INSTANT display + FULL OneDrive integration active.', 'success');
                     await this.loadArticles();
 
                 } catch (error) {
@@ -1496,7 +1395,7 @@
 
                 try {
                     const encrypted = btoa(JSON.stringify(tokenData));
-                    localStorage.setItem('mypocket_optimized_tokens', encrypted);
+                    localStorage.setItem('mypocket_hybrid_tokens', encrypted);
                     console.log('💾 Tokens saved with expiry:', new Date(tokenData.expires_at));
                 } catch (error) {
                     console.error('❌ Failed to save tokens:', error);
@@ -1506,7 +1405,7 @@
 
             loadStoredTokens() {
                 try {
-                    const encrypted = localStorage.getItem('mypocket_optimized_tokens');
+                    const encrypted = localStorage.getItem('mypocket_hybrid_tokens');
                     if (!encrypted) {
                         console.log('📭 No stored tokens found');
                         return false;
@@ -1631,7 +1530,7 @@
             }
 
             clearTokens() {
-                localStorage.removeItem('mypocket_optimized_tokens');
+                localStorage.removeItem('mypocket_hybrid_tokens');
                 this.accessToken = null;
                 this.refreshToken = null;
                 this.tokenExpiry = null;
@@ -1719,9 +1618,9 @@
                     connectIcon.textContent = '🚀';
 
                     if (this.refreshToken) {
-                        connectText.textContent = 'Connected (OPTIMIZED)';
+                        connectText.textContent = 'Connected (Complete)';
                         connectBtn.style.background = 'rgba(39, 174, 96, 0.9)';
-                        connectBtn.title = 'Persistent PKCE + OPTIMIZED display + OneDrive backup';
+                        connectBtn.title = 'Persistent PKCE + INSTANT display + OneDrive backup';
                     } else {
                         connectText.textContent = 'Connected';
                         connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
@@ -1795,7 +1694,7 @@
 
                     this.displayArticles(this.articles);
 
-                    let statusMessage = `🚀 OPTIMIZED: Loaded ${this.articles.length} articles`;
+                    let statusMessage = `🚀 COMPLETE: Loaded ${this.articles.length} articles`;
                     if (instantImages > 0) {
                         statusMessage += ` (${instantImages} INSTANT)`;
                     }
@@ -1925,9 +1824,9 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
 
-                // OPTIMIZED: Display instant images first, then process new ones (YOUR ORIGINAL FLOW)
+                // HYBRID: Display instant images first, then process new ones (YOUR ORIGINAL FLOW)
                 this.displayInstantImages(articles);
-                this.processNewImagesOptimized(articles); // Using optimized version of your original method
+                this.processNewImages(articles); // Using your exact original method
             }
 
             displayEmptyState() {
@@ -1949,7 +1848,7 @@
 
             // INSTANT: Display all cached images immediately  
             displayInstantImages(articles) {
-                console.log('⚡ Displaying OPTIMIZED instant images...');
+                console.log('⚡ Displaying INSTANT images...');
 
                 for (let i = 0; i < articles.length; i++) {
                     const article = articles[i];
@@ -1977,23 +1876,18 @@
                                 indicator.className = 'backup-indicator instant show';
                             }
 
-                            console.log(`⚡ OPTIMIZED instant display: ${article.title.substring(0, 30)}...`);
+                            console.log(`⚡ INSTANT display: ${article.title.substring(0, 30)}...`);
                         }
                     }
                 }
             }
 
-            // ==================== OPTIMIZED IMAGE PROCESSING ====================
-            // KEEPING ORIGINAL FETCHING MECHANISM + ADDING PERFORMANCE OPTIMIZATIONS
-
-            // Process new images (YOUR ORIGINAL METHOD with optimizations)
-            async processNewImagesOptimized(articles) {
-                console.log('🚀 Processing new images with OPTIMIZED performance...');
+            // Process new images (not instant, not OneDrive backed up) - YOUR EXACT ORIGINAL METHOD
+            async processNewImages(articles) {
+                console.log('🔄 Processing new images...');
 
                 let processedCount = 0;
-                const unprocessedArticles = [];
 
-                // OPTIMIZATION: First, identify what needs processing and skip already cached
                 for (let i = 0; i < articles.length; i++) {
                     const article = articles[i];
                     const cacheKey = this.getImageCacheKey(article);
@@ -2003,7 +1897,7 @@
                         continue;
                     }
 
-                    // Try to load from OneDrive backup first (YOUR ORIGINAL LOGIC)
+                    // Try to load from OneDrive backup first
                     if (article.backedUpImage && this.accessToken) {
                         try {
                             const oneDriveUrl = await this.getBackedUpImageUrl(article.backedUpImage);
@@ -2025,50 +1919,25 @@
                         }
                     }
 
-                    // Add to processing queue
-                    unprocessedArticles.push({ article, index: i });
-                }
+                    // Process new image
+                    try {
+                        const result = await this.processNewImage(article, i);
+                        if (result.success) {
+                            processedCount++;
+                        }
 
-                if (unprocessedArticles.length === 0) {
-                    console.log('✅ All images already processed');
-                    this.updateStatus(`🚀 All images ready! ${processedCount} loaded from cache.`, 'success');
-                    return;
-                }
-
-                console.log(`📊 Processing ${unprocessedArticles.length} new images with parallel optimization...`);
-
-                // OPTIMIZATION: Process in parallel batches instead of sequential
-                for (let i = 0; i < unprocessedArticles.length; i += this.batchSize) {
-                    const batch = unprocessedArticles.slice(i, i + this.batchSize);
-                    console.log(`🔄 Batch ${Math.floor(i / this.batchSize) + 1}/${Math.ceil(unprocessedArticles.length / this.batchSize)}`);
-                    
-                    // Process batch in parallel
-                    const batchPromises = batch.map(({ article, index }) => 
-                        this.uploadSemaphore.acquire().then(async (release) => {
-                            try {
-                                const result = await this.processNewImage(article, index);
-                                if (result.success) {
-                                    processedCount++;
-                                }
-                                return result;
-                            } finally {
-                                release();
-                            }
-                        })
-                    );
-
-                    await Promise.allSettled(batchPromises);
-                    
-                    // OPTIMIZATION: Reduced delay between batches
-                    if (i + this.batchSize < unprocessedArticles.length) {
+                        // OPTIMIZATION: Reduced delay between processing
                         await new Promise(resolve => setTimeout(resolve, 100)); // Reduced from 500ms
+
+                    } catch (error) {
+                        console.error(`❌ Failed to process image for article ${i}:`, error);
                     }
                 }
 
-                this.updateStatus(`🚀 OPTIMIZED processing complete! ${processedCount} images processed.`, 'success');
+                this.updateStatus(`🚀 COMPLETE processing! ${processedCount} images handled.`, 'success');
             }
 
-            // Process a single new image with HYBRID storage (YOUR ORIGINAL METHOD with optimizations)
+            // Process a single new image with HYBRID storage - YOUR EXACT ORIGINAL METHOD
             async processNewImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
                 const indicator = document.getElementById(`backup-${index}`);
@@ -2078,7 +1947,7 @@
                 console.log(`🔄 Processing new image: ${article.title.substring(0, 40)}...`);
 
                 try {
-                    // Get image URL (YOUR ORIGINAL LOGIC)
+                    // Get image URL
                     let imageUrl = this.getBestArticleImage(article);
 
                     if (!imageUrl) {
@@ -2089,7 +1958,7 @@
                         imageUrl = this.getCategoryBasedImage(article, index);
                     }
 
-                    // OPTIMIZATION: Download image as blob for INSTANT storage
+                    // Download image as blob for INSTANT storage
                     const imageBlob = await this.downloadImageAsBlob(imageUrl);
                     if (imageBlob) {
                         const cacheKey = this.getImageCacheKey(article);
@@ -2100,17 +1969,17 @@
                             processedAt: new Date().toISOString()
                         };
 
-                        // Store for INSTANT display (YOUR ORIGINAL LOGIC)
+                        // Store for INSTANT display
                         await this.storeInstantImageData(cacheKey, imageBlob, metadata);
 
-                        // Create blob URL for immediate display (YOUR ORIGINAL LOGIC)
+                        // Create blob URL for immediate display
                         const blobUrl = URL.createObjectURL(imageBlob);
                         this.preloadedImages.set(cacheKey, {
                             blobUrl: blobUrl,
                             metadata: metadata
                         });
 
-                        // Display immediately (YOUR ORIGINAL LOGIC)
+                        // Display immediately
                         imageElement.innerHTML = `
                             <img src="${blobUrl}" 
                                  alt="Article image" 
@@ -2127,14 +1996,11 @@
                             indicator.className = 'backup-indicator instant show';
                         }
 
-                        // OPTIMIZATION: ALSO backup to OneDrive (if connected) - but compress first
+                        // ALSO backup to OneDrive (if connected)
                         if (this.imageBackupEnabled && this.accessToken) {
                             try {
                                 console.log(`☁️ Also backing up to OneDrive...`);
-                                
-                                // OPTIMIZATION: Compress before upload for faster upload
-                                const compressedBlob = await this.compressImageOptimized(imageBlob);
-                                const backupInfo = await this.backupImageToOneDrive(blobUrl, article, index, compressedBlob);
+                                const backupInfo = await this.backupImageToOneDrive(imageUrl, article, index);
                                 if (backupInfo) {
                                     this.setImageBackupStatus(article, backupInfo);
                                     console.log(`☁️ OneDrive backup complete: ${backupInfo.fileName}`);
@@ -2152,7 +2018,7 @@
                     console.error(`❌ Error processing image: ${error.message}`);
                 }
 
-                // Fallback image (YOUR ORIGINAL LOGIC)
+                // Fallback image
                 const fallbackUrl = this.getCategoryBasedImage(article, index);
                 imageElement.innerHTML = `
                     <img src="${fallbackUrl}" 
@@ -2173,21 +2039,14 @@
                 return { success: true };
             }
 
-            // OPTIMIZATION: Download image as blob for local storage (YOUR ORIGINAL METHOD with timeout)
+            // Download image as blob for local storage - YOUR EXACT ORIGINAL METHOD
             async downloadImageAsBlob(imageUrl) {
                 try {
-                    // OPTIMIZATION: Add timeout to prevent hanging
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
-
                     const response = await fetch(imageUrl, {
-                        signal: controller.signal,
                         headers: {
-                            'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader OPTIMIZED)'
+                            'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader HYBRID)'
                         }
                     });
-
-                    clearTimeout(timeoutId);
 
                     if (!response.ok) {
                         throw new Error(`Failed to download image: ${response.status}`);
@@ -2206,8 +2065,8 @@
                 }
             }
 
-            // OPTIMIZATION: Modified backup method to accept compressed blob
-            async backupImageToOneDrive(imageUrl, article, index, compressedBlob = null) {
+            // FULL OneDrive backup to cloud storage - YOUR EXACT ORIGINAL METHOD
+            async backupImageToOneDrive(imageUrl, article, index) {
                 if (!this.accessToken) {
                     throw new Error('Not connected to OneDrive');
                 }
@@ -2215,30 +2074,22 @@
                 try {
                     console.log(`☁️ Backing up to OneDrive: ${article.title.substring(0, 40)}...`);
 
-                    let imageBlob = compressedBlob;
-                    
-                    // If no compressed blob provided, download and compress
-                    if (!imageBlob) {
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 30000);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-                        const imageResponse = await fetch(imageUrl, {
-                            signal: controller.signal,
-                            headers: {
-                                'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader OPTIMIZED)'
-                            }
-                        });
-                        clearTimeout(timeoutId);
-
-                        if (!imageResponse.ok) {
-                            throw new Error(`Failed to fetch image: ${imageResponse.status} ${imageResponse.statusText}`);
+                    const imageResponse = await fetch(imageUrl, {
+                        signal: controller.signal,
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader HYBRID)'
                         }
+                    });
+                    clearTimeout(timeoutId);
 
-                        const originalBlob = await imageResponse.blob();
-                        // OPTIMIZATION: Compress before upload
-                        imageBlob = await this.compressImageOptimized(originalBlob);
+                    if (!imageResponse.ok) {
+                        throw new Error(`Failed to fetch image: ${imageResponse.status} ${imageResponse.statusText}`);
                     }
 
+                    const imageBlob = await imageResponse.blob();
                     const imageBuffer = await imageBlob.arrayBuffer();
 
                     const maxSize = 10 * 1024 * 1024; // 10MB limit
@@ -2249,7 +2100,7 @@
                     const imageExtension = this.getImageExtension(imageUrl) || 'jpg';
                     const sanitizedTitle = this.sanitizeFilename(article.title);
                     const timestamp = Date.now();
-                    const fileName = `optimized_image_${sanitizedTitle}_${timestamp}.${imageExtension}`;
+                    const fileName = `hybrid_image_${sanitizedTitle}_${timestamp}.${imageExtension}`;
 
                     // Ensure images folder exists
                     await this.ensureImagesFolderExists();
@@ -2310,7 +2161,7 @@
                         uploadDate: new Date().toISOString(),
                         originalUrl: imageUrl,
                         size: imageBuffer.byteLength,
-                        authMethod: 'PKCE-OPTIMIZED'
+                        authMethod: 'PKCE-HYBRID'
                     };
 
                 } catch (error) {
@@ -2319,7 +2170,7 @@
                 }
             }
 
-            // OPTIMIZATION: Client-side image compression (ADDED OPTIMIZATION)
+            // OPTIMIZATION: Client-side image compression (OPTIONAL - not used in original flow)
             async compressImageOptimized(blob) {
                 if (!this.compressionEnabled || blob.size <= this.maxImageSize) {
                     return blob;
@@ -3317,11 +3168,6 @@
                                 const transaction = this.db.transaction(['instant_images'], 'readwrite');
                                 const store = transaction.objectStore('instant_images');
                                 store.delete(cacheKey);
-                                
-                                // Also clean upload status
-                                const uploadTransaction = this.db.transaction(['upload_status'], 'readwrite');
-                                const uploadStore = uploadTransaction.objectStore('upload_status');
-                                uploadStore.delete(cacheKey);
                             } catch (error) {
                                 console.error('Failed to delete instant image from database:', error);
                             }
@@ -3569,16 +3415,12 @@ This is the COMPLETE OPTIMIZED solution!
             }
 
             async clearImageCache() {
-                if (confirm('Clear ALL image data?\n\nThis will remove:\n- INSTANT images (IndexedDB)\n- OneDrive backup cache\n- Upload status tracking\n- All locally stored image data\n\nImages will need to be re-processed with OPTIMIZED system.')) {
+                if (confirm('Clear ALL image data?\n\nThis will remove:\n- INSTANT images (IndexedDB)\n- OneDrive backup cache\n- All locally stored image data\n\nImages will need to be re-processed.')) {
                     // Clear INSTANT IndexedDB
                     if (this.db) {
-                        const imageTransaction = this.db.transaction(['instant_images'], 'readwrite');
-                        const imageStore = imageTransaction.objectStore('instant_images');
-                        imageStore.clear();
-                        
-                        const uploadTransaction = this.db.transaction(['upload_status'], 'readwrite');
-                        const uploadStore = uploadTransaction.objectStore('upload_status');
-                        uploadStore.clear();
+                        const transaction = this.db.transaction(['instant_images'], 'readwrite');
+                        const store = transaction.objectStore('instant_images');
+                        store.clear();
                     }
 
                     // Clean up blob URLs
@@ -3589,15 +3431,15 @@ This is the COMPLETE OPTIMIZED solution!
                     // Clear all caches
                     this.preloadedImages.clear();
                     this.imageBackupCache.clear();
-                    localStorage.removeItem('mypocket_optimized_backup_cache');
+                    localStorage.removeItem('mypocket_hybrid_backup_cache');
 
                     // Clear from articles
                     this.articles.forEach(article => {
                         delete article.backedUpImage;
                     });
 
-                    console.log('🗑️ OPTIMIZED image cache cleared');
-                    this.updateStatus('🗑️ All image data cleared. OPTIMIZED system will re-process images faster.', 'success');
+                    console.log('🗑️ HYBRID image cache cleared');
+                    this.updateStatus('🗑️ All image data cleared. HYBRID system will re-process images.', 'success');
 
                     if (this.articles.length > 0) {
                         this.displayArticles(this.articles);
@@ -3792,13 +3634,12 @@ This is the COMPLETE OPTIMIZED solution with ALL features!
             webReader = new MyPocketWebReader();
             window.webReader = webReader;
 
-            console.log('🚀 MyPocket Web Reader OPTIMIZED Complete Edition Initialized');
+            console.log('🚀 MyPocket Web Reader Complete Edition Initialized');
             console.log('🔒 PKCE Features: Persistent authentication, automatic token refresh, secure flow');
             console.log('⚡ INSTANT Features: IndexedDB storage, blob URLs, zero-load-time display');
             console.log('☁️ OneDrive Features: Cloud backup, metadata sync, persistent storage');
             console.log('🌐 Content Features: Real-time fetching, multi-proxy, advanced extraction');
-            console.log('🚀 OPTIMIZATION Features: Parallel processing, image compression, smart caching, background uploads');
-            console.log('✅ OPTIMIZED COMPLETE: ALL features integrated with 5-10x faster performance!');
+            console.log('✅ COMPLETE: ALL features integrated with your original processing logic!');
         });
     </script>
 </body>
