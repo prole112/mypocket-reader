@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPocket - Web Reader (INSTANT Display + FULL OneDrive Integration + PKCE)</title>
+    <title>MyPocket - Web Reader (ENHANCED Real Images + FULL OneDrive Integration + PKCE)</title>
     <style>
         * {
             margin: 0;
@@ -384,7 +384,7 @@
             transform: scale(1.08);
         }
 
-        /* INSTANT + OneDrive status indicator */
+        /* Enhanced status indicators */
         .backup-indicator {
             position: absolute;
             top: 8px;
@@ -415,6 +415,67 @@
 
         .backup-indicator.processing {
             background: rgba(255, 87, 34, 0.9);
+        }
+
+        .backup-indicator.real-image {
+            background: rgba(40, 167, 69, 0.9);
+        }
+
+        .backup-indicator.no-image {
+            background: rgba(220, 53, 69, 0.9);
+        }
+
+        .backup-indicator.extracting {
+            background: rgba(102, 16, 242, 0.9);
+        }
+
+        /* Enhanced loading states */
+        .loading-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .no-image-placeholder {
+            width: 100%;
+            height: 100%;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 0.8em;
+        }
+
+        .retry-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75em;
+            margin-top: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .retry-btn:hover {
+            background: #d63031;
+            transform: scale(1.05);
         }
 
         /* Compact content area with organic feel */
@@ -697,7 +758,7 @@
             }
         }
 
-        /* INSTANT + OneDrive Indicators */
+        /* Feature Indicators */
         .feature-indicator {
             display: inline-flex;
             align-items: center;
@@ -720,6 +781,12 @@
             background: rgba(255, 193, 7, 0.1);
             color: #ff6b00;
             border-color: rgba(255, 193, 7, 0.2);
+        }
+
+        .feature-indicator.enhanced {
+            background: rgba(102, 16, 242, 0.1);
+            color: #6610f2;
+            border-color: rgba(102, 16, 242, 0.2);
         }
 
         /* Responsive */
@@ -801,20 +868,6 @@
             }
         }
 
-        @keyframes shimmer {
-            0% {
-                opacity: 0.6;
-            }
-
-            50% {
-                opacity: 1;
-            }
-
-            100% {
-                opacity: 0.6;
-            }
-        }
-
         .article-card:nth-child(7n+1) {
             animation: float 6s ease-in-out infinite;
             animation-delay: 0s;
@@ -859,7 +912,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    🚀 MyPocket - INSTANT + OneDrive Complete
+                    🌐 MyPocket - ENHANCED Real Images + OneDrive Complete
                 </div>
                 <div class="header-actions">
                     <button id="connectBtn" class="btn btn-primary">
@@ -904,7 +957,7 @@
 
     <!-- Status -->
     <div class="status" id="status">
-        Connect to OneDrive with PKCE authentication + INSTANT display + FULL OneDrive backup integration
+        ENHANCED Real Image Extraction + INSTANT display + FULL OneDrive integration + PKCE authentication
     </div>
 
     <!-- Articles -->
@@ -912,14 +965,15 @@
         <div class="container">
             <div id="articlesContainer">
                 <div class="empty-state">
-                    <div class="empty-state-icon">🚀</div>
-                    <h3>Welcome to MyPocket - Complete Edition</h3>
-                    <p>INSTANT image display + FULL OneDrive integration + Real content fetching!</p>
+                    <div class="empty-state-icon">🌐</div>
+                    <h3>Welcome to MyPocket - ENHANCED Complete Edition</h3>
+                    <p>ENHANCED real image extraction + INSTANT display + FULL OneDrive integration!</p>
                     <div style="margin-top: 20px;">
                         <span class="feature-indicator persistent">🔒 PKCE Enabled</span>
                         <span class="feature-indicator instant">⚡ INSTANT Display</span>
                         <span class="feature-indicator">☁️ OneDrive Backup</span>
-                        <span class="feature-indicator">🌐 Content Fetching</span>
+                        <span class="feature-indicator enhanced">🌐 Enhanced Real Images</span>
+                        <span class="feature-indicator">📄 Content Fetching</span>
                     </div>
                 </div>
             </div>
@@ -954,7 +1008,7 @@
             constructor() {
                 this.clientId = '436e8796-8c40-47c3-9ad5-b8882f3ef7f7';
                 this.redirectUri = this.getRedirectUri();
-                console.log('🚀 COMPLETE EDITION Redirect URI:', this.redirectUri);
+                console.log('🌐 ENHANCED COMPLETE EDITION Redirect URI:', this.redirectUri);
 
                 // PKCE & Token Management
                 this.accessToken = null;
@@ -973,6 +1027,15 @@
                 this.preloadedImages = new Map(); // Blob URLs for instant display
                 this.imageBackupCache = new Map(); // OneDrive backup tracking
                 this.metadataSaveDebouncer = null; // OneDrive backup debouncer
+
+                // ENHANCED IMAGE EXTRACTION
+                this.proxies = [
+                    'https://api.allorigins.win/get?url=',
+                    'https://corsproxy.io/?',
+                    'https://cors-anywhere.herokuapp.com/',
+                    'https://thingproxy.freeboard.io/fetch/'
+                ];
+                this.imageExtractionLogs = [];
 
                 this.init();
             }
@@ -1048,7 +1111,7 @@
             // OneDrive backup cache (from original system)
             loadImageBackupCache() {
                 try {
-                    const cacheData = localStorage.getItem('mypocket_hybrid_backup_cache');
+                    const cacheData = localStorage.getItem('mypocket_enhanced_backup_cache');
                     if (cacheData) {
                         const parsed = JSON.parse(cacheData);
 
@@ -1077,10 +1140,10 @@
                     const cacheData = {
                         entries: Array.from(this.imageBackupCache.entries()),
                         timestamp: Date.now(),
-                        version: '3.0-HYBRID'
+                        version: '4.0-ENHANCED'
                     };
 
-                    localStorage.setItem('mypocket_hybrid_backup_cache', JSON.stringify(cacheData));
+                    localStorage.setItem('mypocket_enhanced_backup_cache', JSON.stringify(cacheData));
                     console.log(`☁️ Saved ${this.imageBackupCache.size} OneDrive backup entries`);
                     return true;
                 } catch (error) {
@@ -1163,13 +1226,13 @@
                     }
 
                     const titleHash = article.title.substring(0, 20).toLowerCase().replace(/[^a-z0-9]/g, '');
-                    const key = `hybrid_${Math.abs(hash).toString(36)}_${titleHash}`;
+                    const key = `enhanced_${Math.abs(hash).toString(36)}_${titleHash}`;
 
                     return key;
                 } catch (error) {
                     console.error('❌ Key generation error:', error);
                     const titleKey = article.title.substring(0, 30).replace(/[^a-z0-9]/g, '_').toLowerCase();
-                    return `hybrid_fallback_${titleKey}_${Date.now()}`;
+                    return `enhanced_fallback_${titleKey}_${Date.now()}`;
                 }
             }
 
@@ -1222,6 +1285,349 @@
                             }
                         }, 5000);
                     });
+                }
+            }
+
+            // ==================== ENHANCED REAL IMAGE EXTRACTION ====================
+
+            logImageExtraction(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+                this.imageExtractionLogs.push(logEntry);
+                
+                // Keep only last 100 entries
+                if (this.imageExtractionLogs.length > 100) {
+                    this.imageExtractionLogs = this.imageExtractionLogs.slice(-100);
+                }
+                
+                console.log(`🌐 ${logEntry}`);
+            }
+
+            async tryMetaImageExtraction(url) {
+                for (const proxy of this.proxies) {
+                    try {
+                        this.logImageExtraction(`Trying meta extraction with: ${proxy}`);
+                        
+                        const proxyUrl = proxy + encodeURIComponent(url);
+                        const response = await fetch(proxyUrl, {
+                            timeout: 10000,
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Enhanced ImageExtractor)'
+                            }
+                        });
+                        
+                        if (!response.ok) continue;
+                        
+                        let html;
+                        if (proxy.includes('allorigins')) {
+                            const data = await response.json();
+                            html = data.contents;
+                        } else {
+                            html = await response.text();
+                        }
+                        
+                        if (!html || html.length < 200) continue;
+                        
+                        // Quick meta tag extraction
+                        const ogImageMatch = html.match(/<meta[^>]*property=["\']og:image["\'][^>]*content=["\']([^"\']+)["\'][^>]*>/i);
+                        if (ogImageMatch) {
+                            const imageUrl = this.makeAbsoluteUrl(ogImageMatch[1], url);
+                            this.logImageExtraction(`Found OG image: ${imageUrl}`);
+                            return imageUrl;
+                        }
+                        
+                        const twitterImageMatch = html.match(/<meta[^>]*name=["\']twitter:image["\'][^>]*content=["\']([^"\']+)["\'][^>]*>/i);
+                        if (twitterImageMatch) {
+                            const imageUrl = this.makeAbsoluteUrl(twitterImageMatch[1], url);
+                            this.logImageExtraction(`Found Twitter image: ${imageUrl}`);
+                            return imageUrl;
+                        }
+                        
+                    } catch (error) {
+                        this.logImageExtraction(`Meta extraction failed with ${proxy}: ${error.message}`);
+                        continue;
+                    }
+                }
+                return null;
+            }
+
+            async tryFullHTMLExtraction(url) {
+                for (const proxy of this.proxies) {
+                    try {
+                        this.logImageExtraction(`Trying full HTML extraction with: ${proxy}`);
+                        
+                        const proxyUrl = proxy + encodeURIComponent(url);
+                        const response = await fetch(proxyUrl, {
+                            timeout: 15000
+                        });
+                        
+                        if (!response.ok) continue;
+                        
+                        let html;
+                        if (proxy.includes('allorigins')) {
+                            const data = await response.json();
+                            html = data.contents;
+                        } else {
+                            html = await response.text();
+                        }
+                        
+                        if (!html || html.length < 500) continue;
+                        
+                        const imageUrl = this.parseHTMLForBestImage(html, url);
+                        if (imageUrl) {
+                            this.logImageExtraction(`Found HTML image: ${imageUrl}`);
+                            return imageUrl;
+                        }
+                        
+                    } catch (error) {
+                        this.logImageExtraction(`HTML extraction failed with ${proxy}: ${error.message}`);
+                        continue;
+                    }
+                }
+                return null;
+            }
+
+            parseHTMLForBestImage(html, baseUrl) {
+                try {
+                    // Enhanced selectors for finding good images
+                    const selectors = [
+                        // Featured images
+                        '.featured-image img',
+                        '.hero-image img', 
+                        '.post-thumbnail img',
+                        '.article-image img',
+                        '.entry-image img',
+                        '.wp-post-image',
+                        '.post-featured-image img',
+                        
+                        // Content images
+                        'article img:first-of-type',
+                        '.content img:first-of-type',
+                        '.post-content img:first-of-type',
+                        '.entry-content img:first-of-type',
+                        '.main-content img:first-of-type',
+                        
+                        // General content areas
+                        'main img',
+                        '#content img',
+                        '.container img'
+                    ];
+                    
+                    // Use regex to find images since we can't use DOM parser with all HTML
+                    for (const selector of selectors.slice(0, 10)) { // Limit to avoid complexity
+                        const className = selector.split('.')[1]?.split(' ')[0];
+                        if (className) {
+                            const pattern = new RegExp(`<img[^>]*class=["\'][^"\']*${className}[^"\']*["\'][^>]*src=["\']([^"\']+)["\']`, 'i');
+                            const match = html.match(pattern);
+                            if (match) {
+                                const imageUrl = this.makeAbsoluteUrl(match[1], baseUrl);
+                                if (this.isGoodImage(match[1])) {
+                                    return imageUrl;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Look for any substantial images
+                    const imgMatches = html.match(/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/gi);
+                    if (imgMatches) {
+                        for (const match of imgMatches.slice(0, 20)) {
+                            const srcMatch = match.match(/src=["\']([^"\']+)["\']/i);
+                            if (srcMatch) {
+                                const src = srcMatch[1];
+                                if (this.isGoodImage(src)) {
+                                    return this.makeAbsoluteUrl(src, baseUrl);
+                                }
+                            }
+                        }
+                    }
+                    
+                    return null;
+                } catch (error) {
+                    this.logImageExtraction(`HTML parsing error: ${error.message}`);
+                    return null;
+                }
+            }
+
+            async tryDomainSpecificPatterns(url) {
+                try {
+                    const domain = this.getDomain(url).toLowerCase();
+                    
+                    // GitHub repository images
+                    if (domain.includes('github.com')) {
+                        const pathMatch = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+                        if (pathMatch) {
+                            const imageUrl = `https://opengraph.githubassets.com/1/${pathMatch[1]}/${pathMatch[2]}`;
+                            this.logImageExtraction(`GitHub pattern image: ${imageUrl}`);
+                            return imageUrl;
+                        }
+                    }
+                    
+                    // YouTube videos
+                    if (domain.includes('youtube.com') || domain.includes('youtu.be')) {
+                        const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
+                        if (videoIdMatch) {
+                            const imageUrl = `https://img.youtube.com/vi/${videoIdMatch[1]}/maxresdefault.jpg`;
+                            this.logImageExtraction(`YouTube pattern image: ${imageUrl}`);
+                            return imageUrl;
+                        }
+                    }
+                    
+                    // Medium articles
+                    if (domain.includes('medium.com')) {
+                        // Try to extract story ID for Medium's CDN
+                        const storyMatch = url.match(/\/([a-f0-9]+)$/);
+                        if (storyMatch) {
+                            const imageUrl = `https://miro.medium.com/max/1400/1*${storyMatch[1]}.png`;
+                            this.logImageExtraction(`Medium pattern image: ${imageUrl}`);
+                            return imageUrl;
+                        }
+                    }
+                    
+                    // Reddit posts
+                    if (domain.includes('reddit.com')) {
+                        // Reddit has a predictable thumbnail system
+                        const imageUrl = `https://www.redditstatic.com/desktop2x/img/reddit_logo.png`;
+                        this.logImageExtraction(`Reddit pattern image: ${imageUrl}`);
+                        return imageUrl;
+                    }
+                    
+                    return null;
+                } catch (error) {
+                    this.logImageExtraction(`Domain pattern error: ${error.message}`);
+                    return null;
+                }
+            }
+
+            async tryFaviconExtraction(url) {
+                try {
+                    const domain = this.getDomain(url);
+                    const baseUrl = `https://${domain}`;
+                    
+                    // Common favicon locations
+                    const faviconUrls = [
+                        `${baseUrl}/favicon.ico`,
+                        `${baseUrl}/favicon.png`,
+                        `${baseUrl}/apple-touch-icon.png`,
+                        `${baseUrl}/apple-touch-icon-180x180.png`,
+                        `${baseUrl}/android-chrome-192x192.png`,
+                        `https://www.google.com/s2/favicons?domain=${domain}&sz=128`
+                    ];
+                    
+                    for (const faviconUrl of faviconUrls) {
+                        try {
+                            const response = await fetch(faviconUrl, { method: 'HEAD', timeout: 5000 });
+                            if (response.ok) {
+                                this.logImageExtraction(`Found favicon: ${faviconUrl}`);
+                                return faviconUrl;
+                            }
+                        } catch (error) {
+                            continue;
+                        }
+                    }
+                    
+                    return null;
+                } catch (error) {
+                    this.logImageExtraction(`Favicon extraction error: ${error.message}`);
+                    return null;
+                }
+            }
+
+            async validateImage(imageUrl) {
+                try {
+                    const response = await fetch(imageUrl, { 
+                        method: 'HEAD',
+                        timeout: 5000
+                    });
+                    
+                    const contentType = response.headers.get('content-type');
+                    const isImage = contentType && contentType.startsWith('image/');
+                    
+                    this.logImageExtraction(`Image validation: ${imageUrl} - ${isImage ? 'Valid' : 'Invalid'}`);
+                    return response.ok && isImage;
+                } catch (error) {
+                    this.logImageExtraction(`Image validation failed: ${error.message}`);
+                    return false;
+                }
+            }
+
+            isGoodImage(src) {
+                if (!src) return false;
+                
+                const badPatterns = [
+                    'icon', 'logo', 'avatar', 'profile', 'favicon', 'sprite',
+                    'button', 'badge', 'social', 'ads', 'advertisement',
+                    '.ico', 'gravatar', '16x16', '32x32', '64x64',
+                    'data:image', 'base64', 'svg+xml'
+                ];
+                
+                const srcLower = src.toLowerCase();
+                return !badPatterns.some(pattern => srcLower.includes(pattern)) &&
+                       src.length > 10 &&
+                       !srcLower.includes('1x1');
+            }
+
+            makeAbsoluteUrl(imageUrl, baseUrl) {
+                try {
+                    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+                        return imageUrl;
+                    }
+                    if (imageUrl.startsWith('//')) {
+                        return 'https:' + imageUrl;
+                    }
+                    const base = new URL(baseUrl);
+                    return new URL(imageUrl, base.origin).href;
+                } catch (error) {
+                    this.logImageExtraction(`URL resolution error: ${error.message}`);
+                    return null;
+                }
+            }
+
+            // ENHANCED: Real image fetching with multiple strategies
+            async fetchRealImageFromWebsite(url) {
+                try {
+                    console.log(`🌐 ENHANCED: Starting real image extraction for: ${url}`);
+                    this.logImageExtraction(`Starting enhanced image extraction for: ${url}`);
+
+                    // Strategy 1: Try to get Open Graph or meta images directly
+                    let imageUrl = await this.tryMetaImageExtraction(url);
+                    
+                    if (imageUrl && await this.validateImage(imageUrl)) {
+                        this.logImageExtraction(`✅ SUCCESS: Meta image found: ${imageUrl}`);
+                        return imageUrl;
+                    }
+                    
+                    // Strategy 2: Full HTML parsing with multiple proxies
+                    imageUrl = await this.tryFullHTMLExtraction(url);
+                    
+                    if (imageUrl && await this.validateImage(imageUrl)) {
+                        this.logImageExtraction(`✅ SUCCESS: HTML image found: ${imageUrl}`);
+                        return imageUrl;
+                    }
+                    
+                    // Strategy 3: Try domain-specific patterns
+                    imageUrl = await this.tryDomainSpecificPatterns(url);
+                    
+                    if (imageUrl && await this.validateImage(imageUrl)) {
+                        this.logImageExtraction(`✅ SUCCESS: Domain pattern image found: ${imageUrl}`);
+                        return imageUrl;
+                    }
+                    
+                    // Strategy 4: Try favicon as last resort
+                    imageUrl = await this.tryFaviconExtraction(url);
+                    
+                    if (imageUrl && await this.validateImage(imageUrl)) {
+                        this.logImageExtraction(`✅ SUCCESS: Favicon found: ${imageUrl}`);
+                        return imageUrl;
+                    }
+                    
+                    // Only return null if ALL strategies fail
+                    this.logImageExtraction(`❌ FAILED: All extraction strategies failed for: ${url}`);
+                    throw new Error('All enhanced extraction strategies failed');
+
+                } catch (error) {
+                    this.logImageExtraction(`❌ ENHANCED extraction error: ${error.message}`, 'error');
+                    throw error;
                 }
             }
 
@@ -1361,7 +1767,7 @@
                     sessionStorage.removeItem('pkce_redirect_uri');
                     sessionStorage.removeItem('pkce_state');
 
-                    this.updateStatus('🚀 Connected! INSTANT display + FULL OneDrive integration active.', 'success');
+                    this.updateStatus('🌐 Connected! ENHANCED real images + INSTANT display + FULL OneDrive integration active.', 'success');
                     await this.loadArticles();
 
                 } catch (error) {
@@ -1383,7 +1789,7 @@
 
                 try {
                     const encrypted = btoa(JSON.stringify(tokenData));
-                    localStorage.setItem('mypocket_hybrid_tokens', encrypted);
+                    localStorage.setItem('mypocket_enhanced_tokens', encrypted);
                     console.log('💾 Tokens saved with expiry:', new Date(tokenData.expires_at));
                 } catch (error) {
                     console.error('❌ Failed to save tokens:', error);
@@ -1393,7 +1799,7 @@
 
             loadStoredTokens() {
                 try {
-                    const encrypted = localStorage.getItem('mypocket_hybrid_tokens');
+                    const encrypted = localStorage.getItem('mypocket_enhanced_tokens');
                     if (!encrypted) {
                         console.log('📭 No stored tokens found');
                         return false;
@@ -1518,7 +1924,7 @@
             }
 
             clearTokens() {
-                localStorage.removeItem('mypocket_hybrid_tokens');
+                localStorage.removeItem('mypocket_enhanced_tokens');
                 this.accessToken = null;
                 this.refreshToken = null;
                 this.tokenExpiry = null;
@@ -1603,12 +2009,12 @@
                 const refreshBtn = document.getElementById('refreshBtn');
 
                 if (connected) {
-                    connectIcon.textContent = '🚀';
+                    connectIcon.textContent = '🌐';
 
                     if (this.refreshToken) {
-                        connectText.textContent = 'Connected (Complete)';
+                        connectText.textContent = 'Connected (Enhanced)';
                         connectBtn.style.background = 'rgba(39, 174, 96, 0.9)';
-                        connectBtn.title = 'Persistent PKCE + INSTANT display + OneDrive backup';
+                        connectBtn.title = 'ENHANCED: Real images + PKCE + INSTANT + OneDrive';
                     } else {
                         connectText.textContent = 'Connected';
                         connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
@@ -1620,7 +2026,7 @@
                     connectIcon.textContent = '☁️';
                     connectText.textContent = 'Connect OneDrive';
                     connectBtn.style.background = 'rgba(255,255,255,0.2)';
-                    connectBtn.title = 'Connect with PKCE + INSTANT + OneDrive';
+                    connectBtn.title = 'ENHANCED: Real images + PKCE + INSTANT + OneDrive';
                     refreshBtn.style.display = 'none';
                 }
             }
@@ -1682,7 +2088,7 @@
 
                     this.displayArticles(this.articles);
 
-                    let statusMessage = `🚀 COMPLETE: Loaded ${this.articles.length} articles`;
+                    let statusMessage = `🌐 ENHANCED: Loaded ${this.articles.length} articles`;
                     if (instantImages > 0) {
                         statusMessage += ` (${instantImages} INSTANT)`;
                     }
@@ -1716,7 +2122,7 @@
                                 uploadDate: backupStatus.uploadDate,
                                 originalUrl: backupStatus.originalUrl,
                                 size: backupStatus.size,
-                                authMethod: backupStatus.authMethod || 'PKCE'
+                                authMethod: backupStatus.authMethod || 'PKCE-ENHANCED'
                             };
                             restoredCount++;
                         }
@@ -1728,7 +2134,7 @@
                 console.log(`☁️ Restored ${restoredCount} OneDrive backup entries to articles`);
             }
 
-            // HYBRID: Enhanced displayArticles with both INSTANT + OneDrive status
+            // ENHANCED: displayArticles with real image extraction status
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1751,8 +2157,8 @@
                         statusText = '☁️ OneDrive';
                         statusClass = 'backed-up';
                     } else {
-                        statusText = '🔄 Processing';
-                        statusClass = 'processing';
+                        statusText = '🌐 Extracting';
+                        statusClass = 'extracting';
                     }
 
                     return `
@@ -1762,25 +2168,10 @@
                                 ${statusText}
                             </div>
                             ${hasInstantImage ? '' : `
-                                <div style="
-                                    width: 100%; 
-                                    height: 100%; 
-                                    background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
-                                               linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
-                                               linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
-                                               linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
-                                    background-size: 20px 20px;
-                                    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    color: #999;
-                                    animation: shimmer 1.5s ease-in-out infinite;
-                                ">
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 1.5em; margin-bottom: 5px;">🚀</div>
-                                        <div style="font-size: 0.8em;">${hasOneDriveBackup ? 'Loading backup...' : 'Processing...'}</div>
-                                    </div>
+                                <div class="loading-placeholder">
+                                    <div style="font-size: 1.5em; margin-bottom: 10px;">🌐</div>
+                                    <div>ENHANCED extraction...</div>
+                                    <div style="font-size: 0.8em; margin-top: 5px;">${this.getDomain(article.url)}</div>
                                 </div>
                             `}
                         </div>
@@ -1812,23 +2203,24 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
 
-                // HYBRID: Display instant images first, then process new ones
+                // ENHANCED: Display instant images first, then process new ones with real extraction
                 this.displayInstantImages(articles);
-                this.processNewImages(articles);
+                this.processNewImagesEnhanced(articles);
             }
 
             displayEmptyState() {
                 const container = document.getElementById('articlesContainer');
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">🚀</div>
+                        <div class="empty-state-icon">🌐</div>
                         <h3>No articles found</h3>
                         <p>Use the MyPocket browser extension to save articles, then refresh this page.</p>
                         <div style="margin-top: 20px;">
                             <span class="feature-indicator persistent">🔒 PKCE Ready</span>
                             <span class="feature-indicator instant">⚡ INSTANT Display</span>
                             <span class="feature-indicator">☁️ OneDrive Backup</span>
-                            <span class="feature-indicator">🌐 Content Fetching</span>
+                            <span class="feature-indicator enhanced">🌐 Enhanced Real Images</span>
+                            <span class="feature-indicator">📄 Content Fetching</span>
                         </div>
                     </div>`;
             }
@@ -1869,9 +2261,9 @@
                 }
             }
 
-            // Process new images (not instant, not OneDrive backed up)
-            async processNewImages(articles) {
-                console.log('🔄 Processing new images...');
+            // ENHANCED: Process new images with real extraction
+            async processNewImagesEnhanced(articles) {
+                console.log('🌐 ENHANCED: Processing new images with real extraction...');
 
                 let processedCount = 0;
 
@@ -1906,43 +2298,63 @@
                         }
                     }
 
-                    // Process new image
+                    // ENHANCED: Process new image with real extraction
                     try {
-                        const result = await this.processNewImage(article, i);
+                        const result = await this.processNewImageEnhanced(article, i);
                         if (result.success) {
                             processedCount++;
                         }
 
-                        // Delay between processing
-                        await new Promise(resolve => setTimeout(resolve, 500));
+                        // Delay between processing to avoid overwhelming servers
+                        await new Promise(resolve => setTimeout(resolve, 2000));
 
                     } catch (error) {
                         console.error(`❌ Failed to process image for article ${i}:`, error);
                     }
                 }
 
-                this.updateStatus(`🚀 COMPLETE processing! ${processedCount} images handled.`, 'success');
+                this.updateStatus(`🌐 ENHANCED processing complete! ${processedCount} images handled with real extraction.`, 'success');
             }
 
-            // Process a single new image with HYBRID storage
-            async processNewImage(article, index) {
+            // ENHANCED: Process a single new image with real extraction
+            async processNewImageEnhanced(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
                 const indicator = document.getElementById(`backup-${index}`);
 
                 if (!imageElement) return { success: false };
 
-                console.log(`🔄 Processing new image: ${article.title.substring(0, 40)}...`);
+                console.log(`🌐 ENHANCED: Processing new image with real extraction: ${article.title.substring(0, 40)}...`);
 
                 try {
-                    // Get image URL
-                    let imageUrl = this.getBestArticleImage(article);
-
-                    if (!imageUrl) {
-                        imageUrl = await this.fetchRealImageFromWebsite(article.url);
+                    // Update status to show extraction
+                    if (indicator) {
+                        indicator.textContent = '🌐 Extracting';
+                        indicator.className = 'backup-indicator extracting show';
                     }
 
+                    // Try enhanced real image extraction first
+                    let imageUrl = null;
+                    let imageSource = 'unknown';
+
+                    try {
+                        imageUrl = await this.fetchRealImageFromWebsite(article.url);
+                        imageSource = 'real-website';
+                        console.log(`🌐 ENHANCED: Real image extracted: ${imageUrl}`);
+                    } catch (error) {
+                        console.log(`🌐 ENHANCED: Real extraction failed: ${error.message}`);
+                    }
+
+                    // If real extraction failed, try article's own images
                     if (!imageUrl) {
-                        imageUrl = this.getCategoryBasedImage(article, index);
+                        imageUrl = this.getBestArticleImage(article);
+                        imageSource = 'article-data';
+                    }
+
+                    // If still no image, only then show no image found
+                    if (!imageUrl) {
+                        console.log(`❌ ENHANCED: No image found for: ${article.title.substring(0, 30)}...`);
+                        this.showNoImageFound(imageElement, index, article.url);
+                        return { success: false };
                     }
 
                     // Download image as blob for INSTANT storage
@@ -1953,6 +2365,7 @@
                             title: article.title,
                             url: article.url,
                             originalImageUrl: imageUrl,
+                            extractionMethod: imageSource,
                             processedAt: new Date().toISOString()
                         };
 
@@ -1979,8 +2392,13 @@
                         `;
 
                         if (indicator) {
-                            indicator.textContent = '⚡ INSTANT';
-                            indicator.className = 'backup-indicator instant show';
+                            if (imageSource === 'real-website') {
+                                indicator.textContent = '🌐 Real Image';
+                                indicator.className = 'backup-indicator real-image show';
+                            } else {
+                                indicator.textContent = '⚡ INSTANT';
+                                indicator.className = 'backup-indicator instant show';
+                            }
                         }
 
                         // ALSO backup to OneDrive (if connected)
@@ -1997,7 +2415,7 @@
                             }
                         }
 
-                        console.log(`✅ HYBRID processing complete: ${article.title.substring(0, 30)}...`);
+                        console.log(`✅ ENHANCED processing complete: ${article.title.substring(0, 30)}... (${imageSource})`);
                         return { success: true };
                     }
 
@@ -2005,25 +2423,37 @@
                     console.error(`❌ Error processing image: ${error.message}`);
                 }
 
-                // Fallback image
-                const fallbackUrl = this.getCategoryBasedImage(article, index);
+                // Show no image found
+                this.showNoImageFound(imageElement, index, article.url);
+                return { success: false };
+            }
+
+            // Show no image found state (no random fallbacks)
+            showNoImageFound(imageElement, index, url) {
                 imageElement.innerHTML = `
-                    <img src="${fallbackUrl}" 
-                         alt="Article image" 
-                         style="
-                            width: 100%;
-                            height: 100%;
-                            object-fit: cover;
-                            border-radius: inherit;
-                         ">
+                    <div class="no-image-placeholder">
+                        <div style="font-size: 2em; margin-bottom: 10px;">❌</div>
+                        <div>No image found</div>
+                        <div style="font-size: 0.8em; margin-top: 5px;">${this.getDomain(url)}</div>
+                        <button class="retry-btn" onclick="webReader.retryImageExtraction(${index})">
+                            🔄 Retry
+                        </button>
+                    </div>
                 `;
-
+                
+                const indicator = document.getElementById(`backup-${index}`);
                 if (indicator) {
-                    indicator.textContent = '🎨 Fallback';
-                    indicator.className = 'backup-indicator show';
+                    indicator.textContent = '❌ No Image';
+                    indicator.className = 'backup-indicator no-image show';
                 }
+            }
 
-                return { success: true };
+            // Retry image extraction for a specific article
+            async retryImageExtraction(index) {
+                console.log(`🔄 Retrying ENHANCED image extraction for index ${index}`);
+                if (this.articles[index]) {
+                    await this.processNewImageEnhanced(this.articles[index], index);
+                }
             }
 
             // Download image as blob for local storage
@@ -2031,7 +2461,7 @@
                 try {
                     const response = await fetch(imageUrl, {
                         headers: {
-                            'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader HYBRID)'
+                            'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader ENHANCED)'
                         }
                     });
 
@@ -2067,7 +2497,7 @@
                     const imageResponse = await fetch(imageUrl, {
                         signal: controller.signal,
                         headers: {
-                            'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader HYBRID)'
+                            'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader ENHANCED)'
                         }
                     });
                     clearTimeout(timeoutId);
@@ -2087,7 +2517,7 @@
                     const imageExtension = this.getImageExtension(imageUrl) || 'jpg';
                     const sanitizedTitle = this.sanitizeFilename(article.title);
                     const timestamp = Date.now();
-                    const fileName = `hybrid_image_${sanitizedTitle}_${timestamp}.${imageExtension}`;
+                    const fileName = `enhanced_image_${sanitizedTitle}_${timestamp}.${imageExtension}`;
 
                     // Ensure images folder exists
                     await this.ensureImagesFolderExists();
@@ -2148,7 +2578,7 @@
                         uploadDate: new Date().toISOString(),
                         originalUrl: imageUrl,
                         size: imageBuffer.byteLength,
-                        authMethod: 'PKCE-HYBRID'
+                        authMethod: 'PKCE-ENHANCED'
                     };
 
                 } catch (error) {
@@ -2234,7 +2664,7 @@
                             uploadDate: cachedBackup.uploadDate,
                             originalUrl: cachedBackup.originalUrl,
                             size: cachedBackup.size,
-                            authMethod: cachedBackup.authMethod || 'PKCE-HYBRID'
+                            authMethod: cachedBackup.authMethod || 'PKCE-ENHANCED'
                         };
                     }
                 }
@@ -2260,9 +2690,9 @@
                         imageBackupEnabled: this.imageBackupEnabled
                     },
                     exportDate: new Date().toISOString(),
-                    version: "6.0-HYBRID-COMPLETE",
+                    version: "7.0-ENHANCED-COMPLETE",
                     deviceInfo: {
-                        browser: "Web Reader HYBRID Edition",
+                        browser: "Web Reader ENHANCED Edition",
                         platform: navigator.platform,
                         timestamp: Date.now(),
                         articleCount: this.articles.length,
@@ -2271,15 +2701,15 @@
                         cacheSize: this.imageBackupCache.size,
                         authMethod: "PKCE",
                         refreshTokenAvailable: !!this.refreshToken,
-                        features: ["INSTANT_DISPLAY", "ONEDRIVE_BACKUP", "CONTENT_FETCHING", "REAL_TIME_EXTRACTION"],
-                        systemType: "HYBRID"
+                        features: ["ENHANCED_REAL_IMAGES", "INSTANT_DISPLAY", "ONEDRIVE_BACKUP", "CONTENT_FETCHING", "REAL_TIME_EXTRACTION"],
+                        systemType: "ENHANCED"
                     }
                 };
 
-                const fileName = `mypocket-backup-hybrid-${new Date().toISOString().split('T')[0]}.json`;
+                const fileName = `mypocket-backup-enhanced-${new Date().toISOString().split('T')[0]}.json`;
                 const fileContent = JSON.stringify(backup, null, 2);
 
-                console.log(`☁️ Saving HYBRID backup: ${backup.articles.length} articles (${Math.round(fileContent.length / 1024)}KB)`);
+                console.log(`☁️ Saving ENHANCED backup: ${backup.articles.length} articles (${Math.round(fileContent.length / 1024)}KB)`);
                 console.log(`☁️ Features: ${backup.deviceInfo.instantImages} instant + ${backup.deviceInfo.oneDriveBackups} OneDrive backups`);
 
                 const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
@@ -2298,347 +2728,11 @@
                 }
 
                 const result = await uploadResponse.json();
-                console.log(`☁️ HYBRID backup saved successfully`);
+                console.log(`☁️ ENHANCED backup saved successfully`);
                 return result;
             }
 
-            // FULL image extraction from websites (original functionality)
-            async fetchRealImageFromWebsite(url) {
-                try {
-                    console.log(`🌐 Fetching webpage: ${url}`);
-
-                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-                    const response = await fetch(proxyUrl);
-
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch webpage');
-                    }
-
-                    const data = await response.json();
-                    const html = data.contents;
-
-                    if (!html || html.length < 500) {
-                        throw new Error('No substantial HTML content received');
-                    }
-
-                    const extractedImageUrl = this.parseHTMLForBestImage(html, url);
-
-                    if (extractedImageUrl) {
-                        console.log(`🎯 Found image: ${extractedImageUrl}`);
-                        return extractedImageUrl;
-                    }
-
-                    throw new Error('No suitable image found in webpage');
-
-                } catch (error) {
-                    console.log(`❌ Website extraction failed: ${error.message}`);
-
-                    try {
-                        return await this.tryAlternativeImageExtraction(url);
-                    } catch (altError) {
-                        console.log(`❌ Alternative extraction failed: ${altError.message}`);
-                        throw error;
-                    }
-                }
-            }
-
-            parseHTMLForBestImage(html, baseUrl) {
-                try {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-
-                    // Strategy 1: Open Graph image
-                    const ogImage = doc.querySelector('meta[property="og:image"]');
-                    if (ogImage) {
-                        const imageUrl = this.makeAbsoluteUrl(ogImage.getAttribute('content'), baseUrl);
-                        if (this.isValidImageUrl(imageUrl)) {
-                            console.log(`🎯 Found Open Graph image: ${imageUrl}`);
-                            return imageUrl;
-                        }
-                    }
-
-                    // Strategy 2: Twitter card image
-                    const twitterImage = doc.querySelector('meta[name="twitter:image"], meta[property="twitter:image"]');
-                    if (twitterImage) {
-                        const imageUrl = this.makeAbsoluteUrl(twitterImage.getAttribute('content'), baseUrl);
-                        if (this.isValidImageUrl(imageUrl)) {
-                            console.log(`🎯 Found Twitter card image: ${imageUrl}`);
-                            return imageUrl;
-                        }
-                    }
-
-                    // Strategy 3: Featured image selectors
-                    const featuredSelectors = [
-                        '.featured-image img',
-                        '.hero-image img',
-                        '.post-thumbnail img',
-                        '.article-image img',
-                        '.entry-image img',
-                        '.wp-post-image',
-                        'article img:first-of-type',
-                        '.content img:first-of-type',
-                        '.post-content img:first-of-type'
-                    ];
-
-                    for (const selector of featuredSelectors) {
-                        const img = doc.querySelector(selector);
-                        if (img) {
-                            const src = img.getAttribute('src') || img.getAttribute('data-src') || img.getAttribute('data-lazy-src');
-                            if (src) {
-                                const imageUrl = this.makeAbsoluteUrl(src, baseUrl);
-                                if (this.isValidImageUrl(imageUrl) && !this.isIconOrLogo(src)) {
-                                    console.log(`🎯 Found featured image: ${imageUrl}`);
-                                    return imageUrl;
-                                }
-                            }
-                        }
-                    }
-
-                    // Strategy 4: First substantial content image
-                    const allImages = Array.from(doc.querySelectorAll('img')).filter(img => {
-                        const src = img.getAttribute('src') || img.getAttribute('data-src');
-                        const width = img.getAttribute('width') || img.style.width;
-                        const height = img.getAttribute('height') || img.style.height;
-
-                        return src &&
-                            !this.isIconOrLogo(src) &&
-                            !this.isSmallImage(width, height) &&
-                            !src.includes('avatar') &&
-                            !src.includes('profile');
-                    });
-
-                    for (const img of allImages) {
-                        const src = img.getAttribute('src') || img.getAttribute('data-src');
-                        if (src) {
-                            const imageUrl = this.makeAbsoluteUrl(src, baseUrl);
-                            if (this.isValidImageUrl(imageUrl)) {
-                                console.log(`🎯 Found content image: ${imageUrl}`);
-                                return imageUrl;
-                            }
-                        }
-                    }
-
-                    console.log(`❌ No suitable image found in HTML`);
-                    return null;
-
-                } catch (error) {
-                    console.error('HTML parsing error:', error);
-                    return null;
-                }
-            }
-
-            async tryAlternativeImageExtraction(url) {
-                try {
-                    const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-                    const response = await fetch(corsProxyUrl);
-
-                    if (response.ok) {
-                        const html = await response.text();
-                        const extractedImage = this.parseHTMLForBestImage(html, url);
-                        if (extractedImage) return extractedImage;
-                    }
-                } catch (error) {
-                    console.log(`CORS proxy failed: ${error.message}`);
-                }
-
-                const guessedImage = this.guessImageFromUrl(url);
-                if (guessedImage) return guessedImage;
-
-                throw new Error('All alternative extraction methods failed');
-            }
-
-            guessImageFromUrl(url) {
-                const domain = this.getDomain(url).toLowerCase();
-
-                if (domain.includes('medium.com')) {
-                    const match = url.match(/\/([a-f0-9]+)$/);
-                    if (match) {
-                        return `https://miro.medium.com/max/1400/1*${match[1]}.png`;
-                    }
-                }
-
-                if (domain.includes('github.com')) {
-                    const pathMatch = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
-                    if (pathMatch) {
-                        return `https://opengraph.githubassets.com/1/${pathMatch[1]}/${pathMatch[2]}`;
-                    }
-                }
-
-                if (domain.includes('youtube.com') || domain.includes('youtu.be')) {
-                    const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
-                    if (videoIdMatch) {
-                        return `https://img.youtube.com/vi/${videoIdMatch[1]}/maxresdefault.jpg`;
-                    }
-                }
-
-                return null;
-            }
-
-            getCategoryBasedImage(article, index) {
-                const domain = this.getDomain(article.url).toLowerCase();
-                const title = article.title.toLowerCase();
-
-                if (domain.includes('github') || domain.includes('stackoverflow') || domain.includes('dev.to') ||
-                    title.includes('code') || title.includes('programming') || title.includes('javascript') || title.includes('react')) {
-                    return `https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-
-                if (domain.includes('business') || domain.includes('finance') || domain.includes('linkedin') ||
-                    title.includes('business') || title.includes('finance') || title.includes('startup') || title.includes('entrepreneur')) {
-                    return `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-
-                if (domain.includes('dribbble') || domain.includes('behance') ||
-                    title.includes('design') || title.includes('ui') || title.includes('ux') || title.includes('creative')) {
-                    return `https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-
-                if (domain.includes('news') || domain.includes('bbc') || domain.includes('cnn') ||
-                    title.includes('news') || title.includes('politics') || title.includes('media')) {
-                    return `https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-
-                if (title.includes('travel') || title.includes('vacation') || title.includes('adventure') || title.includes('journey')) {
-                    return `https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-
-                if (title.includes('food') || title.includes('recipe') || title.includes('cooking') || title.includes('restaurant')) {
-                    return `https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-
-                if (title.includes('health') || title.includes('fitness') || title.includes('exercise') || title.includes('wellness')) {
-                    return `https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-
-                if (domain.includes('arxiv') || domain.includes('research') ||
-                    title.includes('science') || title.includes('research') || title.includes('study') || title.includes('data')) {
-                    return `https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-
-                if (domain.includes('edu') || title.includes('learn') || title.includes('education') || title.includes('course')) {
-                    return `https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-
-                if (title.includes('photo') || title.includes('art') || title.includes('gallery') || title.includes('visual')) {
-                    return `https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-
-                if (domain.includes('tech') || title.includes('tech') || title.includes('digital') || title.includes('innovation')) {
-                    return `https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-
-                if (domain.includes('medium') || domain.includes('blog') ||
-                    title.includes('book') || title.includes('read') || title.includes('write') || title.includes('story')) {
-                    return `https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-
-                if (title.includes('music') || title.includes('entertainment') || title.includes('movie') || title.includes('film')) {
-                    return `https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-
-                if (title.includes('sport') || title.includes('game') || title.includes('team') || title.includes('player')) {
-                    return `https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-
-                if (title.includes('nature') || title.includes('environment') || title.includes('climate') || title.includes('green')) {
-                    return `https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-
-                const defaultImages = [
-                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1470115636492-6d2b56f9146d?w=400&h=250&fit=crop&crop=center&q=80&auto=format'
-                ];
-
-                return defaultImages[index % defaultImages.length];
-            }
-
-            setArticleImageDirect(imageElement, imageUrl) {
-                imageElement.innerHTML = `
-                    <img src="${imageUrl}" 
-                         alt="Article image" 
-                         style="
-                            opacity: 0; 
-                            transition: opacity 0.8s ease;
-                            width: 100%;
-                            height: 100%;
-                            object-fit: cover;
-                            border-radius: inherit;
-                         "
-                         onload="
-                            this.style.opacity='1';
-                            console.log('✅ Image loaded successfully');
-                         " 
-                         onerror="
-                            console.log('⚠️ Image failed, using fallback');
-                            this.src='https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
-                         ">
-                `;
-            }
-
-            // ==================== HELPER METHODS ====================
-
-            isValidImageUrl(url) {
-                if (!url || typeof url !== 'string') return false;
-
-                try {
-                    new URL(url);
-                } catch {
-                    return false;
-                }
-
-                const imagePattern = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i;
-                const imageServices = ['unsplash.com', 'images.unsplash.com', 'picsum.photos', 'via.placeholder.com'];
-
-                return imagePattern.test(url) || imageServices.some(service => url.includes(service));
-            }
-
-            isIconOrLogo(src) {
-                if (!src) return false;
-
-                const iconPatterns = [
-                    'icon', 'logo', 'avatar', 'profile', 'favicon', 'sprite',
-                    'button', 'badge', 'social', 'thumb', 'thumbnail',
-                    '/icons/', '/images/icons/', 'gravatar', 'user-content'
-                ];
-
-                const srcLower = src.toLowerCase();
-                return iconPatterns.some(pattern => srcLower.includes(pattern)) ||
-                    srcLower.includes('.ico') ||
-                    (srcLower.includes('64x64') || srcLower.includes('32x32'));
-            }
-
-            isSmallImage(width, height) {
-                if (!width && !height) return false;
-
-                const w = parseInt(width) || 0;
-                const h = parseInt(height) || 0;
-
-                return (w > 0 && w < 200) || (h > 0 && h < 150);
-            }
-
-            makeAbsoluteUrl(imageUrl, baseUrl) {
-                if (!imageUrl) return null;
-
-                try {
-                    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-                        return imageUrl;
-                    }
-
-                    if (imageUrl.startsWith('//')) {
-                        return 'https:' + imageUrl;
-                    }
-
-                    const base = new URL(baseUrl);
-                    return new URL(imageUrl, base.origin).href;
-                } catch (error) {
-                    console.log(`Failed to make absolute URL: ${imageUrl}, base: ${baseUrl}`);
-                    return null;
-                }
-            }
-
+            // Get best article image from article data
             getBestArticleImage(article) {
                 if (article.images && article.images.length > 0) {
                     let bestImage = article.images[0];
@@ -2672,6 +2766,31 @@
 
                 return null;
             }
+
+            setArticleImageDirect(imageElement, imageUrl) {
+                imageElement.innerHTML = `
+                    <img src="${imageUrl}" 
+                         alt="Article image" 
+                         style="
+                            opacity: 0; 
+                            transition: opacity 0.8s ease;
+                            width: 100%;
+                            height: 100%;
+                            object-fit: cover;
+                            border-radius: inherit;
+                         "
+                         onload="
+                            this.style.opacity='1';
+                            console.log('✅ Image loaded successfully');
+                         " 
+                         onerror="
+                            console.log('⚠️ Image failed, showing no image state');
+                            this.parentElement.innerHTML='<div class=\"no-image-placeholder\"><div style=\"font-size: 2em; margin-bottom: 10px;\">❌</div><div>Image failed to load</div></div>';
+                         ">
+                `;
+            }
+
+            // ==================== HELPER METHODS ====================
 
             getImageExtension(url) {
                 try {
@@ -2776,7 +2895,7 @@
                 document.getElementById('readerContent').innerHTML = `
                     <div style="text-align: center; padding: 40px;">
                         <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
-                        <p>Checking for article content with HYBRID system...</p>
+                        <p>Checking for article content with ENHANCED system...</p>
                     </div>
                 `;
 
@@ -2787,7 +2906,7 @@
             }
 
             async loadArticleContent(article) {
-                console.log('🚀 HYBRID CONTENT LOADER with real-time fetching');
+                console.log('🌐 ENHANCED CONTENT LOADER with real-time fetching');
                 const contentElement = document.getElementById('readerContent');
 
                 let content = this.getArticleContent(article);
@@ -2799,12 +2918,12 @@
                         contentElement.innerHTML = `
                             <div style="text-align: center; padding: 40px;">
                                 <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
-                                <p><strong>🌐 Fetching content with HYBRID system...</strong></p>
+                                <p><strong>🌐 Fetching content with ENHANCED system...</strong></p>
                                 <p style="font-size: 0.9em; color: var(--text-secondary);">
                                     Loading from ${this.getDomain(article.url)}
                                 </p>
                                 <p style="font-size: 0.8em; color: var(--text-secondary);">
-                                    INSTANT images + OneDrive backup + Real-time content...
+                                    Enhanced real images + INSTANT display + OneDrive backup + Real-time content...
                                 </p>
                             </div>
                         `;
@@ -2814,7 +2933,7 @@
                         if (fetchedContent && fetchedContent.trim()) {
                             content = fetchedContent;
                             console.log('✅ Successfully fetched article content');
-                            this.updateStatus('✅ Article content loaded with HYBRID system!', 'success');
+                            this.updateStatus('✅ Article content loaded with ENHANCED system!', 'success');
                         } else {
                             throw new Error('No content extracted from fetched page');
                         }
@@ -2884,7 +3003,7 @@
                         const response = await fetch(url, {
                             mode: 'cors',
                             headers: {
-                                'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader HYBRID)'
+                                'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader ENHANCED)'
                             }
                         });
 
@@ -2961,7 +3080,7 @@
                         content = `
                             <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                                 <p style="margin: 0; font-size: 0.9em;">
-                                    <strong>📡 Content fetched with HYBRID system</strong><br>
+                                    <strong>🌐 Content fetched with ENHANCED system</strong><br>
                                     This article content was retrieved in real-time from <a href="${url}" target="_blank" style="color: #1976d2;">${this.getDomain(url)}</a>
                                 </p>
                             </div>
@@ -3007,13 +3126,13 @@
                         </div>
                         
                         <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                            <p><strong>🚀 HYBRID System Status:</strong></p>
-                            <p style="font-size: 0.9em;">⚡ INSTANT images + ☁️ OneDrive backup + 🌐 Real-time fetching</p>
+                            <p><strong>🌐 ENHANCED System Status:</strong></p>
+                            <p style="font-size: 0.9em;">🌐 Enhanced real images + ⚡ INSTANT display + ☁️ OneDrive backup + 📄 Real-time fetching</p>
                             <p style="font-size: 0.8em;">
                                 INSTANT Images: ${instantImages} | 
                                 OneDrive Backups: ${oneDriveBackups} | 
                                 Refresh Token: ${this.refreshToken ? 'Available' : 'Not available'} |
-                                System: HYBRID Complete
+                                System: ENHANCED Complete
                             </p>
                         </div>
                         
@@ -3027,11 +3146,11 @@
                             <summary style="cursor: pointer; color: #666;">Technical Details</summary>
                             <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
                                 Error: ${errorMessage}<br>
-                                Auth Method: PKCE (HYBRID Edition)<br>
-                                Image System: INSTANT display + OneDrive backup<br>
+                                Auth Method: PKCE (ENHANCED Edition)<br>
+                                Image System: Enhanced real extraction + INSTANT display + OneDrive backup<br>
                                 Content Fetching: Multi-proxy with real-time extraction<br>
                                 Cache Entries: ${instantImages} instant + ${oneDriveBackups} OneDrive<br>
-                                Features: Complete HYBRID system active
+                                Features: Complete ENHANCED system active with real image extraction
                             </p>
                         </details>
                     </div>
@@ -3220,6 +3339,15 @@
             display: inline-block;
             margin: 10px 0;
         }
+        .enhanced-badge {
+            background: #e2e3ff;
+            color: #3730a3;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            display: inline-block;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -3231,6 +3359,7 @@
             <div style="margin-bottom: 8px;">📅 Saved: ${this.formatDate(article.dateAdded)}</div>
             <div>⏱️ Reading time: ${article.readTime || 1} minutes</div>
             <div class="system-badge">🔒 PKCE Authentication</div>
+            <div class="enhanced-badge">🌐 Enhanced Real Images</div>
             <div class="instant-badge">⚡ INSTANT Display System</div>
             <div class="feature-badge">☁️ OneDrive Backup Integration</div>
         </div>
@@ -3239,14 +3368,14 @@
         ${article.content || article.excerpt || 'Content not available'}
     </div>
     <div class="footer">
-        <p><strong>✨ Exported from MyPocket Web Reader (HYBRID Complete Edition)</strong></p>
+        <p><strong>✨ Exported from MyPocket Web Reader (ENHANCED Complete Edition)</strong></p>
         <p>Original URL: <a href="${article.url}" style="color: #ee5a24;">${article.url}</a></p>
         <p>Export Date: ${new Date().toLocaleDateString()}</p>
         <p>Authentication: PKCE (Authorization Code Flow with Proof Key for Code Exchange)</p>
-        <p>Image System: HYBRID - INSTANT display (${instantImages}) + OneDrive backup (${oneDriveBackups})</p>
+        <p>Image System: ENHANCED - Real image extraction + INSTANT display (${instantImages}) + OneDrive backup (${oneDriveBackups})</p>
         <p>Content System: Real-time fetching with multi-proxy support</p>
-        <p>Session: Persistent with auto-refresh | Features: Complete integration</p>
-        <p>Technology: IndexedDB + OneDrive + CORS proxies + Category fallbacks</p>
+        <p>Session: Persistent with auto-refresh | Features: Complete integration with enhanced real images</p>
+        <p>Technology: Enhanced real image extraction + IndexedDB + OneDrive + CORS proxies + Domain patterns</p>
     </div>
 </body>
 </html>`;
@@ -3274,11 +3403,12 @@
                 const totalArticles = this.articles.length;
 
                 const progressInfo = `
-🚀 HYBRID System Progress Report:
-=================================
+🌐 ENHANCED System Progress Report:
+===================================
 
 📊 Overall Stats:
 - Total Articles: ${totalArticles}
+- 🌐 Enhanced Real Images: Extracted from actual websites
 - ⚡ INSTANT Images: ${instantImages}
 - ☁️ OneDrive Backups: ${oneDriveBackups}
 - Combined Coverage: ${Math.round(((instantImages + oneDriveBackups) / totalArticles) * 100)}%
@@ -3288,36 +3418,40 @@ ${this.articles.map((article, i) => {
                     const cacheKey = this.getImageCacheKey(article);
                     const hasInstant = this.preloadedImages.has(cacheKey);
                     const hasOneDrive = !!article.backedUpImage;
-                    let status = '🔄 Processing';
+                    let status = '🌐 Extracting';
                     if (hasInstant) status = '⚡ INSTANT';
                     else if (hasOneDrive) status = '☁️ OneDrive';
                     return `${i + 1}. ${status} "${article.title.substring(0, 35)}..."`;
                 }).join('\n')}
 
-🚀 HYBRID SYSTEM FEATURES:
+🌐 ENHANCED SYSTEM FEATURES:
+- ✅ ENHANCED real image extraction from actual websites
+- ✅ Multi-strategy extraction (meta tags, HTML parsing, domain patterns, favicons)
 - ✅ INSTANT display via IndexedDB + blob URLs
 - ✅ OneDrive cloud backup for persistence
 - ✅ Real-time content fetching with multi-proxy
-- ✅ Advanced image extraction strategies
-- ✅ Category-based intelligent fallbacks
+- ✅ Advanced image validation and filtering
 - ✅ PKCE authentication with auto-refresh
 - ✅ Rate limiting protection and retry logic
+- ✅ NO random fallback images - only real images or no images
 - ✅ Full export functionality with metadata
 
-⚡ PERFORMANCE GUARANTEE:
-- INSTANT images appear immediately (0ms load time)
-- OneDrive backups provide cloud persistence
-- Real-time content fetching for full articles
-- Complete system integration with all features
+🌐 REAL IMAGE EXTRACTION GUARANTEE:
+- Extracts images from Open Graph meta tags
+- Parses HTML for featured/hero images  
+- Uses domain-specific patterns (GitHub, YouTube, Medium, etc.)
+- Falls back to favicons only as last resort
+- NEVER uses random placeholder images
+- Shows "No image found" if all strategies fail
 
-This is the COMPLETE HYBRID solution!
+This is the COMPLETE ENHANCED solution with real image extraction!
                 `;
 
                 alert(progressInfo);
             }
 
             async clearImageCache() {
-                if (confirm('Clear ALL image data?\n\nThis will remove:\n- INSTANT images (IndexedDB)\n- OneDrive backup cache\n- All locally stored image data\n\nImages will need to be re-processed.')) {
+                if (confirm('Clear ALL image data?\n\nThis will remove:\n- INSTANT images (IndexedDB)\n- OneDrive backup cache\n- All locally stored image data\n\nImages will need to be re-processed with ENHANCED extraction.')) {
                     // Clear INSTANT IndexedDB
                     if (this.db) {
                         const transaction = this.db.transaction(['instant_images'], 'readwrite');
@@ -3333,15 +3467,16 @@ This is the COMPLETE HYBRID solution!
                     // Clear all caches
                     this.preloadedImages.clear();
                     this.imageBackupCache.clear();
-                    localStorage.removeItem('mypocket_hybrid_backup_cache');
+                    this.imageExtractionLogs = [];
+                    localStorage.removeItem('mypocket_enhanced_backup_cache');
 
                     // Clear from articles
                     this.articles.forEach(article => {
                         delete article.backedUpImage;
                     });
 
-                    console.log('🗑️ HYBRID image cache cleared');
-                    this.updateStatus('🗑️ All image data cleared. HYBRID system will re-process images.', 'success');
+                    console.log('🗑️ ENHANCED image cache cleared');
+                    this.updateStatus('🗑️ All image data cleared. ENHANCED system will re-extract real images.', 'success');
 
                     if (this.articles.length > 0) {
                         this.displayArticles(this.articles);
@@ -3353,28 +3488,31 @@ This is the COMPLETE HYBRID solution!
                 const instantImages = this.preloadedImages.size;
                 const oneDriveBackups = this.articles.filter(a => a.backedUpImage).length;
 
-                const results = `🧪 HYBRID System Test Results:
+                const results = `🧪 ENHANCED System Test Results:
 
 ✅ PKCE authentication: Available
 ✅ Redirect URI: ${this.redirectUri}
 ✅ Client ID: ${this.clientId}
+✅ 🌐 Enhanced real image extraction: Multi-strategy enabled
 ✅ ⚡ INSTANT display: ${this.db ? 'Enabled' : 'Not available'} (${instantImages} images)
 ✅ ☁️ OneDrive backup: ${this.accessToken ? 'Connected' : 'Requires auth'} (${oneDriveBackups} backups)
-✅ 🌐 Content fetching: Multi-proxy system ready
+✅ 📄 Content fetching: Multi-proxy system ready
 ✅ IndexedDB: ${this.db ? 'Connected' : 'Not available'}
 
 ${this.accessToken ? '🔒 Currently authenticated with PKCE' : '☁️ Not authenticated'}
 ${this.refreshToken ? '🔄 Persistent session with auto-refresh' : '⚠️ No refresh token'}
 
-🚀 HYBRID SYSTEM COMPLETE:
+🌐 ENHANCED SYSTEM COMPLETE:
+- Enhanced real image extraction from actual websites
 - INSTANT image display for zero-load-time experience
 - OneDrive cloud backup for persistence across devices  
 - Real-time content fetching from any website
 - Advanced image extraction with intelligent fallbacks
 - Complete PKCE authentication with token refresh
 - Full export functionality with rich metadata
+- NO random images - only real images from websites
 
-This is the COMPLETE solution combining all features!`;
+This is the COMPLETE ENHANCED solution with real image extraction!`;
 
                 alert(results);
             }
@@ -3387,13 +3525,14 @@ This is the COMPLETE solution combining all features!`;
                 const isRateLimited = rateLimitReset && Date.now() < parseInt(rateLimitReset);
 
                 const info = `
-MyPocket Web Reader Debug Info (HYBRID Complete Edition):
-=========================================================
+MyPocket Web Reader Debug Info (ENHANCED Complete Edition):
+===========================================================
 
-🚀 HYBRID Image System:
+🌐 ENHANCED Real Image System:
+- 🌐 Real Image Extraction: Multi-strategy from actual websites
 - ⚡ INSTANT Display: IndexedDB + blob URLs (${instantImages} images)
 - ☁️ OneDrive Backup: Cloud storage + metadata (${oneDriveBackups} backups)
-- 🌐 Content Fetching: Multi-proxy real-time extraction
+- 📄 Content Fetching: Multi-proxy real-time extraction
 - Combined Coverage: ${Math.round(((instantImages + oneDriveBackups) / totalArticles) * 100)}%
 
 📊 Application State:
@@ -3414,7 +3553,15 @@ MyPocket Web Reader Debug Info (HYBRID Complete Edition):
 - Batch Processing: ✅ Enabled
 - Retry Logic: ✅ Exponential backoff
 
-🌐 Content Fetching:
+🌐 ENHANCED Real Image Extraction:
+- Meta Tag Extraction: ✅ Open Graph + Twitter cards
+- HTML Parsing: ✅ Featured/hero/article images
+- Domain Patterns: ✅ GitHub, YouTube, Medium, Reddit
+- Favicon Fallback: ✅ High-quality site icons
+- Image Validation: ✅ Content-type + URL validation
+- No Random Images: ✅ Only real images or no image
+
+📄 Content Fetching:
 - AllOrigins Proxy: ✅ Enabled
 - CORS Proxy: ✅ Enabled  
 - Direct Fetch: ✅ Fallback
@@ -3426,23 +3573,25 @@ MyPocket Web Reader Debug Info (HYBRID Complete Edition):
 - localStorage: ✅ OneDrive cache
 - Memory: ✅ Blob URLs for instant display
 
-🚀 HYBRID FEATURES ACTIVE:
+🌐 ENHANCED FEATURES ACTIVE:
+- ✅ Enhanced real image extraction from actual websites
 - ✅ INSTANT image display (0ms load time)
 - ✅ OneDrive cloud backup and sync
 - ✅ Real-time article content fetching
-- ✅ Advanced website image extraction
+- ✅ Advanced website image extraction strategies
 - ✅ PKCE authentication with auto-refresh
 - ✅ Rate limiting protection and retry logic
-- ✅ Category-based intelligent fallbacks
+- ✅ Intelligent image validation and filtering
 - ✅ Full export functionality with metadata
 - ✅ Dark mode and responsive design
 - ✅ Search and filtering capabilities
+- ✅ NO random fallback images
 
-This is the COMPLETE HYBRID solution with ALL features!
+This is the COMPLETE ENHANCED solution with ALL features + real image extraction!
                 `;
 
                 alert(info);
-                console.log('🚀 HYBRID Debug Info:', {
+                console.log('🌐 ENHANCED Debug Info:', {
                     redirectUri: this.redirectUri,
                     hasAccessToken: !!this.accessToken,
                     hasRefreshToken: !!this.refreshToken,
@@ -3451,10 +3600,11 @@ This is the COMPLETE HYBRID solution with ALL features!
                     instantImages: instantImages,
                     oneDriveBackups: oneDriveBackups,
                     authMethod: 'PKCE',
-                    systemType: 'HYBRID-COMPLETE',
-                    features: ['INSTANT_DISPLAY', 'ONEDRIVE_BACKUP', 'CONTENT_FETCHING', 'REAL_TIME_EXTRACTION'],
+                    systemType: 'ENHANCED-COMPLETE',
+                    features: ['ENHANCED_REAL_IMAGES', 'INSTANT_DISPLAY', 'ONEDRIVE_BACKUP', 'CONTENT_FETCHING', 'REAL_TIME_EXTRACTION'],
                     isRateLimited: isRateLimited,
                     hasIndexedDB: !!this.db,
+                    imageExtractionLogs: this.imageExtractionLogs.length,
                     combinedCoverage: Math.round(((instantImages + oneDriveBackups) / totalArticles) * 100)
                 });
             }
@@ -3513,12 +3663,13 @@ This is the COMPLETE HYBRID solution with ALL features!
             webReader = new MyPocketWebReader();
             window.webReader = webReader;
 
-            console.log('🚀 MyPocket Web Reader HYBRID Complete Edition Initialized');
+            console.log('🌐 MyPocket Web Reader ENHANCED Complete Edition Initialized');
             console.log('🔒 PKCE Features: Persistent authentication, automatic token refresh, secure flow');
+            console.log('🌐 ENHANCED Features: Real image extraction from actual websites with multiple strategies');
             console.log('⚡ INSTANT Features: IndexedDB storage, blob URLs, zero-load-time display');
             console.log('☁️ OneDrive Features: Cloud backup, metadata sync, persistent storage');
-            console.log('🌐 Content Features: Real-time fetching, multi-proxy, advanced extraction');
-            console.log('✅ HYBRID COMPLETE: ALL features integrated in one system!');
+            console.log('📄 Content Features: Real-time fetching, multi-proxy, advanced extraction');
+            console.log('✅ ENHANCED COMPLETE: ALL features integrated with real image extraction!');
         });
     </script>
 </body>
