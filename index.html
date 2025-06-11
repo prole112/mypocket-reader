@@ -1463,10 +1463,40 @@
                     }
                 }
 
-                // Strategy 3: Try saved article images and backup them
+                // Strategy 3: Extract REAL image from the original website FIRST (before saved images)
+                try {
+                    console.log(`🌐 Extracting real image from website: ${article.url}`);
+                    const extractedImage = await this.fetchRealImageFromWebsite(article.url);
+                    if (extractedImage && extractedImage.length > 10) { // Make sure we got a real URL
+                        console.log(`✅ Extracted real image from website: ${article.title.substring(0, 30)}...`);
+                        this.setArticleImageDirect(imageElement, extractedImage);
+
+                        // Backup the extracted image for future use
+                        if (this.imageBackupEnabled && this.accessToken) {
+                            try {
+                                const backupInfo = await this.backupImageToOneDriveWithSharing(extractedImage, article, index);
+                                if (backupInfo) {
+                                    article.backedUpImage = backupInfo;
+                                    console.log(`💾 Real website image backed up: ${backupInfo.fileName}`);
+                                    return { success: true, shared: false, newBackup: true };
+                                }
+                            } catch (error) {
+                                console.log(`⚠️ Backup of extracted image failed: ${error.message}`);
+                            }
+                        }
+
+                        return { success: true, shared: false, newBackup: false };
+                    } else {
+                        console.log(`⚠️ Website extraction returned empty or invalid URL: ${extractedImage}`);
+                    }
+                } catch (error) {
+                    console.log(`⚠️ Could not extract from website: ${error.message}`);
+                }
+
+                // Strategy 4: Try saved article images as fallback
                 const savedImage = this.getBestArticleImage(article);
-                if (savedImage) {
-                    console.log(`✅ Using saved image: ${article.title.substring(0, 30)}...`);
+                if (savedImage && savedImage.length > 10) { // Make sure it's a real URL
+                    console.log(`✅ Using saved image from article data: ${article.title.substring(0, 30)}...`);
                     this.setArticleImageDirect(imageElement, savedImage);
                     
                     // Try to backup saved image for future use
@@ -1485,35 +1515,8 @@
                     return { success: true, shared: false, newBackup: false };
                 }
 
-                // Strategy 4: Extract image from website and backup with sharing
-                try {
-                    const extractedImage = await this.fetchRealImageFromWebsite(article.url);
-                    if (extractedImage) {
-                        console.log(`✅ Extracted real image: ${article.title.substring(0, 30)}...`);
-                        this.setArticleImageDirect(imageElement, extractedImage);
-
-                        // Backup the extracted image
-                        if (this.imageBackupEnabled && this.accessToken) {
-                            try {
-                                const backupInfo = await this.backupImageToOneDriveWithSharing(extractedImage, article, index);
-                                if (backupInfo) {
-                                    article.backedUpImage = backupInfo;
-                                    console.log(`💾 Extracted image backed up: ${backupInfo.fileName}`);
-                                    return { success: true, shared: false, newBackup: true };
-                                }
-                            } catch (error) {
-                                console.log(`⚠️ Image backup failed: ${error.message}`);
-                            }
-                        }
-
-                        return { success: true, shared: false, newBackup: false };
-                    }
-                } catch (error) {
-                    console.log(`⚠️ Could not extract from website: ${error.message}`);
-                }
-
-                // Strategy 5: Use intelligent category-based fallback
-                console.log(`🎨 Using intelligent fallback: ${article.title.substring(0, 30)}...`);
+                // Strategy 5: Use intelligent category-based fallback ONLY as last resort
+                console.log(`🎨 No real images found, using category fallback: ${article.title.substring(0, 30)}...`);
                 const fallbackImage = this.getCategoryBasedImage(article, index);
                 this.setArticleImageDirect(imageElement, fallbackImage);
                 return { success: true, shared: false, newBackup: false };
@@ -1681,46 +1684,89 @@
                 }
             }
 
-            // Fetch the actual featured image from a website
+            // ENHANCED: Fetch the actual featured image from a website with better debugging
             async fetchRealImageFromWebsite(url) {
                 try {
-                    console.log(`🌐 Fetching webpage to extract image: ${url}`);
+                    console.log(`🌐 WEBSITE IMAGE EXTRACTION: Starting for ${url}`);
 
                     // Method 1: Try AllOrigins proxy
-                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-                    const response = await fetch(proxyUrl);
+                    try {
+                        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                        console.log(`🌐 Trying AllOrigins proxy...`);
+                        const response = await fetch(proxyUrl);
 
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch webpage');
+                        if (!response.ok) {
+                            throw new Error(`AllOrigins failed: ${response.status}`);
+                        }
+
+                        const data = await response.json();
+                        const html = data.contents;
+
+                        if (!html || html.length < 500) {
+                            throw new Error(`AllOrigins returned insufficient content: ${html ? html.length : 0} chars`);
+                        }
+
+                        console.log(`✅ AllOrigins success: Got ${html.length} characters of HTML`);
+                        
+                        // Parse the HTML and extract the best image
+                        const extractedImageUrl = this.parseHTMLForBestImage(html, url);
+
+                        if (extractedImageUrl && extractedImageUrl.length > 10) {
+                            console.log(`🎯 AllOrigins extracted image: ${extractedImageUrl}`);
+                            return extractedImageUrl;
+                        } else {
+                            console.log(`⚠️ AllOrigins: No suitable image found in HTML`);
+                        }
+
+                    } catch (error) {
+                        console.log(`❌ AllOrigins failed: ${error.message}`);
                     }
 
-                    const data = await response.json();
-                    const html = data.contents;
+                    // Method 2: Try CORS proxy
+                    try {
+                        const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                        console.log(`🌐 Trying CORS proxy...`);
+                        const response = await fetch(corsProxyUrl);
 
-                    if (!html || html.length < 500) {
-                        throw new Error('No substantial HTML content received');
+                        if (!response.ok) {
+                            throw new Error(`CORS proxy failed: ${response.status}`);
+                        }
+
+                        const html = await response.text();
+
+                        if (!html || html.length < 500) {
+                            throw new Error(`CORS proxy returned insufficient content: ${html ? html.length : 0} chars`);
+                        }
+
+                        console.log(`✅ CORS proxy success: Got ${html.length} characters of HTML`);
+                        
+                        const extractedImageUrl = this.parseHTMLForBestImage(html, url);
+                        if (extractedImageUrl && extractedImageUrl.length > 10) {
+                            console.log(`🎯 CORS proxy extracted image: ${extractedImageUrl}`);
+                            return extractedImageUrl;
+                        } else {
+                            console.log(`⚠️ CORS proxy: No suitable image found in HTML`);
+                        }
+
+                    } catch (error) {
+                        console.log(`❌ CORS proxy failed: ${error.message}`);
                     }
 
-                    // Parse the HTML and extract the best image
-                    const extractedImageUrl = this.parseHTMLForBestImage(html, url);
-
-                    if (extractedImageUrl) {
-                        console.log(`🎯 Found image: ${extractedImageUrl}`);
-                        return extractedImageUrl;
+                    // Method 3: Try to guess common image patterns based on URL
+                    console.log(`🌐 Trying URL pattern guessing...`);
+                    const guessedImage = this.guessImageFromUrl(url);
+                    if (guessedImage && guessedImage.length > 10) {
+                        console.log(`🎯 URL pattern guess successful: ${guessedImage}`);
+                        return guessedImage;
+                    } else {
+                        console.log(`⚠️ URL pattern guessing found nothing`);
                     }
 
-                    throw new Error('No suitable image found in webpage');
+                    throw new Error('All website extraction methods failed to find a suitable image');
 
                 } catch (error) {
-                    console.log(`❌ Website image extraction failed: ${error.message}`);
-
-                    // Try alternative proxy methods
-                    try {
-                        return await this.tryAlternativeImageExtraction(url);
-                    } catch (altError) {
-                        console.log(`❌ Alternative extraction also failed: ${altError.message}`);
-                        throw error;
-                    }
+                    console.log(`❌ WEBSITE IMAGE EXTRACTION FAILED for ${url}: ${error.message}`);
+                    throw error;
                 }
             }
 
@@ -1835,16 +1881,19 @@
                 throw new Error('All alternative extraction methods failed');
             }
 
-            // Guess image from URL patterns (for known sites)
+            // ENHANCED: Guess image from URL patterns (for known sites) with more patterns
             guessImageFromUrl(url) {
                 const domain = this.getDomain(url).toLowerCase();
+                console.log(`🔍 URL PATTERN GUESSING: Trying patterns for ${domain}`);
 
                 // Medium articles often have predictable image patterns
                 if (domain.includes('medium.com')) {
                     // Try to extract the article ID and construct image URL
-                    const match = url.match(/\/([a-f0-9]+)$/);
+                    const match = url.match(/\/([a-f0-9]{8,})/);
                     if (match) {
-                        return `https://miro.medium.com/max/1400/1*${match[1]}.png`;
+                        const guessedUrl = `https://miro.medium.com/max/1400/1*${match[1]}.png`;
+                        console.log(`🎯 Medium pattern guess: ${guessedUrl}`);
+                        return guessedUrl;
                     }
                 }
 
@@ -1852,7 +1901,9 @@
                 if (domain.includes('github.com')) {
                     const pathMatch = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
                     if (pathMatch) {
-                        return `https://opengraph.githubassets.com/1/${pathMatch[1]}/${pathMatch[2]}`;
+                        const guessedUrl = `https://opengraph.githubassets.com/1/${pathMatch[1]}/${pathMatch[2]}`;
+                        console.log(`🎯 GitHub pattern guess: ${guessedUrl}`);
+                        return guessedUrl;
                     }
                 }
 
@@ -1860,10 +1911,38 @@
                 if (domain.includes('youtube.com') || domain.includes('youtu.be')) {
                     const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
                     if (videoIdMatch) {
-                        return `https://img.youtube.com/vi/${videoIdMatch[1]}/maxresdefault.jpg`;
+                        const guessedUrl = `https://img.youtube.com/vi/${videoIdMatch[1]}/maxresdefault.jpg`;
+                        console.log(`🎯 YouTube pattern guess: ${guessedUrl}`);
+                        return guessedUrl;
                     }
                 }
 
+                // Reddit posts
+                if (domain.includes('reddit.com')) {
+                    // Try to find post ID and construct thumbnail
+                    const postMatch = url.match(/\/comments\/([a-z0-9]+)/);
+                    if (postMatch) {
+                        const guessedUrl = `https://www.redditstatic.com/desktop2x/img/favicon/android-icon-192x192.png`;
+                        console.log(`🎯 Reddit pattern guess: ${guessedUrl}`);
+                        return guessedUrl;
+                    }
+                }
+
+                // Stack Overflow
+                if (domain.includes('stackoverflow.com')) {
+                    const guessedUrl = `https://cdn.sstatic.net/Sites/stackoverflow/Img/apple-touch-icon@2.png`;
+                    console.log(`🎯 StackOverflow pattern guess: ${guessedUrl}`);
+                    return guessedUrl;
+                }
+
+                // Dev.to
+                if (domain.includes('dev.to')) {
+                    const guessedUrl = `https://dev-to-uploads.s3.amazonaws.com/uploads/logos/resized_logo_UQww2soKuUsjaOGNB38o.png`;
+                    console.log(`🎯 Dev.to pattern guess: ${guessedUrl}`);
+                    return guessedUrl;
+                }
+
+                console.log(`⚠️ No URL patterns matched for ${domain}`);
                 return null;
             }
 
@@ -2613,11 +2692,13 @@
                 URL.revokeObjectURL(url);
             }
 
-            // Enhanced image handling
+            // Enhanced image handling - only return REAL image URLs
             getBestArticleImage(article) {
-                if (article.images && article.images.length > 0) {
+                // Check if we have a real images array with actual image data
+                if (article.images && Array.isArray(article.images) && article.images.length > 0) {
                     let bestImage = article.images[0];
 
+                    // Find the largest suitable image
                     for (const img of article.images) {
                         if (img.width && img.height) {
                             if (img.width >= 300 && img.height >= 150) {
@@ -2627,25 +2708,36 @@
                         }
                     }
 
-                    return bestImage.src || bestImage.url || bestImage;
+                    const imageUrl = bestImage.src || bestImage.url || bestImage;
+                    if (imageUrl && typeof imageUrl === 'string' && this.isValidImageUrl(imageUrl)) {
+                        console.log(`Found valid image from images array: ${imageUrl}`);
+                        return imageUrl;
+                    }
                 }
 
-                if (article.featuredImage) {
+                // Check featured image
+                if (article.featuredImage && typeof article.featuredImage === 'string' && this.isValidImageUrl(article.featuredImage)) {
+                    console.log(`Found valid featured image: ${article.featuredImage}`);
                     return article.featuredImage;
                 }
 
-                if (article.image) {
+                // Check generic image field
+                if (article.image && typeof article.image === 'string' && this.isValidImageUrl(article.image)) {
+                    console.log(`Found valid image field: ${article.image}`);
                     return article.image;
                 }
 
-                if (article.content) {
+                // Check if content has embedded images
+                if (article.content && typeof article.content === 'string') {
                     const imgMatch = article.content.match(/<img[^>]+src="([^"]+)"/i);
-                    if (imgMatch && imgMatch[1]) {
+                    if (imgMatch && imgMatch[1] && this.isValidImageUrl(imgMatch[1])) {
+                        console.log(`Found valid image in content: ${imgMatch[1]}`);
                         return imgMatch[1];
                     }
                 }
 
-                return null;
+                console.log(`No valid saved images found for article`);
+                return null; // Return null if no real images found
             }
 
             getDomain(url) {
