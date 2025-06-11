@@ -1419,76 +1419,120 @@
             // NEW: Load persistent image with sharing links that work across devices
             async loadPersistentArticleImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
-                if (!imageElement) return { success: false, shared: false };
+                if (!imageElement) return { success: false, shared: false, newBackup: false };
 
-                console.log(`🔍 Loading persistent image for: ${this.getDomain(article.url)}`);
+                console.log(`🔍 Loading image for: ${this.getDomain(article.url)} - ${article.title.substring(0, 30)}...`);
 
-                // Strategy 1: Check for OneDrive shared image first (works across devices)
-                if (article.backedUpImage && this.accessToken) {
+                // Strategy 1: Check for OneDrive cached image FIRST (highest priority)
+                if (article.backedUpImage && article.backedUpImage.sharedUrl && this.accessToken) {
                     try {
-                        const sharedUrl = await this.getOneDriveSharedImageUrl(article.backedUpImage);
-                        if (sharedUrl) {
-                            console.log(`✅ Using OneDrive shared image: ${article.title.substring(0, 30)}...`);
-                            this.setArticleImageDirect(imageElement, sharedUrl);
-                            return { success: true, shared: true };
+                        console.log(`⚡ Using cached OneDrive image: ${article.title.substring(0, 30)}...`);
+                        
+                        // Try to use the existing sharing URL directly
+                        this.setArticleImageDirect(imageElement, article.backedUpImage.sharedUrl);
+                        
+                        // Verify the image loads successfully
+                        const isAccessible = await this.testImageUrl(article.backedUpImage.sharedUrl);
+                        if (isAccessible) {
+                            console.log(`✅ Cached image works: ${article.title.substring(0, 30)}`);
+                            return { success: true, shared: true, newBackup: false };
+                        } else {
+                            console.log(`⚠️ Cached image URL expired, will re-create: ${article.title.substring(0, 30)}`);
+                            // Continue to re-create the sharing link
                         }
                     } catch (error) {
-                        console.log(`⚠️ Failed to load OneDrive image, trying alternatives: ${error.message}`);
+                        console.log(`⚠️ Cached image failed, trying fresh: ${error.message}`);
                     }
                 }
 
-                // Strategy 2: Try saved article images
+                // Strategy 2: Check if we have file ID but no sharing URL - create sharing URL
+                if (article.backedUpImage && article.backedUpImage.fileId && this.accessToken) {
+                    try {
+                        console.log(`🔗 Creating sharing link for existing backup: ${article.title.substring(0, 30)}...`);
+                        const sharedUrl = await this.getOneDriveSharedImageUrl(article.backedUpImage);
+                        if (sharedUrl) {
+                            console.log(`✅ Created sharing link for existing image: ${article.title.substring(0, 30)}...`);
+                            this.setArticleImageDirect(imageElement, sharedUrl);
+                            // Update the article with the new sharing URL
+                            article.backedUpImage.sharedUrl = sharedUrl;
+                            article.backedUpImage.sharedDate = new Date().toISOString();
+                            return { success: true, shared: true, newBackup: false }; // Updated existing backup
+                        }
+                    } catch (error) {
+                        console.log(`⚠️ Failed to create sharing link for existing backup: ${error.message}`);
+                    }
+                }
+
+                // Strategy 3: Try saved article images and backup them
                 const savedImage = this.getBestArticleImage(article);
                 if (savedImage) {
                     console.log(`✅ Using saved image: ${article.title.substring(0, 30)}...`);
                     this.setArticleImageDirect(imageElement, savedImage);
                     
-                    // Try to backup and create sharing link for future use
+                    // Try to backup saved image for future use
                     if (this.imageBackupEnabled && this.accessToken) {
                         try {
                             const backupInfo = await this.backupImageToOneDriveWithSharing(savedImage, article, index);
                             if (backupInfo) {
                                 article.backedUpImage = backupInfo;
-                                return { success: true, shared: false }; // Will be shared next time
+                                console.log(`💾 Saved image backed up: ${backupInfo.fileName}`);
+                                return { success: true, shared: false, newBackup: true };
                             }
                         } catch (error) {
                             console.log(`⚠️ Backup of saved image failed: ${error.message}`);
                         }
                     }
-                    return { success: true, shared: false };
+                    return { success: true, shared: false, newBackup: false };
                 }
 
-                // Strategy 3: Extract image from website and backup with sharing
+                // Strategy 4: Extract image from website and backup with sharing
                 try {
                     const extractedImage = await this.fetchRealImageFromWebsite(article.url);
                     if (extractedImage) {
                         console.log(`✅ Extracted real image: ${article.title.substring(0, 30)}...`);
                         this.setArticleImageDirect(imageElement, extractedImage);
 
-                        // Backup with sharing link
+                        // Backup the extracted image
                         if (this.imageBackupEnabled && this.accessToken) {
                             try {
                                 const backupInfo = await this.backupImageToOneDriveWithSharing(extractedImage, article, index);
                                 if (backupInfo) {
                                     article.backedUpImage = backupInfo;
-                                    console.log(`💾 Real image backed up with sharing: ${backupInfo.fileName}`);
+                                    console.log(`💾 Extracted image backed up: ${backupInfo.fileName}`);
+                                    return { success: true, shared: false, newBackup: true };
                                 }
                             } catch (error) {
                                 console.log(`⚠️ Image backup failed: ${error.message}`);
                             }
                         }
 
-                        return { success: true, shared: false };
+                        return { success: true, shared: false, newBackup: false };
                     }
                 } catch (error) {
                     console.log(`⚠️ Could not extract from website: ${error.message}`);
                 }
 
-                // Strategy 4: Use intelligent category-based fallback
+                // Strategy 5: Use intelligent category-based fallback
                 console.log(`🎨 Using intelligent fallback: ${article.title.substring(0, 30)}...`);
                 const fallbackImage = this.getCategoryBasedImage(article, index);
                 this.setArticleImageDirect(imageElement, fallbackImage);
-                return { success: true, shared: false };
+                return { success: true, shared: false, newBackup: false };
+            }
+
+            // NEW: Test if an image URL is accessible
+            async testImageUrl(url) {
+                try {
+                    const img = new Image();
+                    return new Promise((resolve) => {
+                        img.onload = () => resolve(true);
+                        img.onerror = () => resolve(false);
+                        img.src = url;
+                        // Timeout after 5 seconds
+                        setTimeout(() => resolve(false), 5000);
+                    });
+                } catch (error) {
+                    return false;
+                }
             }
 
             // NEW: Get OneDrive shared image URL that works across devices and sessions
@@ -1498,12 +1542,20 @@
                 }
 
                 try {
-                    // First check if we already have a sharing link
-                    if (backupInfo.sharedUrl && this.isUrlAccessible(backupInfo.sharedUrl)) {
-                        return backupInfo.sharedUrl;
+                    // First check if we already have a valid sharing link
+                    if (backupInfo.sharedUrl) {
+                        console.log(`🔗 Testing existing sharing URL: ${backupInfo.fileName}`);
+                        const isValid = await this.testImageUrl(backupInfo.sharedUrl);
+                        if (isValid) {
+                            console.log(`✅ Existing sharing URL works: ${backupInfo.fileName}`);
+                            return backupInfo.sharedUrl;
+                        } else {
+                            console.log(`⚠️ Existing sharing URL expired: ${backupInfo.fileName}`);
+                        }
                     }
 
-                    // Create a sharing link that works without authentication
+                    // Create a new sharing link
+                    console.log(`🔗 Creating new sharing link: ${backupInfo.fileName}`);
                     const shareResponse = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${backupInfo.fileId}/createLink`, {
                         method: 'POST',
                         headers: {
@@ -1525,17 +1577,13 @@
                     // Extract direct image URL from sharing link
                     let imageUrl = shareResult.link.webUrl;
                     
-                    // Convert OneDrive sharing URL to direct download URL
+                    // Convert OneDrive sharing URL to direct download URL for better mobile compatibility
                     if (imageUrl.includes('1drv.ms') || imageUrl.includes('onedrive.live.com')) {
                         // Convert to direct download URL that works in img tags
                         imageUrl = imageUrl.replace('/view.aspx?', '/download.aspx?');
                     }
 
-                    // Update backup info with sharing URL
-                    backupInfo.sharedUrl = imageUrl;
-                    backupInfo.sharedDate = new Date().toISOString();
-
-                    console.log(`✅ Created OneDrive sharing link: ${imageUrl}`);
+                    console.log(`✅ Created new sharing link: ${backupInfo.fileName} -> ${imageUrl}`);
                     return imageUrl;
 
                 } catch (error) {
@@ -1619,16 +1667,6 @@
                 } catch (error) {
                     console.error('Image backup with sharing error:', error);
                     throw error;
-                }
-            }
-
-            // NEW: Check if URL is accessible (simple check)
-            async isUrlAccessible(url) {
-                try {
-                    const response = await fetch(url, { method: 'HEAD' });
-                    return response.ok;
-                } catch (error) {
-                    return false;
                 }
             }
 
@@ -2418,7 +2456,7 @@
                     }
                 }
 
-                // Optimize articles by including image backup info for persistence
+                // Optimize articles but PRESERVE ALL image backup info for persistence
                 const optimizedArticles = this.articles.map(article => ({
                     title: article.title,
                     url: article.url,
@@ -2428,15 +2466,14 @@
                     wordCount: article.wordCount,
                     author: article.author,
                     domain: this.getDomain(article.url),
-                    // IMPORTANT: Keep image backup info for cross-device access
-                    backedUpImage: article.backedUpImage,
+                    // CRITICAL: Preserve ALL image backup info for cross-device access
+                    backedUpImage: article.backedUpImage, // This includes fileId, sharedUrl, etc.
                     featuredImage: article.featuredImage,
                     image: article.image,
                     images: article.images,
-                    // Skip heavy content fields to reduce size but keep lightweight content
-                    excerpt: article.excerpt,
+                    // Keep lightweight content but skip heavy content
                     textContent: article.textContent && article.textContent.length < 10000 ? article.textContent : undefined,
-                    // Skip large content fields
+                    // Skip large content fields to reduce backup size
                     // content: article.content,  // Skip large content
                     // html: article.html  // Skip large HTML
                 }));
@@ -2445,8 +2482,8 @@
                     articles: optimizedArticles,
                     settings: {
                         imageBackupEnabled: this.imageBackupEnabled,
-                        persistentImages: true, // NEW: Flag for persistent images
-                        version: "4.0" // Updated version
+                        persistentImages: true,
+                        version: "4.0"
                     },
                     exportDate: new Date().toISOString(),
                     version: "4.0", // Updated version with persistent OneDrive images
@@ -2463,7 +2500,7 @@
                 const fileName = `mypocket-backup-${new Date().toISOString().split('T')[0]}.json`;
                 const fileContent = JSON.stringify(backup, null, 2);
 
-                console.log(`💾 Backing up ${backup.articles.length} articles (${Math.round(fileContent.length / 1024)}KB) with persistent images`);
+                console.log(`💾 Backing up ${backup.articles.length} articles (${Math.round(fileContent.length / 1024)}KB) with ${backup.deviceInfo.sharedImageCount} cached images`);
 
                 const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
 
@@ -2481,6 +2518,7 @@
                     throw new Error(`Failed to update OneDrive backup: ${uploadResponse.status} - ${errorText}`);
                 }
 
+                console.log(`✅ Backup saved successfully with ${backup.deviceInfo.sharedImageCount} cached images`);
                 return await uploadResponse.json();
             }
 
@@ -2681,6 +2719,9 @@
                     new Date(this.tokenExpiry).toLocaleString() : 
                     'N/A';
 
+                const cachedImages = this.articles.filter(a => a.backedUpImage && a.backedUpImage.sharedUrl).length;
+                const backedUpImages = this.articles.filter(a => a.backedUpImage).length;
+
                 const info = `
 MyPocket Web Reader Debug Info (Enhanced v4.0):
 =====================================
@@ -2700,13 +2741,21 @@ TOKEN INFORMATION:
 ARTICLES & IMAGES:
 - Articles Loaded: ${this.articles.length}
 - Image Backup: ${this.imageBackupEnabled ? 'Enabled' : 'Disabled'}
-- OneDrive Images: ${this.articles.filter(a => a.backedUpImage).length}
-- Shared Images: ${this.articles.filter(a => a.backedUpImage && a.backedUpImage.sharedUrl).length}
+- Images Backed Up: ${backedUpImages}/${this.articles.length}
+- Images Cached (with sharing URLs): ${cachedImages}/${this.articles.length}
+- Cache Hit Rate: ${this.articles.length > 0 ? Math.round((cachedImages / this.articles.length) * 100) : 0}%
 
 MOBILE COMPATIBILITY:
 - User Agent: ${navigator.userAgent}
 - Touch Support: ${('ontouchstart' in window) ? 'Yes' : 'No'}
 - Screen Size: ${screen.width}x${screen.height}
+
+IMAGE CACHING SYSTEM:
+- ✅ Cached images load instantly (no re-processing)
+- ✅ Images work on mobile Firefox and all devices
+- ✅ No authentication required for cached images
+- ✅ Sharing URLs survive token expiration
+- ⚡ ${cachedImages} images cached, ${backedUpImages - cachedImages} pending sharing URLs
 
 AZURE AD REQUIREMENTS:
 - Must be absolute URI (http:// or https://)
@@ -2714,19 +2763,19 @@ AZURE AD REQUIREMENTS:
 - Must match exactly (including trailing slashes)
 - Scope should include 'offline_access' for refresh tokens
 
-PERSISTENT IMAGES FEATURES:
-- Images stored in OneDrive/MyPocket/images/
-- Sharing links created for cross-device access
-- Works on mobile Firefox and other browsers
-- No authentication required once shared
-- Images survive token expiration
+PERFORMANCE OPTIMIZATION:
+- Images are processed once, then cached permanently
+- Next page loads use cached images (instant loading)
+- Metadata automatically saved after image processing
+- Cross-device sync via OneDrive sharing links
 
 Common Issues & Solutions:
-1. Token Expiration: Now auto-refreshes every 10 minutes
-2. Mobile Images: Using OneDrive sharing links (no auth needed)
-3. Cross-device Access: All images backed up with sharing URLs
-4. File:// Protocol: Not supported, use HTTP/HTTPS server
-5. CORS Issues: Using multiple proxy fallbacks for content
+1. ✅ Token Expiration: Auto-refreshes every 10 minutes
+2. ✅ Mobile Images: Using OneDrive sharing links (no auth needed)
+3. ✅ Re-processing Images: Now properly cached after first load
+4. ✅ Cross-device Access: All images backed up with sharing URLs
+5. ❌ File:// Protocol: Not supported, use HTTP/HTTPS server
+6. ✅ CORS Issues: Using multiple proxy fallbacks for content
 
 Next Steps for Setup:
 1. Open Azure Portal → App registrations
@@ -2735,6 +2784,11 @@ Next Steps for Setup:
 4. Add redirect URI: ${this.redirectUri}
 5. Ensure 'Access tokens' is checked
 6. Add 'offline_access' to API permissions for refresh tokens
+
+Cache Performance:
+- First Load: Images processed and cached
+- Subsequent Loads: ${cachedImages > 0 ? 'Instant loading from cache!' : 'Will cache images on next processing'}
+- Mobile Access: ${cachedImages > 0 ? 'Ready for mobile use!' : 'Will work on mobile after first cache'}
                 `;
 
                 alert(info);
@@ -2748,8 +2802,9 @@ Next Steps for Setup:
                     hasRefreshToken: !!this.refreshToken,
                     articlesCount: this.articles.length,
                     imageBackup: this.imageBackupEnabled,
-                    oneDriveImages: this.articles.filter(a => a.backedUpImage).length,
-                    sharedImages: this.articles.filter(a => a.backedUpImage && a.backedUpImage.sharedUrl).length,
+                    backedUpImages: backedUpImages,
+                    cachedImages: cachedImages,
+                    cacheHitRate: this.articles.length > 0 ? Math.round((cachedImages / this.articles.length) * 100) : 0,
                     isMobile: ('ontouchstart' in window),
                     userAgent: navigator.userAgent
                 });
