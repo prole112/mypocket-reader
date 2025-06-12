@@ -170,7 +170,7 @@
 
         /* Header */
         .header {
-            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
             color: white;
             padding: 20px 0;
             box-shadow: var(--shadow);
@@ -199,7 +199,6 @@
             display: flex;
             align-items: center;
             gap: 15px;
-            flex-wrap: wrap;
         }
 
         .btn {
@@ -303,8 +302,8 @@
 
         .articles-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 18px;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 24px;
             margin-top: 20px;
         }
 
@@ -460,8 +459,7 @@
         .action-btn {
             background: rgba(255, 255, 255, 0.95);
             border: 2px solid var(--border);
-            border-radius: 50%;
-            /* Circular buttons for organic feel */
+            border-radius: 50%; /* Circular buttons for organic feel */
             padding: 12px;
             cursor: pointer;
             font-size: 16px;
@@ -679,13 +677,9 @@
                 text-align: center;
             }
 
-            .header-actions {
-                justify-content: center;
-            }
-
             .articles-grid {
                 grid-template-columns: 1fr;
-                gap: 16px;
+                gap: 20px;
             }
 
             .article-card {
@@ -763,41 +757,21 @@
 
         /* Additional organic elements */
         @keyframes float {
-
-            0%,
-            100% {
-                transform: translateY(0px);
-            }
-
-            50% {
-                transform: translateY(-6px);
-            }
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
         }
 
         /* Background pattern animation for generated placeholders */
         @keyframes floatPattern {
-            0% {
-                transform: translate(-50%, -50%) rotate(0deg);
-            }
-
-            100% {
-                transform: translate(-50%, -50%) rotate(360deg);
-            }
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
         /* Shimmer animation for loading placeholders */
         @keyframes shimmer {
-            0% {
-                opacity: 0.6;
-            }
-
-            50% {
-                opacity: 1;
-            }
-
-            100% {
-                opacity: 0.6;
-            }
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
         }
 
         .article-card:nth-child(7n+1) {
@@ -834,48 +808,6 @@
 
         .article-image:nth-child(5n+1) {
             background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        }
-
-        /* Persistent Status Indicator */
-        .persistent-status {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--surface);
-            border: 2px solid var(--border);
-            border-radius: 50px;
-            padding: 10px 15px;
-            font-size: 0.85em;
-            z-index: 200;
-            box-shadow: var(--shadow);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            max-width: 200px;
-        }
-
-        .persistent-status.connected {
-            border-color: #27ae60;
-            background: #d4edda;
-        }
-
-        .persistent-status.expired {
-            border-color: #f39c12;
-            background: #fff3cd;
-        }
-
-        .persistent-status.disconnected {
-            border-color: #e74c3c;
-            background: #f8d7da;
-        }
-
-        @media (max-width: 768px) {
-            .persistent-status {
-                bottom: 10px;
-                right: 10px;
-                font-size: 0.8em;
-                padding: 8px 12px;
-            }
         }
     </style>
 </head>
@@ -961,12 +893,6 @@
         </div>
     </div>
 
-    <!-- Persistent Connection Status -->
-    <div class="persistent-status disconnected" id="persistentStatus">
-        <span id="statusIcon">⚠️</span>
-        <span id="statusText">Disconnected</span>
-    </div>
-
     <script>
         class MyPocketWebReader {
             constructor() {
@@ -975,12 +901,8 @@
                 console.log('🔵 Redirect URI:', this.redirectUri);
 
                 this.accessToken = null;
-                this.refreshToken = null;
-                this.tokenExpiry = null;
                 this.articles = [];
                 this.currentArticle = null;
-                this.imageBackupEnabled = true;
-                this.autoRefreshTimer = null;
 
                 this.init();
             }
@@ -1001,8 +923,6 @@
                 this.checkAuthFromURL();
                 this.loadStoredToken();
                 this.loadThemePreference();
-                this.startTokenRefreshMonitor();
-                this.updatePersistentStatus();
             }
 
             setupEventListeners() {
@@ -1011,13 +931,6 @@
                 document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
                 document.getElementById('closeReader').addEventListener('click', () => this.closeReader());
                 document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
-                
-                // Add visibility change listener to refresh token when tab becomes active
-                document.addEventListener('visibilitychange', () => {
-                    if (!document.hidden && this.accessToken) {
-                        this.checkAndRefreshToken();
-                    }
-                });
             }
 
             checkAuthFromURL() {
@@ -1025,7 +938,6 @@
                 if (hash && hash.includes('access_token=')) {
                     const params = new URLSearchParams(hash);
                     const accessToken = params.get('access_token');
-                    const expiresIn = params.get('expires_in') || '3600'; // Default 1 hour
                     const error = params.get('error');
 
                     if (error) {
@@ -1035,8 +947,7 @@
 
                     if (accessToken) {
                         this.accessToken = accessToken;
-                        this.tokenExpiry = Date.now() + (parseInt(expiresIn) * 1000);
-                        this.saveToken(accessToken, this.tokenExpiry);
+                        this.saveToken(accessToken);
                         this.updateConnectionStatus(true);
                         this.loadArticles();
                         window.history.replaceState({}, document.title, window.location.pathname);
@@ -1045,139 +956,20 @@
             }
 
             loadStoredToken() {
-                const tokenData = localStorage.getItem('mypocket_token_data');
-                if (tokenData) {
-                    try {
-                        const data = JSON.parse(tokenData);
-                        this.accessToken = data.accessToken;
-                        this.tokenExpiry = data.tokenExpiry;
-                        this.refreshToken = data.refreshToken;
-
-                        // Check if token is still valid
-                        if (this.isTokenValid()) {
-                            this.updateConnectionStatus(true);
-                            this.loadArticles();
-                        } else if (this.refreshToken) {
-                            this.updateStatus('🔄 Token expired, attempting to refresh...', 'loading');
-                            this.refreshAccessToken();
-                        } else {
-                            this.updateStatus('🔑 Token expired, please reconnect', 'error');
-                            this.clearToken();
-                        }
-                    } catch (error) {
-                        console.error('Error parsing stored token:', error);
-                        this.clearToken();
-                    }
+                this.accessToken = localStorage.getItem('mypocket_access_token');
+                if (this.accessToken) {
+                    this.updateConnectionStatus(true);
+                    this.loadArticles();
                 }
             }
 
-            saveToken(token, expiry, refreshToken = null) {
-                const tokenData = {
-                    accessToken: token,
-                    tokenExpiry: expiry,
-                    refreshToken: refreshToken,
-                    savedAt: Date.now()
-                };
-                localStorage.setItem('mypocket_token_data', JSON.stringify(tokenData));
+            saveToken(token) {
+                localStorage.setItem('mypocket_access_token', token);
             }
 
             clearToken() {
-                localStorage.removeItem('mypocket_token_data');
+                localStorage.removeItem('mypocket_access_token');
                 this.accessToken = null;
-                this.refreshToken = null;
-                this.tokenExpiry = null;
-                this.updateConnectionStatus(false);
-                this.updatePersistentStatus();
-            }
-
-            isTokenValid() {
-                if (!this.accessToken || !this.tokenExpiry) {
-                    return false;
-                }
-                // Consider token invalid if it expires in less than 5 minutes
-                return Date.now() < (this.tokenExpiry - 5 * 60 * 1000);
-            }
-
-            async checkAndRefreshToken() {
-                if (!this.isTokenValid() && this.refreshToken) {
-                    console.log('🔄 Token expired or about to expire, refreshing...');
-                    await this.refreshAccessToken();
-                }
-            }
-
-            async refreshAccessToken() {
-                if (!this.refreshToken) {
-                    console.log('❌ No refresh token available');
-                    this.clearToken();
-                    return false;
-                }
-
-                try {
-                    const response = await fetch('https://login.microsoftonline.com/consumers/oauth2/v2.0/token', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: new URLSearchParams({
-                            client_id: this.clientId,
-                            grant_type: 'refresh_token',
-                            refresh_token: this.refreshToken,
-                            scope: 'Files.ReadWrite User.Read offline_access'
-                        })
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        this.accessToken = data.access_token;
-                        this.tokenExpiry = Date.now() + (data.expires_in * 1000);
-                        this.refreshToken = data.refresh_token || this.refreshToken;
-                        
-                        this.saveToken(this.accessToken, this.tokenExpiry, this.refreshToken);
-                        this.updateConnectionStatus(true);
-                        this.updatePersistentStatus();
-                        
-                        console.log('✅ Token refreshed successfully');
-                        return true;
-                    } else {
-                        console.error('❌ Token refresh failed:', await response.text());
-                        this.clearToken();
-                        return false;
-                    }
-                } catch (error) {
-                    console.error('❌ Token refresh error:', error);
-                    this.clearToken();
-                    return false;
-                }
-            }
-
-            startTokenRefreshMonitor() {
-                // Check token validity every 10 minutes
-                setInterval(() => {
-                    if (this.accessToken) {
-                        this.checkAndRefreshToken();
-                        this.updatePersistentStatus();
-                    }
-                }, 10 * 60 * 1000);
-            }
-
-            updatePersistentStatus() {
-                const statusElement = document.getElementById('persistentStatus');
-                const iconElement = document.getElementById('statusIcon');
-                const textElement = document.getElementById('statusText');
-
-                if (!this.accessToken) {
-                    statusElement.className = 'persistent-status disconnected';
-                    iconElement.textContent = '⚠️';
-                    textElement.textContent = 'Disconnected';
-                } else if (this.isTokenValid()) {
-                    statusElement.className = 'persistent-status connected';
-                    iconElement.textContent = '✅';
-                    textElement.textContent = 'Connected';
-                } else {
-                    statusElement.className = 'persistent-status expired';
-                    iconElement.textContent = '🔄';
-                    textElement.textContent = 'Refreshing...';
-                }
             }
 
             authenticate() {
@@ -1188,17 +980,16 @@
                     return;
                 }
 
-                // Use authorization code flow for refresh tokens (more persistent)
                 const authUrl = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?` +
                     `client_id=${this.clientId}&` +
-                    `response_type=token&` +  // Still using implicit flow for simplicity, but could use code+PKCE
+                    `response_type=token&` +
                     `redirect_uri=${encodeURIComponent(this.redirectUri)}&` +
-                    `scope=${encodeURIComponent('Files.ReadWrite User.Read offline_access')}&` +
+                    `scope=${encodeURIComponent('Files.ReadWrite User.Read')}&` +
                     `response_mode=fragment&` +
-                    `nonce=${Date.now()}&` +
-                    `prompt=consent`; // Force consent to get refresh token
+                    `nonce=${Date.now()}`;
 
                 console.log('🔵 Auth URL:', authUrl);
+                console.log('🔵 Encoded Redirect URI:', encodeURIComponent(this.redirectUri));
 
                 this.updateStatus('🔄 Redirecting to Microsoft login...', 'loading');
 
@@ -1224,8 +1015,6 @@
                     connectBtn.style.background = 'rgba(255,255,255,0.2)';
                     refreshBtn.style.display = 'none';
                 }
-                
-                this.updatePersistentStatus();
             }
 
             updateStatus(message, type = '') {
@@ -1240,15 +1029,6 @@
                     return;
                 }
 
-                // Check and refresh token if needed
-                if (!this.isTokenValid()) {
-                    const refreshed = await this.checkAndRefreshToken();
-                    if (!refreshed) {
-                        this.updateStatus('Authentication expired. Please reconnect.', 'error');
-                        return;
-                    }
-                }
-
                 try {
                     this.updateStatus('Loading articles... ⏳', 'loading');
 
@@ -1261,15 +1041,10 @@
 
                     if (!listResponse.ok) {
                         if (listResponse.status === 401) {
-                            console.log('🔄 401 error, attempting token refresh...');
-                            const refreshed = await this.checkAndRefreshToken();
-                            if (refreshed) {
-                                return this.loadArticles(); // Retry with new token
-                            } else {
-                                this.clearToken();
-                                this.updateStatus('Session expired. Please reconnect.', 'error');
-                                return;
-                            }
+                            this.clearToken();
+                            this.updateConnectionStatus(false);
+                            this.updateStatus('Session expired. Please reconnect.', 'error');
+                            return;
                         }
                         throw new Error(`Failed to list files: ${listResponse.status}`);
                     }
@@ -1313,7 +1088,7 @@
                 }
             }
 
-            // Enhanced displayArticles with PERSISTENT OneDrive images
+            // Enhanced displayArticles with GUARANTEED real images
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1374,409 +1149,130 @@
                 `}).join('');
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
-
+                
                 // Show image loading status
-                this.updateStatus(`🔍 Loading images from OneDrive...`, 'loading');
-
-                // ENHANCED: Load PERSISTENT images from OneDrive with sharing links
-                this.loadAllPersistentImages(articles);
+                this.updateStatus(`🔍 Extracting real images from article websites...`, 'loading');
+                
+                // ENHANCED: Extract real images from original websites
+                this.loadAllArticleImages(articles);
             }
 
-            // ENHANCED: Load persistent images that work across devices
-            async loadAllPersistentImages(articles) {
-                console.log('🎨 PERSISTENT IMAGE LOADER - Loading images that work on all devices...');
-
+            // ENHANCED: Extract real images from article websites
+            async loadAllArticleImages(articles) {
+                console.log('🎨 REAL IMAGE EXTRACTOR - Getting actual article images...');
+                
                 let successCount = 0;
-                let sharedCount = 0;
                 const totalImages = articles.length;
-
-                // Load images sequentially to avoid API limits
+                
+                // Load images sequentially to avoid overwhelming websites
                 for (let i = 0; i < articles.length; i++) {
                     try {
-                        const result = await this.loadPersistentArticleImage(articles[i], i);
-                        if (result.success) successCount++;
-                        if (result.shared) sharedCount++;
-
+                        const success = await this.extractRealArticleImage(articles[i], i);
+                        if (success) successCount++;
+                        
                         // Update progress
                         const progress = Math.round(((i + 1) / totalImages) * 100);
-                        this.updateStatus(`🔍 Loading images... ${i + 1}/${totalImages} (${progress}%)`, 'loading');
-
-                        // Delay to be respectful to OneDrive API
-                        await new Promise(resolve => setTimeout(resolve, 100));
-
+                        this.updateStatus(`🔍 Extracting real images... ${i + 1}/${totalImages} (${progress}%)`, 'loading');
+                        
+                        // Delay to be respectful to websites
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                        
                     } catch (error) {
-                        console.error(`Failed to load image for article ${i}:`, error);
-                        // Use category fallback for failed loads
+                        console.error(`Failed to extract image for article ${i}:`, error);
+                        // Use category fallback for failed extractions
                         this.setArticleImageDirect(document.getElementById(`image-${i}`), this.getCategoryBasedImage(articles[i], i));
                         successCount++;
                     }
                 }
-
-                this.updateStatus(`✅ Loaded ${successCount}/${totalImages} images! ${sharedCount} from OneDrive, rest from web.`, 'success');
-                console.log(`🎨 Image loading complete: ${successCount}/${totalImages} successful, ${sharedCount} from OneDrive`);
+                
+                this.updateStatus(`✅ Extracted ${successCount}/${totalImages} real article images!`, 'success');
+                console.log(`🎨 Real image extraction complete: ${successCount}/${totalImages} successful`);
             }
 
-            // NEW: Load persistent image with sharing links that work across devices
-            async loadPersistentArticleImage(article, index) {
+            // NEW: Extract the actual featured image from the article's website
+            async extractRealArticleImage(article, index) {
                 const imageElement = document.getElementById(`image-${index}`);
-                if (!imageElement) return { success: false, shared: false, newBackup: false };
+                if (!imageElement) return false;
 
-                console.log(`🔍 Loading image for: ${this.getDomain(article.url)} - ${article.title.substring(0, 30)}...`);
+                console.log(`🔍 Extracting real image from: ${this.getDomain(article.url)}`);
 
-                // Strategy 1: Check for OneDrive cached image FIRST (highest priority)
-                if (article.backedUpImage && article.backedUpImage.sharedUrl && this.accessToken) {
-                    try {
-                        console.log(`⚡ Using cached OneDrive image: ${article.title.substring(0, 30)}...`);
-                        
-                        // Try to use the existing sharing URL directly
-                        this.setArticleImageDirect(imageElement, article.backedUpImage.sharedUrl);
-                        
-                        // Verify the image loads successfully
-                        const isAccessible = await this.testImageUrl(article.backedUpImage.sharedUrl);
-                        if (isAccessible) {
-                            console.log(`✅ Cached image works: ${article.title.substring(0, 30)}`);
-                            return { success: true, shared: true, newBackup: false };
-                        } else {
-                            console.log(`⚠️ Cached image URL expired, will re-create: ${article.title.substring(0, 30)}`);
-                            // Continue to re-create the sharing link
-                        }
-                    } catch (error) {
-                        console.log(`⚠️ Cached image failed, trying fresh: ${error.message}`);
-                    }
+                // Strategy 1: Try saved article images first (fastest)
+                const savedImage = this.getBestArticleImage(article);
+                if (savedImage) {
+                    console.log(`✅ Using saved image: ${article.title.substring(0, 30)}...`);
+                    this.setArticleImageDirect(imageElement, savedImage);
+                    return true;
                 }
 
-                // Strategy 2: Check if we have file ID but no sharing URL - create sharing URL
-                if (article.backedUpImage && article.backedUpImage.fileId && this.accessToken) {
-                    try {
-                        console.log(`🔗 Creating sharing link for existing backup: ${article.title.substring(0, 30)}...`);
-                        const sharedUrl = await this.getOneDriveSharedImageUrl(article.backedUpImage);
-                        if (sharedUrl) {
-                            console.log(`✅ Created sharing link for existing image: ${article.title.substring(0, 30)}...`);
-                            this.setArticleImageDirect(imageElement, sharedUrl);
-                            // Update the article with the new sharing URL
-                            article.backedUpImage.sharedUrl = sharedUrl;
-                            article.backedUpImage.sharedDate = new Date().toISOString();
-                            return { success: true, shared: true, newBackup: false }; // Updated existing backup
-                        }
-                    } catch (error) {
-                        console.log(`⚠️ Failed to create sharing link for existing backup: ${error.message}`);
-                    }
-                }
-
-                // Strategy 3: Extract REAL image from the original website FIRST (before saved images)
+                // Strategy 2: Extract image from the original website
                 try {
-                    console.log(`🌐 Extracting real image from website: ${article.url}`);
                     const extractedImage = await this.fetchRealImageFromWebsite(article.url);
-                    if (extractedImage && extractedImage.length > 10) { // Make sure we got a real URL
-                        console.log(`✅ Extracted real image from website: ${article.title.substring(0, 30)}...`);
+                    if (extractedImage) {
+                        console.log(`✅ Extracted real image: ${article.title.substring(0, 30)}...`);
                         this.setArticleImageDirect(imageElement, extractedImage);
-
-                        // Backup the extracted image for future use
-                        if (this.imageBackupEnabled && this.accessToken) {
-                            try {
-                                const backupInfo = await this.backupImageToOneDriveWithSharing(extractedImage, article, index);
-                                if (backupInfo) {
-                                    article.backedUpImage = backupInfo;
-                                    console.log(`💾 Real website image backed up: ${backupInfo.fileName}`);
-                                    return { success: true, shared: false, newBackup: true };
-                                }
-                            } catch (error) {
-                                console.log(`⚠️ Backup of extracted image failed: ${error.message}`);
-                            }
-                        }
-
-                        return { success: true, shared: false, newBackup: false };
-                    } else {
-                        console.log(`⚠️ Website extraction returned empty or invalid URL: ${extractedImage}`);
+                        return true;
                     }
                 } catch (error) {
                     console.log(`⚠️ Could not extract from website: ${error.message}`);
                 }
 
-                // Strategy 4: Try saved article images as fallback
-                const savedImage = this.getBestArticleImage(article);
-                if (savedImage && savedImage.length > 10) { // Make sure it's a real URL
-                    console.log(`✅ Using saved image from article data: ${article.title.substring(0, 30)}...`);
-                    this.setArticleImageDirect(imageElement, savedImage);
-                    
-                    // Try to backup saved image for future use
-                    if (this.imageBackupEnabled && this.accessToken) {
-                        try {
-                            const backupInfo = await this.backupImageToOneDriveWithSharing(savedImage, article, index);
-                            if (backupInfo) {
-                                article.backedUpImage = backupInfo;
-                                console.log(`💾 Saved image backed up: ${backupInfo.fileName}`);
-                                return { success: true, shared: false, newBackup: true };
-                            }
-                        } catch (error) {
-                            console.log(`⚠️ Backup of saved image failed: ${error.message}`);
-                        }
-                    }
-                    return { success: true, shared: false, newBackup: false };
-                }
-
-                // Strategy 5: Use intelligent category-based fallback ONLY as last resort
-                console.log(`🎨 No real images found, using category fallback: ${article.title.substring(0, 30)}...`);
+                // Strategy 3: Use intelligent category-based fallback
+                console.log(`🎨 Using intelligent fallback: ${article.title.substring(0, 30)}...`);
                 const fallbackImage = this.getCategoryBasedImage(article, index);
                 this.setArticleImageDirect(imageElement, fallbackImage);
-                return { success: true, shared: false, newBackup: false };
+                return true;
             }
 
-            // NEW: Test if an image URL is accessible
-            async testImageUrl(url) {
-                try {
-                    const img = new Image();
-                    return new Promise((resolve) => {
-                        img.onload = () => resolve(true);
-                        img.onerror = () => resolve(false);
-                        img.src = url;
-                        // Timeout after 5 seconds
-                        setTimeout(() => resolve(false), 5000);
-                    });
-                } catch (error) {
-                    return false;
-                }
-            }
-
-            // NEW: Get OneDrive shared image URL that works across devices and sessions
-            async getOneDriveSharedImageUrl(backupInfo) {
-                if (!this.accessToken || !backupInfo || !backupInfo.fileId) {
-                    return null;
-                }
-
-                try {
-                    // First check if we already have a valid sharing link
-                    if (backupInfo.sharedUrl) {
-                        console.log(`🔗 Testing existing sharing URL: ${backupInfo.fileName}`);
-                        const isValid = await this.testImageUrl(backupInfo.sharedUrl);
-                        if (isValid) {
-                            console.log(`✅ Existing sharing URL works: ${backupInfo.fileName}`);
-                            return backupInfo.sharedUrl;
-                        } else {
-                            console.log(`⚠️ Existing sharing URL expired: ${backupInfo.fileName}`);
-                        }
-                    }
-
-                    // Create a new sharing link
-                    console.log(`🔗 Creating new sharing link: ${backupInfo.fileName}`);
-                    const shareResponse = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${backupInfo.fileId}/createLink`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${this.accessToken}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            type: 'view',
-                            scope: 'anonymous'
-                        })
-                    });
-
-                    if (!shareResponse.ok) {
-                        throw new Error(`Failed to create sharing link: ${shareResponse.status}`);
-                    }
-
-                    const shareResult = await shareResponse.json();
-                    
-                    // Extract direct image URL from sharing link
-                    let imageUrl = shareResult.link.webUrl;
-                    
-                    // Convert OneDrive sharing URL to direct download URL for better mobile compatibility
-                    if (imageUrl.includes('1drv.ms') || imageUrl.includes('onedrive.live.com')) {
-                        // Convert to direct download URL that works in img tags
-                        imageUrl = imageUrl.replace('/view.aspx?', '/download.aspx?');
-                    }
-
-                    console.log(`✅ Created new sharing link: ${backupInfo.fileName} -> ${imageUrl}`);
-                    return imageUrl;
-
-                } catch (error) {
-                    console.error('Failed to get OneDrive shared image URL:', error);
-                    return null;
-                }
-            }
-
-            // NEW: Backup image to OneDrive with sharing link creation
-            async backupImageToOneDriveWithSharing(imageUrl, article, index) {
-                if (!this.accessToken) {
-                    throw new Error('Not connected to OneDrive');
-                }
-
-                try {
-                    console.log(`💾 Backing up image with sharing to OneDrive: ${imageUrl}`);
-
-                    // Download the image
-                    const imageResponse = await fetch(imageUrl);
-                    if (!imageResponse.ok) {
-                        throw new Error(`Failed to fetch image: ${imageResponse.status}`);
-                    }
-
-                    const imageBlob = await imageResponse.blob();
-                    const imageBuffer = await imageBlob.arrayBuffer();
-
-                    // Generate a unique filename
-                    const imageExtension = this.getImageExtension(imageUrl) || 'jpg';
-                    const sanitizedTitle = this.sanitizeFilename(article.title);
-                    const timestamp = Date.now();
-                    const fileName = `image_${sanitizedTitle}_${timestamp}.${imageExtension}`;
-
-                    // Upload to OneDrive in MyPocket/images folder
-                    const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/images/${fileName}:/content`;
-
-                    const uploadResponse = await fetch(uploadUrl, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `Bearer ${this.accessToken}`,
-                            'Content-Type': imageBlob.type || 'image/jpeg'
-                        },
-                        body: imageBuffer
-                    });
-
-                    if (!uploadResponse.ok) {
-                        const errorText = await uploadResponse.text();
-                        throw new Error(`Upload failed: ${uploadResponse.status} - ${errorText}`);
-                    }
-
-                    const uploadResult = await uploadResponse.json();
-
-                    // Create sharing link immediately
-                    const shareResponse = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${uploadResult.id}/createLink`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${this.accessToken}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            type: 'view',
-                            scope: 'anonymous'
-                        })
-                    });
-
-                    let sharedUrl = null;
-                    if (shareResponse.ok) {
-                        const shareResult = await shareResponse.json();
-                        sharedUrl = shareResult.link.webUrl.replace('/view.aspx?', '/download.aspx?');
-                    }
-
-                    return {
-                        fileName: fileName,
-                        fileId: uploadResult.id,
-                        uploadDate: new Date().toISOString(),
-                        originalUrl: imageUrl,
-                        size: imageBuffer.byteLength,
-                        sharedUrl: sharedUrl,
-                        sharedDate: sharedUrl ? new Date().toISOString() : null
-                    };
-
-                } catch (error) {
-                    console.error('Image backup with sharing error:', error);
-                    throw error;
-                }
-            }
-
-            // Extract image extension from URL
-            getImageExtension(url) {
-                try {
-                    const pathname = new URL(url).pathname;
-                    const match = pathname.match(/\.([a-zA-Z0-9]+)$/);
-                    return match ? match[1].toLowerCase() : null;
-                } catch (error) {
-                    return null;
-                }
-            }
-
-            // ENHANCED: Fetch the actual featured image from a website with better debugging
+            // NEW: Fetch the actual featured image from a website
             async fetchRealImageFromWebsite(url) {
                 try {
-                    console.log(`🌐 WEBSITE IMAGE EXTRACTION: Starting for ${url}`);
-
+                    console.log(`🌐 Fetching webpage to extract image: ${url}`);
+                    
                     // Method 1: Try AllOrigins proxy
-                    try {
-                        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-                        console.log(`🌐 Trying AllOrigins proxy...`);
-                        const response = await fetch(proxyUrl);
-
-                        if (!response.ok) {
-                            throw new Error(`AllOrigins failed: ${response.status}`);
-                        }
-
-                        const data = await response.json();
-                        const html = data.contents;
-
-                        if (!html || html.length < 500) {
-                            throw new Error(`AllOrigins returned insufficient content: ${html ? html.length : 0} chars`);
-                        }
-
-                        console.log(`✅ AllOrigins success: Got ${html.length} characters of HTML`);
-                        
-                        // Parse the HTML and extract the best image
-                        const extractedImageUrl = this.parseHTMLForBestImage(html, url);
-
-                        if (extractedImageUrl && extractedImageUrl.length > 10) {
-                            console.log(`🎯 AllOrigins extracted image: ${extractedImageUrl}`);
-                            return extractedImageUrl;
-                        } else {
-                            console.log(`⚠️ AllOrigins: No suitable image found in HTML`);
-                        }
-
-                    } catch (error) {
-                        console.log(`❌ AllOrigins failed: ${error.message}`);
+                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                    const response = await fetch(proxyUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch webpage');
                     }
-
-                    // Method 2: Try CORS proxy
-                    try {
-                        const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-                        console.log(`🌐 Trying CORS proxy...`);
-                        const response = await fetch(corsProxyUrl);
-
-                        if (!response.ok) {
-                            throw new Error(`CORS proxy failed: ${response.status}`);
-                        }
-
-                        const html = await response.text();
-
-                        if (!html || html.length < 500) {
-                            throw new Error(`CORS proxy returned insufficient content: ${html ? html.length : 0} chars`);
-                        }
-
-                        console.log(`✅ CORS proxy success: Got ${html.length} characters of HTML`);
-                        
-                        const extractedImageUrl = this.parseHTMLForBestImage(html, url);
-                        if (extractedImageUrl && extractedImageUrl.length > 10) {
-                            console.log(`🎯 CORS proxy extracted image: ${extractedImageUrl}`);
-                            return extractedImageUrl;
-                        } else {
-                            console.log(`⚠️ CORS proxy: No suitable image found in HTML`);
-                        }
-
-                    } catch (error) {
-                        console.log(`❌ CORS proxy failed: ${error.message}`);
+                    
+                    const data = await response.json();
+                    const html = data.contents;
+                    
+                    if (!html || html.length < 500) {
+                        throw new Error('No substantial HTML content received');
                     }
-
-                    // Method 3: Try to guess common image patterns based on URL
-                    console.log(`🌐 Trying URL pattern guessing...`);
-                    const guessedImage = this.guessImageFromUrl(url);
-                    if (guessedImage && guessedImage.length > 10) {
-                        console.log(`🎯 URL pattern guess successful: ${guessedImage}`);
-                        return guessedImage;
-                    } else {
-                        console.log(`⚠️ URL pattern guessing found nothing`);
+                    
+                    // Parse the HTML and extract the best image
+                    const extractedImageUrl = this.parseHTMLForBestImage(html, url);
+                    
+                    if (extractedImageUrl) {
+                        console.log(`🎯 Found image: ${extractedImageUrl}`);
+                        return extractedImageUrl;
                     }
-
-                    throw new Error('All website extraction methods failed to find a suitable image');
-
+                    
+                    throw new Error('No suitable image found in webpage');
+                    
                 } catch (error) {
-                    console.log(`❌ WEBSITE IMAGE EXTRACTION FAILED for ${url}: ${error.message}`);
-                    throw error;
+                    console.log(`❌ Website image extraction failed: ${error.message}`);
+                    
+                    // Try alternative proxy methods
+                    try {
+                        return await this.tryAlternativeImageExtraction(url);
+                    } catch (altError) {
+                        console.log(`❌ Alternative extraction also failed: ${altError.message}`);
+                        throw error;
+                    }
                 }
             }
 
-            // Parse HTML to find the best image
+            // NEW: Parse HTML to find the best image
             parseHTMLForBestImage(html, baseUrl) {
                 try {
                     // Create a DOM parser
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
-
+                    
                     // Strategy 1: Look for Open Graph image (most reliable)
                     const ogImage = doc.querySelector('meta[property="og:image"]');
                     if (ogImage) {
@@ -1786,7 +1282,7 @@
                             return imageUrl;
                         }
                     }
-
+                    
                     // Strategy 2: Look for Twitter card image
                     const twitterImage = doc.querySelector('meta[name="twitter:image"], meta[property="twitter:image"]');
                     if (twitterImage) {
@@ -1796,7 +1292,7 @@
                             return imageUrl;
                         }
                     }
-
+                    
                     // Strategy 3: Look for article featured image
                     const featuredSelectors = [
                         '.featured-image img',
@@ -1809,7 +1305,7 @@
                         '.content img:first-of-type',
                         '.post-content img:first-of-type'
                     ];
-
+                    
                     for (const selector of featuredSelectors) {
                         const img = doc.querySelector(selector);
                         if (img) {
@@ -1823,21 +1319,21 @@
                             }
                         }
                     }
-
+                    
                     // Strategy 4: Look for the first substantial image in the content
                     const allImages = Array.from(doc.querySelectorAll('img')).filter(img => {
                         const src = img.getAttribute('src') || img.getAttribute('data-src');
                         const width = img.getAttribute('width') || img.style.width;
                         const height = img.getAttribute('height') || img.style.height;
-
+                        
                         // Filter out small images, icons, and logos
-                        return src &&
-                            !this.isIconOrLogo(src) &&
-                            !this.isSmallImage(width, height) &&
-                            !src.includes('avatar') &&
-                            !src.includes('profile');
+                        return src && 
+                               !this.isIconOrLogo(src) && 
+                               !this.isSmallImage(width, height) &&
+                               !src.includes('avatar') &&
+                               !src.includes('profile');
                     });
-
+                    
                     for (const img of allImages) {
                         const src = img.getAttribute('src') || img.getAttribute('data-src');
                         if (src) {
@@ -1848,23 +1344,79 @@
                             }
                         }
                     }
-
+                    
+                    // Strategy 5: Look for images in JSON-LD structured data
+                    const jsonLdScripts = doc.querySelectorAll('script[type="application/ld+json"]');
+                    for (const script of jsonLdScripts) {
+                        try {
+                            const data = JSON.parse(script.textContent);
+                            const image = this.extractImageFromJsonLd(data);
+                            if (image) {
+                                const imageUrl = this.makeAbsoluteUrl(image, baseUrl);
+                                if (this.isValidImageUrl(imageUrl)) {
+                                    console.log(`🎯 Found JSON-LD image: ${imageUrl}`);
+                                    return imageUrl;
+                                }
+                            }
+                        } catch (e) {
+                            // Ignore malformed JSON-LD
+                        }
+                    }
+                    
                     console.log(`❌ No suitable image found in HTML`);
                     return null;
-
+                    
                 } catch (error) {
                     console.error('HTML parsing error:', error);
                     return null;
                 }
             }
 
-            // Try alternative image extraction methods
+            // NEW: Extract image from JSON-LD structured data
+            extractImageFromJsonLd(data) {
+                if (typeof data !== 'object') return null;
+                
+                // Handle arrays
+                if (Array.isArray(data)) {
+                    for (const item of data) {
+                        const image = this.extractImageFromJsonLd(item);
+                        if (image) return image;
+                    }
+                    return null;
+                }
+                
+                // Look for image properties
+                if (data.image) {
+                    if (typeof data.image === 'string') return data.image;
+                    if (Array.isArray(data.image) && data.image.length > 0) {
+                        return typeof data.image[0] === 'string' ? data.image[0] : data.image[0].url;
+                    }
+                    if (data.image.url) return data.image.url;
+                }
+                
+                // Look for thumbnailUrl
+                if (data.thumbnailUrl) {
+                    return typeof data.thumbnailUrl === 'string' ? data.thumbnailUrl : data.thumbnailUrl.url;
+                }
+                
+                // Recursively search nested objects
+                for (const key in data) {
+                    if (typeof data[key] === 'object') {
+                        const image = this.extractImageFromJsonLd(data[key]);
+                        if (image) return image;
+                    }
+                }
+                
+                return null;
+            }
+
+            // NEW: Try alternative image extraction methods
             async tryAlternativeImageExtraction(url) {
                 // Method 1: Try CORS proxy
                 try {
                     const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
                     const response = await fetch(corsProxyUrl);
-
+                    
                     if (response.ok) {
                         const html = await response.text();
                         const extractedImage = this.parseHTMLForBestImage(html, url);
@@ -1873,211 +1425,178 @@
                 } catch (error) {
                     console.log(`CORS proxy failed: ${error.message}`);
                 }
-
+                
                 // Method 2: Try to guess common image patterns based on URL
                 const guessedImage = this.guessImageFromUrl(url);
                 if (guessedImage) return guessedImage;
-
+                
                 throw new Error('All alternative extraction methods failed');
             }
 
-            // ENHANCED: Guess image from URL patterns (for known sites) with more patterns
+            // NEW: Guess image from URL patterns (for known sites)
             guessImageFromUrl(url) {
                 const domain = this.getDomain(url).toLowerCase();
-                console.log(`🔍 URL PATTERN GUESSING: Trying patterns for ${domain}`);
-
+                
                 // Medium articles often have predictable image patterns
                 if (domain.includes('medium.com')) {
                     // Try to extract the article ID and construct image URL
-                    const match = url.match(/\/([a-f0-9]{8,})/);
+                    const match = url.match(/\/([a-f0-9]+)$/);
                     if (match) {
-                        const guessedUrl = `https://miro.medium.com/max/1400/1*${match[1]}.png`;
-                        console.log(`🎯 Medium pattern guess: ${guessedUrl}`);
-                        return guessedUrl;
+                        return `https://miro.medium.com/max/1400/1*${match[1]}.png`;
                     }
                 }
-
+                
                 // GitHub repository images
                 if (domain.includes('github.com')) {
                     const pathMatch = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
                     if (pathMatch) {
-                        const guessedUrl = `https://opengraph.githubassets.com/1/${pathMatch[1]}/${pathMatch[2]}`;
-                        console.log(`🎯 GitHub pattern guess: ${guessedUrl}`);
-                        return guessedUrl;
+                        return `https://opengraph.githubassets.com/1/${pathMatch[1]}/${pathMatch[2]}`;
                     }
                 }
-
+                
                 // YouTube videos
                 if (domain.includes('youtube.com') || domain.includes('youtu.be')) {
                     const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
                     if (videoIdMatch) {
-                        const guessedUrl = `https://img.youtube.com/vi/${videoIdMatch[1]}/maxresdefault.jpg`;
-                        console.log(`🎯 YouTube pattern guess: ${guessedUrl}`);
-                        return guessedUrl;
+                        return `https://img.youtube.com/vi/${videoIdMatch[1]}/maxresdefault.jpg`;
                     }
                 }
-
-                // Reddit posts
-                if (domain.includes('reddit.com')) {
-                    // Try to find post ID and construct thumbnail
-                    const postMatch = url.match(/\/comments\/([a-z0-9]+)/);
-                    if (postMatch) {
-                        const guessedUrl = `https://www.redditstatic.com/desktop2x/img/favicon/android-icon-192x192.png`;
-                        console.log(`🎯 Reddit pattern guess: ${guessedUrl}`);
-                        return guessedUrl;
-                    }
-                }
-
-                // Stack Overflow
-                if (domain.includes('stackoverflow.com')) {
-                    const guessedUrl = `https://cdn.sstatic.net/Sites/stackoverflow/Img/apple-touch-icon@2.png`;
-                    console.log(`🎯 StackOverflow pattern guess: ${guessedUrl}`);
-                    return guessedUrl;
-                }
-
-                // Dev.to
-                if (domain.includes('dev.to')) {
-                    const guessedUrl = `https://dev-to-uploads.s3.amazonaws.com/uploads/logos/resized_logo_UQww2soKuUsjaOGNB38o.png`;
-                    console.log(`🎯 Dev.to pattern guess: ${guessedUrl}`);
-                    return guessedUrl;
-                }
-
-                console.log(`⚠️ No URL patterns matched for ${domain}`);
+                
                 return null;
             }
 
             // Enhanced URL validation
             isValidImageUrl(url) {
                 if (!url || typeof url !== 'string') return false;
-
+                
                 // Must be a valid URL
                 try {
                     new URL(url);
                 } catch {
                     return false;
                 }
-
+                
                 // Must have common image extensions or be from known image services
                 const imagePattern = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i;
                 const imageServices = ['unsplash.com', 'images.unsplash.com', 'picsum.photos', 'via.placeholder.com'];
-
+                
                 return imagePattern.test(url) || imageServices.some(service => url.includes(service));
             }
 
             // Enhanced icon/logo detection
             isIconOrLogo(src) {
                 if (!src) return false;
-
+                
                 const iconPatterns = [
-                    'icon', 'logo', 'avatar', 'profile', 'favicon', 'sprite',
+                    'icon', 'logo', 'avatar', 'profile', 'favicon', 'sprite', 
                     'button', 'badge', 'social', 'thumb', 'thumbnail',
                     '/icons/', '/images/icons/', 'gravatar', 'user-content'
                 ];
-
+                
                 const srcLower = src.toLowerCase();
                 return iconPatterns.some(pattern => srcLower.includes(pattern)) ||
-                    srcLower.includes('.ico') ||
-                    (srcLower.includes('64x64') || srcLower.includes('32x32'));
+                       srcLower.includes('.ico') ||
+                       (srcLower.includes('64x64') || srcLower.includes('32x32'));
             }
 
             // Check if image dimensions suggest it's too small
             isSmallImage(width, height) {
                 if (!width && !height) return false;
-
+                
                 const w = parseInt(width) || 0;
                 const h = parseInt(height) || 0;
-
+                
                 return (w > 0 && w < 200) || (h > 0 && h < 150);
             }
 
-            // Get category-based images that always work
+            // NEW: Get category-based images that always work
             getCategoryBasedImage(article, index) {
                 const domain = this.getDomain(article.url).toLowerCase();
                 const title = article.title.toLowerCase();
-
+                
                 // Use reliable image services that work well with direct img tags
-
+                
                 // Technology/Programming
                 if (domain.includes('github') || domain.includes('stackoverflow') || domain.includes('dev.to') ||
                     title.includes('code') || title.includes('programming') || title.includes('javascript') || title.includes('react')) {
                     return `https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
                 // Business/Finance
                 if (domain.includes('business') || domain.includes('finance') || domain.includes('linkedin') ||
                     title.includes('business') || title.includes('finance') || title.includes('startup') || title.includes('entrepreneur')) {
                     return `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
                 // Design/Creative
-                if (domain.includes('dribbble') || domain.includes('behance') ||
+                if (domain.includes('dribbble') || domain.includes('behance') || 
                     title.includes('design') || title.includes('ui') || title.includes('ux') || title.includes('creative')) {
-                    return `https://images.unsplash.com/photo-1561070791-2526d30994b5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                    return `https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
                 // News/Media
                 if (domain.includes('news') || domain.includes('bbc') || domain.includes('cnn') ||
                     title.includes('news') || title.includes('politics') || title.includes('media')) {
                     return `https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
                 // Travel/Adventure
                 if (title.includes('travel') || title.includes('vacation') || title.includes('adventure') || title.includes('journey')) {
                     return `https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
                 // Food/Cooking
                 if (title.includes('food') || title.includes('recipe') || title.includes('cooking') || title.includes('restaurant')) {
                     return `https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
                 // Health/Fitness
                 if (title.includes('health') || title.includes('fitness') || title.includes('exercise') || title.includes('wellness')) {
                     return `https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
                 // Science/Research
                 if (domain.includes('arxiv') || domain.includes('research') ||
                     title.includes('science') || title.includes('research') || title.includes('study') || title.includes('data')) {
                     return `https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
                 // Education/Learning
                 if (domain.includes('edu') || title.includes('learn') || title.includes('education') || title.includes('course')) {
                     return `https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
                 // Photography/Art
                 if (title.includes('photo') || title.includes('art') || title.includes('gallery') || title.includes('visual')) {
                     return `https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
                 // Technology (general)
                 if (domain.includes('tech') || title.includes('tech') || title.includes('digital') || title.includes('innovation')) {
                     return `https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
                 // Books/Reading/Writing
                 if (domain.includes('medium') || domain.includes('blog') ||
                     title.includes('book') || title.includes('read') || title.includes('write') || title.includes('story')) {
                     return `https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
                 // Music/Entertainment
                 if (title.includes('music') || title.includes('entertainment') || title.includes('movie') || title.includes('film')) {
                     return `https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
                 // Sports
                 if (title.includes('sport') || title.includes('game') || title.includes('team') || title.includes('player')) {
                     return `https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
                 // Nature/Environment
                 if (title.includes('nature') || title.includes('environment') || title.includes('climate') || title.includes('green')) {
                     return `https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
                 // Default beautiful images based on index
                 const defaultImages = [
                     'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Mountain landscape
@@ -2091,25 +1610,27 @@
                     'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Lake reflection
                     'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&h=250&fit=crop&crop=center&q=80&auto=format'  // Geometric pattern
                 ];
-
+                
                 return defaultImages[index % defaultImages.length];
             }
+
+
 
             // Convert relative URLs to absolute
             makeAbsoluteUrl(imageUrl, baseUrl) {
                 if (!imageUrl) return null;
-
+                
                 try {
                     // If already absolute, return as-is
                     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
                         return imageUrl;
                     }
-
+                    
                     // Handle protocol-relative URLs
                     if (imageUrl.startsWith('//')) {
                         return 'https:' + imageUrl;
                     }
-
+                    
                     // If relative, make it absolute
                     const base = new URL(baseUrl);
                     return new URL(imageUrl, base.origin).href;
@@ -2118,7 +1639,6 @@
                     return null;
                 }
             }
-
             // FIXED: Direct image setting without CORS validation
             setArticleImageDirect(imageElement, imageUrl) {
                 imageElement.innerHTML = `
@@ -2161,8 +1681,8 @@
 
                 const filtered = this.articles.filter(article =>
                     article.title.toLowerCase().includes(query.toLowerCase()) ||
-                    (article.textContent && article.textContent.toLowerCase().includes(query.toLowerCase())) ||
-                    (article.author && article.author.toLowerCase().includes(query.toLowerCase())) ||
+                    article.textContent.toLowerCase().includes(query.toLowerCase()) ||
+                    article.author.toLowerCase().includes(query.toLowerCase()) ||
                     this.getDomain(article.url).toLowerCase().includes(query.toLowerCase())
                 );
 
@@ -2179,7 +1699,7 @@
                 document.getElementById('readerDate').textContent = this.formatDate(this.currentArticle.dateAdded);
                 document.getElementById('readerDomain').textContent = this.getDomain(this.currentArticle.url);
                 document.getElementById('readerTime').textContent = `${this.currentArticle.readTime || 1} min read`;
-
+                
                 // Show loading state first
                 document.getElementById('readerContent').innerHTML = `
                     <div style="text-align: center; padding: 40px;">
@@ -2190,7 +1710,7 @@
 
                 overlay.classList.add('active');
                 document.body.style.overflow = 'hidden';
-
+                
                 // Try to get content, fetch if needed
                 setTimeout(() => this.loadArticleContent(this.currentArticle), 100);
             }
@@ -2198,14 +1718,14 @@
             async loadArticleContent(article) {
                 console.log('🚀 NEW CONTENT LOADER STARTING - Version 2.0');
                 const contentElement = document.getElementById('readerContent');
-
+                
                 // First try to get saved content
                 let content = this.getArticleContent(article);
-
+                
                 // If no saved content found, try to fetch from original URL
                 if (!content) {
                     console.log('🌐 No saved content found. Attempting to fetch from original URL...');
-
+                    
                     try {
                         // Show fetching status
                         contentElement.innerHTML = `
@@ -2220,10 +1740,10 @@
                                 </p>
                             </div>
                         `;
-
+                        
                         // Fetch content using proxy services
                         const fetchedContent = await this.fetchArticleContent(article.url);
-
+                        
                         if (fetchedContent && fetchedContent.trim()) {
                             content = fetchedContent;
                             console.log('✅ Successfully fetched article content');
@@ -2231,7 +1751,7 @@
                         } else {
                             throw new Error('No content extracted from fetched page');
                         }
-
+                        
                     } catch (error) {
                         console.log('❌ Failed to fetch content:', error.message);
                         this.updateStatus('❌ Could not fetch article content. Using fallback.', 'error');
@@ -2241,7 +1761,7 @@
                     console.log('✅ Using saved content');
                     this.updateStatus('✅ Article loaded from saved content', 'success');
                 }
-
+                
                 // Display the final content
                 contentElement.innerHTML = content;
             }
@@ -2249,18 +1769,18 @@
             async fetchArticleContent(url) {
                 try {
                     console.log(`🌐 Starting fetch for: ${url}`);
-
+                    
                     // Method 1: Try using AllOrigins proxy (most reliable)
                     try {
                         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
                         console.log(`Trying AllOrigins proxy...`);
-
+                        
                         const response = await fetch(proxyUrl);
-
+                        
                         if (response.ok) {
                             const data = await response.json();
                             const html = data.contents;
-
+                            
                             if (html && html.length > 1000) { // Ensure we got substantial content
                                 console.log(`✅ AllOrigins success: ${html.length} chars`);
                                 const extractedContent = this.extractContentFromHTML(html, url);
@@ -2272,17 +1792,17 @@
                     } catch (error) {
                         console.log(`AllOrigins failed: ${error.message}`);
                     }
-
+                    
                     // Method 2: Try CORS proxy
                     try {
                         const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
                         console.log(`Trying CORS proxy...`);
-
+                        
                         const response = await fetch(corsProxyUrl);
-
+                        
                         if (response.ok) {
                             const html = await response.text();
-
+                            
                             if (html && html.length > 1000) {
                                 console.log(`✅ CORS proxy success: ${html.length} chars`);
                                 const extractedContent = this.extractContentFromHTML(html, url);
@@ -2294,7 +1814,7 @@
                     } catch (error) {
                         console.log(`CORS proxy failed: ${error.message}`);
                     }
-
+                    
                     // Method 3: Try direct fetch (will likely fail due to CORS, but worth trying)
                     try {
                         console.log(`Trying direct fetch...`);
@@ -2304,7 +1824,7 @@
                                 'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader)'
                             }
                         });
-
+                        
                         if (response.ok) {
                             const html = await response.text();
                             console.log(`✅ Direct fetch success: ${html.length} chars`);
@@ -2313,9 +1833,9 @@
                     } catch (error) {
                         console.log(`Direct fetch failed (expected): ${error.message}`);
                     }
-
+                    
                     throw new Error('All proxy methods failed to fetch content');
-
+                    
                 } catch (error) {
                     console.error('❌ All fetch methods failed:', error);
                     throw error;
@@ -2327,19 +1847,19 @@
                     // Create a temporary DOM to parse the HTML
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
-
+                    
                     // Remove unwanted elements
                     const unwantedSelectors = [
-                        'script', 'style', 'nav', 'header', 'footer',
+                        'script', 'style', 'nav', 'header', 'footer', 
                         '.sidebar', '.menu', '.navigation', '.comments',
                         '.advertisement', '.ads', '.social-share',
                         '[role="banner"]', '[role="navigation"]', '[role="complementary"]'
                     ];
-
+                    
                     unwantedSelectors.forEach(selector => {
                         doc.querySelectorAll(selector).forEach(el => el.remove());
                     });
-
+                    
                     // Try to find the main content using common selectors
                     const contentSelectors = [
                         'article',
@@ -2349,38 +1869,38 @@
                         '.entry', '.post', '.article-body',
                         'main', '#content', '#main'
                     ];
-
+                    
                     let contentElement = null;
-
+                    
                     for (const selector of contentSelectors) {
                         contentElement = doc.querySelector(selector);
                         if (contentElement && contentElement.textContent.trim().length > 200) {
                             break;
                         }
                     }
-
+                    
                     // If no main content found, try to get paragraphs from body
                     if (!contentElement || contentElement.textContent.trim().length < 200) {
                         const paragraphs = Array.from(doc.querySelectorAll('p'))
                             .filter(p => p.textContent.trim().length > 50)
                             .slice(0, 20); // Take first 20 substantial paragraphs
-
+                        
                         if (paragraphs.length > 0) {
                             const div = doc.createElement('div');
                             paragraphs.forEach(p => div.appendChild(p.cloneNode(true)));
                             contentElement = div;
                         }
                     }
-
+                    
                     if (contentElement) {
                         // Clean up the content
                         let content = contentElement.innerHTML;
-
+                        
                         // Fix relative URLs to absolute
                         const baseUrl = new URL(url).origin;
                         content = content.replace(/src="\/([^"]+)"/g, `src="${baseUrl}/$1"`);
                         content = content.replace(/href="\/([^"]+)"/g, `href="${baseUrl}/$1"`);
-
+                        
                         // Add a note about the source
                         content = `
                             <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
@@ -2391,12 +1911,12 @@
                             </div>
                             ${content}
                         `;
-
+                        
                         return content;
                     }
-
+                    
                     throw new Error('Could not extract readable content from page');
-
+                    
                 } catch (error) {
                     console.error('Content extraction error:', error);
                     throw error;
@@ -2446,17 +1966,17 @@
             // Get the best available content for reading - simplified version
             getArticleContent(article) {
                 console.log('📖 Checking for saved content...');
-
+                
                 // Try content fields in order
                 const contentFields = ['content', 'html', 'fullContent', 'textContent', 'body', 'readableContent', 'articleContent', 'savedContent'];
-
+                
                 for (const field of contentFields) {
                     if (article[field] && article[field].trim()) {
                         console.log(`✅ Found content in ${field} (${article[field].length} chars)`);
                         return article[field];
                     }
                 }
-
+                
                 // Look for any substantial text content
                 for (const [key, value] of Object.entries(article)) {
                     if (typeof value === 'string' && value.length > 200 && key !== 'excerpt' && key !== 'url') {
@@ -2464,7 +1984,7 @@
                         return value;
                     }
                 }
-
+                
                 console.log('❌ No saved content found');
                 return null;
             }
@@ -2521,65 +2041,26 @@
                 }
             }
 
-            // ENHANCED: Update OneDrive backup with optimized size and persistent images
             async updateOneDriveBackup() {
                 if (!this.accessToken) {
                     throw new Error('Not connected to OneDrive');
                 }
 
-                // Check and refresh token if needed
-                if (!this.isTokenValid()) {
-                    const refreshed = await this.checkAndRefreshToken();
-                    if (!refreshed) {
-                        throw new Error('Token expired and could not be refreshed');
-                    }
-                }
-
-                // Optimize articles but PRESERVE ALL image backup info for persistence
-                const optimizedArticles = this.articles.map(article => ({
-                    title: article.title,
-                    url: article.url,
-                    excerpt: article.excerpt,
-                    dateAdded: article.dateAdded,
-                    readTime: article.readTime,
-                    wordCount: article.wordCount,
-                    author: article.author,
-                    domain: this.getDomain(article.url),
-                    // CRITICAL: Preserve ALL image backup info for cross-device access
-                    backedUpImage: article.backedUpImage, // This includes fileId, sharedUrl, etc.
-                    featuredImage: article.featuredImage,
-                    image: article.image,
-                    images: article.images,
-                    // Keep lightweight content but skip heavy content
-                    textContent: article.textContent && article.textContent.length < 10000 ? article.textContent : undefined,
-                    // Skip large content fields to reduce backup size
-                    // content: article.content,  // Skip large content
-                    // html: article.html  // Skip large HTML
-                }));
-
                 const backup = {
-                    articles: optimizedArticles,
-                    settings: {
-                        imageBackupEnabled: this.imageBackupEnabled,
-                        persistentImages: true,
-                        version: "4.0"
-                    },
+                    articles: this.articles,
+                    settings: {},
                     exportDate: new Date().toISOString(),
-                    version: "4.0", // Updated version with persistent OneDrive images
+                    version: "3.3",
                     deviceInfo: {
                         browser: "Web Reader",
                         platform: navigator.platform,
                         timestamp: Date.now(),
-                        articleCount: this.articles.length,
-                        imageBackupCount: this.articles.filter(a => a.backedUpImage).length,
-                        sharedImageCount: this.articles.filter(a => a.backedUpImage && a.backedUpImage.sharedUrl).length
+                        articleCount: this.articles.length
                     }
                 };
 
                 const fileName = `mypocket-backup-${new Date().toISOString().split('T')[0]}.json`;
                 const fileContent = JSON.stringify(backup, null, 2);
-
-                console.log(`💾 Backing up ${backup.articles.length} articles (${Math.round(fileContent.length / 1024)}KB) with ${backup.deviceInfo.sharedImageCount} cached images`);
 
                 const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
 
@@ -2597,7 +2078,6 @@
                     throw new Error(`Failed to update OneDrive backup: ${uploadResponse.status} - ${errorText}`);
                 }
 
-                console.log(`✅ Backup saved successfully with ${backup.deviceInfo.sharedImageCount} cached images`);
                 return await uploadResponse.json();
             }
 
@@ -2667,7 +2147,7 @@
         </div>
     </div>
     <div class="content">
-        ${article.content || article.textContent || 'Content not available - visit original URL below.'}
+        ${article.content}
     </div>
     <div class="footer">
         <p><strong>✨ Exported from MyPocket Web Reader</strong></p>
@@ -2692,13 +2172,11 @@
                 URL.revokeObjectURL(url);
             }
 
-            // Enhanced image handling - only return REAL image URLs
+            // Enhanced image handling
             getBestArticleImage(article) {
-                // Check if we have a real images array with actual image data
-                if (article.images && Array.isArray(article.images) && article.images.length > 0) {
+                if (article.images && article.images.length > 0) {
                     let bestImage = article.images[0];
-
-                    // Find the largest suitable image
+                    
                     for (const img of article.images) {
                         if (img.width && img.height) {
                             if (img.width >= 300 && img.height >= 150) {
@@ -2707,37 +2185,74 @@
                             }
                         }
                     }
-
-                    const imageUrl = bestImage.src || bestImage.url || bestImage;
-                    if (imageUrl && typeof imageUrl === 'string' && this.isValidImageUrl(imageUrl)) {
-                        console.log(`Found valid image from images array: ${imageUrl}`);
-                        return imageUrl;
-                    }
+                    
+                    return bestImage.src || bestImage.url || bestImage;
                 }
-
-                // Check featured image
-                if (article.featuredImage && typeof article.featuredImage === 'string' && this.isValidImageUrl(article.featuredImage)) {
-                    console.log(`Found valid featured image: ${article.featuredImage}`);
+                
+                if (article.featuredImage) {
                     return article.featuredImage;
                 }
-
-                // Check generic image field
-                if (article.image && typeof article.image === 'string' && this.isValidImageUrl(article.image)) {
-                    console.log(`Found valid image field: ${article.image}`);
+                
+                if (article.image) {
                     return article.image;
                 }
-
-                // Check if content has embedded images
-                if (article.content && typeof article.content === 'string') {
+                
+                if (article.content) {
                     const imgMatch = article.content.match(/<img[^>]+src="([^"]+)"/i);
-                    if (imgMatch && imgMatch[1] && this.isValidImageUrl(imgMatch[1])) {
-                        console.log(`Found valid image in content: ${imgMatch[1]}`);
+                    if (imgMatch && imgMatch[1]) {
                         return imgMatch[1];
                     }
                 }
+                
+                return null;
+            }
 
-                console.log(`No valid saved images found for article`);
-                return null; // Return null if no real images found
+            // Smart icon selection based on domain
+            getArticleIcon(url) {
+                const domain = this.getDomain(url).toLowerCase();
+                
+                const siteIcons = {
+                    'youtube.com': '📺',
+                    'github.com': '🐙',
+                    'stackoverflow.com': '💻',
+                    'medium.com': '📝',
+                    'dev.to': '👨‍💻',
+                    'twitter.com': '🐦',
+                    'x.com': '🐦',
+                    'linkedin.com': '💼',
+                    'reddit.com': '🔴',
+                    'hackernews.ycombinator.com': '🟠',
+                    'techcrunch.com': '📰',
+                    'theverge.com': '📱',
+                    'arstechnica.com': '🔬',
+                    'wired.com': '⚡',
+                    'bbc.com': '📺',
+                    'cnn.com': '📰',
+                    'nytimes.com': '📰',
+                    'guardian.co.uk': '📰',
+                    'washingtonpost.com': '📰',
+                    'wikipedia.org': '📖',
+                    'arxiv.org': '🎓',
+                };
+                
+                for (const [siteDomain, icon] of Object.entries(siteIcons)) {
+                    if (domain.includes(siteDomain)) {
+                        return icon;
+                    }
+                }
+                
+                if (domain.includes('blog') || domain.includes('medium')) return '📝';
+                if (domain.includes('news')) return '📰';
+                if (domain.includes('tech')) return '💻';
+                if (domain.includes('code') || domain.includes('dev')) return '👨‍💻';
+                if (domain.includes('video') || domain.includes('tube')) return '📺';
+                if (domain.includes('music') || domain.includes('spotify')) return '🎵';
+                if (domain.includes('photo') || domain.includes('image')) return '📸';
+                if (domain.includes('shop') || domain.includes('store')) return '🛒';
+                if (domain.includes('book') || domain.includes('read')) return '📚';
+                if (domain.includes('learn') || domain.includes('edu')) return '🎓';
+                
+                return '📄';
             }
 
             getDomain(url) {
@@ -2803,19 +2318,8 @@
             }
 
             showDebugInfo() {
-                const tokenStatus = this.accessToken ? 
-                    (this.isTokenValid() ? 'Valid' : 'Expired') : 
-                    'None';
-                
-                const tokenExpiry = this.tokenExpiry ? 
-                    new Date(this.tokenExpiry).toLocaleString() : 
-                    'N/A';
-
-                const cachedImages = this.articles.filter(a => a.backedUpImage && a.backedUpImage.sharedUrl).length;
-                const backedUpImages = this.articles.filter(a => a.backedUpImage).length;
-
                 const info = `
-MyPocket Web Reader Debug Info (Enhanced v4.0):
+MyPocket Web Reader Debug Info:
 =====================================
 
 Current URL: ${window.location.href}
@@ -2823,82 +2327,40 @@ Redirect URI: ${this.redirectUri}
 Client ID: ${this.clientId}
 Protocol: ${window.location.protocol}
 Host: ${window.location.host}
+Has Access Token: ${!!this.accessToken}
+Articles Loaded: ${this.articles.length}
 
-TOKEN INFORMATION:
-- Has Access Token: ${!!this.accessToken}
-- Token Status: ${tokenStatus}
-- Token Expires: ${tokenExpiry}
-- Has Refresh Token: ${!!this.refreshToken}
-
-ARTICLES & IMAGES:
-- Articles Loaded: ${this.articles.length}
-- Image Backup: ${this.imageBackupEnabled ? 'Enabled' : 'Disabled'}
-- Images Backed Up: ${backedUpImages}/${this.articles.length}
-- Images Cached (with sharing URLs): ${cachedImages}/${this.articles.length}
-- Cache Hit Rate: ${this.articles.length > 0 ? Math.round((cachedImages / this.articles.length) * 100) : 0}%
-
-MOBILE COMPATIBILITY:
-- User Agent: ${navigator.userAgent}
-- Touch Support: ${('ontouchstart' in window) ? 'Yes' : 'No'}
-- Screen Size: ${screen.width}x${screen.height}
-
-IMAGE CACHING SYSTEM:
-- ✅ Cached images load instantly (no re-processing)
-- ✅ Images work on mobile Firefox and all devices
-- ✅ No authentication required for cached images
-- ✅ Sharing URLs survive token expiration
-- ⚡ ${cachedImages} images cached, ${backedUpImages - cachedImages} pending sharing URLs
-
-AZURE AD REQUIREMENTS:
+Azure AD Redirect URI Requirements:
 - Must be absolute URI (http:// or https://)
 - Must be registered in Azure AD App Registration
 - Must match exactly (including trailing slashes)
-- Scope should include 'offline_access' for refresh tokens
 
-PERFORMANCE OPTIMIZATION:
-- Images are processed once, then cached permanently
-- Next page loads use cached images (instant loading)
-- Metadata automatically saved after image processing
-- Cross-device sync via OneDrive sharing links
+Common Issues:
+1. Using file:// protocol (not supported)
+2. Redirect URI not registered in Azure AD
+3. Mismatch between actual URI and registered URI
 
-Common Issues & Solutions:
-1. ✅ Token Expiration: Auto-refreshes every 10 minutes
-2. ✅ Mobile Images: Using OneDrive sharing links (no auth needed)
-3. ✅ Re-processing Images: Now properly cached after first load
-4. ✅ Cross-device Access: All images backed up with sharing URLs
-5. ❌ File:// Protocol: Not supported, use HTTP/HTTPS server
-6. ✅ CORS Issues: Using multiple proxy fallbacks for content
-
-Next Steps for Setup:
+Next Steps:
 1. Open Azure Portal → App registrations
 2. Find your app: ${this.clientId}
-3. Go to Authentication → Add platform → Web
-4. Add redirect URI: ${this.redirectUri}
-5. Ensure 'Access tokens' is checked
-6. Add 'offline_access' to API permissions for refresh tokens
+3. Go to Authentication → Platform configurations
+4. Add Web platform with redirect URI: ${this.redirectUri}
+5. Make sure URI is exact match
 
-Cache Performance:
-- First Load: Images processed and cached
-- Subsequent Loads: ${cachedImages > 0 ? 'Instant loading from cache!' : 'Will cache images on next processing'}
-- Mobile Access: ${cachedImages > 0 ? 'Ready for mobile use!' : 'Will work on mobile after first cache'}
+Button Issues:
+- Try clicking "Show Buttons" to test if buttons work
+- Check browser console for JavaScript errors
+- Inspect element to see if buttons are in DOM
                 `;
 
                 alert(info);
-                console.log('🔧 Enhanced Debug Info:', {
+                console.log('🔧 Debug Info:', {
                     currentUrl: window.location.href,
                     redirectUri: this.redirectUri,
                     clientId: this.clientId,
                     protocol: window.location.protocol,
-                    tokenStatus: tokenStatus,
-                    tokenExpiry: tokenExpiry,
-                    hasRefreshToken: !!this.refreshToken,
-                    articlesCount: this.articles.length,
-                    imageBackup: this.imageBackupEnabled,
-                    backedUpImages: backedUpImages,
-                    cachedImages: cachedImages,
-                    cacheHitRate: this.articles.length > 0 ? Math.round((cachedImages / this.articles.length) * 100) : 0,
-                    isMobile: ('ontouchstart' in window),
-                    userAgent: navigator.userAgent
+                    hasToken: !!this.accessToken,
+                    articlesCount: this.articles.length
                 });
             }
 
@@ -2925,10 +2387,10 @@ Cache Performance:
             toggleDarkMode() {
                 const currentTheme = document.documentElement.getAttribute('data-theme');
                 const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
+                
                 document.documentElement.setAttribute('data-theme', newTheme);
                 localStorage.setItem('theme', newTheme);
-
+                
                 this.updateDarkModeButton(newTheme);
                 this.updateStatus(
                     newTheme === 'dark' ? '🌙 Dark mode enabled' : '☀️ Light mode enabled',
@@ -2945,7 +2407,7 @@ Cache Performance:
             updateDarkModeButton(theme) {
                 const darkModeBtn = document.getElementById('darkModeBtn');
                 if (darkModeBtn) {
-                    darkModeBtn.innerHTML = theme === 'dark'
+                    darkModeBtn.innerHTML = theme === 'dark' 
                         ? '<span>☀️</span> Light Mode'
                         : '<span>🌙</span> Dark Mode';
                 }
