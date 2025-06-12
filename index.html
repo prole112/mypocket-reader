@@ -666,6 +666,27 @@
             }
         }
 
+        /* Cache indicator */
+        .cache-indicator {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            z-index: 5;
+        }
+
+        .cache-indicator.cached {
+            background: rgba(39, 174, 96, 0.8);
+        }
+
+        .cache-indicator.fresh {
+            background: rgba(52, 152, 219, 0.8);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .container {
@@ -828,6 +849,9 @@
                     <button id="refreshBtn" class="btn btn-secondary" style="display: none;">
                         <span>🔄</span> Refresh
                     </button>
+                    <button id="clearCacheBtn" class="btn btn-secondary" onclick="webReader.clearImageCache()">
+                        <span>🗑️</span> Clear Cache
+                    </button>
                     <button id="debugBtn" class="btn btn-secondary" onclick="webReader.showDebugInfo()">
                         <span>🔧</span> Debug
                     </button>
@@ -903,6 +927,11 @@
                 this.accessToken = null;
                 this.articles = [];
                 this.currentArticle = null;
+                
+                // Image cache system
+                this.imageCache = new Map();
+                this.cacheKey = 'mypocket_image_cache';
+                this.cacheExpiryDays = 7; // Cache images for 7 days
 
                 this.init();
             }
@@ -923,6 +952,7 @@
                 this.checkAuthFromURL();
                 this.loadStoredToken();
                 this.loadThemePreference();
+                this.loadImageCache(); // Load cached images
             }
 
             setupEventListeners() {
@@ -931,6 +961,317 @@
                 document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
                 document.getElementById('closeReader').addEventListener('click', () => this.closeReader());
                 document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
+            }
+
+            // ===== IMAGE CACHE SYSTEM =====
+            
+            loadImageCache() {
+                try {
+                    const cachedData = localStorage.getItem(this.cacheKey);
+                    if (cachedData) {
+                        const cache = JSON.parse(cachedData);
+                        
+                        // Clean expired cache entries
+                        const now = Date.now();
+                        const expiryTime = this.cacheExpiryDays * 24 * 60 * 60 * 1000;
+                        
+                        for (const [key, entry] of Object.entries(cache)) {
+                            if (now - entry.timestamp < expiryTime) {
+                                this.imageCache.set(key, entry);
+                            }
+                        }
+                        
+                        console.log(`📦 Loaded ${this.imageCache.size} cached images`);
+                    }
+                } catch (error) {
+                    console.error('Error loading image cache:', error);
+                    this.imageCache.clear();
+                }
+            }
+
+            saveImageCache() {
+                try {
+                    const cacheObject = {};
+                    for (const [key, value] of this.imageCache.entries()) {
+                        cacheObject[key] = value;
+                    }
+                    localStorage.setItem(this.cacheKey, JSON.stringify(cacheObject));
+                    console.log(`💾 Saved ${this.imageCache.size} images to cache`);
+                } catch (error) {
+                    console.error('Error saving image cache:', error);
+                }
+            }
+
+            getCacheKey(article) {
+                // Create a unique cache key based on article URL and title
+                return `${this.getDomain(article.url)}_${article.url.substring(article.url.length - 20)}_${article.title.substring(0, 30)}`.replace(/[^a-zA-Z0-9]/g, '_');
+            }
+
+            getCachedImage(article) {
+                const key = this.getCacheKey(article);
+                const cached = this.imageCache.get(key);
+                
+                if (cached) {
+                    const now = Date.now();
+                    const expiryTime = this.cacheExpiryDays * 24 * 60 * 60 * 1000;
+                    
+                    if (now - cached.timestamp < expiryTime) {
+                        console.log(`✅ Using cached image for: ${article.title.substring(0, 30)}...`);
+                        return cached.imageUrl;
+                    } else {
+                        // Remove expired cache entry
+                        this.imageCache.delete(key);
+                        console.log(`⏰ Cache expired for: ${article.title.substring(0, 30)}...`);
+                    }
+                }
+                
+                return null;
+            }
+
+            setCachedImage(article, imageUrl) {
+                const key = this.getCacheKey(article);
+                this.imageCache.set(key, {
+                    imageUrl: imageUrl,
+                    timestamp: Date.now(),
+                    domain: this.getDomain(article.url),
+                    title: article.title.substring(0, 50)
+                });
+                
+                // Save to localStorage (debounced)
+                clearTimeout(this.cacheSaveTimeout);
+                this.cacheSaveTimeout = setTimeout(() => this.saveImageCache(), 1000);
+                
+                console.log(`💾 Cached image for: ${article.title.substring(0, 30)}...`);
+            }
+
+            clearImageCache() {
+                if (confirm('Clear all cached images?\n\nThis will force re-downloading images next time you visit.')) {
+                    this.imageCache.clear();
+                    localStorage.removeItem(this.cacheKey);
+                    this.updateStatus('🗑️ Image cache cleared. Images will be re-downloaded next time.', 'success');
+                    console.log('🗑️ Image cache cleared');
+                }
+            }
+
+            getCacheStats() {
+                return {
+                    total: this.imageCache.size,
+                    memoryUsage: JSON.stringify(Object.fromEntries(this.imageCache)).length,
+                    oldestEntry: Math.min(...Array.from(this.imageCache.values()).map(entry => entry.timestamp)),
+                    newestEntry: Math.max(...Array.from(this.imageCache.values()).map(entry => entry.timestamp))
+                };
+            }
+
+            // ===== ENHANCED IMAGE LOADING WITH CACHE =====
+
+            // Enhanced displayArticles with intelligent caching
+            displayArticles(articles) {
+                const container = document.getElementById('articlesContainer');
+
+                if (articles.length === 0) {
+                    this.displayEmptyState();
+                    return;
+                }
+
+                const articlesHTML = articles.map((article, index) => {
+                    const cachedImage = this.getCachedImage(article);
+                    const cacheStatus = cachedImage ? 'cached' : 'fresh';
+                    
+                    return `
+                    <div class="article-card" data-index="${index}">
+                        <div class="article-image" id="image-${index}">
+                            ${cachedImage ? this.createImageHTML(cachedImage, true) : this.createPlaceholderHTML()}
+                            <div class="cache-indicator ${cacheStatus}">
+                                ${cachedImage ? '💾 Cached' : '🔄 Loading'}
+                            </div>
+                        </div>
+                        <div class="article-content" onclick="webReader.openReader(${index})">
+                            <h2 class="article-title">${this.escapeHtml(article.title)}</h2>
+                            <p class="article-excerpt">${this.escapeHtml(article.excerpt)}</p>
+                            <div class="article-meta">
+                                <span class="article-domain">🌐 ${this.getDomain(article.url)}</span>
+                                <span class="article-date">📅 ${this.formatDate(article.dateAdded)}</span>
+                            </div>
+                            <div class="article-stats">
+                                <span>⏱️ ${article.readTime || 1} min read</span>
+                                <span>📝 ${article.wordCount || 0} words</span>
+                            </div>
+                        </div>
+                        <div class="article-actions">
+                            <button class="action-btn read-btn" onclick="event.stopPropagation(); webReader.openReader(${index})" title="Read article">
+                                📖
+                            </button>
+                            <button class="action-btn export-btn" onclick="event.stopPropagation(); webReader.exportArticle(${index})" title="Export article">
+                                📤
+                            </button>
+                            <button class="action-btn delete-btn" onclick="event.stopPropagation(); webReader.deleteArticle(${index})" title="Delete article">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                `}).join('');
+
+                container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
+                
+                // Count articles that need image extraction
+                const articlesNeedingImages = articles.filter(article => !this.getCachedImage(article));
+                
+                if (articlesNeedingImages.length > 0) {
+                    this.updateStatus(`📸 Loading ${articlesNeedingImages.length} new images (${this.imageCache.size} cached)...`, 'loading');
+                    this.loadMissingImages(articles);
+                } else {
+                    this.updateStatus(`✅ All ${articles.length} images loaded from cache!`, 'success');
+                }
+            }
+
+            createImageHTML(imageUrl, fromCache = false) {
+                return `
+                    <img src="${imageUrl}" 
+                         alt="Article image" 
+                         style="
+                            opacity: 0; 
+                            transition: opacity 0.8s ease;
+                            width: 100%;
+                            height: 100%;
+                            object-fit: cover;
+                            border-radius: inherit;
+                         "
+                         onload="
+                            this.style.opacity='1';
+                            console.log('✅ Image loaded ${fromCache ? 'from cache' : 'successfully'}');
+                         " 
+                         onerror="
+                            console.log('⚠️ Image failed, using fallback');
+                            this.src='https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                         ">
+                `;
+            }
+
+            createPlaceholderHTML() {
+                return `
+                    <div style="
+                        width: 100%; 
+                        height: 100%; 
+                        background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                                   linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                                   linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                                   linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+                        background-size: 20px 20px;
+                        background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #999;
+                        animation: shimmer 1.5s ease-in-out infinite;
+                    ">
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.2em; margin-bottom: 5px;">🖼️</div>
+                            <div style="font-size: 0.7em;">Loading image...</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Load only missing images (not cached)
+            async loadMissingImages(articles) {
+                console.log('🎨 SMART IMAGE LOADER - Loading only missing images...');
+                
+                const articlesNeedingImages = articles.filter((article, index) => {
+                    const cached = this.getCachedImage(article);
+                    return !cached;
+                });
+
+                if (articlesNeedingImages.length === 0) {
+                    this.updateStatus(`✅ All images loaded from cache!`, 'success');
+                    return;
+                }
+
+                let successCount = 0;
+                const totalNew = articlesNeedingImages.length;
+                
+                console.log(`🔄 Loading ${totalNew} new images (${this.imageCache.size} already cached)`);
+                
+                // Load images sequentially to avoid overwhelming websites
+                for (let i = 0; i < articlesNeedingImages.length; i++) {
+                    const article = articlesNeedingImages[i];
+                    const originalIndex = articles.findIndex(a => a === article);
+                    
+                    try {
+                        const success = await this.extractAndCacheRealImage(article, originalIndex);
+                        if (success) successCount++;
+                        
+                        // Update progress
+                        const progress = Math.round(((i + 1) / totalNew) * 100);
+                        this.updateStatus(`🔍 Loading new images... ${i + 1}/${totalNew} (${progress}%)`, 'loading');
+                        
+                        // Delay to be respectful to websites
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                        
+                    } catch (error) {
+                        console.error(`Failed to extract image for article ${originalIndex}:`, error);
+                        // Use category fallback for failed extractions
+                        const fallbackImage = this.getCategoryBasedImage(article, originalIndex);
+                        this.setArticleImageAndCache(article, originalIndex, fallbackImage, 'fallback');
+                        successCount++;
+                    }
+                }
+                
+                const totalCached = this.imageCache.size;
+                this.updateStatus(`✅ Loaded ${successCount}/${totalNew} new images! (${totalCached} total cached)`, 'success');
+                console.log(`🎨 Smart image loading complete: ${successCount}/${totalNew} new, ${totalCached} total cached`);
+            }
+
+            // Extract and cache image (enhanced version)
+            async extractAndCacheRealImage(article, index) {
+                const imageElement = document.getElementById(`image-${index}`);
+                if (!imageElement) return false;
+
+                console.log(`🔍 Extracting new image from: ${this.getDomain(article.url)}`);
+
+                // Strategy 1: Try saved article images first (fastest)
+                const savedImage = this.getBestArticleImage(article);
+                if (savedImage) {
+                    console.log(`✅ Using saved image: ${article.title.substring(0, 30)}...`);
+                    this.setArticleImageAndCache(article, index, savedImage, 'saved');
+                    return true;
+                }
+
+                // Strategy 2: Extract image from the original website
+                try {
+                    const extractedImage = await this.fetchRealImageFromWebsite(article.url);
+                    if (extractedImage) {
+                        console.log(`✅ Extracted real image: ${article.title.substring(0, 30)}...`);
+                        this.setArticleImageAndCache(article, index, extractedImage, 'extracted');
+                        return true;
+                    }
+                } catch (error) {
+                    console.log(`⚠️ Could not extract from website: ${error.message}`);
+                }
+
+                // Strategy 3: Use intelligent category-based fallback
+                console.log(`🎨 Using intelligent fallback: ${article.title.substring(0, 30)}...`);
+                const fallbackImage = this.getCategoryBasedImage(article, index);
+                this.setArticleImageAndCache(article, index, fallbackImage, 'fallback');
+                return true;
+            }
+
+            // Set image and update cache
+            setArticleImageAndCache(article, index, imageUrl, source) {
+                const imageElement = document.getElementById(`image-${index}`);
+                if (!imageElement) return;
+
+                // Update the DOM
+                imageElement.innerHTML = this.createImageHTML(imageUrl, false);
+                
+                // Update cache indicator
+                const cacheIndicator = imageElement.querySelector('.cache-indicator');
+                if (cacheIndicator) {
+                    cacheIndicator.textContent = source === 'extracted' ? '🌐 Fresh' : '💾 Cached';
+                    cacheIndicator.className = `cache-indicator ${source === 'extracted' ? 'fresh' : 'cached'}`;
+                }
+
+                // Cache the image
+                this.setCachedImage(article, imageUrl);
             }
 
             checkAuthFromURL() {
@@ -1080,7 +1421,8 @@
                     this.articles = backup.articles || [];
                     this.displayArticles(this.articles);
 
-                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name}`, 'success');
+                    const cacheStats = this.getCacheStats();
+                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name} (${cacheStats.total} images cached)`, 'success');
 
                 } catch (error) {
                     console.error('Error loading articles:', error);
@@ -1088,139 +1430,553 @@
                 }
             }
 
-            // Enhanced displayArticles with GUARANTEED real images
-            displayArticles(articles) {
+            displayEmptyState() {
                 const container = document.getElementById('articlesContainer');
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📖</div>
+                        <h3>No articles found</h3>
+                        <p>Use the MyPocket browser extension to save articles, then refresh this page.</p>
+                    </div>`;
+            }
 
-                if (articles.length === 0) {
-                    this.displayEmptyState();
+            searchArticles(query) {
+                if (!query) {
+                    this.displayArticles(this.articles);
                     return;
                 }
 
-                const articlesHTML = articles.map((article, index) => {
-                    return `
-                    <div class="article-card" data-index="${index}">
-                        <div class="article-image" id="image-${index}">
-                            <div style="
-                                width: 100%; 
-                                height: 100%; 
-                                background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
-                                           linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
-                                           linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
-                                           linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
-                                background-size: 20px 20px;
-                                background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                color: #999;
-                                animation: shimmer 1.5s ease-in-out infinite;
-                            ">
-                                <div style="text-align: center;">
-                                    <div style="font-size: 1.2em; margin-bottom: 5px;">🖼️</div>
-                                    <div style="font-size: 0.7em;">Loading image...</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="article-content" onclick="webReader.openReader(${index})">
-                            <h2 class="article-title">${this.escapeHtml(article.title)}</h2>
-                            <p class="article-excerpt">${this.escapeHtml(article.excerpt)}</p>
-                            <div class="article-meta">
-                                <span class="article-domain">🌐 ${this.getDomain(article.url)}</span>
-                                <span class="article-date">📅 ${this.formatDate(article.dateAdded)}</span>
-                            </div>
-                            <div class="article-stats">
-                                <span>⏱️ ${article.readTime || 1} min read</span>
-                                <span>📝 ${article.wordCount || 0} words</span>
-                            </div>
-                        </div>
-                        <div class="article-actions">
-                            <button class="action-btn read-btn" onclick="event.stopPropagation(); webReader.openReader(${index})" title="Read article">
-                                📖
-                            </button>
-                            <button class="action-btn export-btn" onclick="event.stopPropagation(); webReader.exportArticle(${index})" title="Export article">
-                                📤
-                            </button>
-                            <button class="action-btn delete-btn" onclick="event.stopPropagation(); webReader.deleteArticle(${index})" title="Delete article">
-                                🗑️
-                            </button>
-                        </div>
-                    </div>
-                `}).join('');
+                const filtered = this.articles.filter(article =>
+                    article.title.toLowerCase().includes(query.toLowerCase()) ||
+                    article.textContent.toLowerCase().includes(query.toLowerCase()) ||
+                    article.author.toLowerCase().includes(query.toLowerCase()) ||
+                    this.getDomain(article.url).toLowerCase().includes(query.toLowerCase())
+                );
 
-                container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
-                
-                // Show image loading status
-                this.updateStatus(`🔍 Extracting real images from article websites...`, 'loading');
-                
-                // ENHANCED: Extract real images from original websites
-                this.loadAllArticleImages(articles);
+                this.displayArticles(filtered);
+                this.updateStatus(`Found ${filtered.length} articles matching "${query}"`, filtered.length > 0 ? 'success' : 'error');
             }
 
-            // ENHANCED: Extract real images from article websites
-            async loadAllArticleImages(articles) {
-                console.log('🎨 REAL IMAGE EXTRACTOR - Getting actual article images...');
+            openReader(index) {
+                this.currentArticle = this.articles[index];
+                const overlay = document.getElementById('readerOverlay');
+
+                // Set title and meta info
+                document.getElementById('readerTitle').textContent = this.currentArticle.title;
+                document.getElementById('readerDate').textContent = this.formatDate(this.currentArticle.dateAdded);
+                document.getElementById('readerDomain').textContent = this.getDomain(this.currentArticle.url);
+                document.getElementById('readerTime').textContent = `${this.currentArticle.readTime || 1} min read`;
                 
-                let successCount = 0;
-                const totalImages = articles.length;
+                // Show loading state first
+                document.getElementById('readerContent').innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+                        <p>Checking for article content...</p>
+                    </div>
+                `;
+
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
                 
-                // Load images sequentially to avoid overwhelming websites
-                for (let i = 0; i < articles.length; i++) {
+                // Try to get content, fetch if needed
+                setTimeout(() => this.loadArticleContent(this.currentArticle), 100);
+            }
+
+            async loadArticleContent(article) {
+                console.log('🚀 CONTENT LOADER WITH CACHING');
+                const contentElement = document.getElementById('readerContent');
+                
+                // First try to get saved content
+                let content = this.getArticleContent(article);
+                
+                // If no saved content found, try to fetch from original URL
+                if (!content) {
+                    console.log('🌐 No saved content found. Attempting to fetch from original URL...');
+                    
                     try {
-                        const success = await this.extractRealArticleImage(articles[i], i);
-                        if (success) successCount++;
+                        // Show fetching status
+                        contentElement.innerHTML = `
+                            <div style="text-align: center; padding: 40px;">
+                                <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+                                <p><strong>🌐 Fetching article content...</strong></p>
+                                <p style="font-size: 0.9em; color: var(--text-secondary);">
+                                    Loading from ${this.getDomain(article.url)}
+                                </p>
+                                <p style="font-size: 0.8em; color: var(--text-secondary);">
+                                    This may take a few seconds...
+                                </p>
+                            </div>
+                        `;
                         
-                        // Update progress
-                        const progress = Math.round(((i + 1) / totalImages) * 100);
-                        this.updateStatus(`🔍 Extracting real images... ${i + 1}/${totalImages} (${progress}%)`, 'loading');
+                        // Fetch content using proxy services
+                        const fetchedContent = await this.fetchArticleContent(article.url);
                         
-                        // Delay to be respectful to websites
-                        await new Promise(resolve => setTimeout(resolve, 200));
+                        if (fetchedContent && fetchedContent.trim()) {
+                            content = fetchedContent;
+                            console.log('✅ Successfully fetched article content');
+                            this.updateStatus('✅ Article content loaded successfully!', 'success');
+                        } else {
+                            throw new Error('No content extracted from fetched page');
+                        }
                         
                     } catch (error) {
-                        console.error(`Failed to extract image for article ${i}:`, error);
-                        // Use category fallback for failed extractions
-                        this.setArticleImageDirect(document.getElementById(`image-${i}`), this.getCategoryBasedImage(articles[i], i));
-                        successCount++;
+                        console.log('❌ Failed to fetch content:', error.message);
+                        this.updateStatus('❌ Could not fetch article content. Using fallback.', 'error');
+                        content = this.getFallbackContent(article, error.message);
+                    }
+                } else {
+                    console.log('✅ Using saved content');
+                    this.updateStatus('✅ Article loaded from saved content', 'success');
+                }
+                
+                // Display the final content
+                contentElement.innerHTML = content;
+            }
+
+            async fetchArticleContent(url) {
+                try {
+                    console.log(`🌐 Starting fetch for: ${url}`);
+                    
+                    // Method 1: Try using AllOrigins proxy (most reliable)
+                    try {
+                        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                        console.log(`Trying AllOrigins proxy...`);
+                        
+                        const response = await fetch(proxyUrl);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            const html = data.contents;
+                            
+                            if (html && html.length > 1000) { // Ensure we got substantial content
+                                console.log(`✅ AllOrigins success: ${html.length} chars`);
+                                const extractedContent = this.extractContentFromHTML(html, url);
+                                if (extractedContent && extractedContent.length > 500) {
+                                    return extractedContent;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`AllOrigins failed: ${error.message}`);
+                    }
+                    
+                    // Method 2: Try CORS proxy
+                    try {
+                        const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                        console.log(`Trying CORS proxy...`);
+                        
+                        const response = await fetch(corsProxyUrl);
+                        
+                        if (response.ok) {
+                            const html = await response.text();
+                            
+                            if (html && html.length > 1000) {
+                                console.log(`✅ CORS proxy success: ${html.length} chars`);
+                                const extractedContent = this.extractContentFromHTML(html, url);
+                                if (extractedContent && extractedContent.length > 500) {
+                                    return extractedContent;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`CORS proxy failed: ${error.message}`);
+                    }
+                    
+                    // Method 3: Try direct fetch (will likely fail due to CORS, but worth trying)
+                    try {
+                        console.log(`Trying direct fetch...`);
+                        const response = await fetch(url, {
+                            mode: 'cors',
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader)'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const html = await response.text();
+                            console.log(`✅ Direct fetch success: ${html.length} chars`);
+                            return this.extractContentFromHTML(html, url);
+                        }
+                    } catch (error) {
+                        console.log(`Direct fetch failed (expected): ${error.message}`);
+                    }
+                    
+                    throw new Error('All proxy methods failed to fetch content');
+                    
+                } catch (error) {
+                    console.error('❌ All fetch methods failed:', error);
+                    throw error;
+                }
+            }
+
+            extractContentFromHTML(html, url) {
+                try {
+                    // Create a temporary DOM to parse the HTML
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Remove unwanted elements
+                    const unwantedSelectors = [
+                        'script', 'style', 'nav', 'header', 'footer', 
+                        '.sidebar', '.menu', '.navigation', '.comments',
+                        '.advertisement', '.ads', '.social-share',
+                        '[role="banner"]', '[role="navigation"]', '[role="complementary"]'
+                    ];
+                    
+                    unwantedSelectors.forEach(selector => {
+                        doc.querySelectorAll(selector).forEach(el => el.remove());
+                    });
+                    
+                    // Try to find the main content using common selectors
+                    const contentSelectors = [
+                        'article',
+                        '[role="main"]',
+                        '.post-content', '.entry-content', '.article-content',
+                        '.content', '.main-content', '.post-body',
+                        '.entry', '.post', '.article-body',
+                        'main', '#content', '#main'
+                    ];
+                    
+                    let contentElement = null;
+                    
+                    for (const selector of contentSelectors) {
+                        contentElement = doc.querySelector(selector);
+                        if (contentElement && contentElement.textContent.trim().length > 200) {
+                            break;
+                        }
+                    }
+                    
+                    // If no main content found, try to get paragraphs from body
+                    if (!contentElement || contentElement.textContent.trim().length < 200) {
+                        const paragraphs = Array.from(doc.querySelectorAll('p'))
+                            .filter(p => p.textContent.trim().length > 50)
+                            .slice(0, 20); // Take first 20 substantial paragraphs
+                        
+                        if (paragraphs.length > 0) {
+                            const div = doc.createElement('div');
+                            paragraphs.forEach(p => div.appendChild(p.cloneNode(true)));
+                            contentElement = div;
+                        }
+                    }
+                    
+                    if (contentElement) {
+                        // Clean up the content
+                        let content = contentElement.innerHTML;
+                        
+                        // Fix relative URLs to absolute
+                        const baseUrl = new URL(url).origin;
+                        content = content.replace(/src="\/([^"]+)"/g, `src="${baseUrl}/$1"`);
+                        content = content.replace(/href="\/([^"]+)"/g, `href="${baseUrl}/$1"`);
+                        
+                        // Add a note about the source
+                        content = `
+                            <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                                <p style="margin: 0; font-size: 0.9em;">
+                                    <strong>📡 Content fetched from original source</strong><br>
+                                    This article content was retrieved in real-time from <a href="${url}" target="_blank" style="color: #1976d2;">${this.getDomain(url)}</a>
+                                </p>
+                            </div>
+                            ${content}
+                        `;
+                        
+                        return content;
+                    }
+                    
+                    throw new Error('Could not extract readable content from page');
+                    
+                } catch (error) {
+                    console.error('Content extraction error:', error);
+                    throw error;
+                }
+            }
+
+            getFallbackContent(article, errorMessage) {
+                return `
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3>📄 Content Not Available</h3>
+                        <p>We couldn't load the full article content. This can happen because:</p>
+                        <ul style="margin: 15px 0;">
+                            <li>The website blocks automated content fetching</li>
+                            <li>CORS (Cross-Origin) restrictions prevent access</li>
+                            <li>The article content wasn't saved by the browser extension</li>
+                            <li>Network connectivity issues</li>
+                        </ul>
+                        
+                        <p><strong>What you can do:</strong></p>
+                        <ol style="margin: 15px 0;">
+                            <li><strong>Visit the original article</strong> using the button below</li>
+                            <li><strong>Re-save the article</strong> with your browser extension</li>
+                            <li><strong>Check extension settings</strong> for content extraction options</li>
+                        </ol>
+                        
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                            <p><strong>Available excerpt:</strong></p>
+                            <p style="font-style: italic;">${article.excerpt || 'No excerpt available'}</p>
+                        </div>
+                        
+                        <div style="text-align: center; margin: 20px 0;">
+                            <a href="${article.url}" target="_blank" style="display: inline-block; background: #ee5a24; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                                🔗 Read Full Article
+                            </a>
+                        </div>
+                        
+                        <details style="margin-top: 20px;">
+                            <summary style="cursor: pointer; color: #666;">Technical Details</summary>
+                            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
+                                Error: ${errorMessage}
+                            </p>
+                        </details>
+                    </div>
+                `;
+            }
+
+            // Get the best available content for reading - simplified version
+            getArticleContent(article) {
+                console.log('📖 Checking for saved content...');
+                
+                // Try content fields in order
+                const contentFields = ['content', 'html', 'fullContent', 'textContent', 'body', 'readableContent', 'articleContent', 'savedContent'];
+                
+                for (const field of contentFields) {
+                    if (article[field] && article[field].trim()) {
+                        console.log(`✅ Found content in ${field} (${article[field].length} chars)`);
+                        return article[field];
                     }
                 }
                 
-                this.updateStatus(`✅ Extracted ${successCount}/${totalImages} real article images!`, 'success');
-                console.log(`🎨 Real image extraction complete: ${successCount}/${totalImages} successful`);
+                // Look for any substantial text content
+                for (const [key, value] of Object.entries(article)) {
+                    if (typeof value === 'string' && value.length > 200 && key !== 'excerpt' && key !== 'url') {
+                        console.log(`✅ Found substantial content in ${key} (${value.length} chars)`);
+                        return value;
+                    }
+                }
+                
+                console.log('❌ No saved content found');
+                return null;
             }
 
-            // NEW: Extract the actual featured image from the article's website
-            async extractRealArticleImage(article, index) {
-                const imageElement = document.getElementById(`image-${index}`);
-                if (!imageElement) return false;
+            closeReader() {
+                const overlay = document.getElementById('readerOverlay');
+                overlay.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
 
-                console.log(`🔍 Extracting real image from: ${this.getDomain(article.url)}`);
-
-                // Strategy 1: Try saved article images first (fastest)
-                const savedImage = this.getBestArticleImage(article);
-                if (savedImage) {
-                    console.log(`✅ Using saved image: ${article.title.substring(0, 30)}...`);
-                    this.setArticleImageDirect(imageElement, savedImage);
-                    return true;
+            openOriginal() {
+                if (this.currentArticle) {
+                    window.open(this.currentArticle.url, '_blank');
                 }
+            }
 
-                // Strategy 2: Extract image from the original website
-                try {
-                    const extractedImage = await this.fetchRealImageFromWebsite(article.url);
-                    if (extractedImage) {
-                        console.log(`✅ Extracted real image: ${article.title.substring(0, 30)}...`);
-                        this.setArticleImageDirect(imageElement, extractedImage);
-                        return true;
+            async deleteArticle(index) {
+                const article = this.articles[index];
+                if (!article) return;
+
+                if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your OneDrive backup.`)) {
+                    try {
+                        // Remove from cache
+                        const cacheKey = this.getCacheKey(article);
+                        this.imageCache.delete(cacheKey);
+                        this.saveImageCache();
+
+                        this.articles.splice(index, 1);
+
+                        if (this.accessToken) {
+                            this.updateStatus('Updating OneDrive backup...', 'loading');
+                            await this.updateOneDriveBackup();
+                            this.updateStatus(`✅ Article deleted and backup updated. ${this.articles.length} articles remaining.`, 'success');
+                        } else {
+                            this.updateStatus(`❌ Article deleted locally but OneDrive backup not updated (not connected).`, 'error');
+                        }
+
+                        this.displayArticles(this.articles);
+
+                    } catch (error) {
+                        console.error('Error deleting article:', error);
+                        this.updateStatus(`❌ Failed to delete article: ${error.message}`, 'error');
                     }
+                }
+            }
+
+            exportArticle(index) {
+                const article = this.articles[index];
+                if (!article) return;
+
+                try {
+                    const html = this.createArticleHTML(article);
+                    const filename = `${this.sanitizeFilename(article.title)}.html`;
+                    this.downloadFile(html, filename, 'text/html');
+                    this.updateStatus(`📤 Article "${article.title}" exported successfully!`, 'success');
                 } catch (error) {
-                    console.log(`⚠️ Could not extract from website: ${error.message}`);
+                    console.error('Error exporting article:', error);
+                    this.updateStatus(`❌ Failed to export article: ${error.message}`, 'error');
+                }
+            }
+
+            async updateOneDriveBackup() {
+                if (!this.accessToken) {
+                    throw new Error('Not connected to OneDrive');
                 }
 
-                // Strategy 3: Use intelligent category-based fallback
-                console.log(`🎨 Using intelligent fallback: ${article.title.substring(0, 30)}...`);
-                const fallbackImage = this.getCategoryBasedImage(article, index);
-                this.setArticleImageDirect(imageElement, fallbackImage);
-                return true;
+                const backup = {
+                    articles: this.articles,
+                    settings: {},
+                    exportDate: new Date().toISOString(),
+                    version: "3.3",
+                    deviceInfo: {
+                        browser: "Web Reader",
+                        platform: navigator.platform,
+                        timestamp: Date.now(),
+                        articleCount: this.articles.length
+                    }
+                };
+
+                const fileName = `mypocket-backup-${new Date().toISOString().split('T')[0]}.json`;
+                const fileContent = JSON.stringify(backup, null, 2);
+
+                const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
+
+                const uploadResponse = await fetch(uploadUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${this.accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: fileContent
+                });
+
+                if (!uploadResponse.ok) {
+                    const errorText = await uploadResponse.text();
+                    throw new Error(`Failed to update OneDrive backup: ${uploadResponse.status} - ${errorText}`);
+                }
+
+                return await uploadResponse.json();
+            }
+
+            createArticleHTML(article) {
+                return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${this.escapeHtml(article.title)}</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 40px 20px; 
+            line-height: 1.7; 
+            color: #333;
+        }
+        .header { 
+            border-bottom: 3px solid #ee5a24; 
+            margin-bottom: 32px; 
+            padding-bottom: 24px; 
+        }
+        .title { 
+            font-size: 2.4em; 
+            font-weight: bold; 
+            margin-bottom: 16px; 
+            color: #2c3e50; 
+            line-height: 1.2; 
+        }
+        .meta { 
+            color: #7f8c8d; 
+            font-size: 0.95em; 
+            margin-bottom: 24px; 
+        }
+        .content { 
+            font-size: 1.15em; 
+            line-height: 1.8; 
+        }
+        .content img { 
+            max-width: 100%; 
+            height: auto; 
+            margin: 24px 0; 
+            border-radius: 8px; 
+        }
+        .content p { 
+            margin-bottom: 1.4em; 
+        }
+        .footer { 
+            margin-top: 48px; 
+            padding-top: 24px; 
+            border-top: 2px solid #f0f0f0; 
+            color: #666; 
+            font-size: 0.9em; 
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">${this.escapeHtml(article.title)}</h1>
+        <div class="meta">
+            <div style="margin-bottom: 8px;">🌐 From: <a href="${article.url}" style="color: #ee5a24;">${this.getDomain(article.url)}</a></div>
+            ${article.author ? `<div style="margin-bottom: 8px;">✍️ By: ${this.escapeHtml(article.author)}</div>` : ''}
+            <div style="margin-bottom: 8px;">📅 Saved: ${this.formatDate(article.dateAdded)}</div>
+            <div>⏱️ Reading time: ${article.readTime || 1} minutes</div>
+        </div>
+    </div>
+    <div class="content">
+        ${article.content}
+    </div>
+    <div class="footer">
+        <p><strong>✨ Exported from MyPocket Web Reader</strong></p>
+        <p>Original URL: <a href="${article.url}" style="color: #ee5a24;">${article.url}</a></p>
+        <p>Export Date: ${new Date().toLocaleDateString()}</p>
+    </div>
+</body>
+</html>`;
+            }
+
+            downloadFile(content, filename, mimeType) {
+                const blob = new Blob([content], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                URL.revokeObjectURL(url);
+            }
+
+            // Enhanced image handling
+            getBestArticleImage(article) {
+                if (article.images && article.images.length > 0) {
+                    let bestImage = article.images[0];
+                    
+                    for (const img of article.images) {
+                        if (img.width && img.height) {
+                            if (img.width >= 300 && img.height >= 150) {
+                                bestImage = img;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    return bestImage.src || bestImage.url || bestImage;
+                }
+                
+                if (article.featuredImage) {
+                    return article.featuredImage;
+                }
+                
+                if (article.image) {
+                    return article.image;
+                }
+                
+                if (article.content) {
+                    const imgMatch = article.content.match(/<img[^>]+src="([^"]+)"/i);
+                    if (imgMatch && imgMatch[1]) {
+                        return imgMatch[1];
+                    }
+                }
+                
+                return null;
             }
 
             // NEW: Fetch the actual featured image from a website
@@ -1614,8 +2370,6 @@
                 return defaultImages[index % defaultImages.length];
             }
 
-
-
             // Convert relative URLs to absolute
             makeAbsoluteUrl(imageUrl, baseUrl) {
                 if (!imageUrl) return null;
@@ -1638,573 +2392,6 @@
                     console.log(`Failed to make absolute URL: ${imageUrl}, base: ${baseUrl}`);
                     return null;
                 }
-            }
-            // FIXED: Direct image setting without CORS validation
-            setArticleImageDirect(imageElement, imageUrl) {
-                imageElement.innerHTML = `
-                    <img src="${imageUrl}" 
-                         alt="Article image" 
-                         style="
-                            opacity: 0; 
-                            transition: opacity 0.8s ease;
-                            width: 100%;
-                            height: 100%;
-                            object-fit: cover;
-                            border-radius: inherit;
-                         "
-                         onload="
-                            this.style.opacity='1';
-                            console.log('✅ Image loaded successfully');
-                         " 
-                         onerror="
-                            console.log('⚠️ Image failed, using fallback');
-                            this.src='https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
-                         ">
-                `;
-            }
-
-            displayEmptyState() {
-                const container = document.getElementById('articlesContainer');
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📖</div>
-                        <h3>No articles found</h3>
-                        <p>Use the MyPocket browser extension to save articles, then refresh this page.</p>
-                    </div>`;
-            }
-
-            searchArticles(query) {
-                if (!query) {
-                    this.displayArticles(this.articles);
-                    return;
-                }
-
-                const filtered = this.articles.filter(article =>
-                    article.title.toLowerCase().includes(query.toLowerCase()) ||
-                    article.textContent.toLowerCase().includes(query.toLowerCase()) ||
-                    article.author.toLowerCase().includes(query.toLowerCase()) ||
-                    this.getDomain(article.url).toLowerCase().includes(query.toLowerCase())
-                );
-
-                this.displayArticles(filtered);
-                this.updateStatus(`Found ${filtered.length} articles matching "${query}"`, filtered.length > 0 ? 'success' : 'error');
-            }
-
-            openReader(index) {
-                this.currentArticle = this.articles[index];
-                const overlay = document.getElementById('readerOverlay');
-
-                // Set title and meta info
-                document.getElementById('readerTitle').textContent = this.currentArticle.title;
-                document.getElementById('readerDate').textContent = this.formatDate(this.currentArticle.dateAdded);
-                document.getElementById('readerDomain').textContent = this.getDomain(this.currentArticle.url);
-                document.getElementById('readerTime').textContent = `${this.currentArticle.readTime || 1} min read`;
-                
-                // Show loading state first
-                document.getElementById('readerContent').innerHTML = `
-                    <div style="text-align: center; padding: 40px;">
-                        <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
-                        <p>Checking for article content...</p>
-                    </div>
-                `;
-
-                overlay.classList.add('active');
-                document.body.style.overflow = 'hidden';
-                
-                // Try to get content, fetch if needed
-                setTimeout(() => this.loadArticleContent(this.currentArticle), 100);
-            }
-
-            async loadArticleContent(article) {
-                console.log('🚀 NEW CONTENT LOADER STARTING - Version 2.0');
-                const contentElement = document.getElementById('readerContent');
-                
-                // First try to get saved content
-                let content = this.getArticleContent(article);
-                
-                // If no saved content found, try to fetch from original URL
-                if (!content) {
-                    console.log('🌐 No saved content found. Attempting to fetch from original URL...');
-                    
-                    try {
-                        // Show fetching status
-                        contentElement.innerHTML = `
-                            <div style="text-align: center; padding: 40px;">
-                                <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
-                                <p><strong>🌐 Fetching article content...</strong></p>
-                                <p style="font-size: 0.9em; color: var(--text-secondary);">
-                                    Loading from ${this.getDomain(article.url)}
-                                </p>
-                                <p style="font-size: 0.8em; color: var(--text-secondary);">
-                                    This may take a few seconds...
-                                </p>
-                            </div>
-                        `;
-                        
-                        // Fetch content using proxy services
-                        const fetchedContent = await this.fetchArticleContent(article.url);
-                        
-                        if (fetchedContent && fetchedContent.trim()) {
-                            content = fetchedContent;
-                            console.log('✅ Successfully fetched article content');
-                            this.updateStatus('✅ Article content loaded successfully!', 'success');
-                        } else {
-                            throw new Error('No content extracted from fetched page');
-                        }
-                        
-                    } catch (error) {
-                        console.log('❌ Failed to fetch content:', error.message);
-                        this.updateStatus('❌ Could not fetch article content. Using fallback.', 'error');
-                        content = this.getFallbackContent(article, error.message);
-                    }
-                } else {
-                    console.log('✅ Using saved content');
-                    this.updateStatus('✅ Article loaded from saved content', 'success');
-                }
-                
-                // Display the final content
-                contentElement.innerHTML = content;
-            }
-
-            async fetchArticleContent(url) {
-                try {
-                    console.log(`🌐 Starting fetch for: ${url}`);
-                    
-                    // Method 1: Try using AllOrigins proxy (most reliable)
-                    try {
-                        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-                        console.log(`Trying AllOrigins proxy...`);
-                        
-                        const response = await fetch(proxyUrl);
-                        
-                        if (response.ok) {
-                            const data = await response.json();
-                            const html = data.contents;
-                            
-                            if (html && html.length > 1000) { // Ensure we got substantial content
-                                console.log(`✅ AllOrigins success: ${html.length} chars`);
-                                const extractedContent = this.extractContentFromHTML(html, url);
-                                if (extractedContent && extractedContent.length > 500) {
-                                    return extractedContent;
-                                }
-                            }
-                        }
-                    } catch (error) {
-                        console.log(`AllOrigins failed: ${error.message}`);
-                    }
-                    
-                    // Method 2: Try CORS proxy
-                    try {
-                        const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-                        console.log(`Trying CORS proxy...`);
-                        
-                        const response = await fetch(corsProxyUrl);
-                        
-                        if (response.ok) {
-                            const html = await response.text();
-                            
-                            if (html && html.length > 1000) {
-                                console.log(`✅ CORS proxy success: ${html.length} chars`);
-                                const extractedContent = this.extractContentFromHTML(html, url);
-                                if (extractedContent && extractedContent.length > 500) {
-                                    return extractedContent;
-                                }
-                            }
-                        }
-                    } catch (error) {
-                        console.log(`CORS proxy failed: ${error.message}`);
-                    }
-                    
-                    // Method 3: Try direct fetch (will likely fail due to CORS, but worth trying)
-                    try {
-                        console.log(`Trying direct fetch...`);
-                        const response = await fetch(url, {
-                            mode: 'cors',
-                            headers: {
-                                'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader)'
-                            }
-                        });
-                        
-                        if (response.ok) {
-                            const html = await response.text();
-                            console.log(`✅ Direct fetch success: ${html.length} chars`);
-                            return this.extractContentFromHTML(html, url);
-                        }
-                    } catch (error) {
-                        console.log(`Direct fetch failed (expected): ${error.message}`);
-                    }
-                    
-                    throw new Error('All proxy methods failed to fetch content');
-                    
-                } catch (error) {
-                    console.error('❌ All fetch methods failed:', error);
-                    throw error;
-                }
-            }
-
-            extractContentFromHTML(html, url) {
-                try {
-                    // Create a temporary DOM to parse the HTML
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    
-                    // Remove unwanted elements
-                    const unwantedSelectors = [
-                        'script', 'style', 'nav', 'header', 'footer', 
-                        '.sidebar', '.menu', '.navigation', '.comments',
-                        '.advertisement', '.ads', '.social-share',
-                        '[role="banner"]', '[role="navigation"]', '[role="complementary"]'
-                    ];
-                    
-                    unwantedSelectors.forEach(selector => {
-                        doc.querySelectorAll(selector).forEach(el => el.remove());
-                    });
-                    
-                    // Try to find the main content using common selectors
-                    const contentSelectors = [
-                        'article',
-                        '[role="main"]',
-                        '.post-content', '.entry-content', '.article-content',
-                        '.content', '.main-content', '.post-body',
-                        '.entry', '.post', '.article-body',
-                        'main', '#content', '#main'
-                    ];
-                    
-                    let contentElement = null;
-                    
-                    for (const selector of contentSelectors) {
-                        contentElement = doc.querySelector(selector);
-                        if (contentElement && contentElement.textContent.trim().length > 200) {
-                            break;
-                        }
-                    }
-                    
-                    // If no main content found, try to get paragraphs from body
-                    if (!contentElement || contentElement.textContent.trim().length < 200) {
-                        const paragraphs = Array.from(doc.querySelectorAll('p'))
-                            .filter(p => p.textContent.trim().length > 50)
-                            .slice(0, 20); // Take first 20 substantial paragraphs
-                        
-                        if (paragraphs.length > 0) {
-                            const div = doc.createElement('div');
-                            paragraphs.forEach(p => div.appendChild(p.cloneNode(true)));
-                            contentElement = div;
-                        }
-                    }
-                    
-                    if (contentElement) {
-                        // Clean up the content
-                        let content = contentElement.innerHTML;
-                        
-                        // Fix relative URLs to absolute
-                        const baseUrl = new URL(url).origin;
-                        content = content.replace(/src="\/([^"]+)"/g, `src="${baseUrl}/$1"`);
-                        content = content.replace(/href="\/([^"]+)"/g, `href="${baseUrl}/$1"`);
-                        
-                        // Add a note about the source
-                        content = `
-                            <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                                <p style="margin: 0; font-size: 0.9em;">
-                                    <strong>📡 Content fetched from original source</strong><br>
-                                    This article content was retrieved in real-time from <a href="${url}" target="_blank" style="color: #1976d2;">${this.getDomain(url)}</a>
-                                </p>
-                            </div>
-                            ${content}
-                        `;
-                        
-                        return content;
-                    }
-                    
-                    throw new Error('Could not extract readable content from page');
-                    
-                } catch (error) {
-                    console.error('Content extraction error:', error);
-                    throw error;
-                }
-            }
-
-            getFallbackContent(article, errorMessage) {
-                return `
-                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                        <h3>📄 Content Not Available</h3>
-                        <p>We couldn't load the full article content. This can happen because:</p>
-                        <ul style="margin: 15px 0;">
-                            <li>The website blocks automated content fetching</li>
-                            <li>CORS (Cross-Origin) restrictions prevent access</li>
-                            <li>The article content wasn't saved by the browser extension</li>
-                            <li>Network connectivity issues</li>
-                        </ul>
-                        
-                        <p><strong>What you can do:</strong></p>
-                        <ol style="margin: 15px 0;">
-                            <li><strong>Visit the original article</strong> using the button below</li>
-                            <li><strong>Re-save the article</strong> with your browser extension</li>
-                            <li><strong>Check extension settings</strong> for content extraction options</li>
-                        </ol>
-                        
-                        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                            <p><strong>Available excerpt:</strong></p>
-                            <p style="font-style: italic;">${article.excerpt || 'No excerpt available'}</p>
-                        </div>
-                        
-                        <div style="text-align: center; margin: 20px 0;">
-                            <a href="${article.url}" target="_blank" style="display: inline-block; background: #ee5a24; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
-                                🔗 Read Full Article
-                            </a>
-                        </div>
-                        
-                        <details style="margin-top: 20px;">
-                            <summary style="cursor: pointer; color: #666;">Technical Details</summary>
-                            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
-                                Error: ${errorMessage}
-                            </p>
-                        </details>
-                    </div>
-                `;
-            }
-
-            // Get the best available content for reading - simplified version
-            getArticleContent(article) {
-                console.log('📖 Checking for saved content...');
-                
-                // Try content fields in order
-                const contentFields = ['content', 'html', 'fullContent', 'textContent', 'body', 'readableContent', 'articleContent', 'savedContent'];
-                
-                for (const field of contentFields) {
-                    if (article[field] && article[field].trim()) {
-                        console.log(`✅ Found content in ${field} (${article[field].length} chars)`);
-                        return article[field];
-                    }
-                }
-                
-                // Look for any substantial text content
-                for (const [key, value] of Object.entries(article)) {
-                    if (typeof value === 'string' && value.length > 200 && key !== 'excerpt' && key !== 'url') {
-                        console.log(`✅ Found substantial content in ${key} (${value.length} chars)`);
-                        return value;
-                    }
-                }
-                
-                console.log('❌ No saved content found');
-                return null;
-            }
-
-            closeReader() {
-                const overlay = document.getElementById('readerOverlay');
-                overlay.classList.remove('active');
-                document.body.style.overflow = 'auto';
-            }
-
-            openOriginal() {
-                if (this.currentArticle) {
-                    window.open(this.currentArticle.url, '_blank');
-                }
-            }
-
-            async deleteArticle(index) {
-                const article = this.articles[index];
-                if (!article) return;
-
-                if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your OneDrive backup.`)) {
-                    try {
-                        this.articles.splice(index, 1);
-
-                        if (this.accessToken) {
-                            this.updateStatus('Updating OneDrive backup...', 'loading');
-                            await this.updateOneDriveBackup();
-                            this.updateStatus(`✅ Article deleted and backup updated. ${this.articles.length} articles remaining.`, 'success');
-                        } else {
-                            this.updateStatus(`❌ Article deleted locally but OneDrive backup not updated (not connected).`, 'error');
-                        }
-
-                        this.displayArticles(this.articles);
-
-                    } catch (error) {
-                        console.error('Error deleting article:', error);
-                        this.updateStatus(`❌ Failed to delete article: ${error.message}`, 'error');
-                    }
-                }
-            }
-
-            exportArticle(index) {
-                const article = this.articles[index];
-                if (!article) return;
-
-                try {
-                    const html = this.createArticleHTML(article);
-                    const filename = `${this.sanitizeFilename(article.title)}.html`;
-                    this.downloadFile(html, filename, 'text/html');
-                    this.updateStatus(`📤 Article "${article.title}" exported successfully!`, 'success');
-                } catch (error) {
-                    console.error('Error exporting article:', error);
-                    this.updateStatus(`❌ Failed to export article: ${error.message}`, 'error');
-                }
-            }
-
-            async updateOneDriveBackup() {
-                if (!this.accessToken) {
-                    throw new Error('Not connected to OneDrive');
-                }
-
-                const backup = {
-                    articles: this.articles,
-                    settings: {},
-                    exportDate: new Date().toISOString(),
-                    version: "3.3",
-                    deviceInfo: {
-                        browser: "Web Reader",
-                        platform: navigator.platform,
-                        timestamp: Date.now(),
-                        articleCount: this.articles.length
-                    }
-                };
-
-                const fileName = `mypocket-backup-${new Date().toISOString().split('T')[0]}.json`;
-                const fileContent = JSON.stringify(backup, null, 2);
-
-                const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
-
-                const uploadResponse = await fetch(uploadUrl, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${this.accessToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: fileContent
-                });
-
-                if (!uploadResponse.ok) {
-                    const errorText = await uploadResponse.text();
-                    throw new Error(`Failed to update OneDrive backup: ${uploadResponse.status} - ${errorText}`);
-                }
-
-                return await uploadResponse.json();
-            }
-
-            createArticleHTML(article) {
-                return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${this.escapeHtml(article.title)}</title>
-    <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            max-width: 800px; 
-            margin: 0 auto; 
-            padding: 40px 20px; 
-            line-height: 1.7; 
-            color: #333;
-        }
-        .header { 
-            border-bottom: 3px solid #ee5a24; 
-            margin-bottom: 32px; 
-            padding-bottom: 24px; 
-        }
-        .title { 
-            font-size: 2.4em; 
-            font-weight: bold; 
-            margin-bottom: 16px; 
-            color: #2c3e50; 
-            line-height: 1.2; 
-        }
-        .meta { 
-            color: #7f8c8d; 
-            font-size: 0.95em; 
-            margin-bottom: 24px; 
-        }
-        .content { 
-            font-size: 1.15em; 
-            line-height: 1.8; 
-        }
-        .content img { 
-            max-width: 100%; 
-            height: auto; 
-            margin: 24px 0; 
-            border-radius: 8px; 
-        }
-        .content p { 
-            margin-bottom: 1.4em; 
-        }
-        .footer { 
-            margin-top: 48px; 
-            padding-top: 24px; 
-            border-top: 2px solid #f0f0f0; 
-            color: #666; 
-            font-size: 0.9em; 
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1 class="title">${this.escapeHtml(article.title)}</h1>
-        <div class="meta">
-            <div style="margin-bottom: 8px;">🌐 From: <a href="${article.url}" style="color: #ee5a24;">${this.getDomain(article.url)}</a></div>
-            ${article.author ? `<div style="margin-bottom: 8px;">✍️ By: ${this.escapeHtml(article.author)}</div>` : ''}
-            <div style="margin-bottom: 8px;">📅 Saved: ${this.formatDate(article.dateAdded)}</div>
-            <div>⏱️ Reading time: ${article.readTime || 1} minutes</div>
-        </div>
-    </div>
-    <div class="content">
-        ${article.content}
-    </div>
-    <div class="footer">
-        <p><strong>✨ Exported from MyPocket Web Reader</strong></p>
-        <p>Original URL: <a href="${article.url}" style="color: #ee5a24;">${article.url}</a></p>
-        <p>Export Date: ${new Date().toLocaleDateString()}</p>
-    </div>
-</body>
-</html>`;
-            }
-
-            downloadFile(content, filename, mimeType) {
-                const blob = new Blob([content], { type: mimeType });
-                const url = URL.createObjectURL(blob);
-
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-
-                URL.revokeObjectURL(url);
-            }
-
-            // Enhanced image handling
-            getBestArticleImage(article) {
-                if (article.images && article.images.length > 0) {
-                    let bestImage = article.images[0];
-                    
-                    for (const img of article.images) {
-                        if (img.width && img.height) {
-                            if (img.width >= 300 && img.height >= 150) {
-                                bestImage = img;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    return bestImage.src || bestImage.url || bestImage;
-                }
-                
-                if (article.featuredImage) {
-                    return article.featuredImage;
-                }
-                
-                if (article.image) {
-                    return article.image;
-                }
-                
-                if (article.content) {
-                    const imgMatch = article.content.match(/<img[^>]+src="([^"]+)"/i);
-                    if (imgMatch && imgMatch[1]) {
-                        return imgMatch[1];
-                    }
-                }
-                
-                return null;
             }
 
             // Smart icon selection based on domain
@@ -2318,6 +2505,7 @@
             }
 
             showDebugInfo() {
+                const cacheStats = this.getCacheStats();
                 const info = `
 MyPocket Web Reader Debug Info:
 =====================================
@@ -2329,6 +2517,13 @@ Protocol: ${window.location.protocol}
 Host: ${window.location.host}
 Has Access Token: ${!!this.accessToken}
 Articles Loaded: ${this.articles.length}
+
+Image Cache Stats:
+- Total Cached Images: ${cacheStats.total}
+- Memory Usage: ${Math.round(cacheStats.memoryUsage / 1024)} KB
+- Cache Expiry: ${this.cacheExpiryDays} days
+- Oldest Entry: ${cacheStats.total > 0 ? new Date(cacheStats.oldestEntry).toLocaleDateString() : 'N/A'}
+- Newest Entry: ${cacheStats.total > 0 ? new Date(cacheStats.newestEntry).toLocaleDateString() : 'N/A'}
 
 Azure AD Redirect URI Requirements:
 - Must be absolute URI (http:// or https://)
@@ -2347,10 +2542,11 @@ Next Steps:
 4. Add Web platform with redirect URI: ${this.redirectUri}
 5. Make sure URI is exact match
 
-Button Issues:
-- Try clicking "Show Buttons" to test if buttons work
-- Check browser console for JavaScript errors
-- Inspect element to see if buttons are in DOM
+Image Cache Features:
+- Images are cached for ${this.cacheExpiryDays} days
+- Cache survives browser sessions
+- Use "Clear Cache" button to force refresh
+- Cached images load instantly on subsequent visits
                 `;
 
                 alert(info);
@@ -2360,7 +2556,8 @@ Button Issues:
                     clientId: this.clientId,
                     protocol: window.location.protocol,
                     hasToken: !!this.accessToken,
-                    articlesCount: this.articles.length
+                    articlesCount: this.articles.length,
+                    cacheStats: cacheStats
                 });
             }
 
