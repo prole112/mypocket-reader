@@ -932,6 +932,7 @@
                 this.imageCache = new Map();
                 this.cacheKey = 'mypocket_image_cache';
                 this.cacheExpiryDays = 7; // Cache images for 7 days
+                this.cloudCacheSyncTimeout = null; // For debounced cloud sync
 
                 this.init();
             }
@@ -963,42 +964,155 @@
                 document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
             }
 
-            // ===== IMAGE CACHE SYSTEM =====
+            // ===== CROSS-DEVICE IMAGE CACHE SYSTEM =====
             
-            loadImageCache() {
+            async loadImageCache() {
+                console.log('📦 Loading image cache from local storage and OneDrive...');
+                
+                // First, load local cache
                 try {
                     const cachedData = localStorage.getItem(this.cacheKey);
                     if (cachedData) {
-                        const cache = JSON.parse(cachedData);
+                        const localCache = JSON.parse(cachedData);
                         
                         // Clean expired cache entries
                         const now = Date.now();
                         const expiryTime = this.cacheExpiryDays * 24 * 60 * 60 * 1000;
                         
-                        for (const [key, entry] of Object.entries(cache)) {
+                        for (const [key, entry] of Object.entries(localCache)) {
                             if (now - entry.timestamp < expiryTime) {
                                 this.imageCache.set(key, entry);
                             }
                         }
                         
-                        console.log(`📦 Loaded ${this.imageCache.size} cached images`);
+                        console.log(`📱 Loaded ${this.imageCache.size} images from local cache`);
                     }
                 } catch (error) {
-                    console.error('Error loading image cache:', error);
-                    this.imageCache.clear();
+                    console.error('Error loading local image cache:', error);
+                }
+
+                // Then, if we have OneDrive access, load and merge cloud cache
+                if (this.accessToken) {
+                    try {
+                        await this.loadCloudImageCache();
+                    } catch (error) {
+                        console.log('☁️ Cloud cache not available:', error.message);
+                    }
+                }
+            }
+
+            async loadCloudImageCache() {
+                try {
+                    console.log('☁️ Loading image cache from OneDrive...');
+                    
+                    // Try to get the latest backup file which now includes image cache
+                    const listResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children', {
+                        headers: {
+                            'Authorization': `Bearer ${this.accessToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!listResponse.ok) {
+                        throw new Error(`Failed to list OneDrive files: ${listResponse.status}`);
+                    }
+
+                    const fileList = await listResponse.json();
+                    const backupFiles = fileList.value.filter(file =>
+                        file.name.startsWith('mypocket-backup-') && file.name.endsWith('.json')
+                    );
+
+                    if (backupFiles.length === 0) {
+                        console.log('☁️ No backup files found on OneDrive');
+                        return;
+                    }
+
+                    const latestFile = backupFiles.sort((a, b) =>
+                        new Date(b.lastModifiedDateTime) - new Date(a.lastModifiedDateTime)
+                    )[0];
+
+                    const downloadResponse = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${latestFile.id}/content`, {
+                        headers: {
+                            'Authorization': `Bearer ${this.accessToken}`
+                        }
+                    });
+
+                    if (!downloadResponse.ok) {
+                        throw new Error(`Failed to download backup: ${downloadResponse.status}`);
+                    }
+
+                    const backupContent = await downloadResponse.text();
+                    const backup = JSON.parse(backupContent);
+
+                    // Merge cloud image cache with local cache
+                    if (backup.imageCache) {
+                        const now = Date.now();
+                        const expiryTime = this.cacheExpiryDays * 24 * 60 * 60 * 1000;
+                        let cloudCacheCount = 0;
+                        let mergedCount = 0;
+
+                        for (const [key, entry] of Object.entries(backup.imageCache)) {
+                            cloudCacheCount++;
+                            
+                            // Only use cloud cache entries that aren't expired
+                            if (now - entry.timestamp < expiryTime) {
+                                // Use cloud cache if we don't have it locally, or if cloud is newer
+                                const localEntry = this.imageCache.get(key);
+                                if (!localEntry || entry.timestamp > localEntry.timestamp) {
+                                    this.imageCache.set(key, entry);
+                                    mergedCount++;
+                                }
+                            }
+                        }
+
+                        console.log(`☁️ Loaded ${cloudCacheCount} images from OneDrive cache`);
+                        console.log(`🔄 Merged ${mergedCount} newer images from cloud`);
+                        console.log(`📦 Total cached images: ${this.imageCache.size}`);
+                        
+                        // Save the merged cache locally
+                        this.saveImageCache();
+                    } else {
+                        console.log('☁️ No image cache found in OneDrive backup');
+                    }
+
+                } catch (error) {
+                    console.error('Error loading cloud image cache:', error);
+                    throw error;
                 }
             }
 
             saveImageCache() {
                 try {
+                    // Save to local storage for instant access
                     const cacheObject = {};
                     for (const [key, value] of this.imageCache.entries()) {
                         cacheObject[key] = value;
                     }
                     localStorage.setItem(this.cacheKey, JSON.stringify(cacheObject));
-                    console.log(`💾 Saved ${this.imageCache.size} images to cache`);
+                    console.log(`💾 Saved ${this.imageCache.size} images to local cache`);
+                    
+                    // Also sync to OneDrive if connected (debounced)
+                    if (this.accessToken) {
+                        clearTimeout(this.cloudCacheSyncTimeout);
+                        this.cloudCacheSyncTimeout = setTimeout(() => {
+                            this.syncImageCacheToCloud();
+                        }, 5000); // Sync to cloud after 5 seconds of inactivity
+                    }
                 } catch (error) {
                     console.error('Error saving image cache:', error);
+                }
+            }
+
+            async syncImageCacheToCloud() {
+                if (!this.accessToken) return;
+                
+                try {
+                    console.log('☁️ Syncing image cache to OneDrive...');
+                    await this.updateOneDriveBackup();
+                    console.log('✅ Image cache synced to OneDrive successfully');
+                } catch (error) {
+                    console.error('❌ Failed to sync image cache to OneDrive:', error);
+                    // Don't show error to user for background sync failures
                 }
             }
 
@@ -1045,10 +1159,18 @@
             }
 
             clearImageCache() {
-                if (confirm('Clear all cached images?\n\nThis will force re-downloading images next time you visit.')) {
+                if (confirm('Clear all cached images?\n\nThis will clear images on this device and sync the change to OneDrive.')) {
                     this.imageCache.clear();
                     localStorage.removeItem(this.cacheKey);
-                    this.updateStatus('🗑️ Image cache cleared. Images will be re-downloaded next time.', 'success');
+                    
+                    // Also clear from OneDrive
+                    if (this.accessToken) {
+                        this.syncImageCacheToCloud();
+                        this.updateStatus('🗑️ Image cache cleared on this device and OneDrive.', 'success');
+                    } else {
+                        this.updateStatus('🗑️ Local image cache cleared. Connect to OneDrive to sync.', 'success');
+                    }
+                    
                     console.log('🗑️ Image cache cleared');
                 }
             }
@@ -1082,7 +1204,7 @@
                         <div class="article-image" id="image-${index}">
                             ${cachedImage ? this.createImageHTML(cachedImage, true) : this.createPlaceholderHTML()}
                             <div class="cache-indicator ${cacheStatus}">
-                                ${cachedImage ? '💾 Cached' : '🔄 Loading'}
+                                ${cachedImage ? '☁️ Synced' : '🔄 Loading'}
                             </div>
                         </div>
                         <div class="article-content" onclick="webReader.openReader(${index})">
@@ -1117,10 +1239,10 @@
                 const articlesNeedingImages = articles.filter(article => !this.getCachedImage(article));
                 
                 if (articlesNeedingImages.length > 0) {
-                    this.updateStatus(`📸 Loading ${articlesNeedingImages.length} new images (${this.imageCache.size} cached)...`, 'loading');
+                    this.updateStatus(`📸 Loading ${articlesNeedingImages.length} new images (${this.imageCache.size} cached across devices)...`, 'loading');
                     this.loadMissingImages(articles);
                 } else {
-                    this.updateStatus(`✅ All ${articles.length} images loaded from cache!`, 'success');
+                    this.updateStatus(`✅ All ${articles.length} images loaded from cache (synced across devices)!`, 'success');
                 }
             }
 
@@ -1217,8 +1339,8 @@
                 }
                 
                 const totalCached = this.imageCache.size;
-                this.updateStatus(`✅ Loaded ${successCount}/${totalNew} new images! (${totalCached} total cached)`, 'success');
-                console.log(`🎨 Smart image loading complete: ${successCount}/${totalNew} new, ${totalCached} total cached`);
+                this.updateStatus(`✅ Loaded ${successCount}/${totalNew} new images! (${totalCached} total cached across devices)`, 'success');
+                console.log(`🎨 Smart image loading complete: ${successCount}/${totalNew} new, ${totalCached} total cached across devices`);
             }
 
             // Extract and cache image (enhanced version)
@@ -1266,7 +1388,7 @@
                 // Update cache indicator
                 const cacheIndicator = imageElement.querySelector('.cache-indicator');
                 if (cacheIndicator) {
-                    cacheIndicator.textContent = source === 'extracted' ? '🌐 Fresh' : '💾 Cached';
+                    cacheIndicator.textContent = source === 'extracted' ? '🌐 Fresh' : '☁️ Synced';
                     cacheIndicator.className = `cache-indicator ${source === 'extracted' ? 'fresh' : 'cached'}`;
                 }
 
@@ -1421,8 +1543,13 @@
                     this.articles = backup.articles || [];
                     this.displayArticles(this.articles);
 
+                    // Load image cache from this backup if available
+                    if (backup.imageCache) {
+                        console.log(`📦 Found ${Object.keys(backup.imageCache).length} cached images in backup`);
+                    }
+
                     const cacheStats = this.getCacheStats();
-                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name} (${cacheStats.total} images cached)`, 'success');
+                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name} (${cacheStats.total} images cached across devices)`, 'success');
 
                 } catch (error) {
                     console.error('Error loading articles:', error);
@@ -1818,16 +1945,24 @@
                     throw new Error('Not connected to OneDrive');
                 }
 
+                // Prepare image cache for backup
+                const imageCacheObject = {};
+                for (const [key, value] of this.imageCache.entries()) {
+                    imageCacheObject[key] = value;
+                }
+
                 const backup = {
                     articles: this.articles,
+                    imageCache: imageCacheObject, // Include image cache in backup
                     settings: {},
                     exportDate: new Date().toISOString(),
-                    version: "3.3",
+                    version: "3.4", // Increment version for image cache support
                     deviceInfo: {
                         browser: "Web Reader",
                         platform: navigator.platform,
                         timestamp: Date.now(),
-                        articleCount: this.articles.length
+                        articleCount: this.articles.length,
+                        cachedImageCount: this.imageCache.size
                     }
                 };
 
@@ -2518,10 +2653,11 @@ Host: ${window.location.host}
 Has Access Token: ${!!this.accessToken}
 Articles Loaded: ${this.articles.length}
 
-Image Cache Stats:
+Image Cache Stats (Cross-Device):
 - Total Cached Images: ${cacheStats.total}
-- Memory Usage: ${Math.round(cacheStats.memoryUsage / 1024)} KB
+- Local Storage Usage: ${Math.round(cacheStats.memoryUsage / 1024)} KB
 - Cache Expiry: ${this.cacheExpiryDays} days
+- OneDrive Sync: ${this.accessToken ? 'Enabled' : 'Disabled'}
 - Oldest Entry: ${cacheStats.total > 0 ? new Date(cacheStats.oldestEntry).toLocaleDateString() : 'N/A'}
 - Newest Entry: ${cacheStats.total > 0 ? new Date(cacheStats.newestEntry).toLocaleDateString() : 'N/A'}
 
@@ -2542,11 +2678,13 @@ Next Steps:
 4. Add Web platform with redirect URI: ${this.redirectUri}
 5. Make sure URI is exact match
 
-Image Cache Features:
-- Images are cached for ${this.cacheExpiryDays} days
-- Cache survives browser sessions
-- Use "Clear Cache" button to force refresh
-- Cached images load instantly on subsequent visits
+Cross-Device Image Cache Features:
+- Images cached for ${this.cacheExpiryDays} days across all devices
+- Automatic sync to/from OneDrive when connected
+- Local cache for instant loading + cloud backup
+- Smart merging: keeps newest images from any device
+- Use "Clear Cache" to reset on all synced devices
+- Works offline with local cache, syncs when online
                 `;
 
                 alert(info);
