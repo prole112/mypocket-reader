@@ -305,14 +305,15 @@
 
         .articles-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 18px;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* REDUCED from 290px to 220px */
+            gap: 18px; /* REDUCED from 24px to 18px */
             margin-top: 20px;
         }
 
         /* ORGANIC SHAPED TILES - SMALLER VERSION */
         .article-card {
             background: var(--surface);
+            /* Organic rounded shape - different for each nth-child */
             border-radius: 32px 24px 32px 24px;
             overflow: visible;
             box-shadow: var(--shadow);
@@ -362,15 +363,16 @@
         /* Organic shaped image area - SMALLER */
         .article-image {
             width: 100%;
-            height: 100px;
+            height: 100px; /* REDUCED from 140px to 100px */
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5em;
+            font-size: 1.5em; /* REDUCED from 2em to 1.5em */
             color: white;
             position: relative;
             overflow: hidden;
+            /* Inherit the card's organic border radius for top corners */
             border-radius: inherit;
             border-bottom-left-radius: 16px;
             border-bottom-right-radius: 16px;
@@ -382,6 +384,7 @@
             object-fit: cover;
             object-position: center;
             transition: transform 0.4s ease, opacity 0.3s ease;
+            /* Force proper aspect ratio on all browsers */
             min-height: 100px;
             max-height: 100px;
         }
@@ -393,17 +396,20 @@
         /* Mobile-specific image fixes */
         @media (max-width: 768px) {
             .article-image {
-                height: 120px;
-                border-radius: 16px 16px 0 0 !important;
+                height: 120px; /* Slightly taller on mobile for better proportions */
+                border-radius: 16px 16px 0 0 !important; /* Simpler radius on mobile */
             }
-
+            
             .article-image img {
+                /* Enhanced mobile image handling */
                 min-height: 120px;
                 max-height: 120px;
                 object-fit: cover;
                 object-position: center;
+                /* Firefox mobile specific fixes */
                 -moz-object-fit: cover;
                 -moz-object-position: center;
+                /* Prevent stretching on mobile */
                 width: 100% !important;
                 height: 100% !important;
                 display: block;
@@ -422,33 +428,31 @@
 
         /* Compact content area with organic feel - SMALLER */
         .article-content {
-            padding: 15px;
+            padding: 15px; /* REDUCED from 20px to 15px */
             flex: 1;
             cursor: pointer;
             border-radius: 0 0 inherit inherit;
         }
 
         .article-title {
-            font-size: 1em;
+            font-size: 1em; /* REDUCED from 1.1em to 1em */
             font-weight: 600;
-            margin-bottom: 6px;
+            margin-bottom: 6px; /* REDUCED from 8px to 6px */
             line-height: 1.3;
             color: var(--text-primary);
             display: -webkit-box;
             -webkit-line-clamp: 2;
-            line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
 
         .article-excerpt {
             color: var(--text-secondary);
-            font-size: 0.8em;
+            font-size: 0.8em; /* REDUCED from 0.9em to 0.8em */
             line-height: 1.4;
-            margin-bottom: 10px;
+            margin-bottom: 10px; /* REDUCED from 12px to 10px */
             display: -webkit-box;
             -webkit-line-clamp: 2;
-            line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
@@ -458,10 +462,10 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 6px;
+            gap: 6px; /* REDUCED from 8px to 6px */
             color: var(--text-secondary);
-            font-size: 0.75em;
-            margin-bottom: 6px;
+            font-size: 0.75em; /* REDUCED from 0.8em to 0.75em */
+            margin-bottom: 6px; /* REDUCED from 8px to 6px */
         }
 
         .article-domain {
@@ -474,18 +478,18 @@
 
         .article-stats {
             display: flex;
-            gap: 10px;
-            font-size: 0.7em;
+            gap: 10px; /* REDUCED from 12px to 10px */
+            font-size: 0.7em; /* REDUCED from 0.75em to 0.7em */
             color: var(--text-secondary);
         }
 
         /* Floating organic action buttons - SMALLER */
         .article-actions {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 10px; /* REDUCED from 15px to 10px */
+            right: 10px; /* REDUCED from 15px to 10px */
             display: flex;
-            gap: 6px;
+            gap: 6px; /* REDUCED from 8px to 6px */
             opacity: 0 !important;
             visibility: hidden;
             transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -495,15 +499,15 @@
         .action-btn {
             background: rgba(255, 255, 255, 0.95);
             border: 2px solid var(--border);
-            border-radius: 50%;
-            padding: 8px;
+            border-radius: 50%; /* Circular buttons for organic feel */
+            padding: 8px; /* REDUCED from 12px to 8px */
             cursor: pointer;
-            font-size: 14px;
+            font-size: 14px; /* REDUCED from 16px to 14px */
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             backdrop-filter: blur(10px);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            min-width: 36px;
-            height: 36px;
+            min-width: 36px; /* REDUCED from 44px to 36px */
+            height: 36px; /* REDUCED from 44px to 36px */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -752,7 +756,9 @@
             }
 
             .article-card {
+                /* Simpler border radius for mobile */
                 border-radius: 16px !important;
+                /* Better mobile shadows */
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             }
 
@@ -761,21 +767,27 @@
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             }
 
+            /* Mobile image container */
             .article-image {
-                height: 120px !important;
+                height: 120px !important; /* Consistent mobile height */
                 border-radius: 16px 16px 0 0 !important;
+                /* Better mobile background gradients */
                 background-size: 200% 200%;
                 animation: gradientShift 3s ease infinite;
             }
-
+            
+            /* Enhanced mobile image handling */
             .article-image img {
                 min-height: 120px !important;
                 max-height: 120px !important;
                 object-fit: cover !important;
                 object-position: center !important;
+                /* Prevent image distortion on mobile */
                 aspect-ratio: 16/9;
+                /* Firefox mobile specific */
                 -moz-object-fit: cover !important;
                 -moz-object-position: center !important;
+                /* Webkit mobile specific */
                 -webkit-object-fit: cover !important;
                 -webkit-object-position: center !important;
             }
@@ -824,6 +836,7 @@
                 height: 44px;
                 font-size: 16px;
                 border-radius: 50% !important;
+                /* Better mobile touch targets */
                 padding: 10px;
             }
 
@@ -856,7 +869,7 @@
             }
 
             .search-input {
-                font-size: 16px;
+                font-size: 16px; /* Prevent zoom on iOS */
                 padding: 12px 45px 12px 15px;
             }
 
@@ -869,6 +882,7 @@
                 font-size: 0.9em;
             }
 
+            /* Mobile cache indicators */
             .cache-indicator {
                 font-size: 9px;
                 padding: 1px 4px;
@@ -882,20 +896,20 @@
             .header-actions {
                 gap: 8px;
             }
-
+            
             .btn {
                 padding: 6px 12px;
                 font-size: 12px;
             }
-
+            
             .btn span {
                 margin-right: 4px;
             }
-
+            
             .article-image {
                 height: 100px !important;
             }
-
+            
             .article-image img {
                 min-height: 100px !important;
                 max-height: 100px !important;
@@ -904,17 +918,9 @@
 
         /* Gradient animation for mobile loading states */
         @keyframes gradientShift {
-            0% {
-                background-position: 0% 50%;
-            }
-
-            50% {
-                background-position: 100% 50%;
-            }
-
-            100% {
-                background-position: 0% 50%;
-            }
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         /* Touch device optimizations */
@@ -922,18 +928,19 @@
             .article-card:hover {
                 transform: none;
             }
-
+            
             .article-image img {
+                /* Force proper rendering on touch devices */
                 transform: translateZ(0);
                 -webkit-transform: translateZ(0);
                 backface-visibility: hidden;
                 -webkit-backface-visibility: hidden;
             }
-
+            
             .action-btn:hover {
                 transform: none;
             }
-
+            
             .action-btn:active {
                 transform: scale(0.95);
                 transition: transform 0.1s ease;
@@ -941,8 +948,7 @@
         }
 
         /* High DPI display optimizations */
-        @media (-webkit-min-device-pixel-ratio: 2),
-        (min-resolution: 192dpi) {
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
             .article-image img {
                 image-rendering: -webkit-optimize-contrast;
                 image-rendering: crisp-edges;
@@ -973,39 +979,21 @@
 
         /* Additional organic elements */
         @keyframes float {
-
-            0%,
-            100% {
-                transform: translateY(0px);
-            }
-
-            50% {
-                transform: translateY(-6px);
-            }
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
         }
 
+        /* Background pattern animation for generated placeholders */
         @keyframes floatPattern {
-            0% {
-                transform: translate(-50%, -50%) rotate(0deg);
-            }
-
-            100% {
-                transform: translate(-50%, -50%) rotate(360deg);
-            }
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
+        /* Shimmer animation for loading placeholders */
         @keyframes shimmer {
-            0% {
-                opacity: 0.6;
-            }
-
-            50% {
-                opacity: 1;
-            }
-
-            100% {
-                opacity: 0.6;
-            }
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
         }
 
         .article-card:nth-child(7n+1) {
@@ -1138,24 +1126,30 @@
                 console.log('🔵 Redirect URI:', this.redirectUri);
 
                 this.accessToken = null;
-                this.refreshToken = null;
                 this.articles = [];
                 this.currentArticle = null;
-
-                // PKCE parameters
-                this.codeVerifier = null;
-                this.codeChallenge = null;
-
+                
                 // Image cache system
                 this.imageCache = new Map();
                 this.cacheKey = 'mypocket_image_cache';
-                this.cacheExpiryDays = 7;
-
+                this.cacheExpiryDays = 7; // Cache images for 7 days
+                
                 // Mobile browser detection
                 this.isMobile = this.detectMobile();
                 this.isFirefoxMobile = this.detectFirefoxMobile();
 
                 this.init();
+            }
+
+            detectMobile() {
+                return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                       window.innerWidth <= 768 ||
+                       ('ontouchstart' in window);
+            }
+
+            detectFirefoxMobile() {
+                return /Firefox/.test(navigator.userAgent) && this.isMobile;
+            }
             }
 
             getRedirectUri() {
@@ -1174,103 +1168,45 @@
                 this.checkAuthFromURL();
                 this.loadStoredToken();
                 this.loadThemePreference();
-                this.loadImageCache();
-
+                this.loadImageCache(); // Load cached images
+                
+                // Mobile debugging info
                 if (this.isMobile) {
                     console.log('📱 Mobile device detected');
                     if (this.isFirefoxMobile) {
                         console.log('🦊 Firefox Mobile detected - applying specific fixes');
                     }
-                    console.log('📐 Screen: ' + window.innerWidth + 'x' + window.innerHeight + ', DPR: ' + (window.devicePixelRatio || 1));
+                    console.log(`📐 Screen: ${window.innerWidth}x${window.innerHeight}, DPR: ${window.devicePixelRatio || 1}`);
                 }
             }
 
             setupEventListeners() {
-                document.getElementById('connectBtn').addEventListener('click', () => {
-                    if (this.accessToken) {
-                        const reconnect = confirm('You are already connected to OneDrive.\n\nWould you like to reconnect with a fresh session?');
-                        if (reconnect) {
-                            this.clearTokens();
-                            this.updateConnectionStatus(false);
-                            this.authenticate();
-                        }
-                    } else {
-                        this.authenticate();
-                    }
-                });
+                document.getElementById('connectBtn').addEventListener('click', () => this.authenticate());
                 document.getElementById('refreshBtn').addEventListener('click', () => this.loadArticles());
                 document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
                 document.getElementById('closeReader').addEventListener('click', () => this.closeReader());
                 document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
             }
 
-            detectMobile() {
-                return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-                    window.innerWidth <= 768 ||
-                    ('ontouchstart' in window);
-            }
-
-            detectFirefoxMobile() {
-                return /Firefox/.test(navigator.userAgent) && this.isMobile;
-            }
-
-            // PKCE IMPLEMENTATION
-            generateCodeVerifier() {
-                const array = new Uint8Array(32);
-                crypto.getRandomValues(array);
-                return this.base64URLEncode(array);
-            }
-
-            async generateCodeChallenge(verifier) {
-                const encoder = new TextEncoder();
-                const data = encoder.encode(verifier);
-                const digest = await crypto.subtle.digest('SHA-256', data);
-                return this.base64URLEncode(new Uint8Array(digest));
-            }
-
-            base64URLEncode(array) {
-                const string = String.fromCharCode.apply(null, array);
-                return btoa(string)
-                    .replace(/\+/g, '-')
-                    .replace(/\//g, '_')
-                    .replace(/=/g, '');
-            }
-
-            storePKCEParams(verifier, challenge) {
-                sessionStorage.setItem('pkce_code_verifier', verifier);
-                sessionStorage.setItem('pkce_code_challenge', challenge);
-                console.log('🔐 PKCE parameters stored');
-            }
-
-            retrievePKCEParams() {
-                const verifier = sessionStorage.getItem('pkce_code_verifier');
-                const challenge = sessionStorage.getItem('pkce_code_challenge');
-                return { verifier, challenge };
-            }
-
-            clearPKCEParams() {
-                sessionStorage.removeItem('pkce_code_verifier');
-                sessionStorage.removeItem('pkce_code_challenge');
-                console.log('🗑️ PKCE parameters cleared');
-            }
-
-            // IMAGE CACHE SYSTEM
+            // ===== IMAGE CACHE SYSTEM =====
+            
             loadImageCache() {
                 try {
                     const cachedData = localStorage.getItem(this.cacheKey);
                     if (cachedData) {
                         const cache = JSON.parse(cachedData);
-
+                        
+                        // Clean expired cache entries
                         const now = Date.now();
                         const expiryTime = this.cacheExpiryDays * 24 * 60 * 60 * 1000;
-
+                        
                         for (const [key, entry] of Object.entries(cache)) {
                             if (now - entry.timestamp < expiryTime) {
                                 this.imageCache.set(key, entry);
                             }
                         }
-
-                        console.log('📦 Loaded ' + this.imageCache.size + ' cached images');
+                        
+                        console.log(`📦 Loaded ${this.imageCache.size} cached images`);
                     }
                 } catch (error) {
                     console.error('Error loading image cache:', error);
@@ -1285,33 +1221,35 @@
                         cacheObject[key] = value;
                     }
                     localStorage.setItem(this.cacheKey, JSON.stringify(cacheObject));
-                    console.log('💾 Saved ' + this.imageCache.size + ' images to cache');
+                    console.log(`💾 Saved ${this.imageCache.size} images to cache`);
                 } catch (error) {
                     console.error('Error saving image cache:', error);
                 }
             }
 
             getCacheKey(article) {
-                return (this.getDomain(article.url) + '_' + article.url.substring(article.url.length - 20) + '_' + article.title.substring(0, 30)).replace(/[^a-zA-Z0-9]/g, '_');
+                // Create a unique cache key based on article URL and title
+                return `${this.getDomain(article.url)}_${article.url.substring(article.url.length - 20)}_${article.title.substring(0, 30)}`.replace(/[^a-zA-Z0-9]/g, '_');
             }
 
             getCachedImage(article) {
                 const key = this.getCacheKey(article);
                 const cached = this.imageCache.get(key);
-
+                
                 if (cached) {
                     const now = Date.now();
                     const expiryTime = this.cacheExpiryDays * 24 * 60 * 60 * 1000;
-
+                    
                     if (now - cached.timestamp < expiryTime) {
-                        console.log('✅ Using cached image for: ' + article.title.substring(0, 30) + '...');
+                        console.log(`✅ Using cached image for: ${article.title.substring(0, 30)}...`);
                         return cached.imageUrl;
                     } else {
+                        // Remove expired cache entry
                         this.imageCache.delete(key);
-                        console.log('⏰ Cache expired for: ' + article.title.substring(0, 30) + '...');
+                        console.log(`⏰ Cache expired for: ${article.title.substring(0, 30)}...`);
                     }
                 }
-
+                
                 return null;
             }
 
@@ -1323,11 +1261,12 @@
                     domain: this.getDomain(article.url),
                     title: article.title.substring(0, 50)
                 });
-
+                
+                // Save to localStorage (debounced)
                 clearTimeout(this.cacheSaveTimeout);
                 this.cacheSaveTimeout = setTimeout(() => this.saveImageCache(), 1000);
-
-                console.log('💾 Cached image for: ' + article.title.substring(0, 30) + '...');
+                
+                console.log(`💾 Cached image for: ${article.title.substring(0, 30)}...`);
             }
 
             clearImageCache() {
@@ -1348,379 +1287,9 @@
                 };
             }
 
-            async authenticate() {
-                if (!this.redirectUri || (!this.redirectUri.startsWith('http://') && !this.redirectUri.startsWith('https://'))) {
-                    this.updateStatus('❌ Invalid redirect URI. Please open this page via HTTP/HTTPS.', 'error');
-                    console.error('🔴 Invalid redirect URI:', this.redirectUri);
-                    alert('Redirect URI Error:\n\nCurrent URI: ' + this.redirectUri + '\n\nPlease:\n1. Open this page via HTTP/HTTPS (not file://)\n2. Register this exact URI in Azure AD\n3. Use a web server to serve this file');
-                    return;
-                }
+            // ===== ENHANCED IMAGE LOADING WITH CACHE =====
 
-                try {
-                    this.updateStatus('🔐 Generating PKCE parameters...', 'loading');
-
-                    this.codeVerifier = this.generateCodeVerifier();
-                    this.codeChallenge = await this.generateCodeChallenge(this.codeVerifier);
-
-                    this.storePKCEParams(this.codeVerifier, this.codeChallenge);
-
-                    const authUrl = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?' +
-                        'client_id=' + this.clientId + '&' +
-                        'response_type=code&' +
-                        'redirect_uri=' + encodeURIComponent(this.redirectUri) + '&' +
-                        'scope=' + encodeURIComponent('Files.ReadWrite User.Read offline_access') + '&' +
-                        'code_challenge=' + this.codeChallenge + '&' +
-                        'code_challenge_method=S256&' +
-                        'prompt=select_account&' +
-                        'state=' + Date.now();
-
-                    console.log('🔐 PKCE Auth URL:', authUrl);
-                    console.log('🔐 Code Challenge:', this.codeChallenge);
-
-                    this.updateStatus('🔄 Redirecting to Microsoft login with PKCE...', 'loading');
-
-                    setTimeout(() => {
-                        window.location.href = authUrl;
-                    }, 1000);
-
-                } catch (error) {
-                    console.error('PKCE setup error:', error);
-                    this.updateStatus('❌ Failed to setup PKCE authentication', 'error');
-                }
-            }
-
-            checkAuthFromURL() {
-                const urlParams = new URLSearchParams(window.location.search);
-                const authCode = urlParams.get('code');
-                const error = urlParams.get('error');
-                const errorDescription = urlParams.get('error_description');
-
-                if (error) {
-                    this.updateStatus('Authentication error: ' + error + ' - ' + errorDescription, 'error');
-                    this.clearPKCEParams();
-                    return;
-                }
-
-                if (authCode) {
-                    console.log('🔐 Authorization code received, exchanging for tokens...');
-                    this.exchangeCodeForTokens(authCode);
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                }
-            }
-
-            async exchangeCodeForTokens(authCode) {
-                try {
-                    this.updateStatus('🔄 Exchanging authorization code for tokens...', 'loading');
-
-                    const { verifier } = this.retrievePKCEParams();
-                    if (!verifier) {
-                        throw new Error('PKCE code verifier not found');
-                    }
-
-                    const tokenUrl = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token';
-                    const body = new URLSearchParams({
-                        client_id: this.clientId,
-                        grant_type: 'authorization_code',
-                        code: authCode,
-                        redirect_uri: this.redirectUri,
-                        code_verifier: verifier,
-                        scope: 'Files.ReadWrite User.Read offline_access'
-                    });
-
-                    const response = await fetch(tokenUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: body
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error('Token exchange failed: ' + (errorData.error_description || response.statusText));
-                    }
-
-                    const tokenData = await response.json();
-
-                    this.accessToken = tokenData.access_token;
-                    this.refreshToken = tokenData.refresh_token;
-
-                    this.saveTokens(tokenData);
-                    this.clearPKCEParams();
-                    this.updateConnectionStatus(true);
-                    this.loadArticles();
-
-                    console.log('✅ PKCE token exchange successful');
-                    this.updateStatus('✅ Successfully authenticated with PKCE!', 'success');
-
-                } catch (error) {
-                    console.error('Token exchange error:', error);
-                    this.updateStatus('❌ Token exchange failed: ' + error.message, 'error');
-                    this.clearPKCEParams();
-                }
-            }
-
-            saveTokens(tokenData) {
-                const tokenInfo = {
-                    accessToken: tokenData.access_token,
-                    refreshToken: tokenData.refresh_token,
-                    expiresAt: Date.now() + ((tokenData.expires_in - 300) * 1000),
-                    tokenType: tokenData.token_type || 'Bearer',
-                    scope: tokenData.scope,
-                    savedAt: Date.now()
-                };
-
-                localStorage.setItem('mypocket_tokens', JSON.stringify(tokenInfo));
-                console.log('💾 PKCE tokens saved with refresh capability');
-                console.log('⏰ Access token expires at:', new Date(tokenInfo.expiresAt));
-
-                this.scheduleTokenRefresh(tokenInfo.expiresAt);
-            }
-
-            loadStoredToken() {
-                try {
-                    const storedData = localStorage.getItem('mypocket_tokens');
-                    if (storedData) {
-                        const tokenInfo = JSON.parse(storedData);
-
-                        if (Date.now() < tokenInfo.expiresAt) {
-                            this.accessToken = tokenInfo.accessToken;
-                            this.refreshToken = tokenInfo.refreshToken;
-                            this.updateConnectionStatus(true);
-                            this.loadArticles();
-
-                            const minutesLeft = Math.round((tokenInfo.expiresAt - Date.now()) / (60 * 1000));
-                            console.log('✅ Valid PKCE tokens loaded. Expires in ' + minutesLeft + ' minutes.');
-
-                            this.scheduleTokenRefresh(tokenInfo.expiresAt);
-                        } else {
-                            console.log('⏰ Access token expired, attempting refresh...');
-                            if (tokenInfo.refreshToken) {
-                                this.refreshAccessToken(tokenInfo.refreshToken);
-                            } else {
-                                this.clearTokens();
-                                this.updateStatus('Session expired. Please reconnect to OneDrive.', 'error');
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error loading stored tokens:', error);
-                    this.clearTokens();
-                }
-            }
-
-            async refreshAccessToken(refreshToken) {
-                try {
-                    console.log('🔄 Refreshing access token...');
-                    this.updateStatus('🔄 Refreshing authentication...', 'loading');
-
-                    const tokenUrl = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token';
-                    const body = new URLSearchParams({
-                        client_id: this.clientId,
-                        grant_type: 'refresh_token',
-                        refresh_token: refreshToken,
-                        scope: 'Files.ReadWrite User.Read offline_access'
-                    });
-
-                    const response = await fetch(tokenUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: body
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error('Token refresh failed: ' + (errorData.error_description || response.statusText));
-                    }
-
-                    const tokenData = await response.json();
-
-                    this.accessToken = tokenData.access_token;
-                    this.refreshToken = tokenData.refresh_token || refreshToken;
-
-                    this.saveTokens(tokenData);
-                    this.updateConnectionStatus(true);
-
-                    console.log('✅ Access token refreshed successfully');
-                    this.updateStatus('✅ Authentication refreshed automatically!', 'success');
-
-                    return true;
-
-                } catch (error) {
-                    console.error('Token refresh error:', error);
-                    this.updateStatus('❌ Failed to refresh authentication. Please reconnect.', 'error');
-                    this.clearTokens();
-                    this.updateConnectionStatus(false);
-
-                    setTimeout(() => {
-                        if (confirm('Your session has expired and cannot be refreshed. Would you like to log in again?')) {
-                            this.authenticate();
-                        }
-                    }, 2000);
-
-                    return false;
-                }
-            }
-
-            scheduleTokenRefresh(expiresAt) {
-                const timeUntilExpiry = expiresAt - Date.now();
-                const refreshTime = Math.max(timeUntilExpiry - (10 * 60 * 1000), 60 * 1000);
-
-                if (refreshTime > 0) {
-                    setTimeout(async () => {
-                        console.log('⏰ Automatic token refresh triggered');
-                        const tokenInfo = JSON.parse(localStorage.getItem('mypocket_tokens') || '{}');
-                        if (tokenInfo.refreshToken) {
-                            await this.refreshAccessToken(tokenInfo.refreshToken);
-                        }
-                    }, refreshTime);
-
-                    console.log('⏰ Automatic refresh scheduled in ' + Math.round(refreshTime / (60 * 1000)) + ' minutes');
-                }
-            }
-
-            clearTokens() {
-                localStorage.removeItem('mypocket_tokens');
-                localStorage.removeItem('mypocket_access_token');
-                this.accessToken = null;
-                this.refreshToken = null;
-                console.log('🗑️ All tokens cleared');
-            }
-
-            saveToken(token) {
-                console.log('⚠️ Using legacy saveToken - consider upgrading to PKCE');
-                const tokenData = {
-                    access_token: token,
-                    expires_in: 3600
-                };
-                this.saveTokens(tokenData);
-            }
-
-            clearToken() {
-                this.clearTokens();
-            }
-
-            async makeAuthenticatedRequest(url, options = {}) {
-                if (!this.accessToken) {
-                    throw new Error('No access token available');
-                }
-
-                const headers = {
-                    'Authorization': 'Bearer ' + this.accessToken,
-                    'Content-Type': 'application/json',
-                    ...options.headers
-                };
-
-                try {
-                    const response = await fetch(url, { ...options, headers });
-
-                    if (response.status === 401) {
-                        console.log('🔑 Access token expired, attempting automatic refresh...');
-
-                        const tokenInfo = JSON.parse(localStorage.getItem('mypocket_tokens') || '{}');
-                        if (tokenInfo.refreshToken) {
-                            const refreshed = await this.refreshAccessToken(tokenInfo.refreshToken);
-
-                            if (refreshed) {
-                                console.log('🔄 Retrying request with refreshed token...');
-                                const newHeaders = {
-                                    'Authorization': 'Bearer ' + this.accessToken,
-                                    'Content-Type': 'application/json',
-                                    ...options.headers
-                                };
-
-                                const retryResponse = await fetch(url, { ...options, headers: newHeaders });
-
-                                if (retryResponse.ok) {
-                                    console.log('✅ Request succeeded after token refresh');
-                                }
-
-                                return retryResponse;
-                            }
-                        }
-
-                        this.clearTokens();
-                        this.updateConnectionStatus(false);
-                        this.updateStatus('🔑 Session expired. Please reconnect to OneDrive.', 'error');
-
-                        setTimeout(() => {
-                            if (confirm('Your OneDrive session has expired. Would you like to reconnect now?')) {
-                                this.authenticate();
-                            }
-                        }, 2000);
-
-                        throw new Error('Authentication expired and refresh failed');
-                    }
-
-                    return response;
-                } catch (error) {
-                    if (error.message.includes('Authentication expired')) {
-                        throw error;
-                    }
-                    throw new Error('Request failed: ' + error.message);
-                }
-            }
-
-            async loadArticles() {
-                if (!this.accessToken) {
-                    this.updateStatus('Not connected to OneDrive', 'error');
-                    return;
-                }
-
-                try {
-                    this.updateStatus('Loading articles... ⏳', 'loading');
-
-                    const listResponse = await this.makeAuthenticatedRequest(
-                        'https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children'
-                    );
-
-                    if (!listResponse.ok) {
-                        throw new Error('Failed to list files: ' + listResponse.status);
-                    }
-
-                    const fileList = await listResponse.json();
-                    const backupFiles = fileList.value.filter(file =>
-                        file.name.startsWith('mypocket-backup-') && file.name.endsWith('.json')
-                    );
-
-                    if (backupFiles.length === 0) {
-                        this.updateStatus('No backup files found. Save some articles with the browser extension first.', 'error');
-                        this.displayEmptyState();
-                        return;
-                    }
-
-                    const latestFile = backupFiles.sort((a, b) =>
-                        new Date(b.lastModifiedDateTime) - new Date(a.lastModifiedDateTime)
-                    )[0];
-
-                    const downloadResponse = await this.makeAuthenticatedRequest(
-                        'https://graph.microsoft.com/v1.0/me/drive/items/' + latestFile.id + '/content'
-                    );
-
-                    if (!downloadResponse.ok) {
-                        throw new Error('Failed to download backup: ' + downloadResponse.status);
-                    }
-
-                    const backupContent = await downloadResponse.text();
-                    const backup = JSON.parse(backupContent);
-
-                    this.articles = backup.articles || [];
-                    this.displayArticles(this.articles);
-
-                    const cacheStats = this.getCacheStats();
-                    this.updateStatus('✅ Loaded ' + this.articles.length + ' articles from ' + latestFile.name + ' (' + cacheStats.total + ' images cached)', 'success');
-
-                } catch (error) {
-                    console.error('Error loading articles:', error);
-                    if (error.message.includes('Authentication expired')) {
-                        return;
-                    }
-                    this.updateStatus('Error loading articles: ' + error.message, 'error');
-                }
-            }
-
+            // Enhanced displayArticles with intelligent caching
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1732,7 +1301,7 @@
                 const articlesHTML = articles.map((article, index) => {
                     const cachedImage = this.getCachedImage(article);
                     const cacheStatus = cachedImage ? 'cached' : 'fresh';
-
+                    
                     return `
                     <div class="article-card" data-index="${index}">
                         <div class="article-image" id="image-${index}">
@@ -1767,15 +1336,16 @@
                     </div>
                 `}).join('');
 
-                container.innerHTML = '<div class="articles-grid">' + articlesHTML + '</div>';
-
+                container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
+                
+                // Count articles that need image extraction
                 const articlesNeedingImages = articles.filter(article => !this.getCachedImage(article));
-
+                
                 if (articlesNeedingImages.length > 0) {
-                    this.updateStatus('📸 Loading ' + articlesNeedingImages.length + ' new images (' + this.imageCache.size + ' cached)...', 'loading');
+                    this.updateStatus(`📸 Loading ${articlesNeedingImages.length} new images (${this.imageCache.size} cached)...`, 'loading');
                     this.loadMissingImages(articles);
                 } else {
-                    this.updateStatus('✅ All ' + articles.length + ' images loaded from cache!', 'success');
+                    this.updateStatus(`✅ All ${articles.length} images loaded from cache!`, 'success');
                 }
             }
 
@@ -1837,86 +1407,98 @@
                 `;
             }
 
+            // Load only missing images (not cached)
             async loadMissingImages(articles) {
                 console.log('🎨 SMART IMAGE LOADER - Loading only missing images...');
-
+                
                 const articlesNeedingImages = articles.filter((article, index) => {
                     const cached = this.getCachedImage(article);
                     return !cached;
                 });
 
                 if (articlesNeedingImages.length === 0) {
-                    this.updateStatus('✅ All images loaded from cache!', 'success');
+                    this.updateStatus(`✅ All images loaded from cache!`, 'success');
                     return;
                 }
 
                 let successCount = 0;
                 const totalNew = articlesNeedingImages.length;
-
-                console.log('🔄 Loading ' + totalNew + ' new images (' + this.imageCache.size + ' already cached)');
-
+                
+                console.log(`🔄 Loading ${totalNew} new images (${this.imageCache.size} already cached)`);
+                
+                // Load images sequentially to avoid overwhelming websites
                 for (let i = 0; i < articlesNeedingImages.length; i++) {
                     const article = articlesNeedingImages[i];
                     const originalIndex = articles.findIndex(a => a === article);
-
+                    
                     try {
                         const success = await this.extractAndCacheRealImage(article, originalIndex);
                         if (success) successCount++;
-
+                        
+                        // Update progress
                         const progress = Math.round(((i + 1) / totalNew) * 100);
-                        this.updateStatus('🔍 Loading new images... ' + (i + 1) + '/' + totalNew + ' (' + progress + '%)', 'loading');
-
+                        this.updateStatus(`🔍 Loading new images... ${i + 1}/${totalNew} (${progress}%)`, 'loading');
+                        
+                        // Delay to be respectful to websites
                         await new Promise(resolve => setTimeout(resolve, 300));
-
+                        
                     } catch (error) {
-                        console.error('Failed to extract image for article ' + originalIndex + ':', error);
+                        console.error(`Failed to extract image for article ${originalIndex}:`, error);
+                        // Use category fallback for failed extractions
                         const fallbackImage = this.getCategoryBasedImage(article, originalIndex);
                         this.setArticleImageAndCache(article, originalIndex, fallbackImage, 'fallback');
                         successCount++;
                     }
                 }
-
+                
                 const totalCached = this.imageCache.size;
-                this.updateStatus('✅ Loaded ' + successCount + '/' + totalNew + ' new images! (' + totalCached + ' total cached)', 'success');
-                console.log('🎨 Smart image loading complete: ' + successCount + '/' + totalNew + ' new, ' + totalCached + ' total cached');
+                this.updateStatus(`✅ Loaded ${successCount}/${totalNew} new images! (${totalCached} total cached)`, 'success');
+                console.log(`🎨 Smart image loading complete: ${successCount}/${totalNew} new, ${totalCached} total cached`);
             }
 
+            // Extract and cache image (enhanced version)
             async extractAndCacheRealImage(article, index) {
-                const imageElement = document.getElementById('image-' + index);
+                const imageElement = document.getElementById(`image-${index}`);
                 if (!imageElement) return false;
 
-                console.log('🔍 Extracting new image from: ' + this.getDomain(article.url));
+                console.log(`🔍 Extracting new image from: ${this.getDomain(article.url)}`);
 
+                // Strategy 1: Try saved article images first (fastest)
                 const savedImage = this.getBestArticleImage(article);
                 if (savedImage) {
-                    console.log('✅ Using saved image: ' + article.title.substring(0, 30) + '...');
+                    console.log(`✅ Using saved image: ${article.title.substring(0, 30)}...`);
                     this.setArticleImageAndCache(article, index, savedImage, 'saved');
                     return true;
                 }
 
+                // Strategy 2: Extract image from the original website
                 try {
                     const extractedImage = await this.fetchRealImageFromWebsite(article.url);
                     if (extractedImage) {
-                        console.log('✅ Extracted real image: ' + article.title.substring(0, 30) + '...');
+                        console.log(`✅ Extracted real image: ${article.title.substring(0, 30)}...`);
                         this.setArticleImageAndCache(article, index, extractedImage, 'extracted');
                         return true;
                     }
                 } catch (error) {
-                    console.log('⚠️ Could not extract from website: ' + error.message);
+                    console.log(`⚠️ Could not extract from website: ${error.message}`);
                 }
 
-                console.log('🎨 Using intelligent fallback: ' + article.title.substring(0, 30) + '...');
+                // Strategy 3: Use intelligent category-based fallback
+                console.log(`🎨 Using intelligent fallback: ${article.title.substring(0, 30)}...`);
                 const fallbackImage = this.getCategoryBasedImage(article, index);
                 this.setArticleImageAndCache(article, index, fallbackImage, 'fallback');
                 return true;
             }
 
+            // Set image and update cache
             setArticleImageAndCache(article, index, imageUrl, source) {
-                const imageElement = document.getElementById('image-' + index);
+                const imageElement = document.getElementById(`image-${index}`);
                 if (!imageElement) return;
 
+                // Create mobile-optimized image HTML
                 let imageHTML;
                 if (this.isFirefoxMobile) {
+                    // Extra fixes for Firefox mobile
                     imageHTML = `
                         <img src="${imageUrl}" 
                              alt="Article image" 
@@ -1953,15 +1535,222 @@
                     imageHTML = this.createImageHTML(imageUrl, false);
                 }
 
+                // Update the DOM
                 imageElement.innerHTML = imageHTML;
-
+                
+                // Update cache indicator
                 const cacheIndicator = imageElement.querySelector('.cache-indicator');
                 if (cacheIndicator) {
                     cacheIndicator.textContent = source === 'extracted' ? '🌐 Fresh' : '💾 Cached';
-                    cacheIndicator.className = 'cache-indicator ' + (source === 'extracted' ? 'fresh' : 'cached');
+                    cacheIndicator.className = `cache-indicator ${source === 'extracted' ? 'fresh' : 'cached'}`;
                 }
 
+                // Cache the image
                 this.setCachedImage(article, imageUrl);
+            }
+
+            checkAuthFromURL() {
+                const hash = window.location.hash.substring(1);
+                if (hash && hash.includes('access_token=')) {
+                    const params = new URLSearchParams(hash);
+                    const accessToken = params.get('access_token');
+                    const error = params.get('error');
+
+                    if (error) {
+                        this.updateStatus(`Authentication error: ${error}`, 'error');
+                        return;
+                    }
+
+                    if (accessToken) {
+                        this.accessToken = accessToken;
+                        this.saveToken(accessToken);
+                        this.updateConnectionStatus(true);
+                        this.loadArticles();
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
+                }
+            }
+
+            loadStoredToken() {
+                this.accessToken = localStorage.getItem('mypocket_access_token');
+                if (this.accessToken) {
+                    this.updateConnectionStatus(true);
+                    this.loadArticles();
+                }
+            }
+
+            saveToken(token) {
+                localStorage.setItem('mypocket_access_token', token);
+            }
+
+            clearToken() {
+                localStorage.removeItem('mypocket_access_token');
+                this.accessToken = null;
+            }
+
+            authenticate() {
+                if (!this.redirectUri || (!this.redirectUri.startsWith('http://') && !this.redirectUri.startsWith('https://'))) {
+                    this.updateStatus('❌ Invalid redirect URI. Please open this page via HTTP/HTTPS.', 'error');
+                    console.error('🔴 Invalid redirect URI:', this.redirectUri);
+                    alert(`Redirect URI Error:\n\nCurrent URI: ${this.redirectUri}\n\nPlease:\n1. Open this page via HTTP/HTTPS (not file://)\n2. Register this exact URI in Azure AD\n3. Use a web server to serve this file`);
+                    return;
+                }
+
+                // Enhanced auth URL with longer token duration and better scope
+                const authUrl = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?` +
+                    `client_id=${this.clientId}&` +
+                    `response_type=token&` +
+                    `redirect_uri=${encodeURIComponent(this.redirectUri)}&` +
+                    `scope=${encodeURIComponent('Files.ReadWrite User.Read offline_access')}&` +
+                    `response_mode=fragment&` +
+                    `prompt=select_account&` +
+                    `nonce=${Date.now()}`;
+
+                console.log('🔵 Enhanced Auth URL:', authUrl);
+                console.log('🔵 Encoded Redirect URI:', encodeURIComponent(this.redirectUri));
+
+                this.updateStatus('🔄 Redirecting to Microsoft login...', 'loading');
+
+                setTimeout(() => {
+                    window.location.href = authUrl;
+                }, 1000);
+            }
+
+            updateConnectionStatus(connected) {
+                const connectBtn = document.getElementById('connectBtn');
+                const connectIcon = document.getElementById('connectIcon');
+                const connectText = document.getElementById('connectText');
+                const refreshBtn = document.getElementById('refreshBtn');
+
+                if (connected) {
+                    connectIcon.textContent = '✅';
+                    
+                    // Show token expiration info if available
+                    try {
+                        const storedData = localStorage.getItem('mypocket_access_token');
+                        if (storedData) {
+                            const tokenData = JSON.parse(storedData);
+                            const minutesLeft = Math.round((tokenData.expiresAt - Date.now()) / (60 * 1000));
+                            connectText.textContent = `Connected (${minutesLeft}m left)`;
+                        } else {
+                            connectText.textContent = 'Connected';
+                        }
+                    } catch (error) {
+                        connectText.textContent = 'Connected';
+                    }
+                    
+                    connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
+                    refreshBtn.style.display = 'inline-flex';
+                } else {
+                    connectIcon.textContent = '☁️';
+                    connectText.textContent = 'Connect OneDrive';
+                    connectBtn.style.background = 'rgba(255,255,255,0.2)';
+                    refreshBtn.style.display = 'none';
+                }
+            }
+
+            updateStatus(message, type = '') {
+                const status = document.getElementById('status');
+                status.textContent = message;
+                status.className = `status ${type}`;
+            }
+
+            async makeAuthenticatedRequest(url, options = {}) {
+                if (!this.accessToken) {
+                    throw new Error('No access token available');
+                }
+
+                const headers = {
+                    'Authorization': `Bearer ${this.accessToken}`,
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                };
+
+                try {
+                    const response = await fetch(url, { ...options, headers });
+                    
+                    if (response.status === 401) {
+                        console.log('🔑 Token expired, clearing and prompting for re-auth');
+                        this.clearToken();
+                        this.updateConnectionStatus(false);
+                        this.updateStatus('🔑 Session expired. Please reconnect to OneDrive.', 'error');
+                        
+                        // Auto-prompt for re-authentication after a delay
+                        setTimeout(() => {
+                            if (confirm('Your OneDrive session has expired. Would you like to reconnect now?')) {
+                                this.authenticate();
+                            }
+                        }, 2000);
+                        
+                        throw new Error('Authentication expired');
+                    }
+                    
+                    return response;
+                } catch (error) {
+                    if (error.message === 'Authentication expired') {
+                        throw error;
+                    }
+                    throw new Error(`Request failed: ${error.message}`);
+                }
+            }
+
+            async loadArticles() {
+                if (!this.accessToken) {
+                    this.updateStatus('Not connected to OneDrive', 'error');
+                    return;
+                }
+
+                try {
+                    this.updateStatus('Loading articles... ⏳', 'loading');
+
+                    const listResponse = await this.makeAuthenticatedRequest(
+                        'https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children'
+                    );
+
+                    if (!listResponse.ok) {
+                        throw new Error(`Failed to list files: ${listResponse.status}`);
+                    }
+
+                    const fileList = await listResponse.json();
+                    const backupFiles = fileList.value.filter(file =>
+                        file.name.startsWith('mypocket-backup-') && file.name.endsWith('.json')
+                    );
+
+                    if (backupFiles.length === 0) {
+                        this.updateStatus('No backup files found. Save some articles with the browser extension first.', 'error');
+                        this.displayEmptyState();
+                        return;
+                    }
+
+                    const latestFile = backupFiles.sort((a, b) =>
+                        new Date(b.lastModifiedDateTime) - new Date(a.lastModifiedDateTime)
+                    )[0];
+
+                    const downloadResponse = await this.makeAuthenticatedRequest(
+                        `https://graph.microsoft.com/v1.0/me/drive/items/${latestFile.id}/content`
+                    );
+
+                    if (!downloadResponse.ok) {
+                        throw new Error(`Failed to download backup: ${downloadResponse.status}`);
+                    }
+
+                    const backupContent = await downloadResponse.text();
+                    const backup = JSON.parse(backupContent);
+
+                    this.articles = backup.articles || [];
+                    this.displayArticles(this.articles);
+
+                    const cacheStats = this.getCacheStats();
+                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name} (${cacheStats.total} images cached)`, 'success');
+
+                } catch (error) {
+                    console.error('Error loading articles:', error);
+                    if (error.message === 'Authentication expired') {
+                        // Already handled in makeAuthenticatedRequest
+                        return;
+                    }
+                    this.updateStatus(`Error loading articles: ${error.message}`, 'error');
+                }
             }
 
             displayEmptyState() {
@@ -1988,18 +1777,20 @@
                 );
 
                 this.displayArticles(filtered);
-                this.updateStatus('Found ' + filtered.length + ' articles matching "' + query + '"', filtered.length > 0 ? 'success' : 'error');
+                this.updateStatus(`Found ${filtered.length} articles matching "${query}"`, filtered.length > 0 ? 'success' : 'error');
             }
 
             openReader(index) {
                 this.currentArticle = this.articles[index];
                 const overlay = document.getElementById('readerOverlay');
 
+                // Set title and meta info
                 document.getElementById('readerTitle').textContent = this.currentArticle.title;
                 document.getElementById('readerDate').textContent = this.formatDate(this.currentArticle.dateAdded);
                 document.getElementById('readerDomain').textContent = this.getDomain(this.currentArticle.url);
-                document.getElementById('readerTime').textContent = (this.currentArticle.readTime || 1) + ' min read';
-
+                document.getElementById('readerTime').textContent = `${this.currentArticle.readTime || 1} min read`;
+                
+                // Show loading state first
                 document.getElementById('readerContent').innerHTML = `
                     <div style="text-align: center; padding: 40px;">
                         <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
@@ -2009,20 +1800,24 @@
 
                 overlay.classList.add('active');
                 document.body.style.overflow = 'hidden';
-
+                
+                // Try to get content, fetch if needed
                 setTimeout(() => this.loadArticleContent(this.currentArticle), 100);
             }
 
             async loadArticleContent(article) {
                 console.log('🚀 CONTENT LOADER WITH CACHING');
                 const contentElement = document.getElementById('readerContent');
-
+                
+                // First try to get saved content
                 let content = this.getArticleContent(article);
-
+                
+                // If no saved content found, try to fetch from original URL
                 if (!content) {
                     console.log('🌐 No saved content found. Attempting to fetch from original URL...');
-
+                    
                     try {
+                        // Show fetching status
                         contentElement.innerHTML = `
                             <div style="text-align: center; padding: 40px;">
                                 <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
@@ -2035,9 +1830,10 @@
                                 </p>
                             </div>
                         `;
-
+                        
+                        // Fetch content using proxy services
                         const fetchedContent = await this.fetchArticleContent(article.url);
-
+                        
                         if (fetchedContent && fetchedContent.trim()) {
                             content = fetchedContent;
                             console.log('✅ Successfully fetched article content');
@@ -2045,7 +1841,7 @@
                         } else {
                             throw new Error('No content extracted from fetched page');
                         }
-
+                        
                     } catch (error) {
                         console.log('❌ Failed to fetch content:', error.message);
                         this.updateStatus('❌ Could not fetch article content. Using fallback.', 'error');
@@ -2055,26 +1851,28 @@
                     console.log('✅ Using saved content');
                     this.updateStatus('✅ Article loaded from saved content', 'success');
                 }
-
+                
+                // Display the final content
                 contentElement.innerHTML = content;
             }
 
             async fetchArticleContent(url) {
                 try {
-                    console.log('🌐 Starting fetch for: ' + url);
-
+                    console.log(`🌐 Starting fetch for: ${url}`);
+                    
+                    // Method 1: Try using AllOrigins proxy (most reliable)
                     try {
-                        const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
-                        console.log('Trying AllOrigins proxy...');
-
+                        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                        console.log(`Trying AllOrigins proxy...`);
+                        
                         const response = await fetch(proxyUrl);
-
+                        
                         if (response.ok) {
                             const data = await response.json();
                             const html = data.contents;
-
-                            if (html && html.length > 1000) {
-                                console.log('✅ AllOrigins success: ' + html.length + ' chars');
+                            
+                            if (html && html.length > 1000) { // Ensure we got substantial content
+                                console.log(`✅ AllOrigins success: ${html.length} chars`);
                                 const extractedContent = this.extractContentFromHTML(html, url);
                                 if (extractedContent && extractedContent.length > 500) {
                                     return extractedContent;
@@ -2082,20 +1880,21 @@
                             }
                         }
                     } catch (error) {
-                        console.log('AllOrigins failed: ' + error.message);
+                        console.log(`AllOrigins failed: ${error.message}`);
                     }
-
+                    
+                    // Method 2: Try CORS proxy
                     try {
-                        const corsProxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
-                        console.log('Trying CORS proxy...');
-
+                        const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                        console.log(`Trying CORS proxy...`);
+                        
                         const response = await fetch(corsProxyUrl);
-
+                        
                         if (response.ok) {
                             const html = await response.text();
-
+                            
                             if (html && html.length > 1000) {
-                                console.log('✅ CORS proxy success: ' + html.length + ' chars');
+                                console.log(`✅ CORS proxy success: ${html.length} chars`);
                                 const extractedContent = this.extractContentFromHTML(html, url);
                                 if (extractedContent && extractedContent.length > 500) {
                                     return extractedContent;
@@ -2103,29 +1902,30 @@
                             }
                         }
                     } catch (error) {
-                        console.log('CORS proxy failed: ' + error.message);
+                        console.log(`CORS proxy failed: ${error.message}`);
                     }
-
+                    
+                    // Method 3: Try direct fetch (will likely fail due to CORS, but worth trying)
                     try {
-                        console.log('Trying direct fetch...');
+                        console.log(`Trying direct fetch...`);
                         const response = await fetch(url, {
                             mode: 'cors',
                             headers: {
                                 'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader)'
                             }
                         });
-
+                        
                         if (response.ok) {
                             const html = await response.text();
-                            console.log('✅ Direct fetch success: ' + html.length + ' chars');
+                            console.log(`✅ Direct fetch success: ${html.length} chars`);
                             return this.extractContentFromHTML(html, url);
                         }
                     } catch (error) {
-                        console.log('Direct fetch failed (expected): ' + error.message);
+                        console.log(`Direct fetch failed (expected): ${error.message}`);
                     }
-
+                    
                     throw new Error('All proxy methods failed to fetch content');
-
+                    
                 } catch (error) {
                     console.error('❌ All fetch methods failed:', error);
                     throw error;
@@ -2134,20 +1934,23 @@
 
             extractContentFromHTML(html, url) {
                 try {
+                    // Create a temporary DOM to parse the HTML
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
-
+                    
+                    // Remove unwanted elements
                     const unwantedSelectors = [
-                        'script', 'style', 'nav', 'header', 'footer',
+                        'script', 'style', 'nav', 'header', 'footer', 
                         '.sidebar', '.menu', '.navigation', '.comments',
                         '.advertisement', '.ads', '.social-share',
                         '[role="banner"]', '[role="navigation"]', '[role="complementary"]'
                     ];
-
+                    
                     unwantedSelectors.forEach(selector => {
                         doc.querySelectorAll(selector).forEach(el => el.remove());
                     });
-
+                    
+                    // Try to find the main content using common selectors
                     const contentSelectors = [
                         'article',
                         '[role="main"]',
@@ -2156,35 +1959,39 @@
                         '.entry', '.post', '.article-body',
                         'main', '#content', '#main'
                     ];
-
+                    
                     let contentElement = null;
-
+                    
                     for (const selector of contentSelectors) {
                         contentElement = doc.querySelector(selector);
                         if (contentElement && contentElement.textContent.trim().length > 200) {
                             break;
                         }
                     }
-
+                    
+                    // If no main content found, try to get paragraphs from body
                     if (!contentElement || contentElement.textContent.trim().length < 200) {
                         const paragraphs = Array.from(doc.querySelectorAll('p'))
                             .filter(p => p.textContent.trim().length > 50)
-                            .slice(0, 20);
-
+                            .slice(0, 20); // Take first 20 substantial paragraphs
+                        
                         if (paragraphs.length > 0) {
                             const div = doc.createElement('div');
                             paragraphs.forEach(p => div.appendChild(p.cloneNode(true)));
                             contentElement = div;
                         }
                     }
-
+                    
                     if (contentElement) {
+                        // Clean up the content
                         let content = contentElement.innerHTML;
-
+                        
+                        // Fix relative URLs to absolute
                         const baseUrl = new URL(url).origin;
-                        content = content.replace(/src="\/([^"]+)"/g, 'src="' + baseUrl + '/$1"');
-                        content = content.replace(/href="\/([^"]+)"/g, 'href="' + baseUrl + '/$1"');
-
+                        content = content.replace(/src="\/([^"]+)"/g, `src="${baseUrl}/$1"`);
+                        content = content.replace(/href="\/([^"]+)"/g, `href="${baseUrl}/$1"`);
+                        
+                        // Add a note about the source
                         content = `
                             <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                                 <p style="margin: 0; font-size: 0.9em;">
@@ -2194,12 +2001,12 @@
                             </div>
                             ${content}
                         `;
-
+                        
                         return content;
                     }
-
+                    
                     throw new Error('Could not extract readable content from page');
-
+                    
                 } catch (error) {
                     console.error('Content extraction error:', error);
                     throw error;
@@ -2246,25 +2053,28 @@
                 `;
             }
 
+            // Get the best available content for reading - simplified version
             getArticleContent(article) {
                 console.log('📖 Checking for saved content...');
-
+                
+                // Try content fields in order
                 const contentFields = ['content', 'html', 'fullContent', 'textContent', 'body', 'readableContent', 'articleContent', 'savedContent'];
-
+                
                 for (const field of contentFields) {
                     if (article[field] && article[field].trim()) {
-                        console.log('✅ Found content in ' + field + ' (' + article[field].length + ' chars)');
+                        console.log(`✅ Found content in ${field} (${article[field].length} chars)`);
                         return article[field];
                     }
                 }
-
+                
+                // Look for any substantial text content
                 for (const [key, value] of Object.entries(article)) {
                     if (typeof value === 'string' && value.length > 200 && key !== 'excerpt' && key !== 'url') {
-                        console.log('✅ Found substantial content in ' + key + ' (' + value.length + ' chars)');
+                        console.log(`✅ Found substantial content in ${key} (${value.length} chars)`);
                         return value;
                     }
                 }
-
+                
                 console.log('❌ No saved content found');
                 return null;
             }
@@ -2285,8 +2095,9 @@
                 const article = this.articles[index];
                 if (!article) return;
 
-                if (confirm('Delete "' + article.title + '"?\n\nThis will permanently remove the article from your OneDrive backup.')) {
+                if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your OneDrive backup.`)) {
                     try {
+                        // Remove from cache
                         const cacheKey = this.getCacheKey(article);
                         this.imageCache.delete(cacheKey);
                         this.saveImageCache();
@@ -2296,16 +2107,16 @@
                         if (this.accessToken) {
                             this.updateStatus('Updating OneDrive backup...', 'loading');
                             await this.updateOneDriveBackup();
-                            this.updateStatus('✅ Article deleted and backup updated. ' + this.articles.length + ' articles remaining.', 'success');
+                            this.updateStatus(`✅ Article deleted and backup updated. ${this.articles.length} articles remaining.`, 'success');
                         } else {
-                            this.updateStatus('❌ Article deleted locally but OneDrive backup not updated (not connected).', 'error');
+                            this.updateStatus(`❌ Article deleted locally but OneDrive backup not updated (not connected).`, 'error');
                         }
 
                         this.displayArticles(this.articles);
 
                     } catch (error) {
                         console.error('Error deleting article:', error);
-                        this.updateStatus('❌ Failed to delete article: ' + error.message, 'error');
+                        this.updateStatus(`❌ Failed to delete article: ${error.message}`, 'error');
                     }
                 }
             }
@@ -2316,12 +2127,12 @@
 
                 try {
                     const html = this.createArticleHTML(article);
-                    const filename = this.sanitizeFilename(article.title) + '.html';
+                    const filename = `${this.sanitizeFilename(article.title)}.html`;
                     this.downloadFile(html, filename, 'text/html');
-                    this.updateStatus('📤 Article "' + article.title + '" exported successfully!', 'success');
+                    this.updateStatus(`📤 Article "${article.title}" exported successfully!`, 'success');
                 } catch (error) {
                     console.error('Error exporting article:', error);
-                    this.updateStatus('❌ Failed to export article: ' + error.message, 'error');
+                    this.updateStatus(`❌ Failed to export article: ${error.message}`, 'error');
                 }
             }
 
@@ -2343,10 +2154,10 @@
                     }
                 };
 
-                const fileName = 'mypocket-backup-' + new Date().toISOString().split('T')[0] + '.json';
+                const fileName = `mypocket-backup-${new Date().toISOString().split('T')[0]}.json`;
                 const fileContent = JSON.stringify(backup, null, 2);
 
-                const uploadUrl = 'https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/' + fileName + ':/content';
+                const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
 
                 const uploadResponse = await this.makeAuthenticatedRequest(uploadUrl, {
                     method: 'PUT',
@@ -2358,7 +2169,7 @@
 
                 if (!uploadResponse.ok) {
                     const errorText = await uploadResponse.text();
-                    throw new Error('Failed to update OneDrive backup: ' + uploadResponse.status + ' - ' + errorText);
+                    throw new Error(`Failed to update OneDrive backup: ${uploadResponse.status} - ${errorText}`);
                 }
 
                 return await uploadResponse.json();
@@ -2424,7 +2235,7 @@
         <h1 class="title">${this.escapeHtml(article.title)}</h1>
         <div class="meta">
             <div style="margin-bottom: 8px;">🌐 From: <a href="${article.url}" style="color: #ee5a24;">${this.getDomain(article.url)}</a></div>
-            ${article.author ? '<div style="margin-bottom: 8px;">✍️ By: ' + this.escapeHtml(article.author) + '</div>' : ''}
+            ${article.author ? `<div style="margin-bottom: 8px;">✍️ By: ${this.escapeHtml(article.author)}</div>` : ''}
             <div style="margin-bottom: 8px;">📅 Saved: ${this.formatDate(article.dateAdded)}</div>
             <div>⏱️ Reading time: ${article.readTime || 1} minutes</div>
         </div>
@@ -2455,10 +2266,11 @@
                 URL.revokeObjectURL(url);
             }
 
+            // Enhanced image handling
             getBestArticleImage(article) {
                 if (article.images && article.images.length > 0) {
                     let bestImage = article.images[0];
-
+                    
                     for (const img of article.images) {
                         if (img.width && img.height) {
                             if (img.width >= 300 && img.height >= 150) {
@@ -2467,90 +2279,99 @@
                             }
                         }
                     }
-
+                    
                     return bestImage.src || bestImage.url || bestImage;
                 }
-
+                
                 if (article.featuredImage) {
                     return article.featuredImage;
                 }
-
+                
                 if (article.image) {
                     return article.image;
                 }
-
+                
                 if (article.content) {
                     const imgMatch = article.content.match(/<img[^>]+src="([^"]+)"/i);
                     if (imgMatch && imgMatch[1]) {
                         return imgMatch[1];
                     }
                 }
-
+                
                 return null;
             }
 
+            // NEW: Fetch the actual featured image from a website
             async fetchRealImageFromWebsite(url) {
                 try {
-                    console.log('🌐 Fetching webpage to extract image: ' + url);
-
-                    const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+                    console.log(`🌐 Fetching webpage to extract image: ${url}`);
+                    
+                    // Method 1: Try AllOrigins proxy
+                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
                     const response = await fetch(proxyUrl);
-
+                    
                     if (!response.ok) {
                         throw new Error('Failed to fetch webpage');
                     }
-
+                    
                     const data = await response.json();
                     const html = data.contents;
-
+                    
                     if (!html || html.length < 500) {
                         throw new Error('No substantial HTML content received');
                     }
-
+                    
+                    // Parse the HTML and extract the best image
                     const extractedImageUrl = this.parseHTMLForBestImage(html, url);
-
+                    
                     if (extractedImageUrl) {
-                        console.log('🎯 Found image: ' + extractedImageUrl);
+                        console.log(`🎯 Found image: ${extractedImageUrl}`);
                         return extractedImageUrl;
                     }
-
+                    
                     throw new Error('No suitable image found in webpage');
-
+                    
                 } catch (error) {
-                    console.log('❌ Website image extraction failed: ' + error.message);
-
+                    console.log(`❌ Website image extraction failed: ${error.message}`);
+                    
+                    // Try alternative proxy methods
                     try {
                         return await this.tryAlternativeImageExtraction(url);
                     } catch (altError) {
-                        console.log('❌ Alternative extraction also failed: ' + altError.message);
+                        console.log(`❌ Alternative extraction also failed: ${altError.message}`);
                         throw error;
                     }
                 }
             }
 
+            // NEW: Parse HTML to find the best image
             parseHTMLForBestImage(html, baseUrl) {
                 try {
+                    // Create a DOM parser
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
-
+                    
+                    // Strategy 1: Look for Open Graph image (most reliable)
                     const ogImage = doc.querySelector('meta[property="og:image"]');
                     if (ogImage) {
                         const imageUrl = this.makeAbsoluteUrl(ogImage.getAttribute('content'), baseUrl);
                         if (this.isValidImageUrl(imageUrl)) {
-                            console.log('🎯 Found Open Graph image: ' + imageUrl);
+                            console.log(`🎯 Found Open Graph image: ${imageUrl}`);
                             return imageUrl;
                         }
                     }
-
+                    
+                    // Strategy 2: Look for Twitter card image
                     const twitterImage = doc.querySelector('meta[name="twitter:image"], meta[property="twitter:image"]');
                     if (twitterImage) {
                         const imageUrl = this.makeAbsoluteUrl(twitterImage.getAttribute('content'), baseUrl);
                         if (this.isValidImageUrl(imageUrl)) {
-                            console.log('🎯 Found Twitter card image: ' + imageUrl);
+                            console.log(`🎯 Found Twitter card image: ${imageUrl}`);
                             return imageUrl;
                         }
                     }
-
+                    
+                    // Strategy 3: Look for article featured image
                     const featuredSelectors = [
                         '.featured-image img',
                         '.hero-image img',
@@ -2562,7 +2383,7 @@
                         '.content img:first-of-type',
                         '.post-content img:first-of-type'
                     ];
-
+                    
                     for (const selector of featuredSelectors) {
                         const img = doc.querySelector(selector);
                         if (img) {
@@ -2570,36 +2391,39 @@
                             if (src) {
                                 const imageUrl = this.makeAbsoluteUrl(src, baseUrl);
                                 if (this.isValidImageUrl(imageUrl) && !this.isIconOrLogo(src)) {
-                                    console.log('🎯 Found featured image: ' + imageUrl);
+                                    console.log(`🎯 Found featured image: ${imageUrl}`);
                                     return imageUrl;
                                 }
                             }
                         }
                     }
-
+                    
+                    // Strategy 4: Look for the first substantial image in the content
                     const allImages = Array.from(doc.querySelectorAll('img')).filter(img => {
                         const src = img.getAttribute('src') || img.getAttribute('data-src');
                         const width = img.getAttribute('width') || img.style.width;
                         const height = img.getAttribute('height') || img.style.height;
-
-                        return src &&
-                            !this.isIconOrLogo(src) &&
-                            !this.isSmallImage(width, height) &&
-                            !src.includes('avatar') &&
-                            !src.includes('profile');
+                        
+                        // Filter out small images, icons, and logos
+                        return src && 
+                               !this.isIconOrLogo(src) && 
+                               !this.isSmallImage(width, height) &&
+                               !src.includes('avatar') &&
+                               !src.includes('profile');
                     });
-
+                    
                     for (const img of allImages) {
                         const src = img.getAttribute('src') || img.getAttribute('data-src');
                         if (src) {
                             const imageUrl = this.makeAbsoluteUrl(src, baseUrl);
                             if (this.isValidImageUrl(imageUrl)) {
-                                console.log('🎯 Found content image: ' + imageUrl);
+                                console.log(`🎯 Found content image: ${imageUrl}`);
                                 return imageUrl;
                             }
                         }
                     }
-
+                    
+                    // Strategy 5: Look for images in JSON-LD structured data
                     const jsonLdScripts = doc.querySelectorAll('script[type="application/ld+json"]');
                     for (const script of jsonLdScripts) {
                         try {
@@ -2608,7 +2432,7 @@
                             if (image) {
                                 const imageUrl = this.makeAbsoluteUrl(image, baseUrl);
                                 if (this.isValidImageUrl(imageUrl)) {
-                                    console.log('🎯 Found JSON-LD image: ' + imageUrl);
+                                    console.log(`🎯 Found JSON-LD image: ${imageUrl}`);
                                     return imageUrl;
                                 }
                             }
@@ -2616,19 +2440,21 @@
                             // Ignore malformed JSON-LD
                         }
                     }
-
-                    console.log('❌ No suitable image found in HTML');
+                    
+                    console.log(`❌ No suitable image found in HTML`);
                     return null;
-
+                    
                 } catch (error) {
                     console.error('HTML parsing error:', error);
                     return null;
                 }
             }
 
+            // NEW: Extract image from JSON-LD structured data
             extractImageFromJsonLd(data) {
                 if (typeof data !== 'object') return null;
-
+                
+                // Handle arrays
                 if (Array.isArray(data)) {
                     for (const item of data) {
                         const image = this.extractImageFromJsonLd(item);
@@ -2636,7 +2462,8 @@
                     }
                     return null;
                 }
-
+                
+                // Look for image properties
                 if (data.image) {
                     if (typeof data.image === 'string') return data.image;
                     if (Array.isArray(data.image) && data.image.length > 0) {
@@ -2644,216 +2471,255 @@
                     }
                     if (data.image.url) return data.image.url;
                 }
-
+                
+                // Look for thumbnailUrl
                 if (data.thumbnailUrl) {
                     return typeof data.thumbnailUrl === 'string' ? data.thumbnailUrl : data.thumbnailUrl.url;
                 }
-
+                
+                // Recursively search nested objects
                 for (const key in data) {
                     if (typeof data[key] === 'object') {
                         const image = this.extractImageFromJsonLd(data[key]);
                         if (image) return image;
                     }
                 }
-
+                
                 return null;
             }
 
+            // NEW: Try alternative image extraction methods
             async tryAlternativeImageExtraction(url) {
+                // Method 1: Try CORS proxy
                 try {
-                    const corsProxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+                    const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
                     const response = await fetch(corsProxyUrl);
-
+                    
                     if (response.ok) {
                         const html = await response.text();
                         const extractedImage = this.parseHTMLForBestImage(html, url);
                         if (extractedImage) return extractedImage;
                     }
                 } catch (error) {
-                    console.log('CORS proxy failed: ' + error.message);
+                    console.log(`CORS proxy failed: ${error.message}`);
                 }
-
+                
+                // Method 2: Try to guess common image patterns based on URL
                 const guessedImage = this.guessImageFromUrl(url);
                 if (guessedImage) return guessedImage;
-
+                
                 throw new Error('All alternative extraction methods failed');
             }
 
+            // NEW: Guess image from URL patterns (for known sites)
             guessImageFromUrl(url) {
                 const domain = this.getDomain(url).toLowerCase();
-
+                
+                // Medium articles often have predictable image patterns
                 if (domain.includes('medium.com')) {
+                    // Try to extract the article ID and construct image URL
                     const match = url.match(/\/([a-f0-9]+)$/);
                     if (match) {
-                        return 'https://miro.medium.com/max/1400/1*' + match[1] + '.png';
+                        return `https://miro.medium.com/max/1400/1*${match[1]}.png`;
                     }
                 }
-
+                
+                // GitHub repository images
                 if (domain.includes('github.com')) {
                     const pathMatch = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
                     if (pathMatch) {
-                        return 'https://opengraph.githubassets.com/1/' + pathMatch[1] + '/' + pathMatch[2];
+                        return `https://opengraph.githubassets.com/1/${pathMatch[1]}/${pathMatch[2]}`;
                     }
                 }
-
+                
+                // YouTube videos
                 if (domain.includes('youtube.com') || domain.includes('youtu.be')) {
                     const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
                     if (videoIdMatch) {
-                        return 'https://img.youtube.com/vi/' + videoIdMatch[1] + '/maxresdefault.jpg';
+                        return `https://img.youtube.com/vi/${videoIdMatch[1]}/maxresdefault.jpg`;
                     }
                 }
-
+                
                 return null;
             }
 
+            // Enhanced URL validation
             isValidImageUrl(url) {
                 if (!url || typeof url !== 'string') return false;
-
+                
+                // Must be a valid URL
                 try {
                     new URL(url);
                 } catch {
                     return false;
                 }
-
+                
+                // Must have common image extensions or be from known image services
                 const imagePattern = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i;
                 const imageServices = ['unsplash.com', 'images.unsplash.com', 'picsum.photos', 'via.placeholder.com'];
-
+                
                 return imagePattern.test(url) || imageServices.some(service => url.includes(service));
             }
 
+            // Enhanced icon/logo detection
             isIconOrLogo(src) {
                 if (!src) return false;
-
+                
                 const iconPatterns = [
-                    'icon', 'logo', 'avatar', 'profile', 'favicon', 'sprite',
+                    'icon', 'logo', 'avatar', 'profile', 'favicon', 'sprite', 
                     'button', 'badge', 'social', 'thumb', 'thumbnail',
                     '/icons/', '/images/icons/', 'gravatar', 'user-content'
                 ];
-
+                
                 const srcLower = src.toLowerCase();
                 return iconPatterns.some(pattern => srcLower.includes(pattern)) ||
-                    srcLower.includes('.ico') ||
-                    (srcLower.includes('64x64') || srcLower.includes('32x32'));
+                       srcLower.includes('.ico') ||
+                       (srcLower.includes('64x64') || srcLower.includes('32x32'));
             }
 
+            // Check if image dimensions suggest it's too small
             isSmallImage(width, height) {
                 if (!width && !height) return false;
-
+                
                 const w = parseInt(width) || 0;
                 const h = parseInt(height) || 0;
-
+                
                 return (w > 0 && w < 200) || (h > 0 && h < 150);
             }
 
+            // NEW: Get category-based images that always work
             getCategoryBasedImage(article, index) {
                 const domain = this.getDomain(article.url).toLowerCase();
                 const title = article.title.toLowerCase();
-
+                
+                // Use reliable image services that work well with direct img tags
+                
+                // Technology/Programming
                 if (domain.includes('github') || domain.includes('stackoverflow') || domain.includes('dev.to') ||
                     title.includes('code') || title.includes('programming') || title.includes('javascript') || title.includes('react')) {
-                    return 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                    return `https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
+                // Business/Finance
                 if (domain.includes('business') || domain.includes('finance') || domain.includes('linkedin') ||
                     title.includes('business') || title.includes('finance') || title.includes('startup') || title.includes('entrepreneur')) {
-                    return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                    return `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
-                if (domain.includes('dribbble') || domain.includes('behance') ||
+                
+                // Design/Creative
+                if (domain.includes('dribbble') || domain.includes('behance') || 
                     title.includes('design') || title.includes('ui') || title.includes('ux') || title.includes('creative')) {
-                    return 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                    return `https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
+                // News/Media
                 if (domain.includes('news') || domain.includes('bbc') || domain.includes('cnn') ||
                     title.includes('news') || title.includes('politics') || title.includes('media')) {
-                    return 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                    return `https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
+                // Travel/Adventure
                 if (title.includes('travel') || title.includes('vacation') || title.includes('adventure') || title.includes('journey')) {
-                    return 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                    return `https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
+                // Food/Cooking
                 if (title.includes('food') || title.includes('recipe') || title.includes('cooking') || title.includes('restaurant')) {
-                    return 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                    return `https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
+                // Health/Fitness
                 if (title.includes('health') || title.includes('fitness') || title.includes('exercise') || title.includes('wellness')) {
-                    return 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                    return `https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
+                // Science/Research
                 if (domain.includes('arxiv') || domain.includes('research') ||
                     title.includes('science') || title.includes('research') || title.includes('study') || title.includes('data')) {
-                    return 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                    return `https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
+                // Education/Learning
                 if (domain.includes('edu') || title.includes('learn') || title.includes('education') || title.includes('course')) {
-                    return 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                    return `https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
+                // Photography/Art
                 if (title.includes('photo') || title.includes('art') || title.includes('gallery') || title.includes('visual')) {
-                    return 'https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                    return `https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
+                // Technology (general)
                 if (domain.includes('tech') || title.includes('tech') || title.includes('digital') || title.includes('innovation')) {
-                    return 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                    return `https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
+                // Books/Reading/Writing
                 if (domain.includes('medium') || domain.includes('blog') ||
                     title.includes('book') || title.includes('read') || title.includes('write') || title.includes('story')) {
-                    return 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                    return `https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
+                // Music/Entertainment
                 if (title.includes('music') || title.includes('entertainment') || title.includes('movie') || title.includes('film')) {
-                    return 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                    return `https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
+                // Sports
                 if (title.includes('sport') || title.includes('game') || title.includes('team') || title.includes('player')) {
-                    return 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                    return `https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
+                // Nature/Environment
                 if (title.includes('nature') || title.includes('environment') || title.includes('climate') || title.includes('green')) {
-                    return 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                    return `https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-
+                
+                // Default beautiful images based on index
                 const defaultImages = [
-                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1470115636492-6d2b56f9146d?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
-                    'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&h=250&fit=crop&crop=center&q=80&auto=format'
+                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Mountain landscape
+                    'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Abstract colorful
+                    'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Space/galaxy
+                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Ocean waves
+                    'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // City skyline
+                    'https://images.unsplash.com/photo-1470115636492-6d2b56f9146d?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Forest/trees
+                    'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Sunset/sunrise
+                    'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Architecture
+                    'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Lake reflection
+                    'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&h=250&fit=crop&crop=center&q=80&auto=format'  // Geometric pattern
                 ];
-
+                
                 return defaultImages[index % defaultImages.length];
             }
 
+            // Convert relative URLs to absolute
             makeAbsoluteUrl(imageUrl, baseUrl) {
                 if (!imageUrl) return null;
-
+                
                 try {
+                    // If already absolute, return as-is
                     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
                         return imageUrl;
                     }
-
+                    
+                    // Handle protocol-relative URLs
                     if (imageUrl.startsWith('//')) {
                         return 'https:' + imageUrl;
                     }
-
+                    
+                    // If relative, make it absolute
                     const base = new URL(baseUrl);
                     return new URL(imageUrl, base.origin).href;
                 } catch (error) {
-                    console.log('Failed to make absolute URL: ' + imageUrl + ', base: ' + baseUrl);
+                    console.log(`Failed to make absolute URL: ${imageUrl}, base: ${baseUrl}`);
                     return null;
                 }
             }
 
+            // Smart icon selection based on domain
             getArticleIcon(url) {
                 const domain = this.getDomain(url).toLowerCase();
-
+                
                 const siteIcons = {
                     'youtube.com': '📺',
                     'github.com': '🐙',
@@ -2877,13 +2743,13 @@
                     'wikipedia.org': '📖',
                     'arxiv.org': '🎓',
                 };
-
+                
                 for (const [siteDomain, icon] of Object.entries(siteIcons)) {
                     if (domain.includes(siteDomain)) {
                         return icon;
                     }
                 }
-
+                
                 if (domain.includes('blog') || domain.includes('medium')) return '📝';
                 if (domain.includes('news')) return '📰';
                 if (domain.includes('tech')) return '💻';
@@ -2894,7 +2760,7 @@
                 if (domain.includes('shop') || domain.includes('store')) return '🛒';
                 if (domain.includes('book') || domain.includes('read')) return '📚';
                 if (domain.includes('learn') || domain.includes('edu')) return '🎓';
-
+                
                 return '📄';
             }
 
@@ -2931,16 +2797,16 @@
                     } else if (diffDays === 1) {
                         return 'yesterday';
                     } else if (diffDays <= 7) {
-                        return diffDays + ' days ago';
+                        return `${diffDays} days ago`;
                     } else if (diffDays <= 30) {
                         const weeks = Math.floor(diffDays / 7);
-                        return weeks === 1 ? '1 week ago' : weeks + ' weeks ago';
+                        return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`;
                     } else if (diffDays <= 365) {
                         const months = Math.floor(diffDays / 30);
-                        return months === 1 ? '1 month ago' : months + ' months ago';
+                        return months === 1 ? '1 month ago' : `${months} months ago`;
                     } else {
                         const years = Math.floor(diffDays / 365);
-                        return years === 1 ? '1 year ago' : years + ' years ago';
+                        return years === 1 ? '1 year ago' : `${years} years ago`;
                     }
                 } catch (error) {
                     console.error('Date formatting error:', error, 'Input:', dateString);
@@ -2960,70 +2826,23 @@
                 return filename.replace(/[^a-z0-9\s]/gi, '_').toLowerCase().substring(0, 50);
             }
 
-            updateConnectionStatus(connected) {
-                const connectBtn = document.getElementById('connectBtn');
-                const connectIcon = document.getElementById('connectIcon');
-                const connectText = document.getElementById('connectText');
-                const refreshBtn = document.getElementById('refreshBtn');
-
-                if (connected) {
-                    connectIcon.textContent = '✅';
-
-                    try {
-                        const storedData = localStorage.getItem('mypocket_tokens');
-                        if (storedData) {
-                            const tokenInfo = JSON.parse(storedData);
-                            const minutesLeft = Math.round((tokenInfo.expiresAt - Date.now()) / (60 * 1000));
-                            const hasRefresh = tokenInfo.refreshToken ? '🔄' : '';
-                            connectText.textContent = 'Connected ' + hasRefresh + '(' + minutesLeft + 'm)';
-                        } else {
-                            connectText.textContent = 'Connected (PKCE)';
-                        }
-                    } catch (error) {
-                        connectText.textContent = 'Connected (PKCE)';
-                    }
-
-                    connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
-                    refreshBtn.style.display = 'inline-flex';
-                } else {
-                    connectIcon.textContent = '☁️';
-                    connectText.textContent = 'Connect OneDrive';
-                    connectBtn.style.background = 'rgba(255,255,255,0.2)';
-                    refreshBtn.style.display = 'none';
-                }
-            }
-
-            updateStatus(message, type = '') {
-                const status = document.getElementById('status');
-                status.textContent = message;
-                status.className = 'status ' + type;
-            }
-
             showDebugInfo() {
                 const cacheStats = this.getCacheStats();
-
-                let tokenInfoText = 'No tokens stored';
-                let authFlow = 'Not authenticated';
+                
+                // Get token info
+                let tokenInfo = 'No token stored';
                 try {
-                    const storedData = localStorage.getItem('mypocket_tokens');
+                    const storedData = localStorage.getItem('mypocket_access_token');
                     if (storedData) {
                         const tokenData = JSON.parse(storedData);
                         const minutesLeft = Math.round((tokenData.expiresAt - Date.now()) / (60 * 1000));
                         const isExpired = Date.now() > tokenData.expiresAt;
-                        const hasRefresh = tokenData.refreshToken ? 'Yes' : 'No';
-                        tokenInfoText = (isExpired ? 'EXPIRED' : 'Valid') + ' - ' + (isExpired ? 'Expired' : minutesLeft + ' minutes left');
-                        authFlow = 'PKCE (Refresh Token: ' + hasRefresh + ')';
-                    } else {
-                        const legacyData = localStorage.getItem('mypocket_access_token');
-                        if (legacyData) {
-                            authFlow = 'Legacy Implicit Flow';
-                            tokenInfoText = 'Legacy token detected - upgrade recommended';
-                        }
+                        tokenInfo = `${isExpired ? 'EXPIRED' : 'Valid'} - ${isExpired ? 'Expired' : minutesLeft + ' minutes left'}`;
                     }
                 } catch (error) {
-                    tokenInfoText = 'Error reading token data';
+                    tokenInfo = 'Error reading token data';
                 }
-
+                
                 const info = `
 MyPocket Web Reader Debug Info:
 =====================================
@@ -3034,9 +2853,7 @@ Client ID: ${this.clientId}
 Protocol: ${window.location.protocol}
 Host: ${window.location.host}
 Has Access Token: ${!!this.accessToken}
-Has Refresh Token: ${!!this.refreshToken}
-Authentication Flow: ${authFlow}
-Token Status: ${tokenInfoText}
+Token Status: ${tokenInfo}
 Articles Loaded: ${this.articles.length}
 
 Device & Browser Info:
@@ -3062,18 +2879,11 @@ Mobile Optimizations Applied:
 - Simplified border radius on mobile
 - Increased touch targets (44px minimum)
 
-PKCE Authentication Features:
-- Secure authorization code flow with PKCE
-- Automatic token refresh with refresh tokens
-- Cross-device authentication support
-- Enhanced security vs implicit flow
-- Longer session duration
-- Automatic retry on 401 errors
-- Seamless background token refresh
-
-Authentication Flow Comparison:
-- Old: Implicit Flow (deprecated, 1-hour limit)
-- New: PKCE Flow (secure, auto-refresh, cross-device)
+Token Management:
+- Access tokens expire after ~1 hour
+- App tracks expiration and warns before expiry
+- Auto-prompts for re-authentication when needed
+- Enhanced error handling for expired sessions
 
 Common Mobile Issues Fixed:
 1. Image stretching in Firefox mobile ✅
@@ -3082,26 +2892,30 @@ Common Mobile Issues Fixed:
 4. Object-fit compatibility ✅
 5. Border radius rendering issues ✅
 
-Azure AD App Registration Requirements:
-- Must support Authorization Code Flow (not just Implicit)
-- Must have redirect URI registered exactly: ${this.redirectUri}
-- Must allow public client flows
-- Recommended: Enable PKCE support
+Azure AD Redirect URI Requirements:
+- Must be absolute URI (http:// or https://)
+- Must be registered in Azure AD App Registration
+- Must match exactly (including trailing slashes)
 
-Next Steps for PKCE Setup:
-1. Open Azure Portal → App registrations
-2. Find your app: ${this.clientId}
-3. Go to Authentication → Advanced settings
-4. Enable "Allow public client flows" = Yes
-5. Ensure redirect URI is registered: ${this.redirectUri}
-6. Test the new PKCE authentication flow
+Next Steps for Mobile Issues:
+1. Check if images still appear stretched
+2. Test touch interactions work properly  
+3. Verify text is readable without zooming
+4. Confirm buttons are easily tappable
+5. Report any remaining visual issues
 
-Token Management Benefits:
-- Automatic refresh before expiration
-- Cross-device session persistence
-- Enhanced security with PKCE
-- Graceful handling of network issues
-- No more manual re-authentication needed
+Image Cache Features:
+- Images are cached for ${this.cacheExpiryDays} days
+- Cache survives browser sessions
+- Use "Clear Cache" button to force refresh
+- Cached images load instantly on subsequent visits
+
+Token Expiration Solutions:
+- App now tracks token expiration time
+- Shows remaining time in connection status
+- Warns 5 minutes before expiration
+- Auto-prompts for re-authentication when expired
+- Enhanced error handling for all API calls
                 `;
 
                 alert(info);
@@ -3111,7 +2925,7 @@ Token Management Benefits:
                     clientId: this.clientId,
                     protocol: window.location.protocol,
                     hasToken: !!this.accessToken,
-                    tokenInfo: tokenInfoText,
+                    tokenInfo: tokenInfo,
                     articlesCount: this.articles.length,
                     cacheStats: cacheStats
                 });
@@ -3136,13 +2950,14 @@ Token Management Benefits:
                 );
             }
 
+            // Dark mode functionality
             toggleDarkMode() {
                 const currentTheme = document.documentElement.getAttribute('data-theme');
                 const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
+                
                 document.documentElement.setAttribute('data-theme', newTheme);
                 localStorage.setItem('theme', newTheme);
-
+                
                 this.updateDarkModeButton(newTheme);
                 this.updateStatus(
                     newTheme === 'dark' ? '🌙 Dark mode enabled' : '☀️ Light mode enabled',
@@ -3159,7 +2974,7 @@ Token Management Benefits:
             updateDarkModeButton(theme) {
                 const darkModeBtn = document.getElementById('darkModeBtn');
                 if (darkModeBtn) {
-                    darkModeBtn.innerHTML = theme === 'dark'
+                    darkModeBtn.innerHTML = theme === 'dark' 
                         ? '<span>☀️</span> Light Mode'
                         : '<span>🌙</span> Dark Mode';
                 }
