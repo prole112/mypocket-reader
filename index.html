@@ -161,6 +161,12 @@
             color: white;
         }
 
+        /* NEW: Dark mode styles for fallback indicator */
+        [data-theme="dark"] .cache-indicator.fallback {
+            background: rgba(255, 152, 0, 0.9);
+            color: white;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
@@ -699,70 +705,305 @@
             color: white;
         }
 
-        /* Responsive */
+        /* NEW: Fallback indicator styles */
+        .cache-indicator.fallback {
+            background: rgba(255, 152, 0, 0.8);
+            color: white;
+        }
+
+        /* Enhanced Mobile Responsive Design */
         @media (max-width: 768px) {
             .container {
-                padding: 0 15px;
+                padding: 0 12px;
+            }
+
+            /* Header improvements for mobile */
+            .header {
+                padding: 15px 0;
+                position: relative; /* Remove sticky on mobile for better performance */
             }
 
             .header-content {
                 flex-direction: column;
                 text-align: center;
+                gap: 15px;
             }
 
-            .articles-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
+            .logo {
+                font-size: 1.5em;
+                margin-bottom: 10px;
             }
 
-            .article-card {
-                /* Simpler border radius for mobile */
-                border-radius: 24px !important;
-            }
-
-            .article-card:hover {
-                transform: translateY(-4px) scale(1.01);
-            }
-
-            .article-actions {
-                position: static;
-                opacity: 1;
-                visibility: visible;
+            .header-actions {
+                flex-wrap: wrap;
                 justify-content: center;
-                margin-top: 15px;
-                padding: 15px;
-                background: var(--background);
+                gap: 8px;
+            }
+
+            .btn {
+                padding: 8px 16px;
+                font-size: 13px;
                 border-radius: 20px;
             }
 
-            .action-btn {
-                min-width: 48px;
-                height: 48px;
-                font-size: 18px;
-                border-radius: 50%;
-            }
-
-            .action-btn:hover {
-                border-radius: 50%;
-                transform: scale(1.1);
-            }
-
-            .reader-container {
-                margin: 20px;
-                border-radius: 16px;
-            }
-
-            .reader-header,
-            .reader-content {
-                padding: 20px;
-            }
-
-            .reader-title {
-                font-size: 1.5em;
+            /* Search improvements */
+            .search-container {
+                padding: 20px 0;
             }
 
             .search-input {
+                font-size: 16px; /* Prevent zoom on iOS */
+                padding: 12px 45px 12px 16px;
+                border-radius: 20px;
+            }
+
+            /* Status bar */
+            .status {
+                padding: 15px 0;
+                font-size: 14px;
+                line-height: 1.4;
+            }
+
+            /* MAJOR MOBILE GRID FIX */
+            .articles-section {
+                padding: 20px 0;
+            }
+
+            .articles-grid {
+                display: block; /* Use block layout instead of grid for better mobile performance */
+                margin-top: 15px;
+            }
+
+            /* COMPLETELY REDESIGNED MOBILE CARDS */
+            .article-card {
+                display: block !important;
+                width: 100% !important;
+                margin-bottom: 20px !important;
+                border-radius: 20px !important;
+                overflow: hidden;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                transform: none !important;
+                animation: none !important;
+            }
+
+            .article-card:hover {
+                transform: none !important;
+                box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+            }
+
+            /* LARGER MOBILE IMAGE */
+            .article-image {
+                width: 100% !important;
+                height: 140px !important; /* Increased from 100px */
+                border-radius: 20px 20px 0 0 !important;
+                position: relative;
+            }
+
+            /* MUCH LARGER TEXT ON MOBILE */
+            .article-content {
+                padding: 20px !important;
+                cursor: pointer;
+            }
+
+            .article-title {
+                font-size: 1.25em !important; /* Much larger - was 1em */
+                font-weight: 600;
+                margin-bottom: 10px !important;
+                line-height: 1.4 !important;
+                color: var(--text-primary);
+                display: block !important; /* Remove text clamping on mobile */
+                -webkit-line-clamp: unset !important;
+                -webkit-box-orient: unset !important;
+                overflow: visible !important;
+            }
+
+            .article-excerpt {
+                font-size: 1em !important; /* Much larger - was 0.8em */
+                line-height: 1.5 !important;
+                margin-bottom: 15px !important;
+                color: var(--text-secondary);
+                display: block !important; /* Remove text clamping on mobile */
+                -webkit-line-clamp: unset !important;
+                -webkit-box-orient: unset !important;
+                overflow: visible !important;
+            }
+
+            .article-meta {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 8px;
+                color: var(--text-secondary);
+                font-size: 0.9em !important; /* Larger - was 0.75em */
+                margin-bottom: 10px;
+            }
+
+            .article-stats {
+                display: flex;
+                gap: 15px;
+                font-size: 0.85em !important; /* Larger - was 0.7em */
+                color: var(--text-secondary);
+                margin-bottom: 10px;
+            }
+
+            /* MOBILE-OPTIMIZED ACTION BUTTONS */
+            .article-actions {
+                position: static !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                display: flex !important;
+                justify-content: center;
+                gap: 15px;
+                padding: 15px 20px;
+                background: var(--background);
+                border-radius: 0;
+                margin: 0;
+                border-top: 1px solid var(--border);
+            }
+
+            .action-btn {
+                min-width: 50px !important;
+                height: 50px !important;
+                font-size: 20px !important;
+                border-radius: 50% !important;
+                padding: 0;
+                background: var(--surface);
+                border: 2px solid var(--border);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+            }
+
+            .action-btn:hover,
+            .action-btn:active {
+                border-radius: 50% !important;
+                transform: scale(1.05);
+                background: var(--primary-color);
+                color: white;
+                border-color: var(--primary-color);
+            }
+
+            /* MOBILE READER IMPROVEMENTS */
+            .reader-overlay {
+                padding: 0;
+            }
+
+            .reader-container {
+                margin: 0 !important;
+                border-radius: 0 !important;
+                height: 100vh;
+                max-width: none;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .reader-header {
+                padding: 20px;
+                border-radius: 0;
+                flex-shrink: 0;
+            }
+
+            .reader-title {
+                font-size: 1.4em !important;
+                line-height: 1.3;
+                margin-bottom: 15px;
+            }
+
+            .reader-meta {
+                font-size: 0.9em;
+                gap: 15px;
+            }
+
+            .reader-content {
+                padding: 20px;
+                font-size: 1.1em !important; /* Larger reading text */
+                line-height: 1.7 !important;
+                flex: 1;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            }
+
+            .close-reader {
+                top: 15px;
+                right: 15px;
+                width: 40px;
+                height: 40px;
                 font-size: 16px;
+            }
+
+            /* MOBILE SEARCH */
+            .search-input {
+                font-size: 16px !important; /* Prevent zoom */
+                padding: 14px 50px 14px 18px;
+            }
+
+            /* EMPTY STATE */
+            .empty-state {
+                padding: 40px 20px;
+            }
+
+            .empty-state-icon {
+                font-size: 3em;
+                margin-bottom: 15px;
+            }
+
+            .empty-state h3 {
+                font-size: 1.3em;
+                margin-bottom: 8px;
+            }
+
+            .empty-state p {
+                font-size: 1em;
+                line-height: 1.5;
+            }
+        }
+
+        /* Extra small screens (very small phones) */
+        @media (max-width: 480px) {
+            .article-title {
+                font-size: 1.15em !important;
+            }
+            
+            .article-excerpt {
+                font-size: 0.95em !important;
+            }
+            
+            .article-content {
+                padding: 16px !important;
+            }
+            
+            .header-actions {
+                gap: 6px;
+            }
+            
+            .btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
+
+        /* Firefox Mobile Specific Fixes */
+        @-moz-document url-prefix() {
+            @media (max-width: 768px) {
+                .article-card {
+                    will-change: auto; /* Improve performance on Firefox mobile */
+                }
+                
+                .articles-grid {
+                    transform: translateZ(0); /* Force hardware acceleration */
+                }
+                
+                .search-input {
+                    -moz-appearance: none; /* Remove Firefox mobile styling */
+                }
+                
+                .btn {
+                    -moz-appearance: none;
+                }
             }
         }
 
@@ -1510,7 +1751,7 @@
                 }
             }
 
-            // Enhanced display articles to use stored image data FIRST
+            // Enhanced display articles with mobile optimization
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1519,6 +1760,9 @@
                     return;
                 }
 
+                // Check if mobile for performance optimization
+                const isMobile = window.innerWidth <= 768;
+                
                 let imagesFromBackup = 0;
                 let imagesFromCache = 0;
                 let imagesNeedLoading = 0;
@@ -1543,12 +1787,20 @@
                         statusText = '💾 Cached';
                         imagesFromCache++;
                     }
-                    // Priority 3: Need to load (SLOW - will fetch)
+                    // Priority 3: Need to load (SLOW - will fetch) - On mobile, use fallback immediately
                     else {
-                        imageHTML = this.createPlaceholderHTML();
-                        cacheStatus = 'loading';
-                        statusText = '🔄 Loading';
-                        imagesNeedLoading++;
+                        if (isMobile) {
+                            // On mobile, use fallback images immediately for better performance
+                            const fallbackImage = this.getCategoryBasedImage(article, index);
+                            imageHTML = this.createImageHTML(fallbackImage, false);
+                            cacheStatus = 'fallback';
+                            statusText = '🎨 Ready';
+                        } else {
+                            imageHTML = this.createPlaceholderHTML();
+                            cacheStatus = 'loading';
+                            statusText = '🔄 Loading';
+                            imagesNeedLoading++;
+                        }
                     }
                     
                     return `
@@ -1587,12 +1839,26 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
                 
-                // Update status with detailed breakdown
-                if (imagesNeedLoading === 0) {
-                    this.updateStatus(`✅ All ${articles.length} images ready! (${imagesFromBackup} synced, ${imagesFromCache} cached)`, 'success');
+                // Update status with mobile-optimized messages
+                if (isMobile) {
+                    if (imagesFromBackup > 0 || imagesFromCache > 0) {
+                        this.updateStatus(`📱 Mobile optimized! ${articles.length} articles ready (${imagesFromBackup + imagesFromCache} with images)`, 'success');
+                    } else {
+                        this.updateStatus(`📱 ${articles.length} articles loaded for mobile`, 'success');
+                    }
+                    
+                    // On mobile, load real images in background at lower priority
+                    if (imagesNeedLoading > 0) {
+                        setTimeout(() => this.loadMissingImages(articles), 2000); // Delay for better mobile UX
+                    }
                 } else {
-                    this.updateStatus(`📸 Loading ${imagesNeedLoading} images... (${imagesFromBackup} synced, ${imagesFromCache} cached)`, 'loading');
-                    this.loadMissingImages(articles);
+                    // Desktop behavior (unchanged)
+                    if (imagesNeedLoading === 0) {
+                        this.updateStatus(`✅ All ${articles.length} images ready! (${imagesFromBackup} synced, ${imagesFromCache} cached)`, 'success');
+                    } else {
+                        this.updateStatus(`📸 Loading ${imagesNeedLoading} images... (${imagesFromBackup} synced, ${imagesFromCache} cached)`, 'loading');
+                        this.loadMissingImages(articles);
+                    }
                 }
             }
 
@@ -1644,7 +1910,7 @@
                 `;
             }
 
-            // Load only missing images (not cached)
+            // Mobile-optimized image loading
             async loadMissingImages(articles) {
                 console.log('🎨 SMART IMAGE LOADER - Loading only missing images...');
                 
@@ -1660,38 +1926,57 @@
                     return;
                 }
 
+                const isMobile = window.innerWidth <= 768;
                 let successCount = 0;
                 const totalNew = articlesNeedingImages.length;
                 
-                console.log(`🔄 Loading ${totalNew} new images`);
+                console.log(`🔄 Loading ${totalNew} new images${isMobile ? ' (mobile mode)' : ''}`);
                 
-                // Load images sequentially to avoid overwhelming websites
-                for (let i = 0; i < articlesNeedingImages.length; i++) {
-                    const article = articlesNeedingImages[i];
-                    const originalIndex = articles.findIndex(a => a === article);
+                // Mobile optimization: Load fewer images concurrently and with longer delays
+                const batchSize = isMobile ? 2 : 5; // Process fewer images at once on mobile
+                const delayBetweenImages = isMobile ? 800 : 300; // Longer delays on mobile
+                
+                for (let i = 0; i < articlesNeedingImages.length; i += batchSize) {
+                    const batch = articlesNeedingImages.slice(i, i + batchSize);
                     
-                    try {
-                        const success = await this.extractAndCacheRealImage(article, originalIndex);
-                        if (success) successCount++;
+                    // Process batch
+                    await Promise.all(batch.map(async (article) => {
+                        const originalIndex = articles.findIndex(a => a === article);
                         
-                        // Update progress
-                        const progress = Math.round(((i + 1) / totalNew) * 100);
-                        this.updateStatus(`🔍 Loading new images... ${i + 1}/${totalNew} (${progress}%)`, 'loading');
-                        
-                        // Delay to be respectful to websites
-                        await new Promise(resolve => setTimeout(resolve, 300));
-                        
-                    } catch (error) {
-                        console.error(`Failed to extract image for article ${originalIndex}:`, error);
-                        // Use category fallback for failed extractions
-                        const fallbackImage = this.getCategoryBasedImage(article, originalIndex);
-                        this.setArticleImageAndCache(article, originalIndex, fallbackImage, 'fallback');
-                        successCount++;
+                        try {
+                            const success = await this.extractAndCacheRealImage(article, originalIndex);
+                            if (success) successCount++;
+                        } catch (error) {
+                            console.error(`Failed to extract image for article ${originalIndex}:`, error);
+                            // Use category fallback for failed extractions
+                            const fallbackImage = this.getCategoryBasedImage(article, originalIndex);
+                            this.setArticleImageAndCache(article, originalIndex, fallbackImage, 'fallback');
+                            successCount++;
+                        }
+                    }));
+                    
+                    // Update progress
+                    const progress = Math.round(((i + batchSize) / totalNew) * 100);
+                    if (isMobile) {
+                        this.updateStatus(`📱 Loading images... ${Math.min(i + batchSize, totalNew)}/${totalNew}`, 'loading');
+                    } else {
+                        this.updateStatus(`🔍 Loading new images... ${Math.min(i + batchSize, totalNew)}/${totalNew} (${progress}%)`, 'loading');
+                    }
+                    
+                    // Delay between batches (longer on mobile for better performance)
+                    if (i + batchSize < articlesNeedingImages.length) {
+                        await new Promise(resolve => setTimeout(resolve, delayBetweenImages));
                     }
                 }
                 
                 const totalCached = this.imageCache.size;
-                this.updateStatus(`✅ Loaded ${successCount}/${totalNew} new images! (${totalCached} total cached)`, 'success');
+                
+                if (isMobile) {
+                    this.updateStatus(`📱 Mobile optimized! ${successCount} images loaded`, 'success');
+                } else {
+                    this.updateStatus(`✅ Loaded ${successCount}/${totalNew} new images! (${totalCached} total cached)`, 'success');
+                }
+                
                 console.log(`🎨 Smart image loading complete: ${successCount}/${totalNew} new, ${totalCached} total cached`);
             }
 
