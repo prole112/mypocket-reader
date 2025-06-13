@@ -155,15 +155,19 @@
             color: #f85149;
         }
 
-        /* NEW: Dark mode styles for synced indicator */
+        /* NEW: Enhanced dark mode styles for cache indicators */
         [data-theme="dark"] .cache-indicator.synced {
             background: rgba(76, 175, 80, 0.9);
             color: white;
         }
 
-        /* NEW: Dark mode styles for fallback indicator */
         [data-theme="dark"] .cache-indicator.fallback {
             background: rgba(255, 152, 0, 0.9);
+            color: white;
+        }
+
+        [data-theme="dark"] .cache-indicator.metadata {
+            background: rgba(103, 58, 183, 0.9);
             color: white;
         }
 
@@ -699,15 +703,19 @@
             background: rgba(52, 152, 219, 0.8);
         }
 
-        /* NEW: Synced indicator styles */
+        /* NEW: Enhanced cache indicator styles */
         .cache-indicator.synced {
             background: rgba(76, 175, 80, 0.8);
             color: white;
         }
 
-        /* NEW: Fallback indicator styles */
         .cache-indicator.fallback {
             background: rgba(255, 152, 0, 0.8);
+            color: white;
+        }
+
+        .cache-indicator.metadata {
+            background: rgba(103, 58, 183, 0.8);
             color: white;
         }
 
@@ -1104,6 +1112,9 @@
                     </button>
                     <button id="clearCacheBtn" class="btn btn-secondary" onclick="webReader.clearImageCache()">
                         <span>🗑️</span> Clear Cache
+                    </button>
+                    <button id="syncBtn" class="btn btn-secondary" onclick="webReader.forceSyncImages()" style="display: none;">
+                        <span>🔄</span> Sync Images
                     </button>
                     <button id="debugBtn" class="btn btn-secondary" onclick="webReader.showDebugInfo()">
                         <span>🔧</span> Debug
@@ -1550,17 +1561,89 @@
                 const connectIcon = document.getElementById('connectIcon');
                 const connectText = document.getElementById('connectText');
                 const refreshBtn = document.getElementById('refreshBtn');
+                const syncBtn = document.getElementById('syncBtn');
 
                 if (connected) {
                     connectIcon.textContent = '✅';
                     connectText.textContent = 'Connected (PKCE)';
                     connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
                     refreshBtn.style.display = 'inline-flex';
+                    if (syncBtn) syncBtn.style.display = 'inline-flex';
                 } else {
                     connectIcon.textContent = '🔐';
                     connectText.textContent = 'Secure Connect';
                     connectBtn.style.background = 'rgba(255,255,255,0.2)';
                     refreshBtn.style.display = 'none';
+                    if (syncBtn) syncBtn.style.display = 'none';
+                }
+            }
+
+            // NEW: Force sync all images to OneDrive
+            async forceSyncImages() {
+                if (!this.accessToken) {
+                    this.updateStatus('❌ Please connect to OneDrive first', 'error');
+                    return;
+                }
+
+                this.updateStatus('🔄 Force syncing all images to OneDrive...', 'loading');
+                
+                try {
+                    let syncedCount = 0;
+                    const totalArticles = this.articles.length;
+
+                    for (let i = 0; i < this.articles.length; i++) {
+                        const article = this.articles[i];
+                        
+                        // If article doesn't have cached image, try to get it from local cache or extract
+                        if (!article.cachedImage) {
+                            let imageUrl = this.getCachedImage(article);
+                            
+                            if (!imageUrl) {
+                                imageUrl = this.getBestArticleImage(article);
+                            }
+                            
+                            if (!imageUrl) {
+                                imageUrl = this.getCategoryBasedImage(article, i);
+                            }
+
+                            if (imageUrl) {
+                                try {
+                                    const imageData = await this.convertImageToBase64(imageUrl);
+                                    if (imageData.stored) {
+                                        article.cachedImage = {
+                                            base64: imageData.base64,
+                                            url: imageData.url,
+                                            timestamp: Date.now(),
+                                            size: imageData.size,
+                                            source: 'force_sync'
+                                        };
+                                        syncedCount++;
+                                    }
+                                } catch (error) {
+                                    console.error(`Failed to sync image for ${article.title}:`, error);
+                                }
+                            }
+                        } else {
+                            syncedCount++; // Already has cached image
+                        }
+
+                        // Update progress
+                        if (i % 5 === 0) {
+                            this.updateStatus(`🔄 Syncing images... ${i + 1}/${totalArticles}`, 'loading');
+                        }
+                    }
+
+                    // Save to OneDrive
+                    await this.updateOneDriveBackup();
+                    
+                    this.updateStatus(`✅ Force sync complete! ${syncedCount}/${totalArticles} images synced to OneDrive`, 'success');
+                    
+                    // Refresh display to show synced status
+                    this.displayArticles(this.articles);
+                    
+                } catch (error) {
+                    console.error('Force sync error:', error);
+                    this.updateStatus(`❌ Force sync failed: ${error.message}`, 'error');
                 }
             }
 
@@ -1751,7 +1834,7 @@
                 }
             }
 
-            // Enhanced display articles with mobile optimization (FIXED - same images on all devices)
+            // ENHANCED: Aggressive cross-device image loading with debugging
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1772,27 +1855,50 @@
                     let cacheStatus = 'loading';
                     let statusText = '🔄 Loading';
 
+                    // ENHANCED: More aggressive checking for stored images
+                    
                     // Priority 1: Check if image is stored in the article backup (BEST - works cross-device)
                     if (article.cachedImage && article.cachedImage.base64) {
                         imageHTML = this.createImageHTML(article.cachedImage.base64, true);
                         cacheStatus = 'synced';
                         statusText = '🌐 Synced';
                         imagesFromBackup++;
-                        console.log(`✅ Using stored image data for: ${article.title.substring(0, 30)}...`);
+                        console.log(`✅ Using stored backup image for: ${article.title.substring(0, 30)}... (${Math.round(article.cachedImage.size)}KB)`);
+                    }
+                    // Priority 1b: Check if article has cached image URL (from previous session)
+                    else if (article.cachedImage && article.cachedImage.url) {
+                        imageHTML = this.createImageHTML(article.cachedImage.url, true);
+                        cacheStatus = 'synced';
+                        statusText = '🔗 Synced URL';
+                        imagesFromBackup++;
+                        console.log(`✅ Using stored image URL for: ${article.title.substring(0, 30)}...`);
                     }
                     // Priority 2: Check local cache (FAST - this device only)
                     else if (this.getCachedImage(article)) {
                         imageHTML = this.createImageHTML(this.getCachedImage(article), true);
                         cacheStatus = 'cached';
-                        statusText = '💾 Cached';
+                        statusText = '💾 Local Cache';
                         imagesFromCache++;
+                        console.log(`✅ Using local cache for: ${article.title.substring(0, 30)}...`);
                     }
-                    // Priority 3: Need to load - SAME on both mobile and desktop
+                    // Priority 3: Try to find any image in article metadata
+                    else if (this.getBestArticleImage(article)) {
+                        const savedImage = this.getBestArticleImage(article);
+                        imageHTML = this.createImageHTML(savedImage, false);
+                        cacheStatus = 'metadata';
+                        statusText = '📄 Metadata';
+                        console.log(`✅ Using article metadata image for: ${article.title.substring(0, 30)}...`);
+                        
+                        // Store this image for cross-device sync
+                        setTimeout(() => this.setArticleImageAndCache(article, index, savedImage, 'saved'), 100);
+                    }
+                    // Priority 4: Need to extract from website
                     else {
                         imageHTML = this.createPlaceholderHTML();
                         cacheStatus = 'loading';
                         statusText = isMobile ? '📱 Loading...' : '🔄 Loading';
                         imagesNeedLoading++;
+                        console.log(`❌ No image found for: ${article.title.substring(0, 30)}... - will extract`);
                     }
                     
                     return `
@@ -1831,21 +1937,30 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
                 
-                // Update status - SAME images on both platforms, just different loading strategy
+                // Enhanced status reporting
+                const totalReady = imagesFromBackup + imagesFromCache;
+                
                 if (imagesNeedLoading === 0) {
                     const message = isMobile ? 
-                        `📱 ${articles.length} articles ready! (${imagesFromBackup + imagesFromCache} with images)` :
-                        `✅ All ${articles.length} images ready! (${imagesFromBackup} synced, ${imagesFromCache} cached)`;
+                        `📱 ALL images ready instantly! ${totalReady}/${articles.length} synced ✨` :
+                        `✅ ALL images ready! ${imagesFromBackup} synced, ${imagesFromCache} cached ✨`;
                     this.updateStatus(message, 'success');
                 } else {
                     const message = isMobile ?
-                        `📱 Loading ${imagesNeedLoading} images... (${imagesFromBackup + imagesFromCache} ready)` :
-                        `📸 Loading ${imagesNeedLoading} images... (${imagesFromBackup} synced, ${imagesFromCache} cached)`;
+                        `📱 ${totalReady} ready, extracting ${imagesNeedLoading} more...` :
+                        `⚡ ${totalReady} ready instantly, extracting ${imagesNeedLoading} more...`;
                     this.updateStatus(message, 'loading');
                     
-                    // Load missing images with mobile-optimized performance but SAME images
-                    this.loadMissingImages(articles);
+                    // Load missing images - prioritize on mobile for faster completion
+                    if (isMobile) {
+                        setTimeout(() => this.loadMissingImages(articles), 500); // Start faster on mobile
+                    } else {
+                        this.loadMissingImages(articles);
+                    }
                 }
+
+                // Debug logging
+                console.log(`📊 IMAGE STATUS: ${imagesFromBackup} synced, ${imagesFromCache} cached, ${imagesNeedLoading} need loading`);
             }
 
             createImageHTML(imageUrl, fromCache = false) {
@@ -1967,7 +2082,7 @@
                 console.log(`🎨 Image loading complete: ${successCount}/${totalNew} SAME images on both platforms`);
             }
 
-            // Enhanced method to store images WITH articles
+            // ENHANCED: Force backup update when images are stored
             async setArticleImageAndCache(article, index, imageUrl, source) {
                 const imageElement = document.getElementById(`image-${index}`);
                 if (!imageElement) return;
@@ -1985,29 +2100,48 @@
                 // Store in local cache
                 this.setCachedImage(article, imageUrl);
 
-                // ENHANCED: Also store base64 data in the article for cross-device sync
-                if (this.storeImagesInBackup && source === 'extracted') {
-                    const imageData = await this.convertImageToBase64(imageUrl);
-                    
-                    if (imageData.stored) {
-                        // Find the article in our array and add image data
-                        const articleIndex = this.articles.findIndex(a => a.url === article.url);
-                        if (articleIndex !== -1) {
-                            this.articles[articleIndex].cachedImage = {
-                                base64: imageData.base64,
-                                url: imageData.url,
-                                timestamp: Date.now(),
-                                size: imageData.size
-                            };
-                            
-                            console.log(`💾 Stored ${imageData.size}KB image data in article for cross-device sync`);
-                            
-                            // Update cache indicator to show it's stored for sync
-                            if (cacheIndicator) {
-                                cacheIndicator.textContent = '🌐 Synced';
-                                cacheIndicator.className = 'cache-indicator synced';
+                // ENHANCED: Always store base64 data for cross-device sync (not just extracted images)
+                if (this.storeImagesInBackup && (source === 'extracted' || source === 'saved' || source === 'fallback')) {
+                    try {
+                        console.log(`🔄 Converting image for cross-device storage: ${article.title.substring(0, 30)}...`);
+                        const imageData = await this.convertImageToBase64(imageUrl);
+                        
+                        if (imageData.stored) {
+                            // Find the article in our array and add image data
+                            const articleIndex = this.articles.findIndex(a => a.url === article.url);
+                            if (articleIndex !== -1) {
+                                this.articles[articleIndex].cachedImage = {
+                                    base64: imageData.base64,
+                                    url: imageData.url,
+                                    timestamp: Date.now(),
+                                    size: imageData.size,
+                                    source: source
+                                };
+                                
+                                console.log(`💾 Stored ${imageData.size}KB image in backup for cross-device sync`);
+                                
+                                // Update cache indicator to show it's stored for sync
+                                if (cacheIndicator) {
+                                    cacheIndicator.textContent = '🌐 Synced';
+                                    cacheIndicator.className = 'cache-indicator synced';
+                                }
+
+                                // IMMEDIATELY save to OneDrive to ensure sync
+                                if (this.accessToken) {
+                                    console.log('💾 Auto-saving to OneDrive for instant cross-device sync...');
+                                    try {
+                                        await this.updateOneDriveBackup();
+                                        console.log('✅ OneDrive backup updated with new image');
+                                    } catch (error) {
+                                        console.error('⚠️ Failed to auto-save backup:', error);
+                                    }
+                                }
                             }
+                        } else {
+                            console.log(`⚠️ Image too large for cross-device storage: ${imageData.size}KB`);
                         }
+                    } catch (error) {
+                        console.error('Error storing image for cross-device sync:', error);
                     }
                 }
             }
