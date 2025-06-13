@@ -155,12 +155,6 @@
             color: #f85149;
         }
 
-        /* NEW: Dark mode styles for synced indicator */
-        [data-theme="dark"] .cache-indicator.synced {
-            background: rgba(76, 175, 80, 0.9);
-            color: white;
-        }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
@@ -693,12 +687,6 @@
             background: rgba(52, 152, 219, 0.8);
         }
 
-        /* NEW: Synced indicator styles */
-        .cache-indicator.synced {
-            background: rgba(76, 175, 80, 0.8);
-            color: white;
-        }
-
         /* Responsive */
         @media (max-width: 768px) {
             .container {
@@ -945,11 +933,6 @@
                 this.cacheKey = 'mypocket_image_cache';
                 this.cacheExpiryDays = 7; // Cache images for 7 days
 
-                // NEW: Cross-device image storage
-                this.storeImagesInBackup = true; // Enable cross-device image storage
-                this.maxImageSizeKB = 500; // Limit to prevent huge backups
-                this.cacheSaveTimeout = null; // For debounced saves
-
                 this.init();
             }
 
@@ -1062,106 +1045,26 @@
             }
 
             clearImageCache() {
-                if (confirm('Clear all cached images?\n\nThis will:\n- Clear local cache\n- Remove stored images from articles\n- Force re-downloading images next time')) {
-                    // Clear local cache
+                if (confirm('Clear all cached images?\n\nThis will force re-downloading images next time you visit.')) {
                     this.imageCache.clear();
                     localStorage.removeItem(this.cacheKey);
-                    
-                    // Clear stored images from articles
-                    this.articles.forEach(article => {
-                        if (article.cachedImage) {
-                            delete article.cachedImage;
-                        }
-                    });
-                    
-                    this.updateStatus('🗑️ All image data cleared. Images will be re-downloaded and stored for cross-device access.', 'success');
-                    console.log('🗑️ All image data cleared');
-                    
-                    // Refresh display
-                    this.displayArticles(this.articles);
+                    this.updateStatus('🗑️ Image cache cleared. Images will be re-downloaded next time.', 'success');
+                    console.log('🗑️ Image cache cleared');
                 }
             }
 
             getCacheStats() {
-                const timestamps = Array.from(this.imageCache.values()).map(entry => entry.timestamp);
                 return {
                     total: this.imageCache.size,
                     memoryUsage: JSON.stringify(Object.fromEntries(this.imageCache)).length,
-                    oldestEntry: timestamps.length > 0 ? Math.min(...timestamps) : null,
-                    newestEntry: timestamps.length > 0 ? Math.max(...timestamps) : null
+                    oldestEntry: Math.min(...Array.from(this.imageCache.values()).map(entry => entry.timestamp)),
+                    newestEntry: Math.max(...Array.from(this.imageCache.values()).map(entry => entry.timestamp))
                 };
             }
 
-            // ===== NEW: CROSS-DEVICE IMAGE STORAGE =====
+            // ===== ENHANCED IMAGE LOADING WITH CACHE =====
 
-            // STEP 1: Convert image URL to base64 data for storage
-            async convertImageToBase64(imageUrl) {
-                try {
-                    console.log(`📸 Converting image to base64: ${imageUrl.substring(0, 50)}...`);
-                    
-                    // Create a canvas to convert image to base64
-                    const img = new Image();
-                    img.crossOrigin = 'anonymous'; // Handle CORS
-                    
-                    return new Promise((resolve, reject) => {
-                        img.onload = () => {
-                            try {
-                                const canvas = document.createElement('canvas');
-                                const ctx = canvas.getContext('2d');
-                                
-                                // Set canvas size (optimize for web display)
-                                const maxWidth = 400;
-                                const maxHeight = 250;
-                                
-                                let { width, height } = img;
-                                
-                                // Maintain aspect ratio while limiting size
-                                if (width > maxWidth) {
-                                    height = (height * maxWidth) / width;
-                                    width = maxWidth;
-                                }
-                                if (height > maxHeight) {
-                                    width = (width * maxHeight) / height;
-                                    height = maxHeight;
-                                }
-                                
-                                canvas.width = width;
-                                canvas.height = height;
-                                
-                                // Draw and convert to base64
-                                ctx.drawImage(img, 0, 0, width, height);
-                                const base64 = canvas.toDataURL('image/jpeg', 0.8); // Compress to 80% quality
-                                
-                                // Check size limit
-                                const sizeKB = Math.round(base64.length * 0.75 / 1024); // Rough base64 size calculation
-                                
-                                if (sizeKB > this.maxImageSizeKB) {
-                                    console.log(`⚠️ Image too large (${sizeKB}KB), using URL only`);
-                                    resolve({ url: imageUrl, size: sizeKB, stored: false });
-                                } else {
-                                    console.log(`✅ Image converted (${sizeKB}KB): ${imageUrl.substring(0, 30)}...`);
-                                    resolve({ base64: base64, url: imageUrl, size: sizeKB, stored: true });
-                                }
-                            } catch (error) {
-                                console.log(`❌ Canvas conversion failed: ${error.message}`);
-                                resolve({ url: imageUrl, stored: false });
-                            }
-                        };
-                        
-                        img.onerror = () => {
-                            console.log(`❌ Image load failed: ${imageUrl}`);
-                            resolve({ url: imageUrl, stored: false });
-                        };
-                        
-                        img.src = imageUrl;
-                    });
-                } catch (error) {
-                    console.error('Image conversion error:', error);
-                    return { url: imageUrl, stored: false };
-                }
-            }
-
-            // STEP 2: Enhanced display articles to use stored image data FIRST
+            // Enhanced displayArticles with intelligent caching
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1170,44 +1073,16 @@
                     return;
                 }
 
-                let imagesFromBackup = 0;
-                let imagesFromCache = 0;
-                let imagesNeedLoading = 0;
-
                 const articlesHTML = articles.map((article, index) => {
-                    let imageHTML = '';
-                    let cacheStatus = 'loading';
-                    let statusText = '🔄 Loading';
-
-                    // Priority 1: Check if image is stored in the article backup (BEST - works cross-device)
-                    if (article.cachedImage && article.cachedImage.base64) {
-                        imageHTML = this.createImageHTML(article.cachedImage.base64, true);
-                        cacheStatus = 'synced';
-                        statusText = '🌐 Synced';
-                        imagesFromBackup++;
-                        console.log(`✅ Using stored image data for: ${article.title.substring(0, 30)}...`);
-                    }
-                    // Priority 2: Check local cache (FAST - this device only)
-                    else if (this.getCachedImage(article)) {
-                        imageHTML = this.createImageHTML(this.getCachedImage(article), true);
-                        cacheStatus = 'cached';
-                        statusText = '💾 Cached';
-                        imagesFromCache++;
-                    }
-                    // Priority 3: Need to load (SLOW - will fetch)
-                    else {
-                        imageHTML = this.createPlaceholderHTML();
-                        cacheStatus = 'loading';
-                        statusText = '🔄 Loading';
-                        imagesNeedLoading++;
-                    }
+                    const cachedImage = this.getCachedImage(article);
+                    const cacheStatus = cachedImage ? 'cached' : 'fresh';
                     
                     return `
                     <div class="article-card" data-index="${index}">
                         <div class="article-image" id="image-${index}">
-                            ${imageHTML}
+                            ${cachedImage ? this.createImageHTML(cachedImage, true) : this.createPlaceholderHTML()}
                             <div class="cache-indicator ${cacheStatus}">
-                                ${statusText}
+                                ${cachedImage ? '💾 Cached' : '🔄 Loading'}
                             </div>
                         </div>
                         <div class="article-content" onclick="webReader.openReader(${index})">
@@ -1238,12 +1113,14 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
                 
-                // Update status with detailed breakdown
-                if (imagesNeedLoading === 0) {
-                    this.updateStatus(`✅ All ${articles.length} images ready! (${imagesFromBackup} synced, ${imagesFromCache} cached)`, 'success');
-                } else {
-                    this.updateStatus(`📸 Loading ${imagesNeedLoading} images... (${imagesFromBackup} synced, ${imagesFromCache} cached)`, 'loading');
+                // Count articles that need image extraction
+                const articlesNeedingImages = articles.filter(article => !this.getCachedImage(article));
+                
+                if (articlesNeedingImages.length > 0) {
+                    this.updateStatus(`📸 Loading ${articlesNeedingImages.length} new images (${this.imageCache.size} cached)...`, 'loading');
                     this.loadMissingImages(articles);
+                } else {
+                    this.updateStatus(`✅ All ${articles.length} images loaded from cache!`, 'success');
                 }
             }
 
@@ -1300,21 +1177,19 @@
                 console.log('🎨 SMART IMAGE LOADER - Loading only missing images...');
                 
                 const articlesNeedingImages = articles.filter((article, index) => {
-                    // Check both stored backup images and local cache
-                    const hasStoredImage = article.cachedImage && article.cachedImage.base64;
-                    const hasCachedImage = this.getCachedImage(article);
-                    return !hasStoredImage && !hasCachedImage;
+                    const cached = this.getCachedImage(article);
+                    return !cached;
                 });
 
                 if (articlesNeedingImages.length === 0) {
-                    this.updateStatus(`✅ All images loaded!`, 'success');
+                    this.updateStatus(`✅ All images loaded from cache!`, 'success');
                     return;
                 }
 
                 let successCount = 0;
                 const totalNew = articlesNeedingImages.length;
                 
-                console.log(`🔄 Loading ${totalNew} new images`);
+                console.log(`🔄 Loading ${totalNew} new images (${this.imageCache.size} already cached)`);
                 
                 // Load images sequentially to avoid overwhelming websites
                 for (let i = 0; i < articlesNeedingImages.length; i++) {
@@ -1344,51 +1219,6 @@
                 const totalCached = this.imageCache.size;
                 this.updateStatus(`✅ Loaded ${successCount}/${totalNew} new images! (${totalCached} total cached)`, 'success');
                 console.log(`🎨 Smart image loading complete: ${successCount}/${totalNew} new, ${totalCached} total cached`);
-            }
-
-            // STEP 3: Enhanced method to store images WITH articles
-            async setArticleImageAndCache(article, index, imageUrl, source) {
-                const imageElement = document.getElementById(`image-${index}`);
-                if (!imageElement) return;
-
-                // Update the DOM immediately
-                imageElement.innerHTML = this.createImageHTML(imageUrl, false);
-                
-                // Update cache indicator
-                const cacheIndicator = imageElement.querySelector('.cache-indicator');
-                if (cacheIndicator) {
-                    cacheIndicator.textContent = source === 'extracted' ? '🌐 Fresh' : '💾 Cached';
-                    cacheIndicator.className = `cache-indicator ${source === 'extracted' ? 'fresh' : 'cached'}`;
-                }
-
-                // Store in local cache
-                this.setCachedImage(article, imageUrl);
-
-                // ENHANCED: Also store base64 data in the article for cross-device sync
-                if (this.storeImagesInBackup && source === 'extracted') {
-                    const imageData = await this.convertImageToBase64(imageUrl);
-                    
-                    if (imageData.stored) {
-                        // Find the article in our array and add image data
-                        const articleIndex = this.articles.findIndex(a => a.url === article.url);
-                        if (articleIndex !== -1) {
-                            this.articles[articleIndex].cachedImage = {
-                                base64: imageData.base64,
-                                url: imageData.url,
-                                timestamp: Date.now(),
-                                size: imageData.size
-                            };
-                            
-                            console.log(`💾 Stored ${imageData.size}KB image data in article for cross-device sync`);
-                            
-                            // Update cache indicator to show it's stored for sync
-                            if (cacheIndicator) {
-                                cacheIndicator.textContent = '🌐 Synced';
-                                cacheIndicator.className = 'cache-indicator synced';
-                            }
-                        }
-                    }
-                }
             }
 
             // Extract and cache image (enhanced version)
@@ -1423,6 +1253,25 @@
                 const fallbackImage = this.getCategoryBasedImage(article, index);
                 this.setArticleImageAndCache(article, index, fallbackImage, 'fallback');
                 return true;
+            }
+
+            // Set image and update cache
+            setArticleImageAndCache(article, index, imageUrl, source) {
+                const imageElement = document.getElementById(`image-${index}`);
+                if (!imageElement) return;
+
+                // Update the DOM
+                imageElement.innerHTML = this.createImageHTML(imageUrl, false);
+                
+                // Update cache indicator
+                const cacheIndicator = imageElement.querySelector('.cache-indicator');
+                if (cacheIndicator) {
+                    cacheIndicator.textContent = source === 'extracted' ? '🌐 Fresh' : '💾 Cached';
+                    cacheIndicator.className = `cache-indicator ${source === 'extracted' ? 'fresh' : 'cached'}`;
+                }
+
+                // Cache the image
+                this.setCachedImage(article, imageUrl);
             }
 
             checkAuthFromURL() {
@@ -1573,8 +1422,7 @@
                     this.displayArticles(this.articles);
 
                     const cacheStats = this.getCacheStats();
-                    const storedImages = this.articles.filter(a => a.cachedImage).length;
-                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name} (${storedImages} with stored images, ${cacheStats.total} locally cached)`, 'success');
+                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name} (${cacheStats.total} images cached)`, 'success');
 
                 } catch (error) {
                     console.error('Error loading articles:', error);
@@ -1965,46 +1813,26 @@
                 }
             }
 
-            // STEP 4: Enhanced backup to include image data
             async updateOneDriveBackup() {
                 if (!this.accessToken) {
                     throw new Error('Not connected to OneDrive');
                 }
 
-                // Calculate backup size with images
-                const articlesWithImages = this.articles.filter(a => a.cachedImage);
-                const totalImageSizeKB = articlesWithImages.reduce((total, article) => {
-                    return total + (article.cachedImage ? article.cachedImage.size || 0 : 0);
-                }, 0);
-
-                console.log(`📦 Creating backup with ${articlesWithImages.length} stored images (${Math.round(totalImageSizeKB)}KB)`);
-
                 const backup = {
-                    articles: this.articles, // This now includes cachedImage data
-                    settings: {
-                        storeImagesInBackup: this.storeImagesInBackup,
-                        maxImageSizeKB: this.maxImageSizeKB
-                    },
+                    articles: this.articles,
+                    settings: {},
                     exportDate: new Date().toISOString(),
-                    version: "4.0", // Bump version for image storage
+                    version: "3.3",
                     deviceInfo: {
-                        browser: "Web Reader with Cross-Device Images",
+                        browser: "Web Reader",
                         platform: navigator.platform,
                         timestamp: Date.now(),
-                        articleCount: this.articles.length,
-                        storedImages: articlesWithImages.length,
-                        totalImageSizeKB: Math.round(totalImageSizeKB)
+                        articleCount: this.articles.length
                     }
                 };
 
                 const fileName = `mypocket-backup-${new Date().toISOString().split('T')[0]}.json`;
                 const fileContent = JSON.stringify(backup, null, 2);
-
-                // Check if backup is getting too large (>10MB)
-                const backupSizeMB = fileContent.length / (1024 * 1024);
-                if (backupSizeMB > 10) {
-                    console.warn(`⚠️ Large backup detected: ${backupSizeMB.toFixed(1)}MB`);
-                }
 
                 const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
 
@@ -2022,7 +1850,6 @@
                     throw new Error(`Failed to update OneDrive backup: ${uploadResponse.status} - ${errorText}`);
                 }
 
-                console.log(`✅ Backup saved with ${articlesWithImages.length} images (${Math.round(totalImageSizeKB)}KB)`);
                 return await uploadResponse.json();
             }
 
@@ -2274,6 +2101,24 @@
                         }
                     }
                     
+                    // Strategy 5: Look for images in JSON-LD structured data
+                    const jsonLdScripts = doc.querySelectorAll('script[type="application/ld+json"]');
+                    for (const script of jsonLdScripts) {
+                        try {
+                            const data = JSON.parse(script.textContent);
+                            const image = this.extractImageFromJsonLd(data);
+                            if (image) {
+                                const imageUrl = this.makeAbsoluteUrl(image, baseUrl);
+                                if (this.isValidImageUrl(imageUrl)) {
+                                    console.log(`🎯 Found JSON-LD image: ${imageUrl}`);
+                                    return imageUrl;
+                                }
+                            }
+                        } catch (e) {
+                            // Ignore malformed JSON-LD
+                        }
+                    }
+                    
                     console.log(`❌ No suitable image found in HTML`);
                     return null;
                     
@@ -2281,6 +2126,44 @@
                     console.error('HTML parsing error:', error);
                     return null;
                 }
+            }
+
+            // NEW: Extract image from JSON-LD structured data
+            extractImageFromJsonLd(data) {
+                if (typeof data !== 'object') return null;
+                
+                // Handle arrays
+                if (Array.isArray(data)) {
+                    for (const item of data) {
+                        const image = this.extractImageFromJsonLd(item);
+                        if (image) return image;
+                    }
+                    return null;
+                }
+                
+                // Look for image properties
+                if (data.image) {
+                    if (typeof data.image === 'string') return data.image;
+                    if (Array.isArray(data.image) && data.image.length > 0) {
+                        return typeof data.image[0] === 'string' ? data.image[0] : data.image[0].url;
+                    }
+                    if (data.image.url) return data.image.url;
+                }
+                
+                // Look for thumbnailUrl
+                if (data.thumbnailUrl) {
+                    return typeof data.thumbnailUrl === 'string' ? data.thumbnailUrl : data.thumbnailUrl.url;
+                }
+                
+                // Recursively search nested objects
+                for (const key in data) {
+                    if (typeof data[key] === 'object') {
+                        const image = this.extractImageFromJsonLd(data[key]);
+                        if (image) return image;
+                    }
+                }
+                
+                return null;
             }
 
             // NEW: Try alternative image extraction methods
@@ -2623,11 +2506,6 @@
 
             showDebugInfo() {
                 const cacheStats = this.getCacheStats();
-                const storedImages = this.articles.filter(a => a.cachedImage).length;
-                const totalStoredSizeKB = this.articles.reduce((total, article) => {
-                    return total + (article.cachedImage ? article.cachedImage.size || 0 : 0);
-                }, 0);
-                
                 const info = `
 MyPocket Web Reader Debug Info:
 =====================================
@@ -2640,13 +2518,7 @@ Host: ${window.location.host}
 Has Access Token: ${!!this.accessToken}
 Articles Loaded: ${this.articles.length}
 
-Cross-Device Image Storage:
-- Store Images in Backup: ${this.storeImagesInBackup}
-- Max Image Size: ${this.maxImageSizeKB}KB
-- Articles with Stored Images: ${storedImages}
-- Total Stored Image Size: ${Math.round(totalStoredSizeKB)}KB
-
-Local Image Cache Stats:
+Image Cache Stats:
 - Total Cached Images: ${cacheStats.total}
 - Memory Usage: ${Math.round(cacheStats.memoryUsage / 1024)} KB
 - Cache Expiry: ${this.cacheExpiryDays} days
@@ -2670,11 +2542,11 @@ Next Steps:
 4. Add Web platform with redirect URI: ${this.redirectUri}
 5. Make sure URI is exact match
 
-Cross-Device Image Features:
-- Images stored in OneDrive backup for instant loading
-- Base64 encoding with ${this.maxImageSizeKB}KB size limit
-- Automatic compression to 80% quality
-- Works across all devices and browsers
+Image Cache Features:
+- Images are cached for ${this.cacheExpiryDays} days
+- Cache survives browser sessions
+- Use "Clear Cache" button to force refresh
+- Cached images load instantly on subsequent visits
                 `;
 
                 alert(info);
@@ -2685,10 +2557,7 @@ Cross-Device Image Features:
                     protocol: window.location.protocol,
                     hasToken: !!this.accessToken,
                     articlesCount: this.articles.length,
-                    cacheStats: cacheStats,
-                    storedImages: storedImages,
-                    totalStoredSizeKB: Math.round(totalStoredSizeKB),
-                    crossDeviceEnabled: this.storeImagesInBackup
+                    cacheStats: cacheStats
                 });
             }
 
