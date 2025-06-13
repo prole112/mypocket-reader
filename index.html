@@ -3,10 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyPocket - Web Reader</title>
     <style>
         * {
@@ -305,8 +302,10 @@
 
         .articles-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* REDUCED from 290px to 220px */
-            gap: 18px; /* REDUCED from 24px to 18px */
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            /* REDUCED from 290px to 220px */
+            gap: 18px;
+            /* REDUCED from 24px to 18px */
             margin-top: 20px;
         }
 
@@ -363,12 +362,14 @@
         /* Organic shaped image area - SMALLER */
         .article-image {
             width: 100%;
-            height: 100px; /* REDUCED from 140px to 100px */
+            height: 100px;
+            /* REDUCED from 140px to 100px */
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5em; /* REDUCED from 2em to 1.5em */
+            font-size: 1.5em;
+            /* REDUCED from 2em to 1.5em */
             color: white;
             position: relative;
             overflow: hidden;
@@ -382,62 +383,28 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            object-position: center;
             transition: transform 0.4s ease, opacity 0.3s ease;
-            /* Force proper aspect ratio on all browsers */
-            min-height: 100px;
-            max-height: 100px;
         }
 
         .article-image:hover img {
             transform: scale(1.08);
         }
 
-        /* Mobile-specific image fixes */
-        @media (max-width: 768px) {
-            .article-image {
-                height: 120px; /* Slightly taller on mobile for better proportions */
-                border-radius: 16px 16px 0 0 !important; /* Simpler radius on mobile */
-            }
-            
-            .article-image img {
-                /* Enhanced mobile image handling */
-                min-height: 120px;
-                max-height: 120px;
-                object-fit: cover;
-                object-position: center;
-                /* Firefox mobile specific fixes */
-                -moz-object-fit: cover;
-                -moz-object-position: center;
-                /* Prevent stretching on mobile */
-                width: 100% !important;
-                height: 100% !important;
-                display: block;
-            }
-        }
-
-        /* Firefox-specific image fixes */
-        @-moz-document url-prefix() {
-            .article-image img {
-                object-fit: cover !important;
-                object-position: center !important;
-                width: 100% !important;
-                height: 100% !important;
-            }
-        }
-
         /* Compact content area with organic feel - SMALLER */
         .article-content {
-            padding: 15px; /* REDUCED from 20px to 15px */
+            padding: 15px;
+            /* REDUCED from 20px to 15px */
             flex: 1;
             cursor: pointer;
             border-radius: 0 0 inherit inherit;
         }
 
         .article-title {
-            font-size: 1em; /* REDUCED from 1.1em to 1em */
+            font-size: 1em;
+            /* REDUCED from 1.1em to 1em */
             font-weight: 600;
-            margin-bottom: 6px; /* REDUCED from 8px to 6px */
+            margin-bottom: 6px;
+            /* REDUCED from 8px to 6px */
             line-height: 1.3;
             color: var(--text-primary);
             display: -webkit-box;
@@ -448,9 +415,11 @@
 
         .article-excerpt {
             color: var(--text-secondary);
-            font-size: 0.8em; /* REDUCED from 0.9em to 0.8em */
+            font-size: 0.8em;
+            /* REDUCED from 0.9em to 0.8em */
             line-height: 1.4;
-            margin-bottom: 10px; /* REDUCED from 12px to 10px */
+            margin-bottom: 10px;
+            /* REDUCED from 12px to 10px */
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
@@ -462,10 +431,13 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 6px; /* REDUCED from 8px to 6px */
+            gap: 6px;
+            /* REDUCED from 8px to 6px */
             color: var(--text-secondary);
-            font-size: 0.75em; /* REDUCED from 0.8em to 0.75em */
-            margin-bottom: 6px; /* REDUCED from 8px to 6px */
+            font-size: 0.75em;
+            /* REDUCED from 0.8em to 0.75em */
+            margin-bottom: 6px;
+            /* REDUCED from 8px to 6px */
         }
 
         .article-domain {
@@ -478,18 +450,23 @@
 
         .article-stats {
             display: flex;
-            gap: 10px; /* REDUCED from 12px to 10px */
-            font-size: 0.7em; /* REDUCED from 0.75em to 0.7em */
+            gap: 10px;
+            /* REDUCED from 12px to 10px */
+            font-size: 0.7em;
+            /* REDUCED from 0.75em to 0.7em */
             color: var(--text-secondary);
         }
 
         /* Floating organic action buttons - SMALLER */
         .article-actions {
             position: absolute;
-            top: 10px; /* REDUCED from 15px to 10px */
-            right: 10px; /* REDUCED from 15px to 10px */
+            top: 10px;
+            /* REDUCED from 15px to 10px */
+            right: 10px;
+            /* REDUCED from 15px to 10px */
             display: flex;
-            gap: 6px; /* REDUCED from 8px to 6px */
+            gap: 6px;
+            /* REDUCED from 8px to 6px */
             opacity: 0 !important;
             visibility: hidden;
             transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -499,15 +476,20 @@
         .action-btn {
             background: rgba(255, 255, 255, 0.95);
             border: 2px solid var(--border);
-            border-radius: 50%; /* Circular buttons for organic feel */
-            padding: 8px; /* REDUCED from 12px to 8px */
+            border-radius: 50%;
+            /* Circular buttons for organic feel */
+            padding: 8px;
+            /* REDUCED from 12px to 8px */
             cursor: pointer;
-            font-size: 14px; /* REDUCED from 16px to 14px */
+            font-size: 14px;
+            /* REDUCED from 16px to 14px */
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             backdrop-filter: blur(10px);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            min-width: 36px; /* REDUCED from 44px to 36px */
-            height: 36px; /* REDUCED from 44px to 36px */
+            min-width: 36px;
+            /* REDUCED from 44px to 36px */
+            height: 36px;
+            /* REDUCED from 44px to 36px */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -738,220 +720,59 @@
                 text-align: center;
             }
 
-            .header-actions {
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 10px;
-            }
-
-            .btn {
-                padding: 8px 16px;
-                font-size: 13px;
-            }
-
             .articles-grid {
                 grid-template-columns: 1fr;
                 gap: 20px;
-                margin-top: 15px;
             }
 
             .article-card {
                 /* Simpler border radius for mobile */
-                border-radius: 16px !important;
-                /* Better mobile shadows */
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                border-radius: 24px !important;
             }
 
             .article-card:hover {
-                transform: translateY(-2px) scale(1.005);
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            }
-
-            /* Mobile image container */
-            .article-image {
-                height: 120px !important; /* Consistent mobile height */
-                border-radius: 16px 16px 0 0 !important;
-                /* Better mobile background gradients */
-                background-size: 200% 200%;
-                animation: gradientShift 3s ease infinite;
-            }
-            
-            /* Enhanced mobile image handling */
-            .article-image img {
-                min-height: 120px !important;
-                max-height: 120px !important;
-                object-fit: cover !important;
-                object-position: center !important;
-                /* Prevent image distortion on mobile */
-                aspect-ratio: 16/9;
-                /* Firefox mobile specific */
-                -moz-object-fit: cover !important;
-                -moz-object-position: center !important;
-                /* Webkit mobile specific */
-                -webkit-object-fit: cover !important;
-                -webkit-object-position: center !important;
-            }
-
-            .article-content {
-                padding: 12px 15px;
-            }
-
-            .article-title {
-                font-size: 0.95em;
-                line-height: 1.4;
-                margin-bottom: 8px;
-            }
-
-            .article-excerpt {
-                font-size: 0.8em;
-                line-height: 1.4;
-                margin-bottom: 8px;
-            }
-
-            .article-meta {
-                font-size: 0.7em;
-                gap: 8px;
-                margin-bottom: 8px;
-            }
-
-            .article-stats {
-                font-size: 0.65em;
-                gap: 8px;
+                transform: translateY(-4px) scale(1.01);
             }
 
             .article-actions {
                 position: static;
-                opacity: 1 !important;
-                visibility: visible !important;
+                opacity: 1;
+                visibility: visible;
                 justify-content: center;
-                margin: 10px 15px 15px;
-                padding: 10px;
+                margin-top: 15px;
+                padding: 15px;
                 background: var(--background);
-                border-radius: 12px;
-                gap: 12px;
+                border-radius: 20px;
             }
 
             .action-btn {
-                min-width: 44px;
-                height: 44px;
-                font-size: 16px;
-                border-radius: 50% !important;
-                /* Better mobile touch targets */
-                padding: 10px;
+                min-width: 48px;
+                height: 48px;
+                font-size: 18px;
+                border-radius: 50%;
             }
 
             .action-btn:hover {
-                border-radius: 50% !important;
-                transform: scale(1.05);
+                border-radius: 50%;
+                transform: scale(1.1);
             }
 
             .reader-container {
-                margin: 10px;
-                border-radius: 12px;
-                max-height: 90vh;
-                overflow-y: auto;
+                margin: 20px;
+                border-radius: 16px;
             }
 
             .reader-header,
             .reader-content {
-                padding: 15px;
+                padding: 20px;
             }
 
             .reader-title {
-                font-size: 1.4em;
-                line-height: 1.3;
-            }
-
-            .reader-meta {
-                flex-direction: column;
-                gap: 8px;
-                font-size: 0.85em;
+                font-size: 1.5em;
             }
 
             .search-input {
-                font-size: 16px; /* Prevent zoom on iOS */
-                padding: 12px 45px 12px 15px;
-            }
-
-            .search-box {
-                margin: 0 15px;
-            }
-
-            .status {
-                padding: 15px 20px;
-                font-size: 0.9em;
-            }
-
-            /* Mobile cache indicators */
-            .cache-indicator {
-                font-size: 9px;
-                padding: 1px 4px;
-                bottom: 5px;
-                left: 5px;
-            }
-        }
-
-        /* Extra small screens (phones in portrait) */
-        @media (max-width: 480px) {
-            .header-actions {
-                gap: 8px;
-            }
-            
-            .btn {
-                padding: 6px 12px;
-                font-size: 12px;
-            }
-            
-            .btn span {
-                margin-right: 4px;
-            }
-            
-            .article-image {
-                height: 100px !important;
-            }
-            
-            .article-image img {
-                min-height: 100px !important;
-                max-height: 100px !important;
-            }
-        }
-
-        /* Gradient animation for mobile loading states */
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* Touch device optimizations */
-        @media (hover: none) and (pointer: coarse) {
-            .article-card:hover {
-                transform: none;
-            }
-            
-            .article-image img {
-                /* Force proper rendering on touch devices */
-                transform: translateZ(0);
-                -webkit-transform: translateZ(0);
-                backface-visibility: hidden;
-                -webkit-backface-visibility: hidden;
-            }
-            
-            .action-btn:hover {
-                transform: none;
-            }
-            
-            .action-btn:active {
-                transform: scale(0.95);
-                transition: transform 0.1s ease;
-            }
-        }
-
-        /* High DPI display optimizations */
-        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-            .article-image img {
-                image-rendering: -webkit-optimize-contrast;
-                image-rendering: crisp-edges;
+                font-size: 16px;
             }
         }
 
@@ -979,21 +800,41 @@
 
         /* Additional organic elements */
         @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-6px); }
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-6px);
+            }
         }
 
         /* Background pattern animation for generated placeholders */
         @keyframes floatPattern {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
         }
 
         /* Shimmer animation for loading placeholders */
         @keyframes shimmer {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
+            0% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.6;
+            }
         }
 
         .article-card:nth-child(7n+1) {
@@ -1128,28 +969,14 @@
                 this.accessToken = null;
                 this.articles = [];
                 this.currentArticle = null;
-                
+
                 // Image cache system
                 this.imageCache = new Map();
                 this.cacheKey = 'mypocket_image_cache';
                 this.cacheExpiryDays = 7; // Cache images for 7 days
-                
-                // Mobile browser detection
-                this.isMobile = this.detectMobile();
-                this.isFirefoxMobile = this.detectFirefoxMobile();
+                this.cloudCacheSyncTimeout = null; // For debounced cloud sync
 
                 this.init();
-            }
-
-            detectMobile() {
-                return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                       window.innerWidth <= 768 ||
-                       ('ontouchstart' in window);
-            }
-
-            detectFirefoxMobile() {
-                return /Firefox/.test(navigator.userAgent) && this.isMobile;
-            }
             }
 
             getRedirectUri() {
@@ -1169,15 +996,6 @@
                 this.loadStoredToken();
                 this.loadThemePreference();
                 this.loadImageCache(); // Load cached images
-                
-                // Mobile debugging info
-                if (this.isMobile) {
-                    console.log('📱 Mobile device detected');
-                    if (this.isFirefoxMobile) {
-                        console.log('🦊 Firefox Mobile detected - applying specific fixes');
-                    }
-                    console.log(`📐 Screen: ${window.innerWidth}x${window.innerHeight}, DPR: ${window.devicePixelRatio || 1}`);
-                }
             }
 
             setupEventListeners() {
@@ -1188,42 +1006,155 @@
                 document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
             }
 
-            // ===== IMAGE CACHE SYSTEM =====
-            
-            loadImageCache() {
+            // ===== CROSS-DEVICE IMAGE CACHE SYSTEM =====
+
+            async loadImageCache() {
+                console.log('📦 Loading image cache from local storage and OneDrive...');
+
+                // First, load local cache
                 try {
                     const cachedData = localStorage.getItem(this.cacheKey);
                     if (cachedData) {
-                        const cache = JSON.parse(cachedData);
-                        
+                        const localCache = JSON.parse(cachedData);
+
                         // Clean expired cache entries
                         const now = Date.now();
                         const expiryTime = this.cacheExpiryDays * 24 * 60 * 60 * 1000;
-                        
-                        for (const [key, entry] of Object.entries(cache)) {
+
+                        for (const [key, entry] of Object.entries(localCache)) {
                             if (now - entry.timestamp < expiryTime) {
                                 this.imageCache.set(key, entry);
                             }
                         }
-                        
-                        console.log(`📦 Loaded ${this.imageCache.size} cached images`);
+
+                        console.log(`📱 Loaded ${this.imageCache.size} images from local cache`);
                     }
                 } catch (error) {
-                    console.error('Error loading image cache:', error);
-                    this.imageCache.clear();
+                    console.error('Error loading local image cache:', error);
+                }
+
+                // Then, if we have OneDrive access, load and merge cloud cache
+                if (this.accessToken) {
+                    try {
+                        await this.loadCloudImageCache();
+                    } catch (error) {
+                        console.log('☁️ Cloud cache not available:', error.message);
+                    }
+                }
+            }
+
+            async loadCloudImageCache() {
+                try {
+                    console.log('☁️ Loading image cache from OneDrive...');
+
+                    // Try to get the latest backup file which now includes image cache
+                    const listResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children', {
+                        headers: {
+                            'Authorization': `Bearer ${this.accessToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!listResponse.ok) {
+                        throw new Error(`Failed to list OneDrive files: ${listResponse.status}`);
+                    }
+
+                    const fileList = await listResponse.json();
+                    const backupFiles = fileList.value.filter(file =>
+                        file.name.startsWith('mypocket-backup-') && file.name.endsWith('.json')
+                    );
+
+                    if (backupFiles.length === 0) {
+                        console.log('☁️ No backup files found on OneDrive');
+                        return;
+                    }
+
+                    const latestFile = backupFiles.sort((a, b) =>
+                        new Date(b.lastModifiedDateTime) - new Date(a.lastModifiedDateTime)
+                    )[0];
+
+                    const downloadResponse = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${latestFile.id}/content`, {
+                        headers: {
+                            'Authorization': `Bearer ${this.accessToken}`
+                        }
+                    });
+
+                    if (!downloadResponse.ok) {
+                        throw new Error(`Failed to download backup: ${downloadResponse.status}`);
+                    }
+
+                    const backupContent = await downloadResponse.text();
+                    const backup = JSON.parse(backupContent);
+
+                    // Merge cloud image cache with local cache
+                    if (backup.imageCache) {
+                        const now = Date.now();
+                        const expiryTime = this.cacheExpiryDays * 24 * 60 * 60 * 1000;
+                        let cloudCacheCount = 0;
+                        let mergedCount = 0;
+
+                        for (const [key, entry] of Object.entries(backup.imageCache)) {
+                            cloudCacheCount++;
+
+                            // Only use cloud cache entries that aren't expired
+                            if (now - entry.timestamp < expiryTime) {
+                                // Use cloud cache if we don't have it locally, or if cloud is newer
+                                const localEntry = this.imageCache.get(key);
+                                if (!localEntry || entry.timestamp > localEntry.timestamp) {
+                                    this.imageCache.set(key, entry);
+                                    mergedCount++;
+                                }
+                            }
+                        }
+
+                        console.log(`☁️ Loaded ${cloudCacheCount} images from OneDrive cache`);
+                        console.log(`🔄 Merged ${mergedCount} newer images from cloud`);
+                        console.log(`📦 Total cached images: ${this.imageCache.size}`);
+
+                        // Save the merged cache locally
+                        this.saveImageCache();
+                    } else {
+                        console.log('☁️ No image cache found in OneDrive backup');
+                    }
+
+                } catch (error) {
+                    console.error('Error loading cloud image cache:', error);
+                    throw error;
                 }
             }
 
             saveImageCache() {
                 try {
+                    // Save to local storage for instant access
                     const cacheObject = {};
                     for (const [key, value] of this.imageCache.entries()) {
                         cacheObject[key] = value;
                     }
                     localStorage.setItem(this.cacheKey, JSON.stringify(cacheObject));
-                    console.log(`💾 Saved ${this.imageCache.size} images to cache`);
+                    console.log(`💾 Saved ${this.imageCache.size} images to local cache`);
+
+                    // Also sync to OneDrive if connected (debounced)
+                    if (this.accessToken) {
+                        clearTimeout(this.cloudCacheSyncTimeout);
+                        this.cloudCacheSyncTimeout = setTimeout(() => {
+                            this.syncImageCacheToCloud();
+                        }, 5000); // Sync to cloud after 5 seconds of inactivity
+                    }
                 } catch (error) {
                     console.error('Error saving image cache:', error);
+                }
+            }
+
+            async syncImageCacheToCloud() {
+                if (!this.accessToken) return;
+
+                try {
+                    console.log('☁️ Syncing image cache to OneDrive...');
+                    await this.updateOneDriveBackup();
+                    console.log('✅ Image cache synced to OneDrive successfully');
+                } catch (error) {
+                    console.error('❌ Failed to sync image cache to OneDrive:', error);
+                    // Don't show error to user for background sync failures
                 }
             }
 
@@ -1235,11 +1166,11 @@
             getCachedImage(article) {
                 const key = this.getCacheKey(article);
                 const cached = this.imageCache.get(key);
-                
+
                 if (cached) {
                     const now = Date.now();
                     const expiryTime = this.cacheExpiryDays * 24 * 60 * 60 * 1000;
-                    
+
                     if (now - cached.timestamp < expiryTime) {
                         console.log(`✅ Using cached image for: ${article.title.substring(0, 30)}...`);
                         return cached.imageUrl;
@@ -1249,7 +1180,7 @@
                         console.log(`⏰ Cache expired for: ${article.title.substring(0, 30)}...`);
                     }
                 }
-                
+
                 return null;
             }
 
@@ -1261,19 +1192,27 @@
                     domain: this.getDomain(article.url),
                     title: article.title.substring(0, 50)
                 });
-                
+
                 // Save to localStorage (debounced)
                 clearTimeout(this.cacheSaveTimeout);
                 this.cacheSaveTimeout = setTimeout(() => this.saveImageCache(), 1000);
-                
+
                 console.log(`💾 Cached image for: ${article.title.substring(0, 30)}...`);
             }
 
             clearImageCache() {
-                if (confirm('Clear all cached images?\n\nThis will force re-downloading images next time you visit.')) {
+                if (confirm('Clear all cached images?\n\nThis will clear images on this device and sync the change to OneDrive.')) {
                     this.imageCache.clear();
                     localStorage.removeItem(this.cacheKey);
-                    this.updateStatus('🗑️ Image cache cleared. Images will be re-downloaded next time.', 'success');
+
+                    // Also clear from OneDrive
+                    if (this.accessToken) {
+                        this.syncImageCacheToCloud();
+                        this.updateStatus('🗑️ Image cache cleared on this device and OneDrive.', 'success');
+                    } else {
+                        this.updateStatus('🗑️ Local image cache cleared. Connect to OneDrive to sync.', 'success');
+                    }
+
                     console.log('🗑️ Image cache cleared');
                 }
             }
@@ -1301,13 +1240,13 @@
                 const articlesHTML = articles.map((article, index) => {
                     const cachedImage = this.getCachedImage(article);
                     const cacheStatus = cachedImage ? 'cached' : 'fresh';
-                    
+
                     return `
                     <div class="article-card" data-index="${index}">
                         <div class="article-image" id="image-${index}">
                             ${cachedImage ? this.createImageHTML(cachedImage, true) : this.createPlaceholderHTML()}
                             <div class="cache-indicator ${cacheStatus}">
-                                ${cachedImage ? '💾 Cached' : '🔄 Loading'}
+                                ${cachedImage ? '☁️ Synced' : '🔄 Loading'}
                             </div>
                         </div>
                         <div class="article-content" onclick="webReader.openReader(${index})">
@@ -1337,15 +1276,15 @@
                 `}).join('');
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
-                
+
                 // Count articles that need image extraction
                 const articlesNeedingImages = articles.filter(article => !this.getCachedImage(article));
-                
+
                 if (articlesNeedingImages.length > 0) {
-                    this.updateStatus(`📸 Loading ${articlesNeedingImages.length} new images (${this.imageCache.size} cached)...`, 'loading');
+                    this.updateStatus(`📸 Loading ${articlesNeedingImages.length} new images (${this.imageCache.size} cached across devices)...`, 'loading');
                     this.loadMissingImages(articles);
                 } else {
-                    this.updateStatus(`✅ All ${articles.length} images loaded from cache!`, 'success');
+                    this.updateStatus(`✅ All ${articles.length} images loaded from cache (synced across devices)!`, 'success');
                 }
             }
 
@@ -1353,19 +1292,13 @@
                 return `
                     <img src="${imageUrl}" 
                          alt="Article image" 
-                         loading="lazy"
-                         decoding="async"
                          style="
                             opacity: 0; 
                             transition: opacity 0.8s ease;
                             width: 100%;
                             height: 100%;
                             object-fit: cover;
-                            object-position: center;
                             border-radius: inherit;
-                            aspect-ratio: 16/9;
-                            min-height: 100px;
-                            max-height: 120px;
                          "
                          onload="
                             this.style.opacity='1';
@@ -1374,7 +1307,6 @@
                          onerror="
                             console.log('⚠️ Image failed, using fallback');
                             this.src='https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
-                            this.style.opacity='1';
                          ">
                 `;
             }
@@ -1395,9 +1327,6 @@
                         justify-content: center;
                         color: #999;
                         animation: shimmer 1.5s ease-in-out infinite;
-                        aspect-ratio: 16/9;
-                        min-height: 100px;
-                        max-height: 120px;
                     ">
                         <div style="text-align: center;">
                             <div style="font-size: 1.2em; margin-bottom: 5px;">🖼️</div>
@@ -1410,7 +1339,7 @@
             // Load only missing images (not cached)
             async loadMissingImages(articles) {
                 console.log('🎨 SMART IMAGE LOADER - Loading only missing images...');
-                
+
                 const articlesNeedingImages = articles.filter((article, index) => {
                     const cached = this.getCachedImage(article);
                     return !cached;
@@ -1423,25 +1352,25 @@
 
                 let successCount = 0;
                 const totalNew = articlesNeedingImages.length;
-                
+
                 console.log(`🔄 Loading ${totalNew} new images (${this.imageCache.size} already cached)`);
-                
+
                 // Load images sequentially to avoid overwhelming websites
                 for (let i = 0; i < articlesNeedingImages.length; i++) {
                     const article = articlesNeedingImages[i];
                     const originalIndex = articles.findIndex(a => a === article);
-                    
+
                     try {
                         const success = await this.extractAndCacheRealImage(article, originalIndex);
                         if (success) successCount++;
-                        
+
                         // Update progress
                         const progress = Math.round(((i + 1) / totalNew) * 100);
                         this.updateStatus(`🔍 Loading new images... ${i + 1}/${totalNew} (${progress}%)`, 'loading');
-                        
+
                         // Delay to be respectful to websites
                         await new Promise(resolve => setTimeout(resolve, 300));
-                        
+
                     } catch (error) {
                         console.error(`Failed to extract image for article ${originalIndex}:`, error);
                         // Use category fallback for failed extractions
@@ -1450,10 +1379,10 @@
                         successCount++;
                     }
                 }
-                
+
                 const totalCached = this.imageCache.size;
-                this.updateStatus(`✅ Loaded ${successCount}/${totalNew} new images! (${totalCached} total cached)`, 'success');
-                console.log(`🎨 Smart image loading complete: ${successCount}/${totalNew} new, ${totalCached} total cached`);
+                this.updateStatus(`✅ Loaded ${successCount}/${totalNew} new images! (${totalCached} total cached across devices)`, 'success');
+                console.log(`🎨 Smart image loading complete: ${successCount}/${totalNew} new, ${totalCached} total cached across devices`);
             }
 
             // Extract and cache image (enhanced version)
@@ -1495,53 +1424,13 @@
                 const imageElement = document.getElementById(`image-${index}`);
                 if (!imageElement) return;
 
-                // Create mobile-optimized image HTML
-                let imageHTML;
-                if (this.isFirefoxMobile) {
-                    // Extra fixes for Firefox mobile
-                    imageHTML = `
-                        <img src="${imageUrl}" 
-                             alt="Article image" 
-                             loading="lazy"
-                             decoding="async"
-                             style="
-                                opacity: 0; 
-                                transition: opacity 0.8s ease;
-                                width: 100% !important;
-                                height: 100% !important;
-                                object-fit: cover !important;
-                                object-position: center !important;
-                                -moz-object-fit: cover !important;
-                                -moz-object-position: center !important;
-                                border-radius: inherit;
-                                aspect-ratio: 16/9;
-                                min-height: ${this.isMobile ? '120px' : '100px'} !important;
-                                max-height: ${this.isMobile ? '120px' : '100px'} !important;
-                                display: block !important;
-                                position: relative;
-                                z-index: 1;
-                             "
-                             onload="
-                                this.style.opacity='1';
-                                console.log('✅ Firefox Mobile image loaded: ${article.title.substring(0, 20)}...');
-                             " 
-                             onerror="
-                                console.log('⚠️ Image failed, using fallback');
-                                this.src='https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
-                                this.style.opacity='1';
-                             ">
-                    `;
-                } else {
-                    imageHTML = this.createImageHTML(imageUrl, false);
-                }
-
                 // Update the DOM
-                imageElement.innerHTML = imageHTML;
-                
+                imageElement.innerHTML = this.createImageHTML(imageUrl, false);
+
                 // Update cache indicator
                 const cacheIndicator = imageElement.querySelector('.cache-indicator');
                 if (cacheIndicator) {
-                    cacheIndicator.textContent = source === 'extracted' ? '🌐 Fresh' : '💾 Cached';
+                    cacheIndicator.textContent = source === 'extracted' ? '🌐 Fresh' : '☁️ Synced';
                     cacheIndicator.className = `cache-indicator ${source === 'extracted' ? 'fresh' : 'cached'}`;
                 }
 
@@ -1596,17 +1485,15 @@
                     return;
                 }
 
-                // Enhanced auth URL with longer token duration and better scope
                 const authUrl = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?` +
                     `client_id=${this.clientId}&` +
                     `response_type=token&` +
                     `redirect_uri=${encodeURIComponent(this.redirectUri)}&` +
-                    `scope=${encodeURIComponent('Files.ReadWrite User.Read offline_access')}&` +
+                    `scope=${encodeURIComponent('Files.ReadWrite User.Read')}&` +
                     `response_mode=fragment&` +
-                    `prompt=select_account&` +
                     `nonce=${Date.now()}`;
 
-                console.log('🔵 Enhanced Auth URL:', authUrl);
+                console.log('🔵 Auth URL:', authUrl);
                 console.log('🔵 Encoded Redirect URI:', encodeURIComponent(this.redirectUri));
 
                 this.updateStatus('🔄 Redirecting to Microsoft login...', 'loading');
@@ -1624,21 +1511,7 @@
 
                 if (connected) {
                     connectIcon.textContent = '✅';
-                    
-                    // Show token expiration info if available
-                    try {
-                        const storedData = localStorage.getItem('mypocket_access_token');
-                        if (storedData) {
-                            const tokenData = JSON.parse(storedData);
-                            const minutesLeft = Math.round((tokenData.expiresAt - Date.now()) / (60 * 1000));
-                            connectText.textContent = `Connected (${minutesLeft}m left)`;
-                        } else {
-                            connectText.textContent = 'Connected';
-                        }
-                    } catch (error) {
-                        connectText.textContent = 'Connected';
-                    }
-                    
+                    connectText.textContent = 'Connected';
                     connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
                     refreshBtn.style.display = 'inline-flex';
                 } else {
@@ -1655,45 +1528,6 @@
                 status.className = `status ${type}`;
             }
 
-            async makeAuthenticatedRequest(url, options = {}) {
-                if (!this.accessToken) {
-                    throw new Error('No access token available');
-                }
-
-                const headers = {
-                    'Authorization': `Bearer ${this.accessToken}`,
-                    'Content-Type': 'application/json',
-                    ...options.headers
-                };
-
-                try {
-                    const response = await fetch(url, { ...options, headers });
-                    
-                    if (response.status === 401) {
-                        console.log('🔑 Token expired, clearing and prompting for re-auth');
-                        this.clearToken();
-                        this.updateConnectionStatus(false);
-                        this.updateStatus('🔑 Session expired. Please reconnect to OneDrive.', 'error');
-                        
-                        // Auto-prompt for re-authentication after a delay
-                        setTimeout(() => {
-                            if (confirm('Your OneDrive session has expired. Would you like to reconnect now?')) {
-                                this.authenticate();
-                            }
-                        }, 2000);
-                        
-                        throw new Error('Authentication expired');
-                    }
-                    
-                    return response;
-                } catch (error) {
-                    if (error.message === 'Authentication expired') {
-                        throw error;
-                    }
-                    throw new Error(`Request failed: ${error.message}`);
-                }
-            }
-
             async loadArticles() {
                 if (!this.accessToken) {
                     this.updateStatus('Not connected to OneDrive', 'error');
@@ -1703,11 +1537,20 @@
                 try {
                     this.updateStatus('Loading articles... ⏳', 'loading');
 
-                    const listResponse = await this.makeAuthenticatedRequest(
-                        'https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children'
-                    );
+                    const listResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children', {
+                        headers: {
+                            'Authorization': `Bearer ${this.accessToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
 
                     if (!listResponse.ok) {
+                        if (listResponse.status === 401) {
+                            this.clearToken();
+                            this.updateConnectionStatus(false);
+                            this.updateStatus('Session expired. Please reconnect.', 'error');
+                            return;
+                        }
                         throw new Error(`Failed to list files: ${listResponse.status}`);
                     }
 
@@ -1726,9 +1569,11 @@
                         new Date(b.lastModifiedDateTime) - new Date(a.lastModifiedDateTime)
                     )[0];
 
-                    const downloadResponse = await this.makeAuthenticatedRequest(
-                        `https://graph.microsoft.com/v1.0/me/drive/items/${latestFile.id}/content`
-                    );
+                    const downloadResponse = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${latestFile.id}/content`, {
+                        headers: {
+                            'Authorization': `Bearer ${this.accessToken}`
+                        }
+                    });
 
                     if (!downloadResponse.ok) {
                         throw new Error(`Failed to download backup: ${downloadResponse.status}`);
@@ -1740,15 +1585,16 @@
                     this.articles = backup.articles || [];
                     this.displayArticles(this.articles);
 
+                    // Load image cache from this backup if available
+                    if (backup.imageCache) {
+                        console.log(`📦 Found ${Object.keys(backup.imageCache).length} cached images in backup`);
+                    }
+
                     const cacheStats = this.getCacheStats();
-                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name} (${cacheStats.total} images cached)`, 'success');
+                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name} (${cacheStats.total} images cached across devices)`, 'success');
 
                 } catch (error) {
                     console.error('Error loading articles:', error);
-                    if (error.message === 'Authentication expired') {
-                        // Already handled in makeAuthenticatedRequest
-                        return;
-                    }
                     this.updateStatus(`Error loading articles: ${error.message}`, 'error');
                 }
             }
@@ -1789,7 +1635,7 @@
                 document.getElementById('readerDate').textContent = this.formatDate(this.currentArticle.dateAdded);
                 document.getElementById('readerDomain').textContent = this.getDomain(this.currentArticle.url);
                 document.getElementById('readerTime').textContent = `${this.currentArticle.readTime || 1} min read`;
-                
+
                 // Show loading state first
                 document.getElementById('readerContent').innerHTML = `
                     <div style="text-align: center; padding: 40px;">
@@ -1800,7 +1646,7 @@
 
                 overlay.classList.add('active');
                 document.body.style.overflow = 'hidden';
-                
+
                 // Try to get content, fetch if needed
                 setTimeout(() => this.loadArticleContent(this.currentArticle), 100);
             }
@@ -1808,14 +1654,14 @@
             async loadArticleContent(article) {
                 console.log('🚀 CONTENT LOADER WITH CACHING');
                 const contentElement = document.getElementById('readerContent');
-                
+
                 // First try to get saved content
                 let content = this.getArticleContent(article);
-                
+
                 // If no saved content found, try to fetch from original URL
                 if (!content) {
                     console.log('🌐 No saved content found. Attempting to fetch from original URL...');
-                    
+
                     try {
                         // Show fetching status
                         contentElement.innerHTML = `
@@ -1830,10 +1676,10 @@
                                 </p>
                             </div>
                         `;
-                        
+
                         // Fetch content using proxy services
                         const fetchedContent = await this.fetchArticleContent(article.url);
-                        
+
                         if (fetchedContent && fetchedContent.trim()) {
                             content = fetchedContent;
                             console.log('✅ Successfully fetched article content');
@@ -1841,7 +1687,7 @@
                         } else {
                             throw new Error('No content extracted from fetched page');
                         }
-                        
+
                     } catch (error) {
                         console.log('❌ Failed to fetch content:', error.message);
                         this.updateStatus('❌ Could not fetch article content. Using fallback.', 'error');
@@ -1851,7 +1697,7 @@
                     console.log('✅ Using saved content');
                     this.updateStatus('✅ Article loaded from saved content', 'success');
                 }
-                
+
                 // Display the final content
                 contentElement.innerHTML = content;
             }
@@ -1859,18 +1705,18 @@
             async fetchArticleContent(url) {
                 try {
                     console.log(`🌐 Starting fetch for: ${url}`);
-                    
+
                     // Method 1: Try using AllOrigins proxy (most reliable)
                     try {
                         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
                         console.log(`Trying AllOrigins proxy...`);
-                        
+
                         const response = await fetch(proxyUrl);
-                        
+
                         if (response.ok) {
                             const data = await response.json();
                             const html = data.contents;
-                            
+
                             if (html && html.length > 1000) { // Ensure we got substantial content
                                 console.log(`✅ AllOrigins success: ${html.length} chars`);
                                 const extractedContent = this.extractContentFromHTML(html, url);
@@ -1882,17 +1728,17 @@
                     } catch (error) {
                         console.log(`AllOrigins failed: ${error.message}`);
                     }
-                    
+
                     // Method 2: Try CORS proxy
                     try {
                         const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
                         console.log(`Trying CORS proxy...`);
-                        
+
                         const response = await fetch(corsProxyUrl);
-                        
+
                         if (response.ok) {
                             const html = await response.text();
-                            
+
                             if (html && html.length > 1000) {
                                 console.log(`✅ CORS proxy success: ${html.length} chars`);
                                 const extractedContent = this.extractContentFromHTML(html, url);
@@ -1904,7 +1750,7 @@
                     } catch (error) {
                         console.log(`CORS proxy failed: ${error.message}`);
                     }
-                    
+
                     // Method 3: Try direct fetch (will likely fail due to CORS, but worth trying)
                     try {
                         console.log(`Trying direct fetch...`);
@@ -1914,7 +1760,7 @@
                                 'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader)'
                             }
                         });
-                        
+
                         if (response.ok) {
                             const html = await response.text();
                             console.log(`✅ Direct fetch success: ${html.length} chars`);
@@ -1923,9 +1769,9 @@
                     } catch (error) {
                         console.log(`Direct fetch failed (expected): ${error.message}`);
                     }
-                    
+
                     throw new Error('All proxy methods failed to fetch content');
-                    
+
                 } catch (error) {
                     console.error('❌ All fetch methods failed:', error);
                     throw error;
@@ -1937,19 +1783,19 @@
                     // Create a temporary DOM to parse the HTML
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
-                    
+
                     // Remove unwanted elements
                     const unwantedSelectors = [
-                        'script', 'style', 'nav', 'header', 'footer', 
+                        'script', 'style', 'nav', 'header', 'footer',
                         '.sidebar', '.menu', '.navigation', '.comments',
                         '.advertisement', '.ads', '.social-share',
                         '[role="banner"]', '[role="navigation"]', '[role="complementary"]'
                     ];
-                    
+
                     unwantedSelectors.forEach(selector => {
                         doc.querySelectorAll(selector).forEach(el => el.remove());
                     });
-                    
+
                     // Try to find the main content using common selectors
                     const contentSelectors = [
                         'article',
@@ -1959,38 +1805,38 @@
                         '.entry', '.post', '.article-body',
                         'main', '#content', '#main'
                     ];
-                    
+
                     let contentElement = null;
-                    
+
                     for (const selector of contentSelectors) {
                         contentElement = doc.querySelector(selector);
                         if (contentElement && contentElement.textContent.trim().length > 200) {
                             break;
                         }
                     }
-                    
+
                     // If no main content found, try to get paragraphs from body
                     if (!contentElement || contentElement.textContent.trim().length < 200) {
                         const paragraphs = Array.from(doc.querySelectorAll('p'))
                             .filter(p => p.textContent.trim().length > 50)
                             .slice(0, 20); // Take first 20 substantial paragraphs
-                        
+
                         if (paragraphs.length > 0) {
                             const div = doc.createElement('div');
                             paragraphs.forEach(p => div.appendChild(p.cloneNode(true)));
                             contentElement = div;
                         }
                     }
-                    
+
                     if (contentElement) {
                         // Clean up the content
                         let content = contentElement.innerHTML;
-                        
+
                         // Fix relative URLs to absolute
                         const baseUrl = new URL(url).origin;
                         content = content.replace(/src="\/([^"]+)"/g, `src="${baseUrl}/$1"`);
                         content = content.replace(/href="\/([^"]+)"/g, `href="${baseUrl}/$1"`);
-                        
+
                         // Add a note about the source
                         content = `
                             <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
@@ -2001,12 +1847,12 @@
                             </div>
                             ${content}
                         `;
-                        
+
                         return content;
                     }
-                    
+
                     throw new Error('Could not extract readable content from page');
-                    
+
                 } catch (error) {
                     console.error('Content extraction error:', error);
                     throw error;
@@ -2056,17 +1902,17 @@
             // Get the best available content for reading - simplified version
             getArticleContent(article) {
                 console.log('📖 Checking for saved content...');
-                
+
                 // Try content fields in order
                 const contentFields = ['content', 'html', 'fullContent', 'textContent', 'body', 'readableContent', 'articleContent', 'savedContent'];
-                
+
                 for (const field of contentFields) {
                     if (article[field] && article[field].trim()) {
                         console.log(`✅ Found content in ${field} (${article[field].length} chars)`);
                         return article[field];
                     }
                 }
-                
+
                 // Look for any substantial text content
                 for (const [key, value] of Object.entries(article)) {
                     if (typeof value === 'string' && value.length > 200 && key !== 'excerpt' && key !== 'url') {
@@ -2074,7 +1920,7 @@
                         return value;
                     }
                 }
-                
+
                 console.log('❌ No saved content found');
                 return null;
             }
@@ -2141,16 +1987,24 @@
                     throw new Error('Not connected to OneDrive');
                 }
 
+                // Prepare image cache for backup
+                const imageCacheObject = {};
+                for (const [key, value] of this.imageCache.entries()) {
+                    imageCacheObject[key] = value;
+                }
+
                 const backup = {
                     articles: this.articles,
+                    imageCache: imageCacheObject, // Include image cache in backup
                     settings: {},
                     exportDate: new Date().toISOString(),
-                    version: "3.3",
+                    version: "3.4", // Increment version for image cache support
                     deviceInfo: {
                         browser: "Web Reader",
                         platform: navigator.platform,
                         timestamp: Date.now(),
-                        articleCount: this.articles.length
+                        articleCount: this.articles.length,
+                        cachedImageCount: this.imageCache.size
                     }
                 };
 
@@ -2159,9 +2013,10 @@
 
                 const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
 
-                const uploadResponse = await this.makeAuthenticatedRequest(uploadUrl, {
+                const uploadResponse = await fetch(uploadUrl, {
                     method: 'PUT',
                     headers: {
+                        'Authorization': `Bearer ${this.accessToken}`,
                         'Content-Type': 'application/json'
                     },
                     body: fileContent
@@ -2270,7 +2125,7 @@
             getBestArticleImage(article) {
                 if (article.images && article.images.length > 0) {
                     let bestImage = article.images[0];
-                    
+
                     for (const img of article.images) {
                         if (img.width && img.height) {
                             if (img.width >= 300 && img.height >= 150) {
@@ -2279,25 +2134,25 @@
                             }
                         }
                     }
-                    
+
                     return bestImage.src || bestImage.url || bestImage;
                 }
-                
+
                 if (article.featuredImage) {
                     return article.featuredImage;
                 }
-                
+
                 if (article.image) {
                     return article.image;
                 }
-                
+
                 if (article.content) {
                     const imgMatch = article.content.match(/<img[^>]+src="([^"]+)"/i);
                     if (imgMatch && imgMatch[1]) {
                         return imgMatch[1];
                     }
                 }
-                
+
                 return null;
             }
 
@@ -2305,35 +2160,35 @@
             async fetchRealImageFromWebsite(url) {
                 try {
                     console.log(`🌐 Fetching webpage to extract image: ${url}`);
-                    
+
                     // Method 1: Try AllOrigins proxy
                     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
                     const response = await fetch(proxyUrl);
-                    
+
                     if (!response.ok) {
                         throw new Error('Failed to fetch webpage');
                     }
-                    
+
                     const data = await response.json();
                     const html = data.contents;
-                    
+
                     if (!html || html.length < 500) {
                         throw new Error('No substantial HTML content received');
                     }
-                    
+
                     // Parse the HTML and extract the best image
                     const extractedImageUrl = this.parseHTMLForBestImage(html, url);
-                    
+
                     if (extractedImageUrl) {
                         console.log(`🎯 Found image: ${extractedImageUrl}`);
                         return extractedImageUrl;
                     }
-                    
+
                     throw new Error('No suitable image found in webpage');
-                    
+
                 } catch (error) {
                     console.log(`❌ Website image extraction failed: ${error.message}`);
-                    
+
                     // Try alternative proxy methods
                     try {
                         return await this.tryAlternativeImageExtraction(url);
@@ -2350,7 +2205,7 @@
                     // Create a DOM parser
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
-                    
+
                     // Strategy 1: Look for Open Graph image (most reliable)
                     const ogImage = doc.querySelector('meta[property="og:image"]');
                     if (ogImage) {
@@ -2360,7 +2215,7 @@
                             return imageUrl;
                         }
                     }
-                    
+
                     // Strategy 2: Look for Twitter card image
                     const twitterImage = doc.querySelector('meta[name="twitter:image"], meta[property="twitter:image"]');
                     if (twitterImage) {
@@ -2370,7 +2225,7 @@
                             return imageUrl;
                         }
                     }
-                    
+
                     // Strategy 3: Look for article featured image
                     const featuredSelectors = [
                         '.featured-image img',
@@ -2383,7 +2238,7 @@
                         '.content img:first-of-type',
                         '.post-content img:first-of-type'
                     ];
-                    
+
                     for (const selector of featuredSelectors) {
                         const img = doc.querySelector(selector);
                         if (img) {
@@ -2397,21 +2252,21 @@
                             }
                         }
                     }
-                    
+
                     // Strategy 4: Look for the first substantial image in the content
                     const allImages = Array.from(doc.querySelectorAll('img')).filter(img => {
                         const src = img.getAttribute('src') || img.getAttribute('data-src');
                         const width = img.getAttribute('width') || img.style.width;
                         const height = img.getAttribute('height') || img.style.height;
-                        
+
                         // Filter out small images, icons, and logos
-                        return src && 
-                               !this.isIconOrLogo(src) && 
-                               !this.isSmallImage(width, height) &&
-                               !src.includes('avatar') &&
-                               !src.includes('profile');
+                        return src &&
+                            !this.isIconOrLogo(src) &&
+                            !this.isSmallImage(width, height) &&
+                            !src.includes('avatar') &&
+                            !src.includes('profile');
                     });
-                    
+
                     for (const img of allImages) {
                         const src = img.getAttribute('src') || img.getAttribute('data-src');
                         if (src) {
@@ -2422,7 +2277,7 @@
                             }
                         }
                     }
-                    
+
                     // Strategy 5: Look for images in JSON-LD structured data
                     const jsonLdScripts = doc.querySelectorAll('script[type="application/ld+json"]');
                     for (const script of jsonLdScripts) {
@@ -2440,10 +2295,10 @@
                             // Ignore malformed JSON-LD
                         }
                     }
-                    
+
                     console.log(`❌ No suitable image found in HTML`);
                     return null;
-                    
+
                 } catch (error) {
                     console.error('HTML parsing error:', error);
                     return null;
@@ -2453,7 +2308,7 @@
             // NEW: Extract image from JSON-LD structured data
             extractImageFromJsonLd(data) {
                 if (typeof data !== 'object') return null;
-                
+
                 // Handle arrays
                 if (Array.isArray(data)) {
                     for (const item of data) {
@@ -2462,7 +2317,7 @@
                     }
                     return null;
                 }
-                
+
                 // Look for image properties
                 if (data.image) {
                     if (typeof data.image === 'string') return data.image;
@@ -2471,12 +2326,12 @@
                     }
                     if (data.image.url) return data.image.url;
                 }
-                
+
                 // Look for thumbnailUrl
                 if (data.thumbnailUrl) {
                     return typeof data.thumbnailUrl === 'string' ? data.thumbnailUrl : data.thumbnailUrl.url;
                 }
-                
+
                 // Recursively search nested objects
                 for (const key in data) {
                     if (typeof data[key] === 'object') {
@@ -2484,7 +2339,7 @@
                         if (image) return image;
                     }
                 }
-                
+
                 return null;
             }
 
@@ -2494,7 +2349,7 @@
                 try {
                     const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
                     const response = await fetch(corsProxyUrl);
-                    
+
                     if (response.ok) {
                         const html = await response.text();
                         const extractedImage = this.parseHTMLForBestImage(html, url);
@@ -2503,18 +2358,18 @@
                 } catch (error) {
                     console.log(`CORS proxy failed: ${error.message}`);
                 }
-                
+
                 // Method 2: Try to guess common image patterns based on URL
                 const guessedImage = this.guessImageFromUrl(url);
                 if (guessedImage) return guessedImage;
-                
+
                 throw new Error('All alternative extraction methods failed');
             }
 
             // NEW: Guess image from URL patterns (for known sites)
             guessImageFromUrl(url) {
                 const domain = this.getDomain(url).toLowerCase();
-                
+
                 // Medium articles often have predictable image patterns
                 if (domain.includes('medium.com')) {
                     // Try to extract the article ID and construct image URL
@@ -2523,7 +2378,7 @@
                         return `https://miro.medium.com/max/1400/1*${match[1]}.png`;
                     }
                 }
-                
+
                 // GitHub repository images
                 if (domain.includes('github.com')) {
                     const pathMatch = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
@@ -2531,7 +2386,7 @@
                         return `https://opengraph.githubassets.com/1/${pathMatch[1]}/${pathMatch[2]}`;
                     }
                 }
-                
+
                 // YouTube videos
                 if (domain.includes('youtube.com') || domain.includes('youtu.be')) {
                     const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
@@ -2539,51 +2394,51 @@
                         return `https://img.youtube.com/vi/${videoIdMatch[1]}/maxresdefault.jpg`;
                     }
                 }
-                
+
                 return null;
             }
 
             // Enhanced URL validation
             isValidImageUrl(url) {
                 if (!url || typeof url !== 'string') return false;
-                
+
                 // Must be a valid URL
                 try {
                     new URL(url);
                 } catch {
                     return false;
                 }
-                
+
                 // Must have common image extensions or be from known image services
                 const imagePattern = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i;
                 const imageServices = ['unsplash.com', 'images.unsplash.com', 'picsum.photos', 'via.placeholder.com'];
-                
+
                 return imagePattern.test(url) || imageServices.some(service => url.includes(service));
             }
 
             // Enhanced icon/logo detection
             isIconOrLogo(src) {
                 if (!src) return false;
-                
+
                 const iconPatterns = [
-                    'icon', 'logo', 'avatar', 'profile', 'favicon', 'sprite', 
+                    'icon', 'logo', 'avatar', 'profile', 'favicon', 'sprite',
                     'button', 'badge', 'social', 'thumb', 'thumbnail',
                     '/icons/', '/images/icons/', 'gravatar', 'user-content'
                 ];
-                
+
                 const srcLower = src.toLowerCase();
                 return iconPatterns.some(pattern => srcLower.includes(pattern)) ||
-                       srcLower.includes('.ico') ||
-                       (srcLower.includes('64x64') || srcLower.includes('32x32'));
+                    srcLower.includes('.ico') ||
+                    (srcLower.includes('64x64') || srcLower.includes('32x32'));
             }
 
             // Check if image dimensions suggest it's too small
             isSmallImage(width, height) {
                 if (!width && !height) return false;
-                
+
                 const w = parseInt(width) || 0;
                 const h = parseInt(height) || 0;
-                
+
                 return (w > 0 && w < 200) || (h > 0 && h < 150);
             }
 
@@ -2591,90 +2446,90 @@
             getCategoryBasedImage(article, index) {
                 const domain = this.getDomain(article.url).toLowerCase();
                 const title = article.title.toLowerCase();
-                
+
                 // Use reliable image services that work well with direct img tags
-                
+
                 // Technology/Programming
                 if (domain.includes('github') || domain.includes('stackoverflow') || domain.includes('dev.to') ||
                     title.includes('code') || title.includes('programming') || title.includes('javascript') || title.includes('react')) {
                     return `https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Business/Finance
                 if (domain.includes('business') || domain.includes('finance') || domain.includes('linkedin') ||
                     title.includes('business') || title.includes('finance') || title.includes('startup') || title.includes('entrepreneur')) {
                     return `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Design/Creative
-                if (domain.includes('dribbble') || domain.includes('behance') || 
+                if (domain.includes('dribbble') || domain.includes('behance') ||
                     title.includes('design') || title.includes('ui') || title.includes('ux') || title.includes('creative')) {
                     return `https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // News/Media
                 if (domain.includes('news') || domain.includes('bbc') || domain.includes('cnn') ||
                     title.includes('news') || title.includes('politics') || title.includes('media')) {
                     return `https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Travel/Adventure
                 if (title.includes('travel') || title.includes('vacation') || title.includes('adventure') || title.includes('journey')) {
                     return `https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Food/Cooking
                 if (title.includes('food') || title.includes('recipe') || title.includes('cooking') || title.includes('restaurant')) {
                     return `https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Health/Fitness
                 if (title.includes('health') || title.includes('fitness') || title.includes('exercise') || title.includes('wellness')) {
                     return `https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Science/Research
                 if (domain.includes('arxiv') || domain.includes('research') ||
                     title.includes('science') || title.includes('research') || title.includes('study') || title.includes('data')) {
                     return `https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Education/Learning
                 if (domain.includes('edu') || title.includes('learn') || title.includes('education') || title.includes('course')) {
                     return `https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Photography/Art
                 if (title.includes('photo') || title.includes('art') || title.includes('gallery') || title.includes('visual')) {
                     return `https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Technology (general)
                 if (domain.includes('tech') || title.includes('tech') || title.includes('digital') || title.includes('innovation')) {
                     return `https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Books/Reading/Writing
                 if (domain.includes('medium') || domain.includes('blog') ||
                     title.includes('book') || title.includes('read') || title.includes('write') || title.includes('story')) {
                     return `https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Music/Entertainment
                 if (title.includes('music') || title.includes('entertainment') || title.includes('movie') || title.includes('film')) {
                     return `https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Sports
                 if (title.includes('sport') || title.includes('game') || title.includes('team') || title.includes('player')) {
                     return `https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Nature/Environment
                 if (title.includes('nature') || title.includes('environment') || title.includes('climate') || title.includes('green')) {
                     return `https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Default beautiful images based on index
                 const defaultImages = [
                     'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Mountain landscape
@@ -2688,25 +2543,25 @@
                     'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Lake reflection
                     'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&h=250&fit=crop&crop=center&q=80&auto=format'  // Geometric pattern
                 ];
-                
+
                 return defaultImages[index % defaultImages.length];
             }
 
             // Convert relative URLs to absolute
             makeAbsoluteUrl(imageUrl, baseUrl) {
                 if (!imageUrl) return null;
-                
+
                 try {
                     // If already absolute, return as-is
                     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
                         return imageUrl;
                     }
-                    
+
                     // Handle protocol-relative URLs
                     if (imageUrl.startsWith('//')) {
                         return 'https:' + imageUrl;
                     }
-                    
+
                     // If relative, make it absolute
                     const base = new URL(baseUrl);
                     return new URL(imageUrl, base.origin).href;
@@ -2719,7 +2574,7 @@
             // Smart icon selection based on domain
             getArticleIcon(url) {
                 const domain = this.getDomain(url).toLowerCase();
-                
+
                 const siteIcons = {
                     'youtube.com': '📺',
                     'github.com': '🐙',
@@ -2743,13 +2598,13 @@
                     'wikipedia.org': '📖',
                     'arxiv.org': '🎓',
                 };
-                
+
                 for (const [siteDomain, icon] of Object.entries(siteIcons)) {
                     if (domain.includes(siteDomain)) {
                         return icon;
                     }
                 }
-                
+
                 if (domain.includes('blog') || domain.includes('medium')) return '📝';
                 if (domain.includes('news')) return '📰';
                 if (domain.includes('tech')) return '💻';
@@ -2760,7 +2615,7 @@
                 if (domain.includes('shop') || domain.includes('store')) return '🛒';
                 if (domain.includes('book') || domain.includes('read')) return '📚';
                 if (domain.includes('learn') || domain.includes('edu')) return '🎓';
-                
+
                 return '📄';
             }
 
@@ -2828,21 +2683,6 @@
 
             showDebugInfo() {
                 const cacheStats = this.getCacheStats();
-                
-                // Get token info
-                let tokenInfo = 'No token stored';
-                try {
-                    const storedData = localStorage.getItem('mypocket_access_token');
-                    if (storedData) {
-                        const tokenData = JSON.parse(storedData);
-                        const minutesLeft = Math.round((tokenData.expiresAt - Date.now()) / (60 * 1000));
-                        const isExpired = Date.now() > tokenData.expiresAt;
-                        tokenInfo = `${isExpired ? 'EXPIRED' : 'Valid'} - ${isExpired ? 'Expired' : minutesLeft + ' minutes left'}`;
-                    }
-                } catch (error) {
-                    tokenInfo = 'Error reading token data';
-                }
-                
                 const info = `
 MyPocket Web Reader Debug Info:
 =====================================
@@ -2853,69 +2693,40 @@ Client ID: ${this.clientId}
 Protocol: ${window.location.protocol}
 Host: ${window.location.host}
 Has Access Token: ${!!this.accessToken}
-Token Status: ${tokenInfo}
 Articles Loaded: ${this.articles.length}
 
-Device & Browser Info:
-- User Agent: ${navigator.userAgent}
-- Is Mobile: ${this.isMobile}
-- Is Firefox Mobile: ${this.isFirefoxMobile}
-- Screen Size: ${window.innerWidth}x${window.innerHeight}
-- Device Pixel Ratio: ${window.devicePixelRatio || 1}
-- Touch Support: ${'ontouchstart' in window}
-
-Image Cache Stats:
+Image Cache Stats (Cross-Device):
 - Total Cached Images: ${cacheStats.total}
-- Memory Usage: ${Math.round(cacheStats.memoryUsage / 1024)} KB
+- Local Storage Usage: ${Math.round(cacheStats.memoryUsage / 1024)} KB
 - Cache Expiry: ${this.cacheExpiryDays} days
+- OneDrive Sync: ${this.accessToken ? 'Enabled' : 'Disabled'}
 - Oldest Entry: ${cacheStats.total > 0 ? new Date(cacheStats.oldestEntry).toLocaleDateString() : 'N/A'}
 - Newest Entry: ${cacheStats.total > 0 ? new Date(cacheStats.newestEntry).toLocaleDateString() : 'N/A'}
-
-Mobile Optimizations Applied:
-- Enhanced image object-fit handling
-- Firefox mobile specific CSS fixes
-- Aspect ratio preservation (16:9)
-- Touch-friendly interface adjustments
-- Simplified border radius on mobile
-- Increased touch targets (44px minimum)
-
-Token Management:
-- Access tokens expire after ~1 hour
-- App tracks expiration and warns before expiry
-- Auto-prompts for re-authentication when needed
-- Enhanced error handling for expired sessions
-
-Common Mobile Issues Fixed:
-1. Image stretching in Firefox mobile ✅
-2. Touch target sizes too small ✅  
-3. Viewport scaling problems ✅
-4. Object-fit compatibility ✅
-5. Border radius rendering issues ✅
 
 Azure AD Redirect URI Requirements:
 - Must be absolute URI (http:// or https://)
 - Must be registered in Azure AD App Registration
 - Must match exactly (including trailing slashes)
 
-Next Steps for Mobile Issues:
-1. Check if images still appear stretched
-2. Test touch interactions work properly  
-3. Verify text is readable without zooming
-4. Confirm buttons are easily tappable
-5. Report any remaining visual issues
+Common Issues:
+1. Using file:// protocol (not supported)
+2. Redirect URI not registered in Azure AD
+3. Mismatch between actual URI and registered URI
 
-Image Cache Features:
-- Images are cached for ${this.cacheExpiryDays} days
-- Cache survives browser sessions
-- Use "Clear Cache" button to force refresh
-- Cached images load instantly on subsequent visits
+Next Steps:
+1. Open Azure Portal → App registrations
+2. Find your app: ${this.clientId}
+3. Go to Authentication → Platform configurations
+4. Add Web platform with redirect URI: ${this.redirectUri}
+5. Make sure URI is exact match
 
-Token Expiration Solutions:
-- App now tracks token expiration time
-- Shows remaining time in connection status
-- Warns 5 minutes before expiration
-- Auto-prompts for re-authentication when expired
-- Enhanced error handling for all API calls
+Cross-Device Image Cache Features:
+- Images cached for ${this.cacheExpiryDays} days across all devices
+- Automatic sync to/from OneDrive when connected
+- Local cache for instant loading + cloud backup
+- Smart merging: keeps newest images from any device
+- Use "Clear Cache" to reset on all synced devices
+- Works offline with local cache, syncs when online
                 `;
 
                 alert(info);
@@ -2925,7 +2736,6 @@ Token Expiration Solutions:
                     clientId: this.clientId,
                     protocol: window.location.protocol,
                     hasToken: !!this.accessToken,
-                    tokenInfo: tokenInfo,
                     articlesCount: this.articles.length,
                     cacheStats: cacheStats
                 });
@@ -2954,10 +2764,10 @@ Token Expiration Solutions:
             toggleDarkMode() {
                 const currentTheme = document.documentElement.getAttribute('data-theme');
                 const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                
+
                 document.documentElement.setAttribute('data-theme', newTheme);
                 localStorage.setItem('theme', newTheme);
-                
+
                 this.updateDarkModeButton(newTheme);
                 this.updateStatus(
                     newTheme === 'dark' ? '🌙 Dark mode enabled' : '☀️ Light mode enabled',
@@ -2974,7 +2784,7 @@ Token Expiration Solutions:
             updateDarkModeButton(theme) {
                 const darkModeBtn = document.getElementById('darkModeBtn');
                 if (darkModeBtn) {
-                    darkModeBtn.innerHTML = theme === 'dark' 
+                    darkModeBtn.innerHTML = theme === 'dark'
                         ? '<span>☀️</span> Light Mode'
                         : '<span>🌙</span> Dark Mode';
                 }
