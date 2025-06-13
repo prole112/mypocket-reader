@@ -155,19 +155,9 @@
             color: #f85149;
         }
 
-        /* NEW: Enhanced dark mode styles for cache indicators */
+        /* NEW: Dark mode styles for synced indicator */
         [data-theme="dark"] .cache-indicator.synced {
             background: rgba(76, 175, 80, 0.9);
-            color: white;
-        }
-
-        [data-theme="dark"] .cache-indicator.fallback {
-            background: rgba(255, 152, 0, 0.9);
-            color: white;
-        }
-
-        [data-theme="dark"] .cache-indicator.metadata {
-            background: rgba(103, 58, 183, 0.9);
             color: white;
         }
 
@@ -703,315 +693,76 @@
             background: rgba(52, 152, 219, 0.8);
         }
 
-        /* NEW: Enhanced cache indicator styles */
+        /* NEW: Synced indicator styles */
         .cache-indicator.synced {
             background: rgba(76, 175, 80, 0.8);
             color: white;
         }
 
-        .cache-indicator.fallback {
-            background: rgba(255, 152, 0, 0.8);
-            color: white;
-        }
-
-        .cache-indicator.metadata {
-            background: rgba(103, 58, 183, 0.8);
-            color: white;
-        }
-
-        /* Enhanced Mobile Responsive Design */
+        /* Responsive */
         @media (max-width: 768px) {
             .container {
-                padding: 0 12px;
-            }
-
-            /* Header improvements for mobile */
-            .header {
-                padding: 15px 0;
-                position: relative; /* Remove sticky on mobile for better performance */
+                padding: 0 15px;
             }
 
             .header-content {
                 flex-direction: column;
                 text-align: center;
-                gap: 15px;
-            }
-
-            .logo {
-                font-size: 1.5em;
-                margin-bottom: 10px;
-            }
-
-            .header-actions {
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 8px;
-            }
-
-            .btn {
-                padding: 8px 16px;
-                font-size: 13px;
-                border-radius: 20px;
-            }
-
-            /* Search improvements */
-            .search-container {
-                padding: 20px 0;
-            }
-
-            .search-input {
-                font-size: 16px; /* Prevent zoom on iOS */
-                padding: 12px 45px 12px 16px;
-                border-radius: 20px;
-            }
-
-            /* Status bar */
-            .status {
-                padding: 15px 0;
-                font-size: 14px;
-                line-height: 1.4;
-            }
-
-            /* MAJOR MOBILE GRID FIX */
-            .articles-section {
-                padding: 20px 0;
             }
 
             .articles-grid {
-                display: block; /* Use block layout instead of grid for better mobile performance */
-                margin-top: 15px;
+                grid-template-columns: 1fr;
+                gap: 20px;
             }
 
-            /* COMPLETELY REDESIGNED MOBILE CARDS */
             .article-card {
-                display: block !important;
-                width: 100% !important;
-                margin-bottom: 20px !important;
-                border-radius: 20px !important;
-                overflow: hidden;
-                background: var(--surface);
-                border: 1px solid var(--border);
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                transform: none !important;
-                animation: none !important;
+                /* Simpler border radius for mobile */
+                border-radius: 24px !important;
             }
 
             .article-card:hover {
-                transform: none !important;
-                box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+                transform: translateY(-4px) scale(1.01);
             }
 
-            /* LARGER MOBILE IMAGE */
-            .article-image {
-                width: 100% !important;
-                height: 140px !important; /* Increased from 100px */
-                border-radius: 20px 20px 0 0 !important;
-                position: relative;
-            }
-
-            /* MUCH LARGER TEXT ON MOBILE */
-            .article-content {
-                padding: 20px !important;
-                cursor: pointer;
-            }
-
-            .article-title {
-                font-size: 1.25em !important; /* Much larger - was 1em */
-                font-weight: 600;
-                margin-bottom: 10px !important;
-                line-height: 1.4 !important;
-                color: var(--text-primary);
-                display: block !important; /* Remove text clamping on mobile */
-                -webkit-line-clamp: unset !important;
-                -webkit-box-orient: unset !important;
-                overflow: visible !important;
-            }
-
-            .article-excerpt {
-                font-size: 1em !important; /* Much larger - was 0.8em */
-                line-height: 1.5 !important;
-                margin-bottom: 15px !important;
-                color: var(--text-secondary);
-                display: block !important; /* Remove text clamping on mobile */
-                -webkit-line-clamp: unset !important;
-                -webkit-box-orient: unset !important;
-                overflow: visible !important;
-            }
-
-            .article-meta {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                flex-wrap: wrap;
-                gap: 8px;
-                color: var(--text-secondary);
-                font-size: 0.9em !important; /* Larger - was 0.75em */
-                margin-bottom: 10px;
-            }
-
-            .article-stats {
-                display: flex;
-                gap: 15px;
-                font-size: 0.85em !important; /* Larger - was 0.7em */
-                color: var(--text-secondary);
-                margin-bottom: 10px;
-            }
-
-            /* MOBILE-OPTIMIZED ACTION BUTTONS */
             .article-actions {
-                position: static !important;
-                opacity: 1 !important;
-                visibility: visible !important;
-                display: flex !important;
+                position: static;
+                opacity: 1;
+                visibility: visible;
                 justify-content: center;
-                gap: 15px;
-                padding: 15px 20px;
+                margin-top: 15px;
+                padding: 15px;
                 background: var(--background);
-                border-radius: 0;
-                margin: 0;
-                border-top: 1px solid var(--border);
+                border-radius: 20px;
             }
 
             .action-btn {
-                min-width: 50px !important;
-                height: 50px !important;
-                font-size: 20px !important;
-                border-radius: 50% !important;
-                padding: 0;
-                background: var(--surface);
-                border: 2px solid var(--border);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.2s ease;
+                min-width: 48px;
+                height: 48px;
+                font-size: 18px;
+                border-radius: 50%;
             }
 
-            .action-btn:hover,
-            .action-btn:active {
-                border-radius: 50% !important;
-                transform: scale(1.05);
-                background: var(--primary-color);
-                color: white;
-                border-color: var(--primary-color);
-            }
-
-            /* MOBILE READER IMPROVEMENTS */
-            .reader-overlay {
-                padding: 0;
+            .action-btn:hover {
+                border-radius: 50%;
+                transform: scale(1.1);
             }
 
             .reader-container {
-                margin: 0 !important;
-                border-radius: 0 !important;
-                height: 100vh;
-                max-width: none;
-                display: flex;
-                flex-direction: column;
+                margin: 20px;
+                border-radius: 16px;
             }
 
-            .reader-header {
+            .reader-header,
+            .reader-content {
                 padding: 20px;
-                border-radius: 0;
-                flex-shrink: 0;
             }
 
             .reader-title {
-                font-size: 1.4em !important;
-                line-height: 1.3;
-                margin-bottom: 15px;
+                font-size: 1.5em;
             }
 
-            .reader-meta {
-                font-size: 0.9em;
-                gap: 15px;
-            }
-
-            .reader-content {
-                padding: 20px;
-                font-size: 1.1em !important; /* Larger reading text */
-                line-height: 1.7 !important;
-                flex: 1;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-            }
-
-            .close-reader {
-                top: 15px;
-                right: 15px;
-                width: 40px;
-                height: 40px;
-                font-size: 16px;
-            }
-
-            /* MOBILE SEARCH */
             .search-input {
-                font-size: 16px !important; /* Prevent zoom */
-                padding: 14px 50px 14px 18px;
-            }
-
-            /* EMPTY STATE */
-            .empty-state {
-                padding: 40px 20px;
-            }
-
-            .empty-state-icon {
-                font-size: 3em;
-                margin-bottom: 15px;
-            }
-
-            .empty-state h3 {
-                font-size: 1.3em;
-                margin-bottom: 8px;
-            }
-
-            .empty-state p {
-                font-size: 1em;
-                line-height: 1.5;
-            }
-        }
-
-        /* Extra small screens (very small phones) */
-        @media (max-width: 480px) {
-            .article-title {
-                font-size: 1.15em !important;
-            }
-            
-            .article-excerpt {
-                font-size: 0.95em !important;
-            }
-            
-            .article-content {
-                padding: 16px !important;
-            }
-            
-            .header-actions {
-                gap: 6px;
-            }
-            
-            .btn {
-                padding: 6px 12px;
-                font-size: 12px;
-            }
-        }
-
-        /* Firefox Mobile Specific Fixes */
-        @-moz-document url-prefix() {
-            @media (max-width: 768px) {
-                .article-card {
-                    will-change: auto; /* Improve performance on Firefox mobile */
-                }
-                
-                .articles-grid {
-                    transform: translateZ(0); /* Force hardware acceleration */
-                }
-                
-                .search-input {
-                    -moz-appearance: none; /* Remove Firefox mobile styling */
-                }
-                
-                .btn {
-                    -moz-appearance: none;
-                }
+                font-size: 16px;
             }
         }
 
@@ -1104,17 +855,14 @@
                 </div>
                 <div class="header-actions">
                     <button id="connectBtn" class="btn btn-primary">
-                        <span id="connectIcon">🔐</span>
-                        <span id="connectText">Secure Connect</span>
+                        <span id="connectIcon">☁️</span>
+                        <span id="connectText">Connect OneDrive</span>
                     </button>
                     <button id="refreshBtn" class="btn btn-secondary" style="display: none;">
                         <span>🔄</span> Refresh
                     </button>
                     <button id="clearCacheBtn" class="btn btn-secondary" onclick="webReader.clearImageCache()">
                         <span>🗑️</span> Clear Cache
-                    </button>
-                    <button id="syncBtn" class="btn btn-secondary" onclick="webReader.forceSyncImages()" style="display: none;">
-                        <span>🔄</span> Sync Images
                     </button>
                     <button id="debugBtn" class="btn btn-secondary" onclick="webReader.showDebugInfo()">
                         <span>🔧</span> Debug
@@ -1197,22 +945,17 @@
                 this.cacheKey = 'mypocket_image_cache';
                 this.cacheExpiryDays = 7; // Cache images for 7 days
 
-                // Cross-device image storage
+                // NEW: Cross-device image storage
                 this.storeImagesInBackup = true; // Enable cross-device image storage
                 this.maxImageSizeKB = 500; // Limit to prevent huge backups
                 this.cacheSaveTimeout = null; // For debounced saves
-
-                // PKCE-specific properties
-                this.codeVerifier = null;
-                this.codeChallenge = null;
-                this.state = null;
 
                 this.init();
             }
 
             getRedirectUri() {
                 const currentUrl = window.location.href;
-                const baseUrl = currentUrl.split('#')[0].split('?')[0]; // Remove both fragment and query
+                const baseUrl = currentUrl.split('#')[0];
 
                 if (baseUrl.startsWith('http://') || baseUrl.startsWith('https://')) {
                     return baseUrl;
@@ -1226,7 +969,7 @@
                 this.checkAuthFromURL();
                 this.loadStoredToken();
                 this.loadThemePreference();
-                this.loadImageCache();
+                this.loadImageCache(); // Load cached images
             }
 
             setupEventListeners() {
@@ -1235,422 +978,6 @@
                 document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
                 document.getElementById('closeReader').addEventListener('click', () => this.closeReader());
                 document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
-            }
-
-            // ===== PKCE IMPLEMENTATION =====
-
-            // Generate a cryptographically secure random string for PKCE
-            generateCodeVerifier() {
-                const array = new Uint8Array(32);
-                crypto.getRandomValues(array);
-                return this.base64URLEncode(array);
-            }
-
-            // Create SHA256 hash and base64url encode it
-            async generateCodeChallenge(codeVerifier) {
-                const encoder = new TextEncoder();
-                const data = encoder.encode(codeVerifier);
-                const digest = await crypto.subtle.digest('SHA-256', data);
-                return this.base64URLEncode(new Uint8Array(digest));
-            }
-
-            // Base64URL encoding (different from regular base64)
-            base64URLEncode(array) {
-                return btoa(String.fromCharCode.apply(null, array))
-                    .replace(/\+/g, '-')
-                    .replace(/\//g, '_')
-                    .replace(/=/g, '');
-            }
-
-            // Generate cryptographically secure state parameter
-            generateState() {
-                const array = new Uint8Array(16);
-                crypto.getRandomValues(array);
-                return this.base64URLEncode(array);
-            }
-
-            // Store PKCE parameters securely
-            storePKCEParameters(codeVerifier, state) {
-                // Use sessionStorage for security (cleared when tab closes)
-                sessionStorage.setItem('mypocket_code_verifier', codeVerifier);
-                sessionStorage.setItem('mypocket_state', state);
-                console.log('🔐 PKCE parameters stored securely');
-            }
-
-            // Retrieve PKCE parameters
-            retrievePKCEParameters() {
-                const codeVerifier = sessionStorage.getItem('mypocket_code_verifier');
-                const state = sessionStorage.getItem('mypocket_state');
-                return { codeVerifier, state };
-            }
-
-            // Clear PKCE parameters after use
-            clearPKCEParameters() {
-                sessionStorage.removeItem('mypocket_code_verifier');
-                sessionStorage.removeItem('mypocket_state');
-                console.log('🗑️ PKCE parameters cleared');
-            }
-
-            // ENHANCED: Secure authentication with PKCE
-            async authenticate() {
-                if (!this.redirectUri || (!this.redirectUri.startsWith('http://') && !this.redirectUri.startsWith('https://'))) {
-                    this.updateStatus('❌ Invalid redirect URI. Please open this page via HTTP/HTTPS.', 'error');
-                    console.error('🔴 Invalid redirect URI:', this.redirectUri);
-                    alert(`Redirect URI Error:\n\nCurrent URI: ${this.redirectUri}\n\nPlease:\n1. Open this page via HTTP/HTTPS (not file://)\n2. Register this exact URI in Azure AD\n3. Use a web server to serve this file`);
-                    return;
-                }
-
-                try {
-                    this.updateStatus('🔐 Generating secure authentication parameters...', 'loading');
-
-                    // Generate PKCE parameters
-                    this.codeVerifier = this.generateCodeVerifier();
-                    this.codeChallenge = await this.generateCodeChallenge(this.codeVerifier);
-                    this.state = this.generateState();
-
-                    // Store parameters securely
-                    this.storePKCEParameters(this.codeVerifier, this.state);
-
-                    // Build authorization URL with PKCE
-                    const authUrl = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?` +
-                        `client_id=${this.clientId}&` +
-                        `response_type=code&` +  // Use code instead of token
-                        `redirect_uri=${encodeURIComponent(this.redirectUri)}&` +
-                        `scope=${encodeURIComponent('Files.ReadWrite User.Read')}&` +
-                        `state=${this.state}&` +  // Anti-CSRF protection
-                        `code_challenge=${this.codeChallenge}&` +  // PKCE challenge
-                        `code_challenge_method=S256&` +  // SHA256 method
-                        `response_mode=query`;  // Use query instead of fragment
-
-                    console.log('🔐 PKCE Auth URL generated');
-                    console.log('🔐 Code Challenge:', this.codeChallenge.substring(0, 20) + '...');
-                    console.log('🔐 State:', this.state.substring(0, 20) + '...');
-
-                    this.updateStatus('🔄 Redirecting to secure Microsoft login...', 'loading');
-
-                    setTimeout(() => {
-                        window.location.href = authUrl;
-                    }, 1000);
-
-                } catch (error) {
-                    console.error('PKCE generation error:', error);
-                    this.updateStatus('❌ Error generating secure authentication. Please try again.', 'error');
-                }
-            }
-
-            // ENHANCED: Handle authorization code from redirect
-            async checkAuthFromURL() {
-                const urlParams = new URLSearchParams(window.location.search);
-                const code = urlParams.get('code');
-                const state = urlParams.get('state');
-                const error = urlParams.get('error');
-                const errorDescription = urlParams.get('error_description');
-
-                // Check for errors first
-                if (error) {
-                    this.updateStatus(`❌ Authentication error: ${error} - ${errorDescription || 'Unknown error'}`, 'error');
-                    this.clearPKCEParameters();
-                    // Clean URL
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    return;
-                }
-
-                // If we have an authorization code, exchange it for tokens
-                if (code && state) {
-                    try {
-                        this.updateStatus('🔐 Exchanging authorization code for tokens...', 'loading');
-                        
-                        // Retrieve stored PKCE parameters
-                        const { codeVerifier, state: storedState } = this.retrievePKCEParameters();
-
-                        // Verify state parameter (anti-CSRF protection)
-                        if (!storedState || state !== storedState) {
-                            throw new Error('State parameter mismatch. Possible CSRF attack.');
-                        }
-
-                        if (!codeVerifier) {
-                            throw new Error('Code verifier not found. Please try authenticating again.');
-                        }
-
-                        // Exchange authorization code for access token
-                        const tokenResponse = await this.exchangeCodeForTokens(code, codeVerifier);
-                        
-                        if (tokenResponse.access_token) {
-                            this.accessToken = tokenResponse.access_token;
-                            this.saveToken(tokenResponse.access_token);
-                            
-                            // Save refresh token if provided
-                            if (tokenResponse.refresh_token) {
-                                this.saveRefreshToken(tokenResponse.refresh_token);
-                            }
-                            
-                            this.updateConnectionStatus(true);
-                            this.loadArticles();
-                            
-                            // Clear PKCE parameters and URL
-                            this.clearPKCEParameters();
-                            window.history.replaceState({}, document.title, window.location.pathname);
-                            
-                            this.updateStatus('✅ Secure authentication successful!', 'success');
-                        } else {
-                            throw new Error('No access token received from authorization server');
-                        }
-
-                    } catch (error) {
-                        console.error('Token exchange error:', error);
-                        this.updateStatus(`❌ Token exchange failed: ${error.message}`, 'error');
-                        this.clearPKCEParameters();
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    }
-                }
-            }
-
-            // NEW: Exchange authorization code for access token using PKCE
-            async exchangeCodeForTokens(authorizationCode, codeVerifier) {
-                const tokenEndpoint = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token';
-                
-                const tokenRequest = {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams({
-                        client_id: this.clientId,
-                        scope: 'Files.ReadWrite User.Read',
-                        code: authorizationCode,
-                        redirect_uri: this.redirectUri,
-                        grant_type: 'authorization_code',
-                        code_verifier: codeVerifier  // PKCE verification
-                    })
-                };
-
-                console.log('🔐 Exchanging authorization code for tokens...');
-                
-                const response = await fetch(tokenEndpoint, tokenRequest);
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(`Token exchange failed: ${errorData.error} - ${errorData.error_description}`);
-                }
-                
-                const tokenData = await response.json();
-                console.log('✅ Token exchange successful');
-                
-                return tokenData;
-            }
-
-            // NEW: Enhanced token management
-            saveToken(token) {
-                localStorage.setItem('mypocket_access_token', token);
-                // Also store timestamp for expiration tracking
-                localStorage.setItem('mypocket_token_timestamp', Date.now().toString());
-            }
-
-            saveRefreshToken(refreshToken) {
-                localStorage.setItem('mypocket_refresh_token', refreshToken);
-            }
-
-            getRefreshToken() {
-                return localStorage.getItem('mypocket_refresh_token');
-            }
-
-            clearTokens() {
-                localStorage.removeItem('mypocket_access_token');
-                localStorage.removeItem('mypocket_refresh_token');
-                localStorage.removeItem('mypocket_token_timestamp');
-                this.accessToken = null;
-            }
-
-            // NEW: Check if token is expired and refresh if needed
-            async ensureValidToken() {
-                if (!this.accessToken) {
-                    return false;
-                }
-
-                // Check if token is expired (Microsoft tokens typically last 1 hour)
-                const tokenTimestamp = localStorage.getItem('mypocket_token_timestamp');
-                if (tokenTimestamp) {
-                    const tokenAge = Date.now() - parseInt(tokenTimestamp);
-                    const oneHour = 60 * 60 * 1000;
-                    
-                    if (tokenAge > oneHour) {
-                        console.log('🔄 Token expired, attempting refresh...');
-                        const refreshSuccess = await this.refreshAccessToken();
-                        if (!refreshSuccess) {
-                            console.log('❌ Token refresh failed, need to re-authenticate');
-                            return false;
-                        }
-                    }
-                }
-
-                return true;
-            }
-
-            // NEW: Refresh access token using refresh token
-            async refreshAccessToken() {
-                const refreshToken = this.getRefreshToken();
-                if (!refreshToken) {
-                    console.log('No refresh token available');
-                    return false;
-                }
-
-                try {
-                    const tokenEndpoint = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token';
-                    
-                    const refreshRequest = {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: new URLSearchParams({
-                            client_id: this.clientId,
-                            scope: 'Files.ReadWrite User.Read',
-                            refresh_token: refreshToken,
-                            grant_type: 'refresh_token'
-                        })
-                    };
-
-                    const response = await fetch(tokenEndpoint, refreshRequest);
-                    
-                    if (!response.ok) {
-                        console.log('Refresh token request failed');
-                        return false;
-                    }
-                    
-                    const tokenData = await response.json();
-                    
-                    if (tokenData.access_token) {
-                        this.accessToken = tokenData.access_token;
-                        this.saveToken(tokenData.access_token);
-                        
-                        // Update refresh token if a new one was provided
-                        if (tokenData.refresh_token) {
-                            this.saveRefreshToken(tokenData.refresh_token);
-                        }
-                        
-                        console.log('✅ Token refreshed successfully');
-                        return true;
-                    }
-                    
-                    return false;
-                    
-                } catch (error) {
-                    console.error('Token refresh error:', error);
-                    return false;
-                }
-            }
-
-            loadStoredToken() {
-                this.accessToken = localStorage.getItem('mypocket_access_token');
-                if (this.accessToken) {
-                    this.updateConnectionStatus(true);
-                    // Check token validity and load articles
-                    this.ensureValidToken().then(isValid => {
-                        if (isValid) {
-                            this.loadArticles();
-                        } else {
-                            this.updateConnectionStatus(false);
-                            this.updateStatus('Stored token expired. Please reconnect.', 'error');
-                        }
-                    });
-                }
-            }
-
-            updateConnectionStatus(connected) {
-                const connectBtn = document.getElementById('connectBtn');
-                const connectIcon = document.getElementById('connectIcon');
-                const connectText = document.getElementById('connectText');
-                const refreshBtn = document.getElementById('refreshBtn');
-                const syncBtn = document.getElementById('syncBtn');
-
-                if (connected) {
-                    connectIcon.textContent = '✅';
-                    connectText.textContent = 'Connected (PKCE)';
-                    connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
-                    refreshBtn.style.display = 'inline-flex';
-                    if (syncBtn) syncBtn.style.display = 'inline-flex';
-                } else {
-                    connectIcon.textContent = '🔐';
-                    connectText.textContent = 'Secure Connect';
-                    connectBtn.style.background = 'rgba(255,255,255,0.2)';
-                    refreshBtn.style.display = 'none';
-                    if (syncBtn) syncBtn.style.display = 'none';
-                }
-            }
-
-            // NEW: Force sync all images to OneDrive
-            async forceSyncImages() {
-                if (!this.accessToken) {
-                    this.updateStatus('❌ Please connect to OneDrive first', 'error');
-                    return;
-                }
-
-                this.updateStatus('🔄 Force syncing all images to OneDrive...', 'loading');
-                
-                try {
-                    let syncedCount = 0;
-                    const totalArticles = this.articles.length;
-
-                    for (let i = 0; i < this.articles.length; i++) {
-                        const article = this.articles[i];
-                        
-                        // If article doesn't have cached image, try to get it from local cache or extract
-                        if (!article.cachedImage) {
-                            let imageUrl = this.getCachedImage(article);
-                            
-                            if (!imageUrl) {
-                                imageUrl = this.getBestArticleImage(article);
-                            }
-                            
-                            if (!imageUrl) {
-                                imageUrl = this.getCategoryBasedImage(article, i);
-                            }
-
-                            if (imageUrl) {
-                                try {
-                                    const imageData = await this.convertImageToBase64(imageUrl);
-                                    if (imageData.stored) {
-                                        article.cachedImage = {
-                                            base64: imageData.base64,
-                                            url: imageData.url,
-                                            timestamp: Date.now(),
-                                            size: imageData.size,
-                                            source: 'force_sync'
-                                        };
-                                        syncedCount++;
-                                    }
-                                } catch (error) {
-                                    console.error(`Failed to sync image for ${article.title}:`, error);
-                                }
-                            }
-                        } else {
-                            syncedCount++; // Already has cached image
-                        }
-
-                        // Update progress
-                        if (i % 5 === 0) {
-                            this.updateStatus(`🔄 Syncing images... ${i + 1}/${totalArticles}`, 'loading');
-                        }
-                    }
-
-                    // Save to OneDrive
-                    await this.updateOneDriveBackup();
-                    
-                    this.updateStatus(`✅ Force sync complete! ${syncedCount}/${totalArticles} images synced to OneDrive`, 'success');
-                    
-                    // Refresh display to show synced status
-                    this.displayArticles(this.articles);
-                    
-                } catch (error) {
-                    console.error('Force sync error:', error);
-                    this.updateStatus(`❌ Force sync failed: ${error.message}`, 'error');
-                }
-            }
-
-            updateStatus(message, type = '') {
-                const status = document.getElementById('status');
-                status.textContent = message;
-                status.className = `status ${type}`;
             }
 
             // ===== IMAGE CACHE SYSTEM =====
@@ -1765,9 +1092,9 @@
                 };
             }
 
-            // ===== CROSS-DEVICE IMAGE STORAGE =====
+            // ===== NEW: CROSS-DEVICE IMAGE STORAGE =====
 
-            // Convert image URL to base64 data for storage
+            // STEP 1: Convert image URL to base64 data for storage
             async convertImageToBase64(imageUrl) {
                 try {
                     console.log(`📸 Converting image to base64: ${imageUrl.substring(0, 50)}...`);
@@ -1834,7 +1161,7 @@
                 }
             }
 
-            // ENHANCED: More aggressive synced image prioritization with debugging
+            // STEP 2: Enhanced display articles to use stored image data FIRST
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1843,72 +1170,40 @@
                     return;
                 }
 
-                // Check if mobile for performance optimization
-                const isMobile = window.innerWidth <= 768;
-                
                 let imagesFromBackup = 0;
                 let imagesFromCache = 0;
                 let imagesNeedLoading = 0;
-
-                console.log('🎯 DISPLAYING ARTICLES - Image Source Priority Check:');
 
                 const articlesHTML = articles.map((article, index) => {
                     let imageHTML = '';
                     let cacheStatus = 'loading';
                     let statusText = '🔄 Loading';
-                    let imageSource = 'none';
 
-                    // PRIORITY 1: Synced base64 images (HIGHEST PRIORITY - guaranteed same across devices)
+                    // Priority 1: Check if image is stored in the article backup (BEST - works cross-device)
                     if (article.cachedImage && article.cachedImage.base64) {
                         imageHTML = this.createImageHTML(article.cachedImage.base64, true);
                         cacheStatus = 'synced';
                         statusText = '🌐 Synced';
-                        imageSource = 'synced_base64';
                         imagesFromBackup++;
-                        console.log(`✅ ${index}: Using SYNCED base64 for "${article.title.substring(0, 30)}..." (${Math.round(article.cachedImage.size)}KB)`);
+                        console.log(`✅ Using stored image data for: ${article.title.substring(0, 30)}...`);
                     }
-                    // PRIORITY 2: Synced URLs (still cross-device but less reliable)
-                    else if (article.cachedImage && article.cachedImage.url && !article.cachedImage.base64) {
-                        imageHTML = this.createImageHTML(article.cachedImage.url, true);
-                        cacheStatus = 'synced';
-                        statusText = '🔗 Synced URL';
-                        imageSource = 'synced_url';
-                        imagesFromBackup++;
-                        console.log(`✅ ${index}: Using SYNCED URL for "${article.title.substring(0, 30)}..."`);
-                    }
-                    // PRIORITY 3: Local cache (device specific)
+                    // Priority 2: Check local cache (FAST - this device only)
                     else if (this.getCachedImage(article)) {
                         imageHTML = this.createImageHTML(this.getCachedImage(article), true);
                         cacheStatus = 'cached';
-                        statusText = '💾 Local Cache';
-                        imageSource = 'local_cache';
+                        statusText = '💾 Cached';
                         imagesFromCache++;
-                        console.log(`⚡ ${index}: Using LOCAL cache for "${article.title.substring(0, 30)}..."`);
                     }
-                    // PRIORITY 4: Article metadata (extract and sync immediately)
-                    else if (this.getBestArticleImage(article)) {
-                        const savedImage = this.getBestArticleImage(article);
-                        imageHTML = this.createImageHTML(savedImage, false);
-                        cacheStatus = 'metadata';
-                        statusText = '📄 Metadata';
-                        imageSource = 'metadata';
-                        console.log(`📄 ${index}: Using METADATA image for "${article.title.substring(0, 30)}..." - will sync`);
-                        
-                        // Store this image for cross-device sync IMMEDIATELY
-                        setTimeout(() => this.setArticleImageAndCache(article, index, savedImage, 'saved'), 100);
-                    }
-                    // PRIORITY 5: Need to extract from website (LAST resort)
+                    // Priority 3: Need to load (SLOW - will fetch)
                     else {
                         imageHTML = this.createPlaceholderHTML();
                         cacheStatus = 'loading';
-                        statusText = isMobile ? '📱 Loading...' : '🔄 Loading';
-                        imageSource = 'needs_extraction';
+                        statusText = '🔄 Loading';
                         imagesNeedLoading++;
-                        console.log(`❌ ${index}: NO image found for "${article.title.substring(0, 30)}..." - needs extraction`);
                     }
                     
                     return `
-                    <div class="article-card" data-index="${index}" data-image-source="${imageSource}">
+                    <div class="article-card" data-index="${index}">
                         <div class="article-image" id="image-${index}">
                             ${imageHTML}
                             <div class="cache-indicator ${cacheStatus}">
@@ -1943,28 +1238,12 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
                 
-                // Enhanced status reporting with debugging
-                const totalReady = imagesFromBackup + imagesFromCache;
-                
-                console.log(`📊 IMAGE SUMMARY: ${imagesFromBackup} synced, ${imagesFromCache} cached, ${imagesNeedLoading} need loading`);
-                
+                // Update status with detailed breakdown
                 if (imagesNeedLoading === 0) {
-                    const message = isMobile ? 
-                        `📱 ALL images ready! ${totalReady}/${articles.length} synced perfectly ✨` :
-                        `✅ ALL images ready! ${imagesFromBackup} synced, ${imagesFromCache} cached ✨`;
-                    this.updateStatus(message, 'success');
+                    this.updateStatus(`✅ All ${articles.length} images ready! (${imagesFromBackup} synced, ${imagesFromCache} cached)`, 'success');
                 } else {
-                    const message = isMobile ?
-                        `📱 ${totalReady} ready instantly, extracting ${imagesNeedLoading} more...` :
-                        `⚡ ${totalReady} ready instantly, extracting ${imagesNeedLoading} more...`;
-                    this.updateStatus(message, 'loading');
-                    
-                    // Load missing images - prioritize on mobile for faster completion
-                    if (isMobile) {
-                        setTimeout(() => this.loadMissingImages(articles), 500); // Start faster on mobile
-                    } else {
-                        this.loadMissingImages(articles);
-                    }
+                    this.updateStatus(`📸 Loading ${imagesNeedLoading} images... (${imagesFromBackup} synced, ${imagesFromCache} cached)`, 'loading');
+                    this.loadMissingImages(articles);
                 }
             }
 
@@ -2016,9 +1295,9 @@
                 `;
             }
 
-            // Mobile-optimized image loading (SAME images, just optimized performance)
+            // Load only missing images (not cached)
             async loadMissingImages(articles) {
-                console.log('🎨 SMART IMAGE LOADER - Loading same images for all devices...');
+                console.log('🎨 SMART IMAGE LOADER - Loading only missing images...');
                 
                 const articlesNeedingImages = articles.filter((article, index) => {
                     // Check both stored backup images and local cache
@@ -2032,62 +1311,42 @@
                     return;
                 }
 
-                const isMobile = window.innerWidth <= 768;
                 let successCount = 0;
                 const totalNew = articlesNeedingImages.length;
                 
-                console.log(`🔄 Loading ${totalNew} SAME images${isMobile ? ' (mobile optimized)' : ''}`);
+                console.log(`🔄 Loading ${totalNew} new images`);
                 
-                // Mobile optimization: Load in smaller batches with longer delays for performance
-                // But extract the SAME real images, not fallbacks
-                const batchSize = isMobile ? 2 : 5; // Process fewer images at once on mobile
-                const delayBetweenImages = isMobile ? 800 : 300; // Longer delays on mobile
-                
-                for (let i = 0; i < articlesNeedingImages.length; i += batchSize) {
-                    const batch = articlesNeedingImages.slice(i, i + batchSize);
+                // Load images sequentially to avoid overwhelming websites
+                for (let i = 0; i < articlesNeedingImages.length; i++) {
+                    const article = articlesNeedingImages[i];
+                    const originalIndex = articles.findIndex(a => a === article);
                     
-                    // Process batch - SAME extraction process for both mobile and desktop
-                    await Promise.all(batch.map(async (article) => {
-                        const originalIndex = articles.findIndex(a => a === article);
+                    try {
+                        const success = await this.extractAndCacheRealImage(article, originalIndex);
+                        if (success) successCount++;
                         
-                        try {
-                            const success = await this.extractAndCacheRealImage(article, originalIndex);
-                            if (success) successCount++;
-                        } catch (error) {
-                            console.error(`Failed to extract image for article ${originalIndex}:`, error);
-                            // Use category fallback for failed extractions (SAME on both platforms)
-                            const fallbackImage = this.getCategoryBasedImage(article, originalIndex);
-                            this.setArticleImageAndCache(article, originalIndex, fallbackImage, 'fallback');
-                            successCount++;
-                        }
-                    }));
-                    
-                    // Update progress with mobile-friendly messages
-                    const progress = Math.round(((i + batchSize) / totalNew) * 100);
-                    if (isMobile) {
-                        this.updateStatus(`📱 Loading images... ${Math.min(i + batchSize, totalNew)}/${totalNew}`, 'loading');
-                    } else {
-                        this.updateStatus(`🔍 Loading new images... ${Math.min(i + batchSize, totalNew)}/${totalNew} (${progress}%)`, 'loading');
-                    }
-                    
-                    // Delay between batches (longer on mobile for better performance)
-                    if (i + batchSize < articlesNeedingImages.length) {
-                        await new Promise(resolve => setTimeout(resolve, delayBetweenImages));
+                        // Update progress
+                        const progress = Math.round(((i + 1) / totalNew) * 100);
+                        this.updateStatus(`🔍 Loading new images... ${i + 1}/${totalNew} (${progress}%)`, 'loading');
+                        
+                        // Delay to be respectful to websites
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                        
+                    } catch (error) {
+                        console.error(`Failed to extract image for article ${originalIndex}:`, error);
+                        // Use category fallback for failed extractions
+                        const fallbackImage = this.getCategoryBasedImage(article, originalIndex);
+                        this.setArticleImageAndCache(article, originalIndex, fallbackImage, 'fallback');
+                        successCount++;
                     }
                 }
                 
                 const totalCached = this.imageCache.size;
-                
-                if (isMobile) {
-                    this.updateStatus(`📱 ${successCount} images loaded! Same as desktop 🎉`, 'success');
-                } else {
-                    this.updateStatus(`✅ Loaded ${successCount}/${totalNew} new images! (${totalCached} total cached)`, 'success');
-                }
-                
-                console.log(`🎨 Image loading complete: ${successCount}/${totalNew} SAME images on both platforms`);
+                this.updateStatus(`✅ Loaded ${successCount}/${totalNew} new images! (${totalCached} total cached)`, 'success');
+                console.log(`🎨 Smart image loading complete: ${successCount}/${totalNew} new, ${totalCached} total cached`);
             }
 
-            // ENHANCED: Force backup update when images are stored
+            // STEP 3: Enhanced method to store images WITH articles
             async setArticleImageAndCache(article, index, imageUrl, source) {
                 const imageElement = document.getElementById(`image-${index}`);
                 if (!imageElement) return;
@@ -2105,48 +1364,29 @@
                 // Store in local cache
                 this.setCachedImage(article, imageUrl);
 
-                // ENHANCED: Always store base64 data for cross-device sync (not just extracted images)
-                if (this.storeImagesInBackup && (source === 'extracted' || source === 'saved' || source === 'fallback')) {
-                    try {
-                        console.log(`🔄 Converting image for cross-device storage: ${article.title.substring(0, 30)}...`);
-                        const imageData = await this.convertImageToBase64(imageUrl);
-                        
-                        if (imageData.stored) {
-                            // Find the article in our array and add image data
-                            const articleIndex = this.articles.findIndex(a => a.url === article.url);
-                            if (articleIndex !== -1) {
-                                this.articles[articleIndex].cachedImage = {
-                                    base64: imageData.base64,
-                                    url: imageData.url,
-                                    timestamp: Date.now(),
-                                    size: imageData.size,
-                                    source: source
-                                };
-                                
-                                console.log(`💾 Stored ${imageData.size}KB image in backup for cross-device sync`);
-                                
-                                // Update cache indicator to show it's stored for sync
-                                if (cacheIndicator) {
-                                    cacheIndicator.textContent = '🌐 Synced';
-                                    cacheIndicator.className = 'cache-indicator synced';
-                                }
-
-                                // IMMEDIATELY save to OneDrive to ensure sync
-                                if (this.accessToken) {
-                                    console.log('💾 Auto-saving to OneDrive for instant cross-device sync...');
-                                    try {
-                                        await this.updateOneDriveBackup();
-                                        console.log('✅ OneDrive backup updated with new image');
-                                    } catch (error) {
-                                        console.error('⚠️ Failed to auto-save backup:', error);
-                                    }
-                                }
+                // ENHANCED: Also store base64 data in the article for cross-device sync
+                if (this.storeImagesInBackup && source === 'extracted') {
+                    const imageData = await this.convertImageToBase64(imageUrl);
+                    
+                    if (imageData.stored) {
+                        // Find the article in our array and add image data
+                        const articleIndex = this.articles.findIndex(a => a.url === article.url);
+                        if (articleIndex !== -1) {
+                            this.articles[articleIndex].cachedImage = {
+                                base64: imageData.base64,
+                                url: imageData.url,
+                                timestamp: Date.now(),
+                                size: imageData.size
+                            };
+                            
+                            console.log(`💾 Stored ${imageData.size}KB image data in article for cross-device sync`);
+                            
+                            // Update cache indicator to show it's stored for sync
+                            if (cacheIndicator) {
+                                cacheIndicator.textContent = '🌐 Synced';
+                                cacheIndicator.className = 'cache-indicator synced';
                             }
-                        } else {
-                            console.log(`⚠️ Image too large for cross-device storage: ${imageData.size}KB`);
                         }
-                    } catch (error) {
-                        console.error('Error storing image for cross-device sync:', error);
                     }
                 }
             }
@@ -2185,13 +1425,99 @@
                 return true;
             }
 
-            // ENHANCED: Load articles with automatic token refresh
+            checkAuthFromURL() {
+                const hash = window.location.hash.substring(1);
+                if (hash && hash.includes('access_token=')) {
+                    const params = new URLSearchParams(hash);
+                    const accessToken = params.get('access_token');
+                    const error = params.get('error');
+
+                    if (error) {
+                        this.updateStatus(`Authentication error: ${error}`, 'error');
+                        return;
+                    }
+
+                    if (accessToken) {
+                        this.accessToken = accessToken;
+                        this.saveToken(accessToken);
+                        this.updateConnectionStatus(true);
+                        this.loadArticles();
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
+                }
+            }
+
+            loadStoredToken() {
+                this.accessToken = localStorage.getItem('mypocket_access_token');
+                if (this.accessToken) {
+                    this.updateConnectionStatus(true);
+                    this.loadArticles();
+                }
+            }
+
+            saveToken(token) {
+                localStorage.setItem('mypocket_access_token', token);
+            }
+
+            clearToken() {
+                localStorage.removeItem('mypocket_access_token');
+                this.accessToken = null;
+            }
+
+            authenticate() {
+                if (!this.redirectUri || (!this.redirectUri.startsWith('http://') && !this.redirectUri.startsWith('https://'))) {
+                    this.updateStatus('❌ Invalid redirect URI. Please open this page via HTTP/HTTPS.', 'error');
+                    console.error('🔴 Invalid redirect URI:', this.redirectUri);
+                    alert(`Redirect URI Error:\n\nCurrent URI: ${this.redirectUri}\n\nPlease:\n1. Open this page via HTTP/HTTPS (not file://)\n2. Register this exact URI in Azure AD\n3. Use a web server to serve this file`);
+                    return;
+                }
+
+                const authUrl = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?` +
+                    `client_id=${this.clientId}&` +
+                    `response_type=token&` +
+                    `redirect_uri=${encodeURIComponent(this.redirectUri)}&` +
+                    `scope=${encodeURIComponent('Files.ReadWrite User.Read')}&` +
+                    `response_mode=fragment&` +
+                    `nonce=${Date.now()}`;
+
+                console.log('🔵 Auth URL:', authUrl);
+                console.log('🔵 Encoded Redirect URI:', encodeURIComponent(this.redirectUri));
+
+                this.updateStatus('🔄 Redirecting to Microsoft login...', 'loading');
+
+                setTimeout(() => {
+                    window.location.href = authUrl;
+                }, 1000);
+            }
+
+            updateConnectionStatus(connected) {
+                const connectBtn = document.getElementById('connectBtn');
+                const connectIcon = document.getElementById('connectIcon');
+                const connectText = document.getElementById('connectText');
+                const refreshBtn = document.getElementById('refreshBtn');
+
+                if (connected) {
+                    connectIcon.textContent = '✅';
+                    connectText.textContent = 'Connected';
+                    connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
+                    refreshBtn.style.display = 'inline-flex';
+                } else {
+                    connectIcon.textContent = '☁️';
+                    connectText.textContent = 'Connect OneDrive';
+                    connectBtn.style.background = 'rgba(255,255,255,0.2)';
+                    refreshBtn.style.display = 'none';
+                }
+            }
+
+            updateStatus(message, type = '') {
+                const status = document.getElementById('status');
+                status.textContent = message;
+                status.className = `status ${type}`;
+            }
+
             async loadArticles() {
-                // Ensure we have a valid token
-                const hasValidToken = await this.ensureValidToken();
-                if (!hasValidToken) {
-                    this.updateConnectionStatus(false);
-                    this.updateStatus('Authentication expired. Please reconnect.', 'error');
+                if (!this.accessToken) {
+                    this.updateStatus('Not connected to OneDrive', 'error');
                     return;
                 }
 
@@ -2207,17 +1533,10 @@
 
                     if (!listResponse.ok) {
                         if (listResponse.status === 401) {
-                            // Try to refresh token
-                            const refreshSuccess = await this.refreshAccessToken();
-                            if (refreshSuccess) {
-                                // Retry the request with new token
-                                return this.loadArticles();
-                            } else {
-                                this.clearTokens();
-                                this.updateConnectionStatus(false);
-                                this.updateStatus('Session expired. Please reconnect.', 'error');
-                                return;
-                            }
+                            this.clearToken();
+                            this.updateConnectionStatus(false);
+                            this.updateStatus('Session expired. Please reconnect.', 'error');
+                            return;
                         }
                         throw new Error(`Failed to list files: ${listResponse.status}`);
                     }
@@ -2646,7 +1965,7 @@
                 }
             }
 
-            // Enhanced backup to include image data
+            // STEP 4: Enhanced backup to include image data
             async updateOneDriveBackup() {
                 if (!this.accessToken) {
                     throw new Error('Not connected to OneDrive');
@@ -2667,15 +1986,14 @@
                         maxImageSizeKB: this.maxImageSizeKB
                     },
                     exportDate: new Date().toISOString(),
-                    version: "4.1", // Bump version for PKCE + image storage
+                    version: "4.0", // Bump version for image storage
                     deviceInfo: {
-                        browser: "Web Reader with PKCE Security + Cross-Device Images",
+                        browser: "Web Reader with Cross-Device Images",
                         platform: navigator.platform,
                         timestamp: Date.now(),
                         articleCount: this.articles.length,
                         storedImages: articlesWithImages.length,
-                        totalImageSizeKB: Math.round(totalImageSizeKB),
-                        authMethod: "Authorization Code + PKCE"
+                        totalImageSizeKB: Math.round(totalImageSizeKB)
                     }
                 };
 
@@ -2777,7 +2095,7 @@
         ${article.content}
     </div>
     <div class="footer">
-        <p><strong>✨ Exported from MyPocket Web Reader (PKCE Secured)</strong></p>
+        <p><strong>✨ Exported from MyPocket Web Reader</strong></p>
         <p>Original URL: <a href="${article.url}" style="color: #ee5a24;">${article.url}</a></p>
         <p>Export Date: ${new Date().toLocaleDateString()}</p>
     </div>
@@ -2834,7 +2152,7 @@
                 return null;
             }
 
-            // Fetch the actual featured image from a website
+            // NEW: Fetch the actual featured image from a website
             async fetchRealImageFromWebsite(url) {
                 try {
                     console.log(`🌐 Fetching webpage to extract image: ${url}`);
@@ -2877,7 +2195,7 @@
                 }
             }
 
-            // Parse HTML to find the best image
+            // NEW: Parse HTML to find the best image
             parseHTMLForBestImage(html, baseUrl) {
                 try {
                     // Create a DOM parser
@@ -2965,7 +2283,7 @@
                 }
             }
 
-            // Try alternative image extraction methods
+            // NEW: Try alternative image extraction methods
             async tryAlternativeImageExtraction(url) {
                 // Method 1: Try CORS proxy
                 try {
@@ -2988,7 +2306,7 @@
                 throw new Error('All alternative extraction methods failed');
             }
 
-            // Guess image from URL patterns (for known sites)
+            // NEW: Guess image from URL patterns (for known sites)
             guessImageFromUrl(url) {
                 const domain = this.getDomain(url).toLowerCase();
                 
@@ -3064,22 +2382,11 @@
                 return (w > 0 && w < 200) || (h > 0 && h < 150);
             }
 
-            // Get category-based images that are CONSISTENT across devices (not based on index)
+            // NEW: Get category-based images that always work
             getCategoryBasedImage(article, index) {
                 const domain = this.getDomain(article.url).toLowerCase();
                 const title = article.title.toLowerCase();
-                const url = article.url.toLowerCase();
                 
-                // Create a consistent seed based on article content (NOT display order)
-                const articleSeed = article.url + article.title;
-                let hash = 0;
-                for (let i = 0; i < articleSeed.length; i++) {
-                    const char = articleSeed.charCodeAt(i);
-                    hash = ((hash << 5) - hash) + char;
-                    hash = hash & hash; // Convert to 32bit integer
-                }
-                const consistentIndex = Math.abs(hash);
-
                 // Use reliable image services that work well with direct img tags
                 
                 // Technology/Programming
@@ -3163,7 +2470,7 @@
                     return `https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
                 
-                // Default beautiful images based on CONSISTENT hash (not display order)
+                // Default beautiful images based on index
                 const defaultImages = [
                     'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Mountain landscape
                     'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Abstract colorful
@@ -3177,8 +2484,7 @@
                     'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&h=250&fit=crop&crop=center&q=80&auto=format'  // Geometric pattern
                 ];
                 
-                // Use consistent index based on article content, not display position
-                return defaultImages[consistentIndex % defaultImages.length];
+                return defaultImages[index % defaultImages.length];
             }
 
             // Convert relative URLs to absolute
@@ -3322,58 +2628,47 @@
                     return total + (article.cachedImage ? article.cachedImage.size || 0 : 0);
                 }, 0);
                 
-                const hasRefreshToken = !!this.getRefreshToken();
-                const tokenTimestamp = localStorage.getItem('mypocket_token_timestamp');
-                const tokenAge = tokenTimestamp ? Math.round((Date.now() - parseInt(tokenTimestamp)) / 1000 / 60) : 'Unknown';
-                
                 const info = `
-MyPocket Web Reader Debug Info (PKCE Enabled):
-===============================================
+MyPocket Web Reader Debug Info:
+=====================================
 
 Current URL: ${window.location.href}
 Redirect URI: ${this.redirectUri}
 Client ID: ${this.clientId}
 Protocol: ${window.location.protocol}
 Host: ${window.location.host}
+Has Access Token: ${!!this.accessToken}
+Articles Loaded: ${this.articles.length}
 
-🔐 SECURITY (PKCE):
-- Authentication Method: Authorization Code + PKCE
-- Security Level: HIGH (recommended for SPAs)
-- Anti-CSRF Protection: Enabled (state parameter)
-- Code Challenge Method: SHA256
-- Token Storage: localStorage (access), sessionStorage (PKCE params)
-
-🎫 TOKEN STATUS:
-- Has Access Token: ${!!this.accessToken}
-- Has Refresh Token: ${hasRefreshToken}
-- Token Age: ${tokenAge} minutes
-- Auto-Refresh: Enabled
-
-📚 ARTICLES & IMAGES:
-- Articles Loaded: ${this.articles.length}
+Cross-Device Image Storage:
 - Store Images in Backup: ${this.storeImagesInBackup}
 - Max Image Size: ${this.maxImageSizeKB}KB
 - Articles with Stored Images: ${storedImages}
 - Total Stored Image Size: ${Math.round(totalStoredSizeKB)}KB
 
-💾 LOCAL CACHE:
+Local Image Cache Stats:
 - Total Cached Images: ${cacheStats.total}
 - Memory Usage: ${Math.round(cacheStats.memoryUsage / 1024)} KB
 - Cache Expiry: ${this.cacheExpiryDays} days
+- Oldest Entry: ${cacheStats.total > 0 ? new Date(cacheStats.oldestEntry).toLocaleDateString() : 'N/A'}
+- Newest Entry: ${cacheStats.total > 0 ? new Date(cacheStats.newestEntry).toLocaleDateString() : 'N/A'}
 
-🛡️ SECURITY BENEFITS:
-✅ No tokens exposed in URL
-✅ Protection against code interception
-✅ Anti-CSRF state verification
-✅ Automatic token refresh
-✅ Secure parameter storage
+Azure AD Redirect URI Requirements:
+- Must be absolute URI (http:// or https://)
+- Must be registered in Azure AD App Registration
+- Must match exactly (including trailing slashes)
 
-Azure AD Setup for PKCE:
-1. App Registration → Authentication
-2. Add Web platform: ${this.redirectUri}
-3. Enable "Access tokens" and "ID tokens"
-4. Set redirect URI exactly: ${this.redirectUri}
-5. PKCE is automatically supported for public clients
+Common Issues:
+1. Using file:// protocol (not supported)
+2. Redirect URI not registered in Azure AD
+3. Mismatch between actual URI and registered URI
+
+Next Steps:
+1. Open Azure Portal → App registrations
+2. Find your app: ${this.clientId}
+3. Go to Authentication → Platform configurations
+4. Add Web platform with redirect URI: ${this.redirectUri}
+5. Make sure URI is exact match
 
 Cross-Device Image Features:
 - Images stored in OneDrive backup for instant loading
@@ -3383,17 +2678,16 @@ Cross-Device Image Features:
                 `;
 
                 alert(info);
-                console.log('🔧 PKCE Debug Info:', {
+                console.log('🔧 Debug Info:', {
                     currentUrl: window.location.href,
                     redirectUri: this.redirectUri,
-                    authMethod: 'Authorization Code + PKCE',
-                    securityLevel: 'HIGH',
+                    clientId: this.clientId,
+                    protocol: window.location.protocol,
                     hasToken: !!this.accessToken,
-                    hasRefreshToken: hasRefreshToken,
-                    tokenAge: `${tokenAge} minutes`,
                     articlesCount: this.articles.length,
                     cacheStats: cacheStats,
                     storedImages: storedImages,
+                    totalStoredSizeKB: Math.round(totalStoredSizeKB),
                     crossDeviceEnabled: this.storeImagesInBackup
                 });
             }
