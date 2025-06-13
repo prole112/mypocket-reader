@@ -1834,7 +1834,7 @@
                 }
             }
 
-            // ENHANCED: Aggressive cross-device image loading with debugging
+            // ENHANCED: More aggressive synced image prioritization with debugging
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1850,59 +1850,65 @@
                 let imagesFromCache = 0;
                 let imagesNeedLoading = 0;
 
+                console.log('🎯 DISPLAYING ARTICLES - Image Source Priority Check:');
+
                 const articlesHTML = articles.map((article, index) => {
                     let imageHTML = '';
                     let cacheStatus = 'loading';
                     let statusText = '🔄 Loading';
+                    let imageSource = 'none';
 
-                    // ENHANCED: More aggressive checking for stored images
-                    
-                    // Priority 1: Check if image is stored in the article backup (BEST - works cross-device)
+                    // PRIORITY 1: Synced base64 images (HIGHEST PRIORITY - guaranteed same across devices)
                     if (article.cachedImage && article.cachedImage.base64) {
                         imageHTML = this.createImageHTML(article.cachedImage.base64, true);
                         cacheStatus = 'synced';
                         statusText = '🌐 Synced';
+                        imageSource = 'synced_base64';
                         imagesFromBackup++;
-                        console.log(`✅ Using stored backup image for: ${article.title.substring(0, 30)}... (${Math.round(article.cachedImage.size)}KB)`);
+                        console.log(`✅ ${index}: Using SYNCED base64 for "${article.title.substring(0, 30)}..." (${Math.round(article.cachedImage.size)}KB)`);
                     }
-                    // Priority 1b: Check if article has cached image URL (from previous session)
-                    else if (article.cachedImage && article.cachedImage.url) {
+                    // PRIORITY 2: Synced URLs (still cross-device but less reliable)
+                    else if (article.cachedImage && article.cachedImage.url && !article.cachedImage.base64) {
                         imageHTML = this.createImageHTML(article.cachedImage.url, true);
                         cacheStatus = 'synced';
                         statusText = '🔗 Synced URL';
+                        imageSource = 'synced_url';
                         imagesFromBackup++;
-                        console.log(`✅ Using stored image URL for: ${article.title.substring(0, 30)}...`);
+                        console.log(`✅ ${index}: Using SYNCED URL for "${article.title.substring(0, 30)}..."`);
                     }
-                    // Priority 2: Check local cache (FAST - this device only)
+                    // PRIORITY 3: Local cache (device specific)
                     else if (this.getCachedImage(article)) {
                         imageHTML = this.createImageHTML(this.getCachedImage(article), true);
                         cacheStatus = 'cached';
                         statusText = '💾 Local Cache';
+                        imageSource = 'local_cache';
                         imagesFromCache++;
-                        console.log(`✅ Using local cache for: ${article.title.substring(0, 30)}...`);
+                        console.log(`⚡ ${index}: Using LOCAL cache for "${article.title.substring(0, 30)}..."`);
                     }
-                    // Priority 3: Try to find any image in article metadata
+                    // PRIORITY 4: Article metadata (extract and sync immediately)
                     else if (this.getBestArticleImage(article)) {
                         const savedImage = this.getBestArticleImage(article);
                         imageHTML = this.createImageHTML(savedImage, false);
                         cacheStatus = 'metadata';
                         statusText = '📄 Metadata';
-                        console.log(`✅ Using article metadata image for: ${article.title.substring(0, 30)}...`);
+                        imageSource = 'metadata';
+                        console.log(`📄 ${index}: Using METADATA image for "${article.title.substring(0, 30)}..." - will sync`);
                         
-                        // Store this image for cross-device sync
+                        // Store this image for cross-device sync IMMEDIATELY
                         setTimeout(() => this.setArticleImageAndCache(article, index, savedImage, 'saved'), 100);
                     }
-                    // Priority 4: Need to extract from website
+                    // PRIORITY 5: Need to extract from website (LAST resort)
                     else {
                         imageHTML = this.createPlaceholderHTML();
                         cacheStatus = 'loading';
                         statusText = isMobile ? '📱 Loading...' : '🔄 Loading';
+                        imageSource = 'needs_extraction';
                         imagesNeedLoading++;
-                        console.log(`❌ No image found for: ${article.title.substring(0, 30)}... - will extract`);
+                        console.log(`❌ ${index}: NO image found for "${article.title.substring(0, 30)}..." - needs extraction`);
                     }
                     
                     return `
-                    <div class="article-card" data-index="${index}">
+                    <div class="article-card" data-index="${index}" data-image-source="${imageSource}">
                         <div class="article-image" id="image-${index}">
                             ${imageHTML}
                             <div class="cache-indicator ${cacheStatus}">
@@ -1937,17 +1943,19 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
                 
-                // Enhanced status reporting
+                // Enhanced status reporting with debugging
                 const totalReady = imagesFromBackup + imagesFromCache;
+                
+                console.log(`📊 IMAGE SUMMARY: ${imagesFromBackup} synced, ${imagesFromCache} cached, ${imagesNeedLoading} need loading`);
                 
                 if (imagesNeedLoading === 0) {
                     const message = isMobile ? 
-                        `📱 ALL images ready instantly! ${totalReady}/${articles.length} synced ✨` :
+                        `📱 ALL images ready! ${totalReady}/${articles.length} synced perfectly ✨` :
                         `✅ ALL images ready! ${imagesFromBackup} synced, ${imagesFromCache} cached ✨`;
                     this.updateStatus(message, 'success');
                 } else {
                     const message = isMobile ?
-                        `📱 ${totalReady} ready, extracting ${imagesNeedLoading} more...` :
+                        `📱 ${totalReady} ready instantly, extracting ${imagesNeedLoading} more...` :
                         `⚡ ${totalReady} ready instantly, extracting ${imagesNeedLoading} more...`;
                     this.updateStatus(message, 'loading');
                     
@@ -1958,9 +1966,6 @@
                         this.loadMissingImages(articles);
                     }
                 }
-
-                // Debug logging
-                console.log(`📊 IMAGE STATUS: ${imagesFromBackup} synced, ${imagesFromCache} cached, ${imagesNeedLoading} need loading`);
             }
 
             createImageHTML(imageUrl, fromCache = false) {
@@ -3059,11 +3064,22 @@
                 return (w > 0 && w < 200) || (h > 0 && h < 150);
             }
 
-            // Get category-based images that always work
+            // Get category-based images that are CONSISTENT across devices (not based on index)
             getCategoryBasedImage(article, index) {
                 const domain = this.getDomain(article.url).toLowerCase();
                 const title = article.title.toLowerCase();
+                const url = article.url.toLowerCase();
                 
+                // Create a consistent seed based on article content (NOT display order)
+                const articleSeed = article.url + article.title;
+                let hash = 0;
+                for (let i = 0; i < articleSeed.length; i++) {
+                    const char = articleSeed.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // Convert to 32bit integer
+                }
+                const consistentIndex = Math.abs(hash);
+
                 // Use reliable image services that work well with direct img tags
                 
                 // Technology/Programming
@@ -3147,7 +3163,7 @@
                     return `https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
                 
-                // Default beautiful images based on index
+                // Default beautiful images based on CONSISTENT hash (not display order)
                 const defaultImages = [
                     'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Mountain landscape
                     'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Abstract colorful
@@ -3161,7 +3177,8 @@
                     'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&h=250&fit=crop&crop=center&q=80&auto=format'  // Geometric pattern
                 ];
                 
-                return defaultImages[index % defaultImages.length];
+                // Use consistent index based on article content, not display position
+                return defaultImages[consistentIndex % defaultImages.length];
             }
 
             // Convert relative URLs to absolute
