@@ -2834,17 +2834,12 @@
                 return null;
             }
 
-            // ENHANCED: Fetch with consistent User-Agent for same results across devices
+            // Fetch the actual featured image from a website
             async fetchRealImageFromWebsite(url) {
                 try {
                     console.log(`🌐 Fetching webpage to extract image: ${url}`);
                     
-                    // Use consistent desktop User-Agent on both mobile and desktop for same results
-                    const consistentHeaders = {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
-                    };
-                    
-                    // Method 1: Try AllOrigins proxy with consistent headers
+                    // Method 1: Try AllOrigins proxy
                     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
                     const response = await fetch(proxyUrl);
                     
@@ -2859,20 +2854,18 @@
                         throw new Error('No substantial HTML content received');
                     }
                     
-                    console.log(`📄 Received ${html.length} chars from ${this.getDomain(url)}`);
-                    
                     // Parse the HTML and extract the best image
                     const extractedImageUrl = this.parseHTMLForBestImage(html, url);
                     
                     if (extractedImageUrl) {
-                        console.log(`🎯 Successfully extracted image: ${extractedImageUrl}`);
+                        console.log(`🎯 Found image: ${extractedImageUrl}`);
                         return extractedImageUrl;
                     }
                     
                     throw new Error('No suitable image found in webpage');
                     
                 } catch (error) {
-                    console.log(`❌ Website image extraction failed for ${this.getDomain(url)}: ${error.message}`);
+                    console.log(`❌ Website image extraction failed: ${error.message}`);
                     
                     // Try alternative proxy methods
                     try {
@@ -2884,103 +2877,14 @@
                 }
             }
 
-            // ENHANCED: Website-specific image extraction with consistent results
+            // Parse HTML to find the best image
             parseHTMLForBestImage(html, baseUrl) {
                 try {
                     // Create a DOM parser
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
                     
-                    const domain = this.getDomain(baseUrl).toLowerCase();
-                    console.log(`🎯 Extracting image from: ${domain}`);
-                    
-                    // DOMAIN-SPECIFIC EXTRACTION (for consistent results)
-                    
-                    // LibCom.com specific extraction
-                    if (domain.includes('libcom.org')) {
-                        console.log('🎯 LibCom.org specific extraction');
-                        
-                        // Try LibCom specific selectors first
-                        const libcomSelectors = [
-                            '.field-name-field-image img',
-                            '.article-image img',
-                            '.node-article .field-type-image img',
-                            'article .field-type-image img'
-                        ];
-                        
-                        for (const selector of libcomSelectors) {
-                            const img = doc.querySelector(selector);
-                            if (img) {
-                                const src = img.getAttribute('src') || img.getAttribute('data-src');
-                                if (src) {
-                                    const imageUrl = this.makeAbsoluteUrl(src, baseUrl);
-                                    if (this.isValidImageUrl(imageUrl)) {
-                                        console.log(`✅ LibCom specific image: ${imageUrl}`);
-                                        return imageUrl;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Blogspot specific extraction
-                    if (domain.includes('blogspot.com')) {
-                        console.log('🎯 Blogspot specific extraction');
-                        
-                        // Try Blogspot specific selectors
-                        const blogspotSelectors = [
-                            '.post-body img:first-of-type',
-                            '.entry-content img:first-of-type',
-                            '.post-content img:first-of-type',
-                            '.separator img'
-                        ];
-                        
-                        for (const selector of blogspotSelectors) {
-                            const img = doc.querySelector(selector);
-                            if (img) {
-                                const src = img.getAttribute('src') || img.getAttribute('data-src');
-                                if (src && !this.isIconOrLogo(src)) {
-                                    const imageUrl = this.makeAbsoluteUrl(src, baseUrl);
-                                    if (this.isValidImageUrl(imageUrl)) {
-                                        console.log(`✅ Blogspot specific image: ${imageUrl}`);
-                                        return imageUrl;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Liquid.ai specific extraction
-                    if (domain.includes('liquid.ai')) {
-                        console.log('🎯 Liquid.ai specific extraction');
-                        
-                        // Try AI company specific selectors
-                        const liquidSelectors = [
-                            '.hero-image img',
-                            '.featured-image img',
-                            '.post-thumbnail img',
-                            '.content-image img',
-                            'main img:first-of-type'
-                        ];
-                        
-                        for (const selector of liquidSelectors) {
-                            const img = doc.querySelector(selector);
-                            if (img) {
-                                const src = img.getAttribute('src') || img.getAttribute('data-src');
-                                if (src) {
-                                    const imageUrl = this.makeAbsoluteUrl(src, baseUrl);
-                                    if (this.isValidImageUrl(imageUrl)) {
-                                        console.log(`✅ Liquid.ai specific image: ${imageUrl}`);
-                                        return imageUrl;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    // GENERAL EXTRACTION (consistent order for all other sites)
-                    
-                    // Strategy 1: Open Graph image (most reliable - same on mobile/desktop)
+                    // Strategy 1: Look for Open Graph image (most reliable)
                     const ogImage = doc.querySelector('meta[property="og:image"]');
                     if (ogImage) {
                         const imageUrl = this.makeAbsoluteUrl(ogImage.getAttribute('content'), baseUrl);
@@ -2990,7 +2894,7 @@
                         }
                     }
                     
-                    // Strategy 2: Twitter card image (also consistent)
+                    // Strategy 2: Look for Twitter card image
                     const twitterImage = doc.querySelector('meta[name="twitter:image"], meta[property="twitter:image"]');
                     if (twitterImage) {
                         const imageUrl = this.makeAbsoluteUrl(twitterImage.getAttribute('content'), baseUrl);
@@ -3000,40 +2904,17 @@
                         }
                     }
                     
-                    // Strategy 3: Structured Data (JSON-LD)
-                    const jsonLdScripts = doc.querySelectorAll('script[type="application/ld+json"]');
-                    for (const script of jsonLdScripts) {
-                        try {
-                            const data = JSON.parse(script.textContent);
-                            const image = data.image || (data.mainEntity && data.mainEntity.image);
-                            if (image) {
-                                const imageUrl = typeof image === 'string' ? image : (image.url || image[0]);
-                                if (imageUrl) {
-                                    const absoluteUrl = this.makeAbsoluteUrl(imageUrl, baseUrl);
-                                    if (this.isValidImageUrl(absoluteUrl)) {
-                                        console.log(`🎯 Found JSON-LD image: ${absoluteUrl}`);
-                                        return absoluteUrl;
-                                    }
-                                }
-                            }
-                        } catch (e) {
-                            // Skip invalid JSON-LD
-                        }
-                    }
-                    
-                    // Strategy 4: Featured image selectors (consistent order)
+                    // Strategy 3: Look for article featured image
                     const featuredSelectors = [
                         '.featured-image img',
-                        '.hero-image img', 
+                        '.hero-image img',
                         '.post-thumbnail img',
                         '.article-image img',
                         '.entry-image img',
                         '.wp-post-image',
                         'article img:first-of-type',
                         '.content img:first-of-type',
-                        '.post-content img:first-of-type',
-                        '.entry-content img:first-of-type',
-                        '.post-body img:first-of-type'
+                        '.post-content img:first-of-type'
                     ];
                     
                     for (const selector of featuredSelectors) {
@@ -3050,29 +2931,18 @@
                         }
                     }
                     
-                    // Strategy 5: First substantial image (size-filtered for consistency)
+                    // Strategy 4: Look for the first substantial image in the content
                     const allImages = Array.from(doc.querySelectorAll('img')).filter(img => {
                         const src = img.getAttribute('src') || img.getAttribute('data-src');
-                        const width = parseInt(img.getAttribute('width')) || 0;
-                        const height = parseInt(img.getAttribute('height')) || 0;
+                        const width = img.getAttribute('width') || img.style.width;
+                        const height = img.getAttribute('height') || img.style.height;
                         
+                        // Filter out small images, icons, and logos
                         return src && 
                                !this.isIconOrLogo(src) && 
                                !this.isSmallImage(width, height) &&
                                !src.includes('avatar') &&
-                               !src.includes('profile') &&
-                               !src.includes('icon') &&
-                               (width === 0 || width >= 200) && // Only images that are likely substantial
-                               (height === 0 || height >= 150);
-                    });
-                    
-                    // Sort by likely size (width * height) for consistency
-                    allImages.sort((a, b) => {
-                        const aWidth = parseInt(a.getAttribute('width')) || 400;
-                        const aHeight = parseInt(a.getAttribute('height')) || 300;
-                        const bWidth = parseInt(b.getAttribute('width')) || 400;
-                        const bHeight = parseInt(b.getAttribute('height')) || 300;
-                        return (bWidth * bHeight) - (aWidth * aHeight);
+                               !src.includes('profile');
                     });
                     
                     for (const img of allImages) {
@@ -3080,13 +2950,13 @@
                         if (src) {
                             const imageUrl = this.makeAbsoluteUrl(src, baseUrl);
                             if (this.isValidImageUrl(imageUrl)) {
-                                console.log(`🎯 Found substantial image: ${imageUrl}`);
+                                console.log(`🎯 Found content image: ${imageUrl}`);
                                 return imageUrl;
                             }
                         }
                     }
                     
-                    console.log(`❌ No suitable image found in HTML for ${domain}`);
+                    console.log(`❌ No suitable image found in HTML`);
                     return null;
                     
                 } catch (error) {
@@ -3456,33 +3326,6 @@
                 const tokenTimestamp = localStorage.getItem('mypocket_token_timestamp');
                 const tokenAge = tokenTimestamp ? Math.round((Date.now() - parseInt(tokenTimestamp)) / 1000 / 60) : 'Unknown';
                 
-                // Check for problematic domains
-                const problematicDomains = ['libcom.org', 'blogspot.com', 'liquid.ai'];
-                const problematicArticles = this.articles.filter(article => 
-                    problematicDomains.some(domain => article.url.toLowerCase().includes(domain))
-                );
-                
-                let problematicInfo = '';
-                if (problematicArticles.length > 0) {
-                    problematicInfo = `\n🔍 PROBLEMATIC DOMAINS FOUND:\n`;
-                    problematicArticles.forEach((article, index) => {
-                        const domain = this.getDomain(article.url);
-                        const hasStoredImage = article.cachedImage && article.cachedImage.base64;
-                        const hasStoredUrl = article.cachedImage && article.cachedImage.url;
-                        const hasLocalCache = !!this.getCachedImage(article);
-                        
-                        problematicInfo += `${index + 1}. ${domain}: "${article.title.substring(0, 40)}..."\n`;
-                        problematicInfo += `   - Stored Base64: ${hasStoredImage ? '✅' : '❌'}\n`;
-                        problematicInfo += `   - Stored URL: ${hasStoredUrl ? '✅' : '❌'}\n`;
-                        problematicInfo += `   - Local Cache: ${hasLocalCache ? '✅' : '❌'}\n`;
-                        if (article.cachedImage) {
-                            problematicInfo += `   - Source: ${article.cachedImage.source || 'unknown'}\n`;
-                            problematicInfo += `   - Size: ${article.cachedImage.size || 0}KB\n`;
-                        }
-                        problematicInfo += `\n`;
-                    });
-                }
-                
                 const info = `
 MyPocket Web Reader Debug Info (PKCE Enabled):
 ===============================================
@@ -3525,13 +3368,6 @@ Host: ${window.location.host}
 ✅ Automatic token refresh
 ✅ Secure parameter storage
 
-🔧 CROSS-DEVICE IMAGE FIXES:
-✅ Consistent User-Agent for same extraction results
-✅ Domain-specific extraction (libcom.org, blogspot.com, liquid.ai)
-✅ Hash-based fallback images (not position-based)
-✅ Immediate OneDrive sync for new images
-✅ Enhanced priority: Synced Base64 > Synced URL > Local Cache${problematicInfo}
-
 Azure AD Setup for PKCE:
 1. App Registration → Authentication
 2. Add Web platform: ${this.redirectUri}
@@ -3544,7 +3380,6 @@ Cross-Device Image Features:
 - Base64 encoding with ${this.maxImageSizeKB}KB size limit
 - Automatic compression to 80% quality
 - Works across all devices and browsers
-- Special handling for problematic domains
                 `;
 
                 alert(info);
@@ -3559,8 +3394,7 @@ Cross-Device Image Features:
                     articlesCount: this.articles.length,
                     cacheStats: cacheStats,
                     storedImages: storedImages,
-                    crossDeviceEnabled: this.storeImagesInBackup,
-                    problematicArticles: problematicArticles
+                    crossDeviceEnabled: this.storeImagesInBackup
                 });
             }
 
