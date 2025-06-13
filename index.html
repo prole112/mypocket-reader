@@ -396,7 +396,7 @@
                 height: 120px;
                 border-radius: 16px 16px 0 0 !important;
             }
-            
+
             .article-image img {
                 min-height: 120px;
                 max-height: 120px;
@@ -767,7 +767,7 @@
                 background-size: 200% 200%;
                 animation: gradientShift 3s ease infinite;
             }
-            
+
             .article-image img {
                 min-height: 120px !important;
                 max-height: 120px !important;
@@ -882,20 +882,20 @@
             .header-actions {
                 gap: 8px;
             }
-            
+
             .btn {
                 padding: 6px 12px;
                 font-size: 12px;
             }
-            
+
             .btn span {
                 margin-right: 4px;
             }
-            
+
             .article-image {
                 height: 100px !important;
             }
-            
+
             .article-image img {
                 min-height: 100px !important;
                 max-height: 100px !important;
@@ -904,9 +904,17 @@
 
         /* Gradient animation for mobile loading states */
         @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
         }
 
         /* Touch device optimizations */
@@ -914,18 +922,18 @@
             .article-card:hover {
                 transform: none;
             }
-            
+
             .article-image img {
                 transform: translateZ(0);
                 -webkit-transform: translateZ(0);
                 backface-visibility: hidden;
                 -webkit-backface-visibility: hidden;
             }
-            
+
             .action-btn:hover {
                 transform: none;
             }
-            
+
             .action-btn:active {
                 transform: scale(0.95);
                 transition: transform 0.1s ease;
@@ -933,7 +941,8 @@
         }
 
         /* High DPI display optimizations */
-        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+        @media (-webkit-min-device-pixel-ratio: 2),
+        (min-resolution: 192dpi) {
             .article-image img {
                 image-rendering: -webkit-optimize-contrast;
                 image-rendering: crisp-edges;
@@ -964,19 +973,39 @@
 
         /* Additional organic elements */
         @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-6px); }
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-6px);
+            }
         }
 
         @keyframes floatPattern {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
         }
 
         @keyframes shimmer {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
+            0% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.6;
+            }
         }
 
         .article-card:nth-child(7n+1) {
@@ -1112,16 +1141,16 @@
                 this.refreshToken = null;
                 this.articles = [];
                 this.currentArticle = null;
-                
+
                 // PKCE parameters
                 this.codeVerifier = null;
                 this.codeChallenge = null;
-                
+
                 // Image cache system
                 this.imageCache = new Map();
                 this.cacheKey = 'mypocket_image_cache';
                 this.cacheExpiryDays = 7;
-                
+
                 // Mobile browser detection
                 this.isMobile = this.detectMobile();
                 this.isFirefoxMobile = this.detectFirefoxMobile();
@@ -1146,7 +1175,7 @@
                 this.loadStoredToken();
                 this.loadThemePreference();
                 this.loadImageCache();
-                
+
                 if (this.isMobile) {
                     console.log('📱 Mobile device detected');
                     if (this.isFirefoxMobile) {
@@ -1176,9 +1205,9 @@
             }
 
             detectMobile() {
-                return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                       window.innerWidth <= 768 ||
-                       ('ontouchstart' in window);
+                return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                    window.innerWidth <= 768 ||
+                    ('ontouchstart' in window);
             }
 
             detectFirefoxMobile() {
@@ -1231,16 +1260,16 @@
                     const cachedData = localStorage.getItem(this.cacheKey);
                     if (cachedData) {
                         const cache = JSON.parse(cachedData);
-                        
+
                         const now = Date.now();
                         const expiryTime = this.cacheExpiryDays * 24 * 60 * 60 * 1000;
-                        
+
                         for (const [key, entry] of Object.entries(cache)) {
                             if (now - entry.timestamp < expiryTime) {
                                 this.imageCache.set(key, entry);
                             }
                         }
-                        
+
                         console.log('📦 Loaded ' + this.imageCache.size + ' cached images');
                     }
                 } catch (error) {
@@ -1269,11 +1298,11 @@
             getCachedImage(article) {
                 const key = this.getCacheKey(article);
                 const cached = this.imageCache.get(key);
-                
+
                 if (cached) {
                     const now = Date.now();
                     const expiryTime = this.cacheExpiryDays * 24 * 60 * 60 * 1000;
-                    
+
                     if (now - cached.timestamp < expiryTime) {
                         console.log('✅ Using cached image for: ' + article.title.substring(0, 30) + '...');
                         return cached.imageUrl;
@@ -1282,7 +1311,7 @@
                         console.log('⏰ Cache expired for: ' + article.title.substring(0, 30) + '...');
                     }
                 }
-                
+
                 return null;
             }
 
@@ -1294,10 +1323,10 @@
                     domain: this.getDomain(article.url),
                     title: article.title.substring(0, 50)
                 });
-                
+
                 clearTimeout(this.cacheSaveTimeout);
                 this.cacheSaveTimeout = setTimeout(() => this.saveImageCache(), 1000);
-                
+
                 console.log('💾 Cached image for: ' + article.title.substring(0, 30) + '...');
             }
 
@@ -1329,12 +1358,12 @@
 
                 try {
                     this.updateStatus('🔐 Generating PKCE parameters...', 'loading');
-                    
+
                     this.codeVerifier = this.generateCodeVerifier();
                     this.codeChallenge = await this.generateCodeChallenge(this.codeVerifier);
-                    
+
                     this.storePKCEParams(this.codeVerifier, this.codeChallenge);
-                    
+
                     const authUrl = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?' +
                         'client_id=' + this.clientId + '&' +
                         'response_type=code&' +
@@ -1353,7 +1382,7 @@
                     setTimeout(() => {
                         window.location.href = authUrl;
                     }, 1000);
-                    
+
                 } catch (error) {
                     console.error('PKCE setup error:', error);
                     this.updateStatus('❌ Failed to setup PKCE authentication', 'error');
@@ -1382,7 +1411,7 @@
             async exchangeCodeForTokens(authCode) {
                 try {
                     this.updateStatus('🔄 Exchanging authorization code for tokens...', 'loading');
-                    
+
                     const { verifier } = this.retrievePKCEParams();
                     if (!verifier) {
                         throw new Error('PKCE code verifier not found');
@@ -1412,18 +1441,18 @@
                     }
 
                     const tokenData = await response.json();
-                    
+
                     this.accessToken = tokenData.access_token;
                     this.refreshToken = tokenData.refresh_token;
-                    
+
                     this.saveTokens(tokenData);
                     this.clearPKCEParams();
                     this.updateConnectionStatus(true);
                     this.loadArticles();
-                    
+
                     console.log('✅ PKCE token exchange successful');
                     this.updateStatus('✅ Successfully authenticated with PKCE!', 'success');
-                    
+
                 } catch (error) {
                     console.error('Token exchange error:', error);
                     this.updateStatus('❌ Token exchange failed: ' + error.message, 'error');
@@ -1440,11 +1469,11 @@
                     scope: tokenData.scope,
                     savedAt: Date.now()
                 };
-                
+
                 localStorage.setItem('mypocket_tokens', JSON.stringify(tokenInfo));
                 console.log('💾 PKCE tokens saved with refresh capability');
                 console.log('⏰ Access token expires at:', new Date(tokenInfo.expiresAt));
-                
+
                 this.scheduleTokenRefresh(tokenInfo.expiresAt);
             }
 
@@ -1453,16 +1482,16 @@
                     const storedData = localStorage.getItem('mypocket_tokens');
                     if (storedData) {
                         const tokenInfo = JSON.parse(storedData);
-                        
+
                         if (Date.now() < tokenInfo.expiresAt) {
                             this.accessToken = tokenInfo.accessToken;
                             this.refreshToken = tokenInfo.refreshToken;
                             this.updateConnectionStatus(true);
                             this.loadArticles();
-                            
+
                             const minutesLeft = Math.round((tokenInfo.expiresAt - Date.now()) / (60 * 1000));
                             console.log('✅ Valid PKCE tokens loaded. Expires in ' + minutesLeft + ' minutes.');
-                            
+
                             this.scheduleTokenRefresh(tokenInfo.expiresAt);
                         } else {
                             console.log('⏰ Access token expired, attempting refresh...');
@@ -1484,7 +1513,7 @@
                 try {
                     console.log('🔄 Refreshing access token...');
                     this.updateStatus('🔄 Refreshing authentication...', 'loading');
-                    
+
                     const tokenUrl = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token';
                     const body = new URLSearchParams({
                         client_id: this.clientId,
@@ -1507,30 +1536,30 @@
                     }
 
                     const tokenData = await response.json();
-                    
+
                     this.accessToken = tokenData.access_token;
                     this.refreshToken = tokenData.refresh_token || refreshToken;
-                    
+
                     this.saveTokens(tokenData);
                     this.updateConnectionStatus(true);
-                    
+
                     console.log('✅ Access token refreshed successfully');
                     this.updateStatus('✅ Authentication refreshed automatically!', 'success');
-                    
+
                     return true;
-                    
+
                 } catch (error) {
                     console.error('Token refresh error:', error);
                     this.updateStatus('❌ Failed to refresh authentication. Please reconnect.', 'error');
                     this.clearTokens();
                     this.updateConnectionStatus(false);
-                    
+
                     setTimeout(() => {
                         if (confirm('Your session has expired and cannot be refreshed. Would you like to log in again?')) {
                             this.authenticate();
                         }
                     }, 2000);
-                    
+
                     return false;
                 }
             }
@@ -1538,7 +1567,7 @@
             scheduleTokenRefresh(expiresAt) {
                 const timeUntilExpiry = expiresAt - Date.now();
                 const refreshTime = Math.max(timeUntilExpiry - (10 * 60 * 1000), 60 * 1000);
-                
+
                 if (refreshTime > 0) {
                     setTimeout(async () => {
                         console.log('⏰ Automatic token refresh triggered');
@@ -1547,7 +1576,7 @@
                             await this.refreshAccessToken(tokenInfo.refreshToken);
                         }
                     }, refreshTime);
-                    
+
                     console.log('⏰ Automatic refresh scheduled in ' + Math.round(refreshTime / (60 * 1000)) + ' minutes');
                 }
             }
@@ -1586,14 +1615,14 @@
 
                 try {
                     const response = await fetch(url, { ...options, headers });
-                    
+
                     if (response.status === 401) {
                         console.log('🔑 Access token expired, attempting automatic refresh...');
-                        
+
                         const tokenInfo = JSON.parse(localStorage.getItem('mypocket_tokens') || '{}');
                         if (tokenInfo.refreshToken) {
                             const refreshed = await this.refreshAccessToken(tokenInfo.refreshToken);
-                            
+
                             if (refreshed) {
                                 console.log('🔄 Retrying request with refreshed token...');
                                 const newHeaders = {
@@ -1601,30 +1630,30 @@
                                     'Content-Type': 'application/json',
                                     ...options.headers
                                 };
-                                
+
                                 const retryResponse = await fetch(url, { ...options, headers: newHeaders });
-                                
+
                                 if (retryResponse.ok) {
                                     console.log('✅ Request succeeded after token refresh');
                                 }
-                                
+
                                 return retryResponse;
                             }
                         }
-                        
+
                         this.clearTokens();
                         this.updateConnectionStatus(false);
                         this.updateStatus('🔑 Session expired. Please reconnect to OneDrive.', 'error');
-                        
+
                         setTimeout(() => {
                             if (confirm('Your OneDrive session has expired. Would you like to reconnect now?')) {
                                 this.authenticate();
                             }
                         }, 2000);
-                        
+
                         throw new Error('Authentication expired and refresh failed');
                     }
-                    
+
                     return response;
                 } catch (error) {
                     if (error.message.includes('Authentication expired')) {
@@ -1703,7 +1732,7 @@
                 const articlesHTML = articles.map((article, index) => {
                     const cachedImage = this.getCachedImage(article);
                     const cacheStatus = cachedImage ? 'cached' : 'fresh';
-                    
+
                     return `
                     <div class="article-card" data-index="${index}">
                         <div class="article-image" id="image-${index}">
@@ -1739,9 +1768,9 @@
                 `}).join('');
 
                 container.innerHTML = '<div class="articles-grid">' + articlesHTML + '</div>';
-                
+
                 const articlesNeedingImages = articles.filter(article => !this.getCachedImage(article));
-                
+
                 if (articlesNeedingImages.length > 0) {
                     this.updateStatus('📸 Loading ' + articlesNeedingImages.length + ' new images (' + this.imageCache.size + ' cached)...', 'loading');
                     this.loadMissingImages(articles);
@@ -1810,7 +1839,7 @@
 
             async loadMissingImages(articles) {
                 console.log('🎨 SMART IMAGE LOADER - Loading only missing images...');
-                
+
                 const articlesNeedingImages = articles.filter((article, index) => {
                     const cached = this.getCachedImage(article);
                     return !cached;
@@ -1823,22 +1852,22 @@
 
                 let successCount = 0;
                 const totalNew = articlesNeedingImages.length;
-                
+
                 console.log('🔄 Loading ' + totalNew + ' new images (' + this.imageCache.size + ' already cached)');
-                
+
                 for (let i = 0; i < articlesNeedingImages.length; i++) {
                     const article = articlesNeedingImages[i];
                     const originalIndex = articles.findIndex(a => a === article);
-                    
+
                     try {
                         const success = await this.extractAndCacheRealImage(article, originalIndex);
                         if (success) successCount++;
-                        
+
                         const progress = Math.round(((i + 1) / totalNew) * 100);
                         this.updateStatus('🔍 Loading new images... ' + (i + 1) + '/' + totalNew + ' (' + progress + '%)', 'loading');
-                        
+
                         await new Promise(resolve => setTimeout(resolve, 300));
-                        
+
                     } catch (error) {
                         console.error('Failed to extract image for article ' + originalIndex + ':', error);
                         const fallbackImage = this.getCategoryBasedImage(article, originalIndex);
@@ -1846,7 +1875,7 @@
                         successCount++;
                     }
                 }
-                
+
                 const totalCached = this.imageCache.size;
                 this.updateStatus('✅ Loaded ' + successCount + '/' + totalNew + ' new images! (' + totalCached + ' total cached)', 'success');
                 console.log('🎨 Smart image loading complete: ' + successCount + '/' + totalNew + ' new, ' + totalCached + ' total cached');
@@ -1925,7 +1954,7 @@
                 }
 
                 imageElement.innerHTML = imageHTML;
-                
+
                 const cacheIndicator = imageElement.querySelector('.cache-indicator');
                 if (cacheIndicator) {
                     cacheIndicator.textContent = source === 'extracted' ? '🌐 Fresh' : '💾 Cached';
@@ -1970,7 +1999,7 @@
                 document.getElementById('readerDate').textContent = this.formatDate(this.currentArticle.dateAdded);
                 document.getElementById('readerDomain').textContent = this.getDomain(this.currentArticle.url);
                 document.getElementById('readerTime').textContent = (this.currentArticle.readTime || 1) + ' min read';
-                
+
                 document.getElementById('readerContent').innerHTML = `
                     <div style="text-align: center; padding: 40px;">
                         <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
@@ -1980,19 +2009,19 @@
 
                 overlay.classList.add('active');
                 document.body.style.overflow = 'hidden';
-                
+
                 setTimeout(() => this.loadArticleContent(this.currentArticle), 100);
             }
 
             async loadArticleContent(article) {
                 console.log('🚀 CONTENT LOADER WITH CACHING');
                 const contentElement = document.getElementById('readerContent');
-                
+
                 let content = this.getArticleContent(article);
-                
+
                 if (!content) {
                     console.log('🌐 No saved content found. Attempting to fetch from original URL...');
-                    
+
                     try {
                         contentElement.innerHTML = `
                             <div style="text-align: center; padding: 40px;">
@@ -2006,9 +2035,9 @@
                                 </p>
                             </div>
                         `;
-                        
+
                         const fetchedContent = await this.fetchArticleContent(article.url);
-                        
+
                         if (fetchedContent && fetchedContent.trim()) {
                             content = fetchedContent;
                             console.log('✅ Successfully fetched article content');
@@ -2016,7 +2045,7 @@
                         } else {
                             throw new Error('No content extracted from fetched page');
                         }
-                        
+
                     } catch (error) {
                         console.log('❌ Failed to fetch content:', error.message);
                         this.updateStatus('❌ Could not fetch article content. Using fallback.', 'error');
@@ -2026,24 +2055,24 @@
                     console.log('✅ Using saved content');
                     this.updateStatus('✅ Article loaded from saved content', 'success');
                 }
-                
+
                 contentElement.innerHTML = content;
             }
 
             async fetchArticleContent(url) {
                 try {
                     console.log('🌐 Starting fetch for: ' + url);
-                    
+
                     try {
                         const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
                         console.log('Trying AllOrigins proxy...');
-                        
+
                         const response = await fetch(proxyUrl);
-                        
+
                         if (response.ok) {
                             const data = await response.json();
                             const html = data.contents;
-                            
+
                             if (html && html.length > 1000) {
                                 console.log('✅ AllOrigins success: ' + html.length + ' chars');
                                 const extractedContent = this.extractContentFromHTML(html, url);
@@ -2055,16 +2084,16 @@
                     } catch (error) {
                         console.log('AllOrigins failed: ' + error.message);
                     }
-                    
+
                     try {
                         const corsProxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
                         console.log('Trying CORS proxy...');
-                        
+
                         const response = await fetch(corsProxyUrl);
-                        
+
                         if (response.ok) {
                             const html = await response.text();
-                            
+
                             if (html && html.length > 1000) {
                                 console.log('✅ CORS proxy success: ' + html.length + ' chars');
                                 const extractedContent = this.extractContentFromHTML(html, url);
@@ -2076,7 +2105,7 @@
                     } catch (error) {
                         console.log('CORS proxy failed: ' + error.message);
                     }
-                    
+
                     try {
                         console.log('Trying direct fetch...');
                         const response = await fetch(url, {
@@ -2085,7 +2114,7 @@
                                 'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader)'
                             }
                         });
-                        
+
                         if (response.ok) {
                             const html = await response.text();
                             console.log('✅ Direct fetch success: ' + html.length + ' chars');
@@ -2094,9 +2123,9 @@
                     } catch (error) {
                         console.log('Direct fetch failed (expected): ' + error.message);
                     }
-                    
+
                     throw new Error('All proxy methods failed to fetch content');
-                    
+
                 } catch (error) {
                     console.error('❌ All fetch methods failed:', error);
                     throw error;
@@ -2107,18 +2136,18 @@
                 try {
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
-                    
+
                     const unwantedSelectors = [
-                        'script', 'style', 'nav', 'header', 'footer', 
+                        'script', 'style', 'nav', 'header', 'footer',
                         '.sidebar', '.menu', '.navigation', '.comments',
                         '.advertisement', '.ads', '.social-share',
                         '[role="banner"]', '[role="navigation"]', '[role="complementary"]'
                     ];
-                    
+
                     unwantedSelectors.forEach(selector => {
                         doc.querySelectorAll(selector).forEach(el => el.remove());
                     });
-                    
+
                     const contentSelectors = [
                         'article',
                         '[role="main"]',
@@ -2127,35 +2156,35 @@
                         '.entry', '.post', '.article-body',
                         'main', '#content', '#main'
                     ];
-                    
+
                     let contentElement = null;
-                    
+
                     for (const selector of contentSelectors) {
                         contentElement = doc.querySelector(selector);
                         if (contentElement && contentElement.textContent.trim().length > 200) {
                             break;
                         }
                     }
-                    
+
                     if (!contentElement || contentElement.textContent.trim().length < 200) {
                         const paragraphs = Array.from(doc.querySelectorAll('p'))
                             .filter(p => p.textContent.trim().length > 50)
                             .slice(0, 20);
-                        
+
                         if (paragraphs.length > 0) {
                             const div = doc.createElement('div');
                             paragraphs.forEach(p => div.appendChild(p.cloneNode(true)));
                             contentElement = div;
                         }
                     }
-                    
+
                     if (contentElement) {
                         let content = contentElement.innerHTML;
-                        
+
                         const baseUrl = new URL(url).origin;
                         content = content.replace(/src="\/([^"]+)"/g, 'src="' + baseUrl + '/$1"');
                         content = content.replace(/href="\/([^"]+)"/g, 'href="' + baseUrl + '/$1"');
-                        
+
                         content = `
                             <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                                 <p style="margin: 0; font-size: 0.9em;">
@@ -2165,12 +2194,12 @@
                             </div>
                             ${content}
                         `;
-                        
+
                         return content;
                     }
-                    
+
                     throw new Error('Could not extract readable content from page');
-                    
+
                 } catch (error) {
                     console.error('Content extraction error:', error);
                     throw error;
@@ -2219,23 +2248,23 @@
 
             getArticleContent(article) {
                 console.log('📖 Checking for saved content...');
-                                
+
                 const contentFields = ['content', 'html', 'fullContent', 'textContent', 'body', 'readableContent', 'articleContent', 'savedContent'];
-                
+
                 for (const field of contentFields) {
                     if (article[field] && article[field].trim()) {
                         console.log('✅ Found content in ' + field + ' (' + article[field].length + ' chars)');
                         return article[field];
                     }
                 }
-                
+
                 for (const [key, value] of Object.entries(article)) {
                     if (typeof value === 'string' && value.length > 200 && key !== 'excerpt' && key !== 'url') {
                         console.log('✅ Found substantial content in ' + key + ' (' + value.length + ' chars)');
                         return value;
                     }
                 }
-                
+
                 console.log('❌ No saved content found');
                 return null;
             }
@@ -2429,7 +2458,7 @@
             getBestArticleImage(article) {
                 if (article.images && article.images.length > 0) {
                     let bestImage = article.images[0];
-                    
+
                     for (const img of article.images) {
                         if (img.width && img.height) {
                             if (img.width >= 300 && img.height >= 150) {
@@ -2438,58 +2467,58 @@
                             }
                         }
                     }
-                    
+
                     return bestImage.src || bestImage.url || bestImage;
                 }
-                
+
                 if (article.featuredImage) {
                     return article.featuredImage;
                 }
-                
+
                 if (article.image) {
                     return article.image;
                 }
-                
+
                 if (article.content) {
                     const imgMatch = article.content.match(/<img[^>]+src="([^"]+)"/i);
                     if (imgMatch && imgMatch[1]) {
                         return imgMatch[1];
                     }
                 }
-                
+
                 return null;
             }
 
             async fetchRealImageFromWebsite(url) {
                 try {
                     console.log('🌐 Fetching webpage to extract image: ' + url);
-                    
+
                     const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
                     const response = await fetch(proxyUrl);
-                    
+
                     if (!response.ok) {
                         throw new Error('Failed to fetch webpage');
                     }
-                    
+
                     const data = await response.json();
                     const html = data.contents;
-                    
+
                     if (!html || html.length < 500) {
                         throw new Error('No substantial HTML content received');
                     }
-                    
+
                     const extractedImageUrl = this.parseHTMLForBestImage(html, url);
-                    
+
                     if (extractedImageUrl) {
                         console.log('🎯 Found image: ' + extractedImageUrl);
                         return extractedImageUrl;
                     }
-                    
+
                     throw new Error('No suitable image found in webpage');
-                    
+
                 } catch (error) {
                     console.log('❌ Website image extraction failed: ' + error.message);
-                    
+
                     try {
                         return await this.tryAlternativeImageExtraction(url);
                     } catch (altError) {
@@ -2503,7 +2532,7 @@
                 try {
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
-                    
+
                     const ogImage = doc.querySelector('meta[property="og:image"]');
                     if (ogImage) {
                         const imageUrl = this.makeAbsoluteUrl(ogImage.getAttribute('content'), baseUrl);
@@ -2512,7 +2541,7 @@
                             return imageUrl;
                         }
                     }
-                    
+
                     const twitterImage = doc.querySelector('meta[name="twitter:image"], meta[property="twitter:image"]');
                     if (twitterImage) {
                         const imageUrl = this.makeAbsoluteUrl(twitterImage.getAttribute('content'), baseUrl);
@@ -2521,7 +2550,7 @@
                             return imageUrl;
                         }
                     }
-                    
+
                     const featuredSelectors = [
                         '.featured-image img',
                         '.hero-image img',
@@ -2533,7 +2562,7 @@
                         '.content img:first-of-type',
                         '.post-content img:first-of-type'
                     ];
-                    
+
                     for (const selector of featuredSelectors) {
                         const img = doc.querySelector(selector);
                         if (img) {
@@ -2547,19 +2576,19 @@
                             }
                         }
                     }
-                    
+
                     const allImages = Array.from(doc.querySelectorAll('img')).filter(img => {
                         const src = img.getAttribute('src') || img.getAttribute('data-src');
                         const width = img.getAttribute('width') || img.style.width;
                         const height = img.getAttribute('height') || img.style.height;
-                        
-                        return src && 
-                               !this.isIconOrLogo(src) && 
-                               !this.isSmallImage(width, height) &&
-                               !src.includes('avatar') &&
-                               !src.includes('profile');
+
+                        return src &&
+                            !this.isIconOrLogo(src) &&
+                            !this.isSmallImage(width, height) &&
+                            !src.includes('avatar') &&
+                            !src.includes('profile');
                     });
-                    
+
                     for (const img of allImages) {
                         const src = img.getAttribute('src') || img.getAttribute('data-src');
                         if (src) {
@@ -2570,7 +2599,7 @@
                             }
                         }
                     }
-                    
+
                     const jsonLdScripts = doc.querySelectorAll('script[type="application/ld+json"]');
                     for (const script of jsonLdScripts) {
                         try {
@@ -2587,10 +2616,10 @@
                             // Ignore malformed JSON-LD
                         }
                     }
-                    
+
                     console.log('❌ No suitable image found in HTML');
                     return null;
-                    
+
                 } catch (error) {
                     console.error('HTML parsing error:', error);
                     return null;
@@ -2599,7 +2628,7 @@
 
             extractImageFromJsonLd(data) {
                 if (typeof data !== 'object') return null;
-                
+
                 if (Array.isArray(data)) {
                     for (const item of data) {
                         const image = this.extractImageFromJsonLd(item);
@@ -2607,7 +2636,7 @@
                     }
                     return null;
                 }
-                
+
                 if (data.image) {
                     if (typeof data.image === 'string') return data.image;
                     if (Array.isArray(data.image) && data.image.length > 0) {
@@ -2615,18 +2644,18 @@
                     }
                     if (data.image.url) return data.image.url;
                 }
-                
+
                 if (data.thumbnailUrl) {
                     return typeof data.thumbnailUrl === 'string' ? data.thumbnailUrl : data.thumbnailUrl.url;
                 }
-                
+
                 for (const key in data) {
                     if (typeof data[key] === 'object') {
                         const image = this.extractImageFromJsonLd(data[key]);
                         if (image) return image;
                     }
                 }
-                
+
                 return null;
             }
 
@@ -2634,7 +2663,7 @@
                 try {
                     const corsProxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
                     const response = await fetch(corsProxyUrl);
-                    
+
                     if (response.ok) {
                         const html = await response.text();
                         const extractedImage = this.parseHTMLForBestImage(html, url);
@@ -2643,149 +2672,149 @@
                 } catch (error) {
                     console.log('CORS proxy failed: ' + error.message);
                 }
-                
+
                 const guessedImage = this.guessImageFromUrl(url);
                 if (guessedImage) return guessedImage;
-                
+
                 throw new Error('All alternative extraction methods failed');
             }
 
             guessImageFromUrl(url) {
                 const domain = this.getDomain(url).toLowerCase();
-                
+
                 if (domain.includes('medium.com')) {
                     const match = url.match(/\/([a-f0-9]+)$/);
                     if (match) {
                         return 'https://miro.medium.com/max/1400/1*' + match[1] + '.png';
                     }
                 }
-                
+
                 if (domain.includes('github.com')) {
                     const pathMatch = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
                     if (pathMatch) {
                         return 'https://opengraph.githubassets.com/1/' + pathMatch[1] + '/' + pathMatch[2];
                     }
                 }
-                
+
                 if (domain.includes('youtube.com') || domain.includes('youtu.be')) {
                     const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
                     if (videoIdMatch) {
                         return 'https://img.youtube.com/vi/' + videoIdMatch[1] + '/maxresdefault.jpg';
                     }
                 }
-                
+
                 return null;
             }
 
             isValidImageUrl(url) {
                 if (!url || typeof url !== 'string') return false;
-                
+
                 try {
                     new URL(url);
                 } catch {
                     return false;
                 }
-                
+
                 const imagePattern = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i;
                 const imageServices = ['unsplash.com', 'images.unsplash.com', 'picsum.photos', 'via.placeholder.com'];
-                
+
                 return imagePattern.test(url) || imageServices.some(service => url.includes(service));
             }
 
             isIconOrLogo(src) {
                 if (!src) return false;
-                
+
                 const iconPatterns = [
-                    'icon', 'logo', 'avatar', 'profile', 'favicon', 'sprite', 
+                    'icon', 'logo', 'avatar', 'profile', 'favicon', 'sprite',
                     'button', 'badge', 'social', 'thumb', 'thumbnail',
                     '/icons/', '/images/icons/', 'gravatar', 'user-content'
                 ];
-                
+
                 const srcLower = src.toLowerCase();
                 return iconPatterns.some(pattern => srcLower.includes(pattern)) ||
-                       srcLower.includes('.ico') ||
-                       (srcLower.includes('64x64') || srcLower.includes('32x32'));
+                    srcLower.includes('.ico') ||
+                    (srcLower.includes('64x64') || srcLower.includes('32x32'));
             }
 
             isSmallImage(width, height) {
                 if (!width && !height) return false;
-                
+
                 const w = parseInt(width) || 0;
                 const h = parseInt(height) || 0;
-                
+
                 return (w > 0 && w < 200) || (h > 0 && h < 150);
             }
 
             getCategoryBasedImage(article, index) {
                 const domain = this.getDomain(article.url).toLowerCase();
                 const title = article.title.toLowerCase();
-                
+
                 if (domain.includes('github') || domain.includes('stackoverflow') || domain.includes('dev.to') ||
                     title.includes('code') || title.includes('programming') || title.includes('javascript') || title.includes('react')) {
                     return 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
                 }
-                
+
                 if (domain.includes('business') || domain.includes('finance') || domain.includes('linkedin') ||
                     title.includes('business') || title.includes('finance') || title.includes('startup') || title.includes('entrepreneur')) {
                     return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
                 }
-                
-                if (domain.includes('dribbble') || domain.includes('behance') || 
+
+                if (domain.includes('dribbble') || domain.includes('behance') ||
                     title.includes('design') || title.includes('ui') || title.includes('ux') || title.includes('creative')) {
                     return 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
                 }
-                
+
                 if (domain.includes('news') || domain.includes('bbc') || domain.includes('cnn') ||
                     title.includes('news') || title.includes('politics') || title.includes('media')) {
                     return 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
                 }
-                
+
                 if (title.includes('travel') || title.includes('vacation') || title.includes('adventure') || title.includes('journey')) {
                     return 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
                 }
-                
+
                 if (title.includes('food') || title.includes('recipe') || title.includes('cooking') || title.includes('restaurant')) {
                     return 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
                 }
-                
+
                 if (title.includes('health') || title.includes('fitness') || title.includes('exercise') || title.includes('wellness')) {
                     return 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
                 }
-                
+
                 if (domain.includes('arxiv') || domain.includes('research') ||
                     title.includes('science') || title.includes('research') || title.includes('study') || title.includes('data')) {
                     return 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
                 }
-                
+
                 if (domain.includes('edu') || title.includes('learn') || title.includes('education') || title.includes('course')) {
                     return 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
                 }
-                
+
                 if (title.includes('photo') || title.includes('art') || title.includes('gallery') || title.includes('visual')) {
                     return 'https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
                 }
-                
+
                 if (domain.includes('tech') || title.includes('tech') || title.includes('digital') || title.includes('innovation')) {
                     return 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
                 }
-                
+
                 if (domain.includes('medium') || domain.includes('blog') ||
                     title.includes('book') || title.includes('read') || title.includes('write') || title.includes('story')) {
                     return 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
                 }
-                
+
                 if (title.includes('music') || title.includes('entertainment') || title.includes('movie') || title.includes('film')) {
                     return 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
                 }
-                
+
                 if (title.includes('sport') || title.includes('game') || title.includes('team') || title.includes('player')) {
                     return 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
                 }
-                
+
                 if (title.includes('nature') || title.includes('environment') || title.includes('climate') || title.includes('green')) {
                     return 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
                 }
-                
+
                 const defaultImages = [
                     'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
                     'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
@@ -2798,22 +2827,22 @@
                     'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
                     'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&h=250&fit=crop&crop=center&q=80&auto=format'
                 ];
-                
+
                 return defaultImages[index % defaultImages.length];
             }
 
             makeAbsoluteUrl(imageUrl, baseUrl) {
                 if (!imageUrl) return null;
-                
+
                 try {
                     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
                         return imageUrl;
                     }
-                    
+
                     if (imageUrl.startsWith('//')) {
                         return 'https:' + imageUrl;
                     }
-                    
+
                     const base = new URL(baseUrl);
                     return new URL(imageUrl, base.origin).href;
                 } catch (error) {
@@ -2824,7 +2853,7 @@
 
             getArticleIcon(url) {
                 const domain = this.getDomain(url).toLowerCase();
-                
+
                 const siteIcons = {
                     'youtube.com': '📺',
                     'github.com': '🐙',
@@ -2848,13 +2877,13 @@
                     'wikipedia.org': '📖',
                     'arxiv.org': '🎓',
                 };
-                
+
                 for (const [siteDomain, icon] of Object.entries(siteIcons)) {
                     if (domain.includes(siteDomain)) {
                         return icon;
                     }
                 }
-                
+
                 if (domain.includes('blog') || domain.includes('medium')) return '📝';
                 if (domain.includes('news')) return '📰';
                 if (domain.includes('tech')) return '💻';
@@ -2865,7 +2894,7 @@
                 if (domain.includes('shop') || domain.includes('store')) return '🛒';
                 if (domain.includes('book') || domain.includes('read')) return '📚';
                 if (domain.includes('learn') || domain.includes('edu')) return '🎓';
-                
+
                 return '📄';
             }
 
@@ -2939,7 +2968,7 @@
 
                 if (connected) {
                     connectIcon.textContent = '✅';
-                    
+
                     try {
                         const storedData = localStorage.getItem('mypocket_tokens');
                         if (storedData) {
@@ -2953,7 +2982,7 @@
                     } catch (error) {
                         connectText.textContent = 'Connected (PKCE)';
                     }
-                    
+
                     connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
                     refreshBtn.style.display = 'inline-flex';
                 } else {
@@ -2972,7 +3001,7 @@
 
             showDebugInfo() {
                 const cacheStats = this.getCacheStats();
-                
+
                 let tokenInfoText = 'No tokens stored';
                 let authFlow = 'Not authenticated';
                 try {
@@ -2994,24 +3023,16 @@
                 } catch (error) {
                     tokenInfoText = 'Error reading token data';
                 }
-                
+
                 const info = `
 MyPocket Web Reader Debug Info:
 =====================================
 
-🔗 REDIRECT URI CONFIGURATION:
-Current Redirect URI: ${this.redirectUri}
-Full Current URL: ${window.location.href}
+Current URL: ${window.location.href}
+Redirect URI: ${this.redirectUri}
+Client ID: ${this.clientId}
 Protocol: ${window.location.protocol}
 Host: ${window.location.host}
-Pathname: ${window.location.pathname}
-Origin: ${window.location.origin}
-
-⚠️  COPY THIS EXACT URI TO AZURE AD:
-${this.redirectUri}
-
-Current URL: ${window.location.href}
-Client ID: ${this.clientId}
 Has Access Token: ${!!this.accessToken}
 Has Refresh Token: ${!!this.refreshToken}
 Authentication Flow: ${authFlow}
@@ -3032,24 +3053,6 @@ Image Cache Stats:
 - Cache Expiry: ${this.cacheExpiryDays} days
 - Oldest Entry: ${cacheStats.total > 0 ? new Date(cacheStats.oldestEntry).toLocaleDateString() : 'N/A'}
 - Newest Entry: ${cacheStats.total > 0 ? new Date(cacheStats.newestEntry).toLocaleDateString() : 'N/A'}
-
-🔧 AZURE AD SETUP STEPS:
-1. Go to: https://portal.azure.com
-2. Navigate to: Azure Active Directory > App registrations
-3. Find your app: ${this.clientId}
-4. Click on "Authentication" in the left menu
-5. Under "Platform configurations" click "Add a platform"
-6. Choose "Web"
-7. Add this EXACT redirect URI: ${this.redirectUri}
-8. Under "Advanced settings" enable "Allow public client flows" = YES
-9. Click "Save"
-
-🚨 COMMON REDIRECT URI ISSUES:
-- Trailing slash matters: ${this.redirectUri} vs ${this.redirectUri}/
-- Protocol matters: http:// vs https://
-- Case sensitivity: exact match required
-- Query parameters: should be excluded
-- Must be absolute URI (not relative)
 
 Mobile Optimizations Applied:
 - Enhanced image object-fit handling
@@ -3079,19 +3082,19 @@ Common Mobile Issues Fixed:
 4. Object-fit compatibility ✅
 5. Border radius rendering issues ✅
 
-🔑 TROUBLESHOOTING REDIRECT URI:
-If you get AADSTS90023 error:
-1. Copy the exact URI from above: ${this.redirectUri}
-2. Register it EXACTLY in Azure AD (no changes)
-3. Make sure "Allow public client flows" is enabled
-4. Wait 5-10 minutes for Azure AD to propagate changes
-5. Try authentication again
+Azure AD App Registration Requirements:
+- Must support Authorization Code Flow (not just Implicit)
+- Must have redirect URI registered exactly: ${this.redirectUri}
+- Must allow public client flows
+- Recommended: Enable PKCE support
 
 Next Steps for PKCE Setup:
-1. Register the exact redirect URI shown above
-2. Enable public client flows in Azure AD
-3. Save changes and wait a few minutes
-4. Test the authentication flow again
+1. Open Azure Portal → App registrations
+2. Find your app: ${this.clientId}
+3. Go to Authentication → Advanced settings
+4. Enable "Allow public client flows" = Yes
+5. Ensure redirect URI is registered: ${this.redirectUri}
+6. Test the new PKCE authentication flow
 
 Token Management Benefits:
 - Automatic refresh before expiration
@@ -3136,10 +3139,10 @@ Token Management Benefits:
             toggleDarkMode() {
                 const currentTheme = document.documentElement.getAttribute('data-theme');
                 const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                
+
                 document.documentElement.setAttribute('data-theme', newTheme);
                 localStorage.setItem('theme', newTheme);
-                
+
                 this.updateDarkModeButton(newTheme);
                 this.updateStatus(
                     newTheme === 'dark' ? '🌙 Dark mode enabled' : '☀️ Light mode enabled',
@@ -3156,7 +3159,7 @@ Token Management Benefits:
             updateDarkModeButton(theme) {
                 const darkModeBtn = document.getElementById('darkModeBtn');
                 if (darkModeBtn) {
-                    darkModeBtn.innerHTML = theme === 'dark' 
+                    darkModeBtn.innerHTML = theme === 'dark'
                         ? '<span>☀️</span> Light Mode'
                         : '<span>🌙</span> Dark Mode';
                 }
