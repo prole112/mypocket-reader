@@ -2999,11 +2999,19 @@
 MyPocket Web Reader Debug Info:
 =====================================
 
-Current URL: ${window.location.href}
-Redirect URI: ${this.redirectUri}
-Client ID: ${this.clientId}
+🔗 REDIRECT URI CONFIGURATION:
+Current Redirect URI: ${this.redirectUri}
+Full Current URL: ${window.location.href}
 Protocol: ${window.location.protocol}
 Host: ${window.location.host}
+Pathname: ${window.location.pathname}
+Origin: ${window.location.origin}
+
+⚠️  COPY THIS EXACT URI TO AZURE AD:
+${this.redirectUri}
+
+Current URL: ${window.location.href}
+Client ID: ${this.clientId}
 Has Access Token: ${!!this.accessToken}
 Has Refresh Token: ${!!this.refreshToken}
 Authentication Flow: ${authFlow}
@@ -3024,6 +3032,24 @@ Image Cache Stats:
 - Cache Expiry: ${this.cacheExpiryDays} days
 - Oldest Entry: ${cacheStats.total > 0 ? new Date(cacheStats.oldestEntry).toLocaleDateString() : 'N/A'}
 - Newest Entry: ${cacheStats.total > 0 ? new Date(cacheStats.newestEntry).toLocaleDateString() : 'N/A'}
+
+🔧 AZURE AD SETUP STEPS:
+1. Go to: https://portal.azure.com
+2. Navigate to: Azure Active Directory > App registrations
+3. Find your app: ${this.clientId}
+4. Click on "Authentication" in the left menu
+5. Under "Platform configurations" click "Add a platform"
+6. Choose "Web"
+7. Add this EXACT redirect URI: ${this.redirectUri}
+8. Under "Advanced settings" enable "Allow public client flows" = YES
+9. Click "Save"
+
+🚨 COMMON REDIRECT URI ISSUES:
+- Trailing slash matters: ${this.redirectUri} vs ${this.redirectUri}/
+- Protocol matters: http:// vs https://
+- Case sensitivity: exact match required
+- Query parameters: should be excluded
+- Must be absolute URI (not relative)
 
 Mobile Optimizations Applied:
 - Enhanced image object-fit handling
@@ -3053,19 +3079,19 @@ Common Mobile Issues Fixed:
 4. Object-fit compatibility ✅
 5. Border radius rendering issues ✅
 
-Azure AD App Registration Requirements:
-- Must support Authorization Code Flow (not just Implicit)
-- Must have redirect URI registered exactly: ${this.redirectUri}
-- Must allow public client flows
-- Recommended: Enable PKCE support
+🔑 TROUBLESHOOTING REDIRECT URI:
+If you get AADSTS90023 error:
+1. Copy the exact URI from above: ${this.redirectUri}
+2. Register it EXACTLY in Azure AD (no changes)
+3. Make sure "Allow public client flows" is enabled
+4. Wait 5-10 minutes for Azure AD to propagate changes
+5. Try authentication again
 
 Next Steps for PKCE Setup:
-1. Open Azure Portal → App registrations
-2. Find your app: ${this.clientId}
-3. Go to Authentication → Advanced settings
-4. Enable "Allow public client flows" = Yes
-5. Ensure redirect URI is registered: ${this.redirectUri}
-6. Test the new PKCE authentication flow
+1. Register the exact redirect URI shown above
+2. Enable public client flows in Azure AD
+3. Save changes and wait a few minutes
+4. Test the authentication flow again
 
 Token Management Benefits:
 - Automatic refresh before expiration
