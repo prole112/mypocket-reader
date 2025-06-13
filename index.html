@@ -1751,7 +1751,7 @@
                 }
             }
 
-            // Enhanced display articles with mobile optimization
+            // Enhanced display articles with mobile optimization (FIXED - same images on all devices)
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -1787,20 +1787,12 @@
                         statusText = '💾 Cached';
                         imagesFromCache++;
                     }
-                    // Priority 3: Need to load (SLOW - will fetch) - On mobile, use fallback immediately
+                    // Priority 3: Need to load - SAME on both mobile and desktop
                     else {
-                        if (isMobile) {
-                            // On mobile, use fallback images immediately for better performance
-                            const fallbackImage = this.getCategoryBasedImage(article, index);
-                            imageHTML = this.createImageHTML(fallbackImage, false);
-                            cacheStatus = 'fallback';
-                            statusText = '🎨 Ready';
-                        } else {
-                            imageHTML = this.createPlaceholderHTML();
-                            cacheStatus = 'loading';
-                            statusText = '🔄 Loading';
-                            imagesNeedLoading++;
-                        }
+                        imageHTML = this.createPlaceholderHTML();
+                        cacheStatus = 'loading';
+                        statusText = isMobile ? '📱 Loading...' : '🔄 Loading';
+                        imagesNeedLoading++;
                     }
                     
                     return `
@@ -1839,26 +1831,20 @@
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
                 
-                // Update status with mobile-optimized messages
-                if (isMobile) {
-                    if (imagesFromBackup > 0 || imagesFromCache > 0) {
-                        this.updateStatus(`📱 Mobile optimized! ${articles.length} articles ready (${imagesFromBackup + imagesFromCache} with images)`, 'success');
-                    } else {
-                        this.updateStatus(`📱 ${articles.length} articles loaded for mobile`, 'success');
-                    }
-                    
-                    // On mobile, load real images in background at lower priority
-                    if (imagesNeedLoading > 0) {
-                        setTimeout(() => this.loadMissingImages(articles), 2000); // Delay for better mobile UX
-                    }
+                // Update status - SAME images on both platforms, just different loading strategy
+                if (imagesNeedLoading === 0) {
+                    const message = isMobile ? 
+                        `📱 ${articles.length} articles ready! (${imagesFromBackup + imagesFromCache} with images)` :
+                        `✅ All ${articles.length} images ready! (${imagesFromBackup} synced, ${imagesFromCache} cached)`;
+                    this.updateStatus(message, 'success');
                 } else {
-                    // Desktop behavior (unchanged)
-                    if (imagesNeedLoading === 0) {
-                        this.updateStatus(`✅ All ${articles.length} images ready! (${imagesFromBackup} synced, ${imagesFromCache} cached)`, 'success');
-                    } else {
-                        this.updateStatus(`📸 Loading ${imagesNeedLoading} images... (${imagesFromBackup} synced, ${imagesFromCache} cached)`, 'loading');
-                        this.loadMissingImages(articles);
-                    }
+                    const message = isMobile ?
+                        `📱 Loading ${imagesNeedLoading} images... (${imagesFromBackup + imagesFromCache} ready)` :
+                        `📸 Loading ${imagesNeedLoading} images... (${imagesFromBackup} synced, ${imagesFromCache} cached)`;
+                    this.updateStatus(message, 'loading');
+                    
+                    // Load missing images with mobile-optimized performance but SAME images
+                    this.loadMissingImages(articles);
                 }
             }
 
@@ -1910,9 +1896,9 @@
                 `;
             }
 
-            // Mobile-optimized image loading
+            // Mobile-optimized image loading (SAME images, just optimized performance)
             async loadMissingImages(articles) {
-                console.log('🎨 SMART IMAGE LOADER - Loading only missing images...');
+                console.log('🎨 SMART IMAGE LOADER - Loading same images for all devices...');
                 
                 const articlesNeedingImages = articles.filter((article, index) => {
                     // Check both stored backup images and local cache
@@ -1930,16 +1916,17 @@
                 let successCount = 0;
                 const totalNew = articlesNeedingImages.length;
                 
-                console.log(`🔄 Loading ${totalNew} new images${isMobile ? ' (mobile mode)' : ''}`);
+                console.log(`🔄 Loading ${totalNew} SAME images${isMobile ? ' (mobile optimized)' : ''}`);
                 
-                // Mobile optimization: Load fewer images concurrently and with longer delays
+                // Mobile optimization: Load in smaller batches with longer delays for performance
+                // But extract the SAME real images, not fallbacks
                 const batchSize = isMobile ? 2 : 5; // Process fewer images at once on mobile
                 const delayBetweenImages = isMobile ? 800 : 300; // Longer delays on mobile
                 
                 for (let i = 0; i < articlesNeedingImages.length; i += batchSize) {
                     const batch = articlesNeedingImages.slice(i, i + batchSize);
                     
-                    // Process batch
+                    // Process batch - SAME extraction process for both mobile and desktop
                     await Promise.all(batch.map(async (article) => {
                         const originalIndex = articles.findIndex(a => a === article);
                         
@@ -1948,14 +1935,14 @@
                             if (success) successCount++;
                         } catch (error) {
                             console.error(`Failed to extract image for article ${originalIndex}:`, error);
-                            // Use category fallback for failed extractions
+                            // Use category fallback for failed extractions (SAME on both platforms)
                             const fallbackImage = this.getCategoryBasedImage(article, originalIndex);
                             this.setArticleImageAndCache(article, originalIndex, fallbackImage, 'fallback');
                             successCount++;
                         }
                     }));
                     
-                    // Update progress
+                    // Update progress with mobile-friendly messages
                     const progress = Math.round(((i + batchSize) / totalNew) * 100);
                     if (isMobile) {
                         this.updateStatus(`📱 Loading images... ${Math.min(i + batchSize, totalNew)}/${totalNew}`, 'loading');
@@ -1972,12 +1959,12 @@
                 const totalCached = this.imageCache.size;
                 
                 if (isMobile) {
-                    this.updateStatus(`📱 Mobile optimized! ${successCount} images loaded`, 'success');
+                    this.updateStatus(`📱 ${successCount} images loaded! Same as desktop 🎉`, 'success');
                 } else {
                     this.updateStatus(`✅ Loaded ${successCount}/${totalNew} new images! (${totalCached} total cached)`, 'success');
                 }
                 
-                console.log(`🎨 Smart image loading complete: ${successCount}/${totalNew} new, ${totalCached} total cached`);
+                console.log(`🎨 Image loading complete: ${successCount}/${totalNew} SAME images on both platforms`);
             }
 
             // Enhanced method to store images WITH articles
