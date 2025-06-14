@@ -64,6 +64,11 @@
             opacity: 0.8;
         }
 
+        [data-theme="dark"] .search-close-btn:hover {
+            background: #21262d;
+            color: var(--text-primary);
+        }
+
         [data-theme="dark"] .btn-secondary {
             background: var(--surface);
             color: var(--text-primary);
@@ -264,15 +269,29 @@
             transform: translateY(-1px);
         }
 
-        /* Search */
+        /* Search Toggle Animation */
         .search-container {
-            padding: 30px 0;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             background: var(--surface);
             border-bottom: 1px solid var(--border);
             position: sticky;
             top: 0;
             z-index: 90;
+            padding: 30px 0;
         }
+
+        .search-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .search-container.hidden {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
         .search-box {
             position: relative;
             max-width: 600px;
@@ -294,13 +313,30 @@
             border-color: var(--primary-color);
         }
 
-        .search-icon {
+        .search-close-btn {
             position: absolute;
             right: 15px;
             top: 50%;
             transform: translateY(-50%);
+            background: none;
+            border: none;
             color: var(--text-secondary);
-            font-size: 20px;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+        }
+
+        .search-close-btn:hover {
+            background: var(--border);
+            color: var(--text-primary);
+            transform: translateY(-50%) scale(1.1);
         }
 
         /* Status */
@@ -807,10 +843,17 @@
             }
 
             .search-input {
-                font-size: 16px;
-                /* Prevent zoom on iOS */
+                font-size: 16px !important;
+                /* Prevent zoom */
                 padding: 12px 45px 12px 16px;
                 border-radius: 20px;
+            }
+
+            .search-close-btn {
+                right: 12px;
+                width: 28px;
+                height: 28px;
+                font-size: 16px;
             }
 
             /* Status bar */
@@ -1192,6 +1235,9 @@
                     <button id="refreshBtn" class="btn btn-secondary" style="display: none;">
                         <span>🔄</span> Refresh
                     </button>
+                    <button id="searchToggleBtn" class="btn btn-secondary" onclick="webReader.toggleSearch()">
+                        <span>🔍</span> Search
+                    </button>
                     <button id="clearCacheBtn" class="btn btn-secondary" onclick="webReader.clearImageCache()">
                         <span>🗑️</span> Clear Cache
                     </button>
@@ -1220,12 +1266,12 @@
         </div>
     </header>
 
-    <!-- Search -->
-    <section class="search-container">
+    <!-- Search (Initially Hidden) -->
+    <section class="search-container" id="searchContainer" style="display: none;">
         <div class="container">
             <div class="search-box">
-                <input type="text" id="searchInput" class="search-input" placeholder="Search your saved articles...">
-                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search your saved articles..." autocomplete="off">
+                <button class="search-close-btn" onclick="webReader.toggleSearch()" title="Close search">✕</button>
             </div>
         </div>
     </section>
@@ -1327,6 +1373,85 @@
                 document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
                 document.getElementById('closeReader').addEventListener('click', () => this.closeReader());
                 document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
+                
+                // Search toggle keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    // Ctrl/Cmd + K or / to open search
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                        e.preventDefault();
+                        this.toggleSearch(true);
+                    } else if (e.key === '/' && !this.isInputFocused()) {
+                        e.preventDefault();
+                        this.toggleSearch(true);
+                    } else if (e.key === 'Escape') {
+                        this.toggleSearch(false);
+                    }
+                });
+
+                // Close search when clicking outside
+                document.addEventListener('click', (e) => {
+                    const searchContainer = document.getElementById('searchContainer');
+                    const searchToggleBtn = document.getElementById('searchToggleBtn');
+                    
+                    if (searchContainer.style.display !== 'none' && 
+                        !searchContainer.contains(e.target) && 
+                        !searchToggleBtn.contains(e.target)) {
+                        this.toggleSearch(false);
+                    }
+                });
+            }
+
+            isInputFocused() {
+                const activeElement = document.activeElement;
+                return activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
+            }
+
+            // NEW: Toggle search functionality
+            toggleSearch(forceState = null) {
+                const searchContainer = document.getElementById('searchContainer');
+                const searchInput = document.getElementById('searchInput');
+                const searchToggleBtn = document.getElementById('searchToggleBtn');
+                
+                const isCurrentlyVisible = searchContainer.style.display !== 'none';
+                const shouldShow = forceState !== null ? forceState : !isCurrentlyVisible;
+                
+                if (shouldShow) {
+                    // Show search
+                    searchContainer.style.display = 'block';
+                    setTimeout(() => {
+                        searchContainer.classList.add('visible');
+                        searchInput.focus();
+                    }, 10);
+                    
+                    // Update button
+                    searchToggleBtn.innerHTML = '<span>🔍</span> Close Search';
+                    searchToggleBtn.style.background = 'var(--primary-color)';
+                    searchToggleBtn.style.color = 'white';
+                    
+                    this.updateStatus('🔍 Search mode active - Type to search or press Escape to close', 'success');
+                } else {
+                    // Hide search
+                    searchContainer.classList.remove('visible');
+                    setTimeout(() => {
+                        if (!searchContainer.classList.contains('visible')) {
+                            searchContainer.style.display = 'none';
+                        }
+                    }, 300);
+                    
+                    // Update button
+                    searchToggleBtn.innerHTML = '<span>🔍</span> Search';
+                    searchToggleBtn.style.background = '';
+                    searchToggleBtn.style.color = '';
+                    
+                    // Clear search if closing
+                    if (searchInput.value) {
+                        searchInput.value = '';
+                        this.searchArticles('');
+                    }
+                    
+                    // Remove focus
+                    searchInput.blur();
+                }
             }
 
             // ===== PKCE IMPLEMENTATION =====
@@ -2786,7 +2911,9 @@ Want All Fresh Images → Use "Sync Images" button
                 if (!query || query.trim() === '') {
                     this.currentDisplayedArticles = this.articles;
                     this.displayArticles(this.articles);
-                    this.updateStatus(`Showing all ${this.articles.length} articles`, 'success');
+                    if (this.articles.length > 0) {
+                        this.updateStatus(`Showing all ${this.articles.length} articles`, 'success');
+                    }
                     return;
                 }
 
@@ -3298,45 +3425,6 @@ Want All Fresh Images → Use "Sync Images" button
                 } catch (error) {
                     console.error('Error exporting article:', error);
                     this.updateStatus(`❌ Failed to export article: ${error.message}`, 'error');
-                }
-            }
-
-            async deleteArticle(index) {
-                const article = this.articles[index];
-                if (!article) return;
-
-                if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your OneDrive backup.`)) {
-                    try {
-                        // Remove from cache
-                        const cacheKey = this.getCacheKey(article);
-                        this.imageCache.delete(cacheKey);
-                        this.saveImageCache();
-
-                        this.articles.splice(index, 1);
-
-                        // Update current displayed articles if this article is in the current view
-                        const displayedIndex = this.currentDisplayedArticles.findIndex(a =>
-                            a.url === article.url && a.title === article.title
-                        );
-                        if (displayedIndex !== -1) {
-                            this.currentDisplayedArticles.splice(displayedIndex, 1);
-                        }
-
-                        if (this.accessToken) {
-                            this.updateStatus('Updating OneDrive backup...', 'loading');
-                            await this.updateOneDriveBackup();
-                            this.updateStatus(`✅ Article deleted and backup updated. ${this.articles.length} articles remaining.`, 'success');
-                        } else {
-                            this.updateStatus(`❌ Article deleted locally but OneDrive backup not updated (not connected).`, 'error');
-                        }
-
-                        // Refresh the display with current articles
-                        this.displayArticles(this.currentDisplayedArticles);
-
-                    } catch (error) {
-                        console.error('Error deleting article:', error);
-                        this.updateStatus(`❌ Failed to delete article: ${error.message}`, 'error');
-                    }
                 }
             }
 
@@ -4020,6 +4108,9 @@ Want All Fresh Images → Use "Sync Images" button
                 const tokenTimestamp = localStorage.getItem('mypocket_token_timestamp');
                 const tokenAge = tokenTimestamp ? Math.round((Date.now() - parseInt(tokenTimestamp)) / 1000 / 60) : 'Unknown';
 
+                const searchContainer = document.getElementById('searchContainer');
+                const isSearchVisible = searchContainer.style.display !== 'none';
+
                 const info = `
 MyPocket Web Reader Debug Info (PKCE Enabled):
 ===============================================
@@ -4045,11 +4136,17 @@ Host: ${window.location.host}
 
 📚 ARTICLES & IMAGES:
 - Articles Loaded: ${this.articles.length}
+- Currently Displayed: ${this.currentDisplayedArticles.length}
 - Store Images in Backup: ${this.storeImagesInBackup}
 - Max Image Size: ${this.maxImageSizeKB}KB
 - Articles with Stored Images: ${storedImages}
 - Total Stored Image Size: ${Math.round(totalStoredSizeKB)}KB
 - Failed Images: ${this.failedImages.size}
+
+🔍 SEARCH STATUS:
+- Search Visible: ${isSearchVisible}
+- Keyboard Shortcuts: Ctrl/Cmd+K, / (open), Esc (close)
+- Click Outside: Enabled
 
 💾 LOCAL CACHE:
 - Total Cached Images: ${cacheStats.total}
@@ -4075,6 +4172,11 @@ Cross-Device Image Features:
 - Base64 encoding with ${this.maxImageSizeKB}KB size limit
 - Automatic compression to 80% quality
 - Works across all devices and browsers
+
+Search Features:
+- Toggle search with 🔍 button or Ctrl/Cmd+K or /
+- Close with Esc or click outside
+- Real-time filtering across title, content, domain, etc.
                 `;
 
                 alert(info);
@@ -4087,6 +4189,8 @@ Cross-Device Image Features:
                     hasRefreshToken: hasRefreshToken,
                     tokenAge: `${tokenAge} minutes`,
                     articlesCount: this.articles.length,
+                    displayedCount: this.currentDisplayedArticles.length,
+                    searchVisible: isSearchVisible,
                     cacheStats: cacheStats,
                     storedImages: storedImages,
                     crossDeviceEnabled: this.storeImagesInBackup
