@@ -64,6 +64,16 @@
             opacity: 0.8;
         }
 
+        /* Dark mode sticky search */
+        [data-theme="dark"] .search-container {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        [data-theme="dark"] .search-container.scrolled {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+            border-bottom-color: var(--primary-color);
+        }
+
         [data-theme="dark"] .btn-secondary {
             background: var(--surface);
             color: var(--text-primary);
@@ -195,7 +205,7 @@
             padding: 0 20px;
         }
 
-        /* Header */
+        /* Header - REVERTED TO WORKING VERSION */
         .header {
             background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
             color: white;
@@ -264,11 +274,25 @@
             transform: translateY(-1px);
         }
 
-        /* Search */
+        /* Search - SIMPLIFIED STICKY POSITIONING */
         .search-container {
             padding: 30px 0;
             background: var(--surface);
             border-bottom: 1px solid var(--border);
+            position: -webkit-sticky; /* Safari support */
+            position: sticky;
+            top: 90px; /* Safe distance below header */
+            z-index: 90;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        /* Enhanced sticky search effect */
+        .search-container.scrolled {
+            background: var(--surface);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border-bottom: 2px solid var(--primary-color);
         }
 
         .search-box {
@@ -769,11 +793,11 @@
                 padding: 0 12px;
             }
 
-            /* Header improvements for mobile */
+            /* Header improvements for mobile - REVERTED */
             .header {
                 padding: 15px 0;
-                position: relative;
-                /* Remove sticky on mobile for better performance */
+                position: sticky; 
+                top: 0;
             }
 
             .header-content {
@@ -799,9 +823,14 @@
                 border-radius: 20px;
             }
 
-            /* Search improvements */
+            /* SIMPLIFIED: Mobile sticky search */
             .search-container {
                 padding: 20px 0;
+                position: -webkit-sticky; 
+                position: sticky;
+                top: 80px; /* Safe distance below header */
+                z-index: 95;
+                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
             }
 
             .search-input {
@@ -1317,9 +1346,47 @@
                 this.loadStoredToken();
                 this.loadThemePreference();
                 this.loadImageCache();
+                // Removed setupStickySearch() to avoid conflicts
             }
 
-            setupEventListeners() {
+            // NEW: Enhanced sticky search with visual feedback
+            setupStickySearch() {
+                const searchContainer = document.querySelector('.search-container');
+                if (!searchContainer) return;
+
+                // Detect mobile vs desktop for proper header height
+                const isMobile = window.innerWidth <= 768;
+                const headerHeight = isMobile ? 50 : 70;
+
+                // Add intersection observer for better sticky feedback
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            searchContainer.classList.remove('scrolled');
+                        } else {
+                            searchContainer.classList.add('scrolled');
+                        }
+                    });
+                }, {
+                    root: null,
+                    rootMargin: `-${headerHeight}px 0px 0px 0px`, // Use dynamic header height
+                    threshold: 0
+                });
+
+                // Create a sentinel element to track when search should be "scrolled"
+                const sentinel = document.createElement('div');
+                sentinel.style.height = '1px';
+                sentinel.style.position = 'absolute';
+                sentinel.style.top = `${headerHeight}px`; // Dynamic header height
+                sentinel.style.left = '0';
+                sentinel.style.width = '100%';
+                sentinel.style.pointerEvents = 'none';
+                document.body.appendChild(sentinel);
+
+                observer.observe(sentinel);
+                
+                console.log(`✅ Sticky search enhanced with ${headerHeight}px header height`);
+            }
                 document.getElementById('connectBtn').addEventListener('click', () => this.authenticate());
                 document.getElementById('refreshBtn').addEventListener('click', () => this.loadArticles());
                 document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
