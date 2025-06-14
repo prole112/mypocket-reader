@@ -100,6 +100,12 @@
             color: #3fb950;
         }
 
+        [data-theme="dark"] .refresh-image-btn:hover {
+            background: rgba(255, 152, 0, 0.2);
+            border-color: #ff9800;
+            color: #ffb74d;
+        }
+
         [data-theme="dark"] .delete-btn:hover {
             background: rgba(220, 53, 69, 0.2);
             border-color: #dc3545;
@@ -534,6 +540,12 @@
             border-radius: 30% 70% 60% 40%;
         }
 
+        .refresh-image-btn:hover {
+            background: #fff3e0;
+            border-color: #ff9800;
+            border-radius: 40% 60% 40% 60%;
+        }
+
         .delete-btn {
             color: #f44336;
         }
@@ -906,7 +918,7 @@
                 visibility: visible !important;
                 display: flex !important;
                 justify-content: center;
-                gap: 15px;
+                gap: 12px;
                 padding: 15px 20px;
                 background: var(--background);
                 border-radius: 0;
@@ -915,9 +927,9 @@
             }
 
             .action-btn {
-                min-width: 50px !important;
-                height: 50px !important;
-                font-size: 20px !important;
+                min-width: 45px !important;
+                height: 45px !important;
+                font-size: 18px !important;
                 border-radius: 50% !important;
                 padding: 0;
                 background: var(--surface);
@@ -1188,6 +1200,9 @@
                     <button id="retryFailedBtn" class="btn btn-secondary" onclick="webReader.retryFailedImages()"
                         style="display: none;">
                         <span>🔄</span> Retry Failed
+                    </button>
+                    <button id="helpBtn" class="btn btn-secondary" onclick="webReader.showImageHelp()">
+                        <span>❓</span> Image Help
                     </button>
                     <button id="debugBtn" class="btn btn-secondary" onclick="webReader.showDebugInfo()">
                         <span>🔧</span> Debug
@@ -1656,7 +1671,117 @@
                 }
             }
 
-            // FIXED: Conservative retry that only targets genuinely failed images
+            // NEW: Refresh a single image that's working but wrong
+            async refreshSingleImage(originalIndex, displayIndex) {
+                const article = this.currentDisplayedArticles[displayIndex];
+                if (!article) {
+                    console.error('Article not found at display index:', displayIndex);
+                    return;
+                }
+
+                const imageElement = document.getElementById(`image-${originalIndex}`);
+                if (!imageElement) {
+                    console.error('Image element not found for index:', originalIndex);
+                    return;
+                }
+
+                // Confirm the action
+                const proceed = confirm(`Refresh image for "${article.title.substring(0, 50)}..."?\n\nThis will:\n• Clear the current image\n• Try to find a better image from the original source\n• Use alternative sources if needed\n\nProceed?`);
+                
+                if (!proceed) return;
+
+                console.log(`🔄 Refreshing single image for: ${article.title.substring(0, 30)}...`);
+
+                // Update status immediately
+                const cacheIndicator = imageElement.querySelector('.cache-indicator');
+                if (cacheIndicator) {
+                    cacheIndicator.textContent = '🔄 Refreshing...';
+                    cacheIndicator.className = 'cache-indicator loading';
+                }
+
+                // Show loading placeholder
+                imageElement.innerHTML = `
+                    ${this.createPlaceholderHTML()}
+                    <div class="cache-indicator loading">
+                        🔄 Refreshing...
+                    </div>
+                `;
+
+                try {
+                    // Clear any existing cache for this article
+                    const cacheKey = this.getCacheKey(article);
+                    this.imageCache.delete(cacheKey);
+
+                    // Clear stored image from article
+                    const mainArticleIndex = this.articles.findIndex(a => 
+                        a.url === article.url && a.title === article.title
+                    );
+                    if (mainArticleIndex !== -1 && this.articles[mainArticleIndex].cachedImage) {
+                        delete this.articles[mainArticleIndex].cachedImage;
+                    }
+
+                    // Try multiple strategies to get a fresh, correct image
+                    let success = false;
+
+                    // Strategy 1: Try to extract fresh from the original website
+                    try {
+                        console.log(`🌐 Attempting fresh extraction from: ${this.getDomain(article.url)}`);
+                        const extractedImage = await this.fetchRealImageFromWebsite(article.url);
+                        if (extractedImage) {
+                            console.log(`✅ Fresh extraction successful: ${article.title.substring(0, 30)}...`);
+                            await this.setArticleImageAndCache(article, originalIndex, extractedImage, 'refreshed');
+                            success = true;
+                        }
+                    } catch (error) {
+                        console.log(`⚠️ Fresh extraction failed: ${error.message}`);
+                    }
+
+                    // Strategy 2: Try alternative extraction methods
+                    if (!success) {
+                        try {
+                            console.log(`🔄 Trying alternative methods...`);
+                            success = await this.tryAlternativeImageStrategies(article, originalIndex);
+                        } catch (error) {
+                            console.log(`⚠️ Alternative methods failed: ${error.message}`);
+                        }
+                    }
+
+                    // Strategy 3: Use a new category-based image (last resort)
+                    if (!success) {
+                        console.log(`🎨 Using refreshed category image...`);
+                        const fallbackImage = this.getCategoryBasedImage(article, originalIndex + Date.now()); // Add timestamp for variation
+                        await this.setArticleImageAndCache(article, originalIndex, fallbackImage, 'refreshed');
+                        success = true;
+                    }
+
+                    if (success) {
+                        this.updateStatus(`✅ Image refreshed successfully for "${article.title.substring(0, 40)}..."`, 'success');
+                        
+                        // Update backup if connected
+                        if (this.accessToken) {
+                            try {
+                                await this.updateOneDriveBackup();
+                                console.log('✅ Updated backup with refreshed image');
+                            } catch (error) {
+                                console.error('⚠️ Failed to update backup:', error);
+                            }
+                        }
+                    } else {
+                        throw new Error('All refresh strategies failed');
+                    }
+
+                } catch (error) {
+                    console.error('Single image refresh error:', error);
+                    this.updateStatus(`❌ Failed to refresh image: ${error.message}`, 'error');
+                    
+                    // Show error state
+                    const errorCacheIndicator = imageElement.querySelector('.cache-indicator');
+                    if (errorCacheIndicator) {
+                        errorCacheIndicator.textContent = '❌ Refresh Failed';
+                        errorCacheIndicator.className = 'cache-indicator error';
+                    }
+                }
+            }
             async retryFailedImages() {
                 if (!this.accessToken) {
                     this.updateStatus('❌ Please connect to OneDrive first', 'error');
@@ -1742,7 +1867,47 @@
                 }
             }
 
-            // NEW: Try multiple alternative strategies for failed images
+            // NEW: Show help for image features
+            showImageHelp() {
+                const helpText = `
+MyPocket Image System Help:
+==========================
+
+🖼️ IMAGE STATUS INDICATORS:
+• 🌐 Synced - Stored across all devices
+• 💾 Cached - Stored locally on this device  
+• 🔄 Refreshed - Recently updated image
+• ❌ Failed - Could not load image
+
+🔧 AVAILABLE ACTIONS:
+
+1️⃣ INDIVIDUAL IMAGE REFRESH (🖼️ button):
+   • Use when an image loaded but shows wrong content
+   • Click the 🖼️ button on any article card
+   • Tries to find the correct image for that article
+   • Works even if current image appears "successful"
+
+2️⃣ RETRY FAILED IMAGES (Retry Failed button):
+   • Only processes images marked "❌ Failed"
+   • Leaves working images untouched
+   • Appears when connected to OneDrive
+
+3️⃣ SYNC ALL IMAGES (Sync Images button):
+   • Forces refresh of ALL images
+   • Stores images for cross-device access
+   • Use for complete refresh
+
+🎯 WHEN TO USE EACH:
+
+Wrong but Working Image → Use 🖼️ (Individual Refresh)
+Red "❌ Failed" Status → Use "Retry Failed" button  
+Want All Fresh Images → Use "Sync Images" button
+
+💡 TIP: The 🖼️ button appears when you hover over article cards (or always visible on mobile). Perfect for fixing individual wrong images!
+                `;
+
+                alert(helpText);
+            }
             async tryAlternativeImageStrategies(article, index) {
                 console.log(`🎯 Trying alternative strategies for: ${article.title.substring(0, 30)}...`);
 
@@ -2249,6 +2414,9 @@
                             <button class="action-btn read-btn" onclick="event.stopPropagation(); webReader.openReaderByDisplayIndex(${displayIndex})" title="Read article">
                                 📖
                             </button>
+                            <button class="action-btn refresh-image-btn" onclick="event.stopPropagation(); webReader.refreshSingleImage(${index}, ${displayIndex})" title="Refresh this image">
+                                🖼️
+                            </button>
                             <button class="action-btn export-btn" onclick="event.stopPropagation(); webReader.exportArticleByDisplayIndex(${displayIndex})" title="Export article">
                                 📤
                             </button>
@@ -2428,15 +2596,23 @@
                 // Update cache indicator
                 const cacheIndicator = imageElement.querySelector('.cache-indicator');
                 if (cacheIndicator) {
-                    cacheIndicator.textContent = source === 'extracted' ? '🌐 Fresh' : '💾 Cached';
-                    cacheIndicator.className = `cache-indicator ${source === 'extracted' ? 'fresh' : 'cached'}`;
+                    if (source === 'extracted') {
+                        cacheIndicator.textContent = '🌐 Fresh';
+                        cacheIndicator.className = 'cache-indicator fresh';
+                    } else if (source === 'refreshed') {
+                        cacheIndicator.textContent = '🔄 Refreshed';
+                        cacheIndicator.className = 'cache-indicator fresh';
+                    } else {
+                        cacheIndicator.textContent = '💾 Cached';
+                        cacheIndicator.className = 'cache-indicator cached';
+                    }
                 }
 
                 // Store in local cache
                 this.setCachedImage(article, imageUrl);
 
                 // ENHANCED: Always store base64 data for cross-device sync (not just extracted images)
-                if (this.storeImagesInBackup && (source === 'extracted' || source === 'saved' || source === 'fallback')) {
+                if (this.storeImagesInBackup && (source === 'extracted' || source === 'saved' || source === 'fallback' || source === 'refreshed')) {
                     try {
                         console.log(`🔄 Converting image for cross-device storage: ${article.title.substring(0, 30)}...`);
                         const imageData = await this.convertImageToBase64(imageUrl);
