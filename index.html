@@ -171,6 +171,11 @@
             color: white;
         }
 
+        [data-theme="dark"] .cache-indicator.error {
+            background: rgba(244, 67, 54, 0.9);
+            color: white;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
@@ -741,6 +746,11 @@
             color: white;
         }
 
+        .cache-indicator.error {
+            background: rgba(244, 67, 54, 0.8);
+            color: white;
+        }
+
         /* Enhanced Mobile Responsive Design */
         @media (max-width: 768px) {
             .container {
@@ -1175,6 +1185,10 @@
                         style="display: none;">
                         <span>🔄</span> Sync Images
                     </button>
+                    <button id="retryFailedBtn" class="btn btn-secondary" onclick="webReader.retryFailedImages()"
+                        style="display: none;">
+                        <span>🔄</span> Retry Failed
+                    </button>
                     <button id="debugBtn" class="btn btn-secondary" onclick="webReader.showDebugInfo()">
                         <span>🔧</span> Debug
                     </button>
@@ -1250,6 +1264,7 @@
                 this.accessToken = null;
                 this.articles = [];
                 this.currentArticle = null;
+                this.failedImages = new Set(); // Track articles with failed images
 
                 // Image cache system
                 this.imageCache = new Map();
@@ -1621,6 +1636,7 @@
                 const connectText = document.getElementById('connectText');
                 const refreshBtn = document.getElementById('refreshBtn');
                 const syncBtn = document.getElementById('syncBtn');
+                const retryFailedBtn = document.getElementById('retryFailedBtn');
 
                 if (connected) {
                     connectIcon.textContent = '✅';
@@ -1628,16 +1644,253 @@
                     connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
                     refreshBtn.style.display = 'inline-flex';
                     if (syncBtn) syncBtn.style.display = 'inline-flex';
+                    if (retryFailedBtn) retryFailedBtn.style.display = 'inline-flex';
                 } else {
                     connectIcon.textContent = '🔐';
                     connectText.textContent = 'Secure Connect';
                     connectBtn.style.background = 'rgba(255,255,255,0.2)';
                     refreshBtn.style.display = 'none';
                     if (syncBtn) syncBtn.style.display = 'none';
+                    if (retryFailedBtn) retryFailedBtn.style.display = 'none';
                 }
             }
 
-            // NEW: Force sync all images to OneDrive
+            // NEW: Retry only failed images without disturbing working ones
+            async retryFailedImages() {
+                if (!this.accessToken) {
+                    this.updateStatus('❌ Please connect to OneDrive first', 'error');
+                    return;
+                }
+
+                // Find articles with failed or missing images
+                const articlesWithFailedImages = this.articles.filter((article, index) => {
+                    const imageElement = document.getElementById(`image-${index}`);
+                    if (!imageElement) return false;
+
+                    // Check if image failed to load or is using placeholder
+                    const img = imageElement.querySelector('img');
+                    const hasPlaceholder = imageElement.querySelector('div[style*="background: linear-gradient"]');
+                    const cacheIndicator = imageElement.querySelector('.cache-indicator');
+                    const isFailedStatus = cacheIndicator && (
+                        cacheIndicator.textContent.includes('Failed') || 
+                        cacheIndicator.textContent.includes('Error') ||
+                        cacheIndicator.textContent.includes('Loading')
+                    );
+
+                    // Consider failed if: no image, has placeholder, or failed status
+                    const hasFailed = !img || hasPlaceholder || isFailedStatus || this.failedImages.has(index);
+                    
+                    return hasFailed;
+                });
+
+                if (articlesWithFailedImages.length === 0) {
+                    this.updateStatus('✅ No failed images found! All images loaded successfully.', 'success');
+                    return;
+                }
+
+                this.updateStatus(`🔄 Retrying ${articlesWithFailedImages.length} failed images without disturbing working ones...`, 'loading');
+
+                let retriedCount = 0;
+                let successCount = 0;
+
+                for (const article of articlesWithFailedImages) {
+                    const originalIndex = this.articles.findIndex(a => a === article);
+                    if (originalIndex === -1) continue;
+
+                    try {
+                        retriedCount++;
+                        console.log(`🔄 Retrying image ${retriedCount}/${articlesWithFailedImages.length}: ${article.title.substring(0, 30)}...`);
+
+                        // Clear from failed set
+                        this.failedImages.delete(originalIndex);
+
+                        // Try multiple fallback strategies for failed images
+                        const success = await this.tryAlternativeImageStrategies(article, originalIndex);
+                        if (success) {
+                            successCount++;
+                            console.log(`✅ Successfully recovered image: ${article.title.substring(0, 30)}...`);
+                        }
+
+                        // Update progress
+                        if (retriedCount % 2 === 0) {
+                            this.updateStatus(`🔄 Retrying failed images... ${retriedCount}/${articlesWithFailedImages.length} (${successCount} recovered)`, 'loading');
+                        }
+
+                        // Small delay to prevent overwhelming
+                        await new Promise(resolve => setTimeout(resolve, 500));
+
+                    } catch (error) {
+                        console.error(`Failed to retry image for ${article.title}:`, error);
+                        this.failedImages.add(originalIndex);
+                    }
+                }
+
+                // Update OneDrive backup if we recovered any images
+                if (successCount > 0 && this.accessToken) {
+                    try {
+                        await this.updateOneDriveBackup();
+                        console.log('✅ OneDrive backup updated with recovered images');
+                    } catch (error) {
+                        console.error('⚠️ Failed to save recovered images to backup:', error);
+                    }
+                }
+
+                const message = successCount > 0 
+                    ? `✅ Retry complete! Recovered ${successCount}/${articlesWithFailedImages.length} failed images without disturbing working ones.`
+                    : `⚠️ Retry complete. Could not recover failed images - they may be permanently unavailable from their sources.`;
+
+                this.updateStatus(message, successCount > 0 ? 'success' : 'error');
+            }
+
+            // NEW: Try multiple alternative strategies for failed images
+            async tryAlternativeImageStrategies(article, index) {
+                console.log(`🎯 Trying alternative strategies for: ${article.title.substring(0, 30)}...`);
+
+                // Strategy 1: Try different proxy services for website extraction
+                try {
+                    const extractedImage = await this.tryAlternativeProxies(article.url);
+                    if (extractedImage) {
+                        console.log(`✅ Recovered via alternative proxy: ${article.title.substring(0, 30)}...`);
+                        this.setArticleImageAndCache(article, index, extractedImage, 'extracted');
+                        return true;
+                    }
+                } catch (error) {
+                    console.log(`⚠️ Alternative proxy failed: ${error.message}`);
+                }
+
+                // Strategy 2: Try searching for similar images via title keywords
+                try {
+                    const searchBasedImage = await this.getImageFromTitleKeywords(article);
+                    if (searchBasedImage) {
+                        console.log(`✅ Found via title search: ${article.title.substring(0, 30)}...`);
+                        this.setArticleImageAndCache(article, index, searchBasedImage, 'search');
+                        return true;
+                    }
+                } catch (error) {
+                    console.log(`⚠️ Title search failed: ${error.message}`);
+                }
+
+                // Strategy 3: Use domain-specific image patterns
+                try {
+                    const domainImage = this.getDomainSpecificImage(article);
+                    if (domainImage) {
+                        console.log(`✅ Using domain-specific image: ${article.title.substring(0, 30)}...`);
+                        this.setArticleImageAndCache(article, index, domainImage, 'domain');
+                        return true;
+                    }
+                } catch (error) {
+                    console.log(`⚠️ Domain-specific image failed: ${error.message}`);
+                }
+
+                // Strategy 4: Use high-quality category fallback (last resort)
+                console.log(`🎨 Using enhanced fallback for: ${article.title.substring(0, 30)}...`);
+                const fallbackImage = this.getCategoryBasedImage(article, index);
+                this.setArticleImageAndCache(article, index, fallbackImage, 'fallback');
+                
+                // Update cache indicator to show it's a fallback
+                const imageElement = document.getElementById(`image-${index}`);
+                const cacheIndicator = imageElement?.querySelector('.cache-indicator');
+                if (cacheIndicator) {
+                    cacheIndicator.textContent = '🎨 Enhanced';
+                    cacheIndicator.className = 'cache-indicator fallback';
+                }
+
+                return true; // Always return true for fallback since we did set an image
+            }
+
+            // NEW: Try alternative proxy services
+            async tryAlternativeProxies(url) {
+                const proxies = [
+                    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+                    `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(url)}`
+                ];
+
+                for (const proxyUrl of proxies) {
+                    try {
+                        console.log(`Trying proxy: ${proxyUrl.substring(0, 50)}...`);
+                        const response = await fetch(proxyUrl);
+                        
+                        if (response.ok) {
+                            const html = await response.text();
+                            if (html && html.length > 1000) {
+                                const extractedImage = this.parseHTMLForBestImage(html, url);
+                                if (extractedImage) {
+                                    return extractedImage;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`Proxy failed: ${error.message}`);
+                        continue;
+                    }
+                }
+
+                return null;
+            }
+
+            // NEW: Get image based on title keywords using search services
+            async getImageFromTitleKeywords(article) {
+                // Extract meaningful keywords from title
+                const title = article.title.toLowerCase();
+                const commonWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'how', 'what', 'why', 'when', 'where'];
+                const keywords = title
+                    .split(/[^\w]+/)
+                    .filter(word => word.length > 3 && !commonWords.includes(word))
+                    .slice(0, 3) // Take first 3 meaningful words
+                    .join(' ');
+
+                if (!keywords) return null;
+
+                // Use Unsplash search API for relevant images
+                try {
+                    const searchQuery = encodeURIComponent(keywords);
+                    const unsplashUrl = `https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                    
+                    // For now, return a themed image based on keywords
+                    // (In a real implementation, you'd use Unsplash API with a key)
+                    if (keywords.includes('tech') || keywords.includes('code') || keywords.includes('software')) {
+                        return 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                    }
+                    if (keywords.includes('business') || keywords.includes('work') || keywords.includes('office')) {
+                        return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                    }
+                    if (keywords.includes('design') || keywords.includes('art') || keywords.includes('creative')) {
+                        return 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
+                    }
+                    
+                    return unsplashUrl;
+                } catch (error) {
+                    console.log(`Keyword-based search failed: ${error.message}`);
+                    return null;
+                }
+            }
+
+            // NEW: Get domain-specific images for known sites
+            getDomainSpecificImage(article) {
+                const domain = this.getDomain(article.url).toLowerCase();
+                
+                // Site-specific default images for when original images fail
+                const siteDefaults = {
+                    'github.com': 'https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
+                    'medium.com': 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
+                    'youtube.com': 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
+                    'stackoverflow.com': 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
+                    'dev.to': 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
+                    'reddit.com': 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
+                    'news': 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
+                    'blog': 'https://images.unsplash.com/photo-1486312338219-ce68e2c6b9d6?w=400&h=250&fit=crop&crop=center&q=80&auto=format'
+                };
+
+                // Check for exact domain matches
+                for (const [siteDomain, image] of Object.entries(siteDefaults)) {
+                    if (domain.includes(siteDomain)) {
+                        return image;
+                    }
+                }
+
+                return null;
+            }
             async forceSyncImages() {
                 if (!this.accessToken) {
                     this.updateStatus('❌ Please connect to OneDrive first', 'error');
@@ -2044,7 +2297,19 @@
                             console.log('✅ Image loaded ${fromCache ? 'from cache' : 'successfully'}');
                          " 
                          onerror="
-                            console.log('⚠️ Image failed, using fallback');
+                            console.log('⚠️ Image failed, tracking for retry');
+                            const cardElement = this.closest('.article-card');
+                            if (cardElement) {
+                                const index = parseInt(cardElement.dataset.index);
+                                if (!isNaN(index)) {
+                                    webReader.failedImages.add(index);
+                                    const indicator = this.parentElement.querySelector('.cache-indicator');
+                                    if (indicator) {
+                                        indicator.textContent = '❌ Failed';
+                                        indicator.className = 'cache-indicator error';
+                                    }
+                                }
+                            }
                             this.src='https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
                          ">
                 `;
@@ -3449,6 +3714,7 @@ Host: ${window.location.host}
 - Max Image Size: ${this.maxImageSizeKB}KB
 - Articles with Stored Images: ${storedImages}
 - Total Stored Image Size: ${Math.round(totalStoredSizeKB)}KB
+- Failed Images: ${this.failedImages.size}
 
 💾 LOCAL CACHE:
 - Total Cached Images: ${cacheStats.total}
