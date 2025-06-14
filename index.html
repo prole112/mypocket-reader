@@ -209,12 +209,12 @@
         .header {
             background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
             color: white;
-            padding: 20px 0;
+            padding: 15px 0; /* Reduced padding */
             box-shadow: var(--shadow);
             position: sticky;
             top: 0;
             z-index: 100;
-            height: 80px; /* Fixed height for consistent sticky positioning */
+            min-height: 70px; /* Consistent minimum height */
         }
 
         .header-content {
@@ -277,15 +277,16 @@
 
         /* Search - FIXED STICKY POSITIONING */
         .search-container {
-            padding: 30px 0;
+            padding: 20px 0; /* Reduced padding */
             background: var(--surface);
             border-bottom: 1px solid var(--border);
             position: -webkit-sticky; /* Safari support */
             position: sticky;
-            top: 80px; /* Exactly below the fixed header height */
+            top: 70px; /* Match header min-height */
             z-index: 90;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
+            width: 100%;
         }
 
         /* Enhanced sticky search effect */
@@ -795,41 +796,41 @@
 
             /* Header improvements for mobile */
             .header {
-                padding: 15px 0;
+                padding: 10px 0; /* Further reduced for mobile */
                 position: sticky; /* Keep sticky on mobile too */
                 top: 0;
-                height: 60px; /* Smaller height on mobile */
+                min-height: 50px; /* Smaller minimum height on mobile */
             }
 
             .header-content {
                 flex-direction: column;
                 text-align: center;
-                gap: 15px;
+                gap: 10px; /* Reduced gap */
             }
 
             .logo {
-                font-size: 1.5em;
-                margin-bottom: 10px;
+                font-size: 1.4em; /* Slightly smaller */
+                margin-bottom: 5px;
             }
 
             .header-actions {
                 flex-wrap: wrap;
                 justify-content: center;
-                gap: 8px;
+                gap: 6px;
             }
 
             .btn {
-                padding: 8px 16px;
-                font-size: 13px;
+                padding: 6px 12px; /* Smaller buttons */
+                font-size: 12px;
                 border-radius: 20px;
             }
 
             /* FIXED: Mobile sticky search */
             .search-container {
-                padding: 20px 0;
+                padding: 15px 0; /* Reduced padding on mobile */
                 position: -webkit-sticky; /* Safari mobile support */
                 position: sticky;
-                top: 60px; /* Below mobile header height */
+                top: 50px; /* Match mobile header height */
                 z-index: 95;
                 box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
             }
@@ -1355,6 +1356,10 @@
                 const searchContainer = document.querySelector('.search-container');
                 if (!searchContainer) return;
 
+                // Detect mobile vs desktop for proper header height
+                const isMobile = window.innerWidth <= 768;
+                const headerHeight = isMobile ? 50 : 70;
+
                 // Add intersection observer for better sticky feedback
                 const observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
@@ -1366,7 +1371,7 @@
                     });
                 }, {
                     root: null,
-                    rootMargin: '-80px 0px 0px 0px', // Trigger when header height is passed
+                    rootMargin: `-${headerHeight}px 0px 0px 0px`, // Use dynamic header height
                     threshold: 0
                 });
 
@@ -1374,7 +1379,7 @@
                 const sentinel = document.createElement('div');
                 sentinel.style.height = '1px';
                 sentinel.style.position = 'absolute';
-                sentinel.style.top = '80px'; // Right at header bottom
+                sentinel.style.top = `${headerHeight}px`; // Dynamic header height
                 sentinel.style.left = '0';
                 sentinel.style.width = '100%';
                 sentinel.style.pointerEvents = 'none';
@@ -1382,7 +1387,7 @@
 
                 observer.observe(sentinel);
                 
-                console.log('✅ Sticky search enhanced with visual feedback');
+                console.log(`✅ Sticky search enhanced with ${headerHeight}px header height`);
             }
                 document.getElementById('connectBtn').addEventListener('click', () => this.authenticate());
                 document.getElementById('refreshBtn').addEventListener('click', () => this.loadArticles());
