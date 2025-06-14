@@ -269,9 +269,6 @@
             padding: 30px 0;
             background: var(--surface);
             border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 100px;
-            z-index: 90;
         }
 
         .search-box {
@@ -805,9 +802,6 @@
             /* Search improvements */
             .search-container {
                 padding: 20px 0;
-                position: sticky;
-                top: 0;
-                z-index: 95;
             }
 
             .search-input {
@@ -1323,47 +1317,9 @@
                 this.loadStoredToken();
                 this.loadThemePreference();
                 this.loadImageCache();
-                // Removed setupStickySearch() to avoid conflicts
             }
 
-            // NEW: Enhanced sticky search with visual feedback
-            setupStickySearch() {
-                const searchContainer = document.querySelector('.search-container');
-                if (!searchContainer) return;
-
-                // Detect mobile vs desktop for proper header height
-                const isMobile = window.innerWidth <= 768;
-                const headerHeight = isMobile ? 50 : 70;
-
-                // Add intersection observer for better sticky feedback
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            searchContainer.classList.remove('scrolled');
-                        } else {
-                            searchContainer.classList.add('scrolled');
-                        }
-                    });
-                }, {
-                    root: null,
-                    rootMargin: `-${headerHeight}px 0px 0px 0px`, // Use dynamic header height
-                    threshold: 0
-                });
-
-                // Create a sentinel element to track when search should be "scrolled"
-                const sentinel = document.createElement('div');
-                sentinel.style.height = '1px';
-                sentinel.style.position = 'absolute';
-                sentinel.style.top = `${headerHeight}px`; // Dynamic header height
-                sentinel.style.left = '0';
-                sentinel.style.width = '100%';
-                sentinel.style.pointerEvents = 'none';
-                document.body.appendChild(sentinel);
-
-                observer.observe(sentinel);
-                
-                console.log(`✅ Sticky search enhanced with ${headerHeight}px header height`);
-            }
+            setupEventListeners() {
                 document.getElementById('connectBtn').addEventListener('click', () => this.authenticate());
                 document.getElementById('refreshBtn').addEventListener('click', () => this.loadArticles());
                 document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
@@ -1731,7 +1687,7 @@
 
                 // Confirm the action
                 const proceed = confirm(`Refresh image for "${article.title.substring(0, 50)}..."?\n\nThis will:\n• Clear the current image\n• Try to find a better image from the original source\n• Use alternative sources if needed\n\nProceed?`);
-                
+
                 if (!proceed) return;
 
                 console.log(`🔄 Refreshing single image for: ${article.title.substring(0, 30)}...`);
@@ -1757,7 +1713,7 @@
                     this.imageCache.delete(cacheKey);
 
                     // Clear stored image from article
-                    const mainArticleIndex = this.articles.findIndex(a => 
+                    const mainArticleIndex = this.articles.findIndex(a =>
                         a.url === article.url && a.title === article.title
                     );
                     if (mainArticleIndex !== -1 && this.articles[mainArticleIndex].cachedImage) {
@@ -1800,7 +1756,7 @@
 
                     if (success) {
                         this.updateStatus(`✅ Image refreshed successfully for "${article.title.substring(0, 40)}..."`, 'success');
-                        
+
                         // Update backup if connected
                         if (this.accessToken) {
                             try {
@@ -1817,7 +1773,7 @@
                 } catch (error) {
                     console.error('Single image refresh error:', error);
                     this.updateStatus(`❌ Failed to refresh image: ${error.message}`, 'error');
-                    
+
                     // Show error state
                     const errorCacheIndicator = imageElement.querySelector('.cache-indicator');
                     if (errorCacheIndicator) {
@@ -1837,11 +1793,11 @@
                     // Only consider images that are explicitly in our failed set
                     // OR have explicit "Failed" indicator - nothing else
                     const isExplicitlyFailed = this.failedImages.has(index);
-                    
+
                     const imageElement = document.getElementById(`image-${index}`);
                     const cacheIndicator = imageElement?.querySelector('.cache-indicator');
                     const hasFailedIndicator = cacheIndicator && cacheIndicator.textContent.includes('❌ Failed');
-                    
+
                     // ONLY process if explicitly marked as failed - be very conservative
                     return isExplicitlyFailed || hasFailedIndicator;
                 });
@@ -1853,7 +1809,7 @@
 
                 // Show confirmation with exact count
                 const proceed = confirm(`Retry ${articlesWithFailedImages.length} explicitly failed images?\n\nThis will ONLY affect images marked with "❌ Failed" status.\nWorking images will NOT be touched.\n\nProceed?`);
-                
+
                 if (!proceed) {
                     this.updateStatus('Retry cancelled by user', 'error');
                     return;
@@ -1894,12 +1850,12 @@
                     }
                 }
 
-                const message = successCount > 0 
+                const message = successCount > 0
                     ? `✅ Retry complete! Recovered ${successCount}/${articlesWithFailedImages.length} failed images. Working images were untouched.`
                     : `⚠️ Could not recover the failed images - they may be permanently unavailable.`;
 
                 this.updateStatus(message, successCount > 0 ? 'success' : 'error');
-                
+
                 // Only update backup if we actually recovered images
                 if (successCount > 0 && this.accessToken) {
                     try {
@@ -1995,7 +1951,7 @@ Want All Fresh Images → Use "Sync Images" button
                 console.log(`🎨 Using enhanced fallback for: ${article.title.substring(0, 30)}...`);
                 const fallbackImage = this.getCategoryBasedImage(article, index);
                 this.setArticleImageAndCache(article, index, fallbackImage, 'fallback');
-                
+
                 // Update cache indicator to show it's a fallback
                 const imageElement = document.getElementById(`image-${index}`);
                 const cacheIndicator = imageElement?.querySelector('.cache-indicator');
@@ -2019,7 +1975,7 @@ Want All Fresh Images → Use "Sync Images" button
                     try {
                         console.log(`Trying proxy: ${proxyUrl.substring(0, 50)}...`);
                         const response = await fetch(proxyUrl);
-                        
+
                         if (response.ok) {
                             const html = await response.text();
                             if (html && html.length > 1000) {
@@ -2055,7 +2011,7 @@ Want All Fresh Images → Use "Sync Images" button
                 try {
                     const searchQuery = encodeURIComponent(keywords);
                     const unsplashUrl = `https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                    
+
                     // For now, return a themed image based on keywords
                     // (In a real implementation, you'd use Unsplash API with a key)
                     if (keywords.includes('tech') || keywords.includes('code') || keywords.includes('software')) {
@@ -2067,7 +2023,7 @@ Want All Fresh Images → Use "Sync Images" button
                     if (keywords.includes('design') || keywords.includes('art') || keywords.includes('creative')) {
                         return 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
                     }
-                    
+
                     return unsplashUrl;
                 } catch (error) {
                     console.log(`Keyword-based search failed: ${error.message}`);
@@ -2078,7 +2034,7 @@ Want All Fresh Images → Use "Sync Images" button
             // NEW: Get domain-specific images for known sites
             getDomainSpecificImage(article) {
                 const domain = this.getDomain(article.url).toLowerCase();
-                
+
                 // Site-specific default images for when original images fail
                 const siteDefaults = {
                     'github.com': 'https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=400&h=250&fit=crop&crop=center&q=80&auto=format',
@@ -2838,39 +2794,39 @@ Want All Fresh Images → Use "Sync Images" button
                 const filtered = this.articles.filter(article => {
                     // Search in title (always exists)
                     const titleMatch = article.title && article.title.toLowerCase().includes(searchTerm);
-                    
+
                     // Search in excerpt (usually exists)
                     const excerptMatch = article.excerpt && article.excerpt.toLowerCase().includes(searchTerm);
-                    
+
                     // Search in various content fields
                     const contentFields = ['content', 'textContent', 'html', 'fullContent', 'body', 'readableContent'];
-                    const contentMatch = contentFields.some(field => 
-                        article[field] && typeof article[field] === 'string' && 
+                    const contentMatch = contentFields.some(field =>
+                        article[field] && typeof article[field] === 'string' &&
                         article[field].toLowerCase().includes(searchTerm)
                     );
-                    
+
                     // Search in author (if exists)
                     const authorMatch = article.author && article.author.toLowerCase().includes(searchTerm);
-                    
+
                     // Search in domain
                     const domainMatch = this.getDomain(article.url).toLowerCase().includes(searchTerm);
-                    
+
                     // Search in URL
                     const urlMatch = article.url && article.url.toLowerCase().includes(searchTerm);
-                    
+
                     // Search in tags or categories (if they exist)
-                    const tagsMatch = article.tags && Array.isArray(article.tags) && 
+                    const tagsMatch = article.tags && Array.isArray(article.tags) &&
                         article.tags.some(tag => tag.toLowerCase().includes(searchTerm));
-                    
+
                     return titleMatch || excerptMatch || contentMatch || authorMatch || domainMatch || urlMatch || tagsMatch;
                 });
 
                 console.log(`🎯 Search results: ${filtered.length}/${this.articles.length} articles`);
-                
+
                 // FIXED: Store the filtered articles and display them
                 this.currentDisplayedArticles = filtered;
                 this.displayArticles(filtered);
-                
+
                 if (filtered.length === 0) {
                     this.updateStatus(`No articles found matching "${query}". Try different keywords.`, 'error');
                 } else if (filtered.length === 1) {
@@ -2887,7 +2843,7 @@ Want All Fresh Images → Use "Sync Images" button
                     console.error('Article not found at display index:', displayIndex);
                     return;
                 }
-                
+
                 this.currentArticle = article;
                 const overlay = document.getElementById('readerOverlay');
 
@@ -2940,10 +2896,10 @@ Want All Fresh Images → Use "Sync Images" button
                 if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your OneDrive backup.`)) {
                     try {
                         // Find the original index in the main articles array
-                        const originalIndex = this.articles.findIndex(a => 
+                        const originalIndex = this.articles.findIndex(a =>
                             a.url === article.url && a.title === article.title
                         );
-                        
+
                         if (originalIndex === -1) {
                             throw new Error('Could not find article in main collection');
                         }
@@ -3303,7 +3259,7 @@ Want All Fresh Images → Use "Sync Images" button
                         this.articles.splice(index, 1);
 
                         // Update current displayed articles if this article is in the current view
-                        const displayedIndex = this.currentDisplayedArticles.findIndex(a => 
+                        const displayedIndex = this.currentDisplayedArticles.findIndex(a =>
                             a.url === article.url && a.title === article.title
                         );
                         if (displayedIndex !== -1) {
@@ -3357,7 +3313,7 @@ Want All Fresh Images → Use "Sync Images" button
                         this.articles.splice(index, 1);
 
                         // Update current displayed articles if this article is in the current view
-                        const displayedIndex = this.currentDisplayedArticles.findIndex(a => 
+                        const displayedIndex = this.currentDisplayedArticles.findIndex(a =>
                             a.url === article.url && a.title === article.title
                         );
                         if (displayedIndex !== -1) {
