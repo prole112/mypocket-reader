@@ -1419,6 +1419,9 @@
                     <button id="testBtn" class="btn btn-secondary" onclick="webReader.toggleTestMode()">
                         <span>👁️</span> Show Buttons
                     </button>
+                    <button id="diagBtn" class="btn btn-secondary" onclick="webReader.runDiagnostics()" title="Run click diagnostics">
+                        <span>🔬</span> Diagnose
+                    </button>
                     <button id="darkModeBtn" class="btn btn-secondary" onclick="webReader.toggleDarkMode()">
                         <span>🌙</span> Dark Mode
                     </button>
@@ -1545,7 +1548,7 @@
                 this.swRegistration = null;
 
                 // Virtual scrolling properties
-                this.virtualScrollEnabled = true;
+                this.virtualScrollEnabled = false; // Temporarily disabled for debugging
                 this.itemsPerBatch = 20; // Articles to render at once
                 this.batchBuffer = 10; // Extra items above/below viewport
                 this.currentBatch = 0;
@@ -1590,6 +1593,11 @@
                     virtualScrollText.textContent = 'Virtual ON';
                     virtualScrollBtn.style.background = 'var(--primary-color)';
                     virtualScrollBtn.style.color = 'white';
+                } else {
+                    virtualScrollIcon.textContent = '📊';
+                    virtualScrollText.textContent = 'Virtual OFF';
+                    virtualScrollBtn.style.background = '';
+                    virtualScrollBtn.style.color = '';
                 }
                 
                 console.log('⚡ Virtual scrolling initialized:', {
@@ -3207,13 +3215,25 @@ Want All Fresh Images → Use "Sync Images" button
                 }
             }
 
-            // FIXED: New functions that work with display indices
+            // FIXED: New functions that work with display indices (with debugging)
             openReaderByDisplayIndex(displayIndex) {
+                console.log(`🔍 Opening reader for display index: ${displayIndex}`, {
+                    currentDisplayedArticles: this.currentDisplayedArticles.length,
+                    virtualScrollEnabled: this.virtualScrollEnabled,
+                    requestedIndex: displayIndex
+                });
+
                 const article = this.currentDisplayedArticles[displayIndex];
                 if (!article) {
-                    console.error('Article not found at display index:', displayIndex);
+                    console.error('❌ Article not found at display index:', displayIndex, {
+                        availableIndices: this.currentDisplayedArticles.length,
+                        displayIndex: displayIndex
+                    });
+                    this.updateStatus(`❌ Error: Article not found (index ${displayIndex})`, 'error');
                     return;
                 }
+
+                console.log(`✅ Found article: "${article.title.substring(0, 50)}..."`);
 
                 this.currentArticle = article;
                 const overlay = document.getElementById('readerOverlay');
@@ -3240,9 +3260,12 @@ Want All Fresh Images → Use "Sync Images" button
             }
 
             exportArticleByDisplayIndex(displayIndex) {
+                console.log(`📤 Exporting article at display index: ${displayIndex}`);
+
                 const article = this.currentDisplayedArticles[displayIndex];
                 if (!article) {
-                    console.error('Article not found at display index:', displayIndex);
+                    console.error('❌ Article not found at display index:', displayIndex);
+                    this.updateStatus(`❌ Error: Article not found for export (index ${displayIndex})`, 'error');
                     return;
                 }
 
@@ -3258,9 +3281,12 @@ Want All Fresh Images → Use "Sync Images" button
             }
 
             async deleteArticleByDisplayIndex(displayIndex) {
+                console.log(`🗑️ Deleting article at display index: ${displayIndex}`);
+
                 const article = this.currentDisplayedArticles[displayIndex];
                 if (!article) {
-                    console.error('Article not found at display index:', displayIndex);
+                    console.error('❌ Article not found at display index:', displayIndex);
+                    this.updateStatus(`❌ Error: Article not found for deletion (index ${displayIndex})`, 'error');
                     return;
                 }
 
@@ -3883,6 +3909,7 @@ Want All Fresh Images → Use "Sync Images" button
                 
                 const articlesHTML = articles.map((article, batchIndex) => {
                     const originalIndex = startIndex + batchIndex;
+                    const displayIndex = startIndex + batchIndex; // This is the index in currentDisplayedArticles
                     
                     let imageHTML = '';
                     let cacheStatus = 'loading';
@@ -3920,14 +3947,14 @@ Want All Fresh Images → Use "Sync Images" button
                     }
 
                     return `
-                    <div class="article-card" data-index="${originalIndex}" data-display-index="${batchIndex}" data-image-source="${imageSource}">
+                    <div class="article-card" data-index="${originalIndex}" data-display-index="${displayIndex}" data-image-source="${imageSource}">
                         <div class="article-image" id="image-${originalIndex}">
                             ${imageHTML}
                             <div class="cache-indicator ${cacheStatus}">
                                 ${statusText}
                             </div>
                         </div>
-                        <div class="article-content" onclick="webReader.openReaderByDisplayIndex(${startIndex + batchIndex})">
+                        <div class="article-content" onclick="webReader.openReaderByDisplayIndex(${displayIndex})">
                             <h2 class="article-title">${this.escapeHtml(article.title)}</h2>
                             <p class="article-excerpt">${this.escapeHtml(article.excerpt)}</p>
                             <div class="article-meta">
@@ -3940,16 +3967,16 @@ Want All Fresh Images → Use "Sync Images" button
                             </div>
                         </div>
                         <div class="article-actions">
-                            <button class="action-btn read-btn" onclick="event.stopPropagation(); webReader.openReaderByDisplayIndex(${startIndex + batchIndex})" title="Read article">
+                            <button class="action-btn read-btn" onclick="event.stopPropagation(); webReader.openReaderByDisplayIndex(${displayIndex})" title="Read article">
                                 📖
                             </button>
-                            <button class="action-btn refresh-image-btn" onclick="event.stopPropagation(); webReader.refreshSingleImage(${originalIndex}, ${startIndex + batchIndex})" title="Refresh this image">
+                            <button class="action-btn refresh-image-btn" onclick="event.stopPropagation(); webReader.refreshSingleImage(${originalIndex}, ${displayIndex})" title="Refresh this image">
                                 🖼️
                             </button>
-                            <button class="action-btn export-btn" onclick="event.stopPropagation(); webReader.exportArticleByDisplayIndex(${startIndex + batchIndex})" title="Export article">
+                            <button class="action-btn export-btn" onclick="event.stopPropagation(); webReader.exportArticleByDisplayIndex(${displayIndex})" title="Export article">
                                 📤
                             </button>
-                            <button class="action-btn delete-btn" onclick="event.stopPropagation(); webReader.deleteArticleByDisplayIndex(${startIndex + batchIndex})" title="Delete article">
+                            <button class="action-btn delete-btn" onclick="event.stopPropagation(); webReader.deleteArticleByDisplayIndex(${displayIndex})" title="Delete article">
                                 🗑️
                             </button>
                         </div>
@@ -4799,9 +4826,29 @@ Search Features:
                         : '<span>👁️</span> Show Buttons';
                 }
 
+                // Enhanced test mode with click debugging
+                if (isTestMode) {
+                    // Add click event logging
+                    document.addEventListener('click', this.testModeClickHandler = (e) => {
+                        if (e.target.closest('.article-card')) {
+                            const card = e.target.closest('.article-card');
+                            const displayIndex = card.dataset.displayIndex;
+                            const originalIndex = card.dataset.index;
+                            console.log('🔍 Test Mode Click:', {
+                                target: e.target.tagName + (e.target.className ? '.' + e.target.className : ''),
+                                card: card,
+                                displayIndex: displayIndex,
+                                originalIndex: originalIndex,
+                                currentDisplayedCount: this.currentDisplayedArticles.length,
+                                virtualScrollEnabled: this.virtualScrollEnabled
+                            });
+                        }
+                    });
+                }
+
                 this.updateStatus(
                     isTestMode
-                        ? '🔍 Test mode ON - Action buttons always visible'
+                        ? '🔍 Test mode ON - Action buttons always visible + click debugging enabled'
                         : '👁️ Test mode OFF - Action buttons show on hover',
                     'success'
                 );
@@ -4826,6 +4873,65 @@ Search Features:
                 const savedTheme = localStorage.getItem('theme') || 'light';
                 document.documentElement.setAttribute('data-theme', savedTheme);
                 this.updateDarkModeButton(savedTheme);
+            }
+
+            runDiagnostics() {
+                console.log('🔬 Running click diagnostics...');
+                
+                const virtualContainer = document.getElementById('virtualScrollContainer');
+                const traditionalContainer = document.getElementById('traditionalContainer');
+                const virtualGrid = document.getElementById('virtualArticlesGrid');
+                const articleCards = document.querySelectorAll('.article-card');
+                
+                const diagnostics = {
+                    displayedArticles: this.currentDisplayedArticles.length,
+                    totalArticles: this.articles.length,
+                    virtualScrollEnabled: this.virtualScrollEnabled,
+                    containers: {
+                        virtualVisible: virtualContainer ? virtualContainer.style.display !== 'none' : false,
+                        traditionalVisible: traditionalContainer ? traditionalContainer.style.display !== 'none' : false,
+                        virtualExists: !!virtualContainer,
+                        traditionalExists: !!traditionalContainer
+                    },
+                    renderedCards: articleCards.length,
+                    firstCardData: articleCards.length > 0 ? {
+                        displayIndex: articleCards[0].dataset.displayIndex,
+                        originalIndex: articleCards[0].dataset.index,
+                        hasClickHandler: articleCards[0].querySelector('.article-content')?.onclick ? 'yes' : 'no'
+                    } : 'no cards found'
+                };
+                
+                console.table(diagnostics);
+                
+                const summary = `
+Diagnostics Summary:
+===================
+📊 Articles: ${diagnostics.displayedArticles} displayed / ${diagnostics.totalArticles} total
+⚡ Virtual Scroll: ${diagnostics.virtualScrollEnabled ? 'ON' : 'OFF'}
+📦 Containers: Virtual=${diagnostics.containers.virtualVisible}, Traditional=${diagnostics.containers.traditionalVisible}
+🎴 Rendered Cards: ${diagnostics.renderedCards}
+
+${diagnostics.renderedCards > 0 ? `
+First Card Info:
+- Display Index: ${diagnostics.firstCardData.displayIndex}
+- Original Index: ${diagnostics.firstCardData.originalIndex}  
+- Click Handler: ${diagnostics.firstCardData.hasClickHandler}
+` : '❌ No cards rendered!'}
+
+${diagnostics.renderedCards === 0 ? '🚨 ISSUE: No article cards are rendered!' : ''}
+${!diagnostics.containers.virtualVisible && !diagnostics.containers.traditionalVisible ? '🚨 ISSUE: No container is visible!' : ''}
+                `;
+                
+                alert(summary);
+                this.updateStatus('🔬 Diagnostics complete - Check console for details', 'success');
+                
+                // Test click on first card if available
+                if (articleCards.length > 0) {
+                    console.log('🧪 Testing click on first card...');
+                    const firstCard = articleCards[0];
+                    const clickEvent = new MouseEvent('click', { bubbles: true });
+                    firstCard.querySelector('.article-content')?.dispatchEvent(clickEvent);
+                }
             }
 
             updateDarkModeButton(theme) {
