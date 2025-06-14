@@ -805,14 +805,15 @@
                 line-height: 1.4;
             }
 
-            /* MAJOR MOBILE GRID FIX */
+            /* MAJOR MOBILE GRID FIX - OVERRIDE FOR MOBILE ONLY */
             .articles-section {
                 padding: 20px 0;
             }
 
             .articles-grid {
-                display: block;
-                /* Use block layout instead of grid for better mobile performance */
+                display: block !important;
+                /* Single column on mobile - override everything else */
+                grid-template-columns: none !important;
                 margin-top: 15px;
             }
 
