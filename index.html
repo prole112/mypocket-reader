@@ -1264,6 +1264,7 @@
                 this.accessToken = null;
                 this.articles = [];
                 this.currentArticle = null;
+                this.currentDisplayedArticles = []; // Track what's currently displayed
                 this.failedImages = new Set(); // Track articles with failed images
 
                 // Image cache system
@@ -2154,6 +2155,9 @@
                     return;
                 }
 
+                // FIXED: Store what we're currently displaying
+                this.currentDisplayedArticles = articles;
+
                 // Check if mobile for performance optimization
                 const isMobile = window.innerWidth <= 768;
 
@@ -2164,9 +2168,8 @@
                 console.log('🎯 DISPLAYING ARTICLES - Image Source Priority Check:');
 
                 const articlesHTML = articles.map((article, displayIndex) => {
-                    // FIXED: Find the original index in the main articles array
-                    const originalIndex = this.articles.findIndex(a => a.url === article.url && a.title === article.title);
-                    const index = originalIndex !== -1 ? originalIndex : displayIndex;
+                    // Use the display index for the currently shown articles
+                    const index = displayIndex;
 
                     let imageHTML = '';
                     let cacheStatus = 'loading';
@@ -2223,14 +2226,14 @@
                     }
 
                     return `
-                    <div class="article-card" data-index="${index}" data-original-index="${index}" data-image-source="${imageSource}">
+                    <div class="article-card" data-index="${index}" data-display-index="${displayIndex}" data-image-source="${imageSource}">
                         <div class="article-image" id="image-${index}">
                             ${imageHTML}
                             <div class="cache-indicator ${cacheStatus}">
                                 ${statusText}
                             </div>
                         </div>
-                        <div class="article-content" onclick="webReader.openReader(${index})">
+                        <div class="article-content" onclick="webReader.openReaderByDisplayIndex(${displayIndex})">
                             <h2 class="article-title">${this.escapeHtml(article.title)}</h2>
                             <p class="article-excerpt">${this.escapeHtml(article.excerpt)}</p>
                             <div class="article-meta">
@@ -2243,13 +2246,13 @@
                             </div>
                         </div>
                         <div class="article-actions">
-                            <button class="action-btn read-btn" onclick="event.stopPropagation(); webReader.openReader(${index})" title="Read article">
+                            <button class="action-btn read-btn" onclick="event.stopPropagation(); webReader.openReaderByDisplayIndex(${displayIndex})" title="Read article">
                                 📖
                             </button>
-                            <button class="action-btn export-btn" onclick="event.stopPropagation(); webReader.exportArticle(${index})" title="Export article">
+                            <button class="action-btn export-btn" onclick="event.stopPropagation(); webReader.exportArticleByDisplayIndex(${displayIndex})" title="Export article">
                                 📤
                             </button>
-                            <button class="action-btn delete-btn" onclick="event.stopPropagation(); webReader.deleteArticle(${index})" title="Delete article">
+                            <button class="action-btn delete-btn" onclick="event.stopPropagation(); webReader.deleteArticleByDisplayIndex(${displayIndex})" title="Delete article">
                                 🗑️
                             </button>
                         </div>
@@ -2578,6 +2581,7 @@
                     const backup = JSON.parse(backupContent);
 
                     this.articles = backup.articles || [];
+                    this.currentDisplayedArticles = this.articles; // Initialize displayed articles
                     this.displayArticles(this.articles);
 
                     const cacheStats = this.getCacheStats();
@@ -2602,6 +2606,7 @@
 
             searchArticles(query) {
                 if (!query || query.trim() === '') {
+                    this.currentDisplayedArticles = this.articles;
                     this.displayArticles(this.articles);
                     this.updateStatus(`Showing all ${this.articles.length} articles`, 'success');
                     return;
@@ -2641,6 +2646,9 @@
                 });
 
                 console.log(`🎯 Search results: ${filtered.length}/${this.articles.length} articles`);
+                
+                // FIXED: Store the filtered articles and display them
+                this.currentDisplayedArticles = filtered;
                 this.displayArticles(filtered);
                 
                 if (filtered.length === 0) {
@@ -2652,6 +2660,104 @@
                 }
             }
 
+            // FIXED: New functions that work with display indices
+            openReaderByDisplayIndex(displayIndex) {
+                const article = this.currentDisplayedArticles[displayIndex];
+                if (!article) {
+                    console.error('Article not found at display index:', displayIndex);
+                    return;
+                }
+                
+                this.currentArticle = article;
+                const overlay = document.getElementById('readerOverlay');
+
+                // Set title and meta info
+                document.getElementById('readerTitle').textContent = article.title;
+                document.getElementById('readerDate').textContent = this.formatDate(article.dateAdded);
+                document.getElementById('readerDomain').textContent = this.getDomain(article.url);
+                document.getElementById('readerTime').textContent = `${article.readTime || 1} min read`;
+
+                // Show loading state first
+                document.getElementById('readerContent').innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+                        <p>Checking for article content...</p>
+                    </div>
+                `;
+
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+
+                // Try to get content, fetch if needed
+                setTimeout(() => this.loadArticleContent(article), 100);
+            }
+
+            exportArticleByDisplayIndex(displayIndex) {
+                const article = this.currentDisplayedArticles[displayIndex];
+                if (!article) {
+                    console.error('Article not found at display index:', displayIndex);
+                    return;
+                }
+
+                try {
+                    const html = this.createArticleHTML(article);
+                    const filename = `${this.sanitizeFilename(article.title)}.html`;
+                    this.downloadFile(html, filename, 'text/html');
+                    this.updateStatus(`📤 Article "${article.title}" exported successfully!`, 'success');
+                } catch (error) {
+                    console.error('Error exporting article:', error);
+                    this.updateStatus(`❌ Failed to export article: ${error.message}`, 'error');
+                }
+            }
+
+            async deleteArticleByDisplayIndex(displayIndex) {
+                const article = this.currentDisplayedArticles[displayIndex];
+                if (!article) {
+                    console.error('Article not found at display index:', displayIndex);
+                    return;
+                }
+
+                if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your OneDrive backup.`)) {
+                    try {
+                        // Find the original index in the main articles array
+                        const originalIndex = this.articles.findIndex(a => 
+                            a.url === article.url && a.title === article.title
+                        );
+                        
+                        if (originalIndex === -1) {
+                            throw new Error('Could not find article in main collection');
+                        }
+
+                        // Remove from cache
+                        const cacheKey = this.getCacheKey(article);
+                        this.imageCache.delete(cacheKey);
+                        this.saveImageCache();
+
+                        // Remove from main articles array
+                        this.articles.splice(originalIndex, 1);
+
+                        // Remove from currently displayed articles
+                        this.currentDisplayedArticles.splice(displayIndex, 1);
+
+                        if (this.accessToken) {
+                            this.updateStatus('Updating OneDrive backup...', 'loading');
+                            await this.updateOneDriveBackup();
+                            this.updateStatus(`✅ Article deleted and backup updated. ${this.articles.length} articles remaining.`, 'success');
+                        } else {
+                            this.updateStatus(`❌ Article deleted locally but OneDrive backup not updated (not connected).`, 'error');
+                        }
+
+                        // Refresh the display with current articles
+                        this.displayArticles(this.currentDisplayedArticles);
+
+                    } catch (error) {
+                        console.error('Error deleting article:', error);
+                        this.updateStatus(`❌ Failed to delete article: ${error.message}`, 'error');
+                    }
+                }
+            }
+
+            // Keep original functions for backward compatibility
             openReader(index) {
                 this.currentArticle = this.articles[index];
                 const overlay = document.getElementById('readerOverlay');
@@ -2976,6 +3082,14 @@
 
                         this.articles.splice(index, 1);
 
+                        // Update current displayed articles if this article is in the current view
+                        const displayedIndex = this.currentDisplayedArticles.findIndex(a => 
+                            a.url === article.url && a.title === article.title
+                        );
+                        if (displayedIndex !== -1) {
+                            this.currentDisplayedArticles.splice(displayedIndex, 1);
+                        }
+
                         if (this.accessToken) {
                             this.updateStatus('Updating OneDrive backup...', 'loading');
                             await this.updateOneDriveBackup();
@@ -2984,7 +3098,8 @@
                             this.updateStatus(`❌ Article deleted locally but OneDrive backup not updated (not connected).`, 'error');
                         }
 
-                        this.displayArticles(this.articles);
+                        // Refresh the display with current articles
+                        this.displayArticles(this.currentDisplayedArticles);
 
                     } catch (error) {
                         console.error('Error deleting article:', error);
@@ -3005,6 +3120,45 @@
                 } catch (error) {
                     console.error('Error exporting article:', error);
                     this.updateStatus(`❌ Failed to export article: ${error.message}`, 'error');
+                }
+            }
+
+            async deleteArticle(index) {
+                const article = this.articles[index];
+                if (!article) return;
+
+                if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your OneDrive backup.`)) {
+                    try {
+                        // Remove from cache
+                        const cacheKey = this.getCacheKey(article);
+                        this.imageCache.delete(cacheKey);
+                        this.saveImageCache();
+
+                        this.articles.splice(index, 1);
+
+                        // Update current displayed articles if this article is in the current view
+                        const displayedIndex = this.currentDisplayedArticles.findIndex(a => 
+                            a.url === article.url && a.title === article.title
+                        );
+                        if (displayedIndex !== -1) {
+                            this.currentDisplayedArticles.splice(displayedIndex, 1);
+                        }
+
+                        if (this.accessToken) {
+                            this.updateStatus('Updating OneDrive backup...', 'loading');
+                            await this.updateOneDriveBackup();
+                            this.updateStatus(`✅ Article deleted and backup updated. ${this.articles.length} articles remaining.`, 'success');
+                        } else {
+                            this.updateStatus(`❌ Article deleted locally but OneDrive backup not updated (not connected).`, 'error');
+                        }
+
+                        // Refresh the display with current articles
+                        this.displayArticles(this.currentDisplayedArticles);
+
+                    } catch (error) {
+                        console.error('Error deleting article:', error);
+                        this.updateStatus(`❌ Failed to delete article: ${error.message}`, 'error');
+                    }
                 }
             }
 
