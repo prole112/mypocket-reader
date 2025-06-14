@@ -64,16 +64,6 @@
             opacity: 0.8;
         }
 
-        /* Dark mode sticky search */
-        [data-theme="dark"] .search-container {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-        }
-
-        [data-theme="dark"] .search-container.scrolled {
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-            border-bottom-color: var(--primary-color);
-        }
-
         [data-theme="dark"] .btn-secondary {
             background: var(--surface);
             color: var(--text-primary);
@@ -205,7 +195,7 @@
             padding: 0 20px;
         }
 
-        /* Header - REVERTED TO WORKING VERSION */
+        /* Header */
         .header {
             background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
             color: white;
@@ -274,25 +264,14 @@
             transform: translateY(-1px);
         }
 
-        /* Search - SIMPLIFIED STICKY POSITIONING */
+        /* Search */
         .search-container {
             padding: 30px 0;
             background: var(--surface);
             border-bottom: 1px solid var(--border);
-            position: -webkit-sticky; /* Safari support */
             position: sticky;
-            top: 90px; /* Safe distance below header */
+            top: 100px;
             z-index: 90;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            width: 100%;
-        }
-
-        /* Enhanced sticky search effect */
-        .search-container.scrolled {
-            background: var(--surface);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            border-bottom: 2px solid var(--primary-color);
         }
 
         .search-box {
@@ -793,11 +772,11 @@
                 padding: 0 12px;
             }
 
-            /* Header improvements for mobile - REVERTED */
+            /* Header improvements for mobile */
             .header {
                 padding: 15px 0;
-                position: sticky; 
-                top: 0;
+                position: relative;
+                /* Remove sticky on mobile for better performance */
             }
 
             .header-content {
@@ -823,14 +802,12 @@
                 border-radius: 20px;
             }
 
-            /* SIMPLIFIED: Mobile sticky search */
+            /* Search improvements */
             .search-container {
                 padding: 20px 0;
-                position: -webkit-sticky; 
                 position: sticky;
-                top: 80px; /* Safe distance below header */
+                top: 0;
                 z-index: 95;
-                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
             }
 
             .search-input {
