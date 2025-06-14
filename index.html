@@ -214,6 +214,7 @@
             position: sticky;
             top: 0;
             z-index: 100;
+            height: 80px; /* Fixed height for consistent sticky positioning */
         }
 
         .header-content {
@@ -274,13 +275,14 @@
             transform: translateY(-1px);
         }
 
-        /* Search */
+        /* Search - FIXED STICKY POSITIONING */
         .search-container {
             padding: 30px 0;
             background: var(--surface);
             border-bottom: 1px solid var(--border);
+            position: -webkit-sticky; /* Safari support */
             position: sticky;
-            top: 100px; /* Below the header */
+            top: 80px; /* Exactly below the fixed header height */
             z-index: 90;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
@@ -794,8 +796,9 @@
             /* Header improvements for mobile */
             .header {
                 padding: 15px 0;
-                position: relative;
-                /* Remove sticky on mobile for better performance */
+                position: sticky; /* Keep sticky on mobile too */
+                top: 0;
+                height: 60px; /* Smaller height on mobile */
             }
 
             .header-content {
@@ -821,11 +824,12 @@
                 border-radius: 20px;
             }
 
-            /* Search improvements */
+            /* FIXED: Mobile sticky search */
             .search-container {
                 padding: 20px 0;
+                position: -webkit-sticky; /* Safari mobile support */
                 position: sticky;
-                top: 0; /* Stick to very top on mobile since header isn't sticky */
+                top: 60px; /* Below mobile header height */
                 z-index: 95;
                 box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
             }
@@ -1343,9 +1347,43 @@
                 this.loadStoredToken();
                 this.loadThemePreference();
                 this.loadImageCache();
+                this.setupStickySearch(); // Add sticky search enhancement
             }
 
-            setupEventListeners() {
+            // NEW: Enhanced sticky search with visual feedback
+            setupStickySearch() {
+                const searchContainer = document.querySelector('.search-container');
+                if (!searchContainer) return;
+
+                // Add intersection observer for better sticky feedback
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            searchContainer.classList.remove('scrolled');
+                        } else {
+                            searchContainer.classList.add('scrolled');
+                        }
+                    });
+                }, {
+                    root: null,
+                    rootMargin: '-80px 0px 0px 0px', // Trigger when header height is passed
+                    threshold: 0
+                });
+
+                // Create a sentinel element to track when search should be "scrolled"
+                const sentinel = document.createElement('div');
+                sentinel.style.height = '1px';
+                sentinel.style.position = 'absolute';
+                sentinel.style.top = '80px'; // Right at header bottom
+                sentinel.style.left = '0';
+                sentinel.style.width = '100%';
+                sentinel.style.pointerEvents = 'none';
+                document.body.appendChild(sentinel);
+
+                observer.observe(sentinel);
+                
+                console.log('✅ Sticky search enhanced with visual feedback');
+            }
                 document.getElementById('connectBtn').addEventListener('click', () => this.authenticate());
                 document.getElementById('refreshBtn').addEventListener('click', () => this.loadArticles());
                 document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
