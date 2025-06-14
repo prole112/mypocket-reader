@@ -2163,7 +2163,11 @@
 
                 console.log('🎯 DISPLAYING ARTICLES - Image Source Priority Check:');
 
-                const articlesHTML = articles.map((article, index) => {
+                const articlesHTML = articles.map((article, displayIndex) => {
+                    // FIXED: Find the original index in the main articles array
+                    const originalIndex = this.articles.findIndex(a => a.url === article.url && a.title === article.title);
+                    const index = originalIndex !== -1 ? originalIndex : displayIndex;
+
                     let imageHTML = '';
                     let cacheStatus = 'loading';
                     let statusText = '🔄 Loading';
@@ -2176,7 +2180,7 @@
                         statusText = '🌐 Synced';
                         imageSource = 'synced_base64';
                         imagesFromBackup++;
-                        console.log(`✅ ${index}: Using SYNCED base64 for "${article.title.substring(0, 30)}..." (${Math.round(article.cachedImage.size)}KB)`);
+                        console.log(`✅ ${displayIndex}: Using SYNCED base64 for "${article.title.substring(0, 30)}..." (${Math.round(article.cachedImage.size)}KB)`);
                     }
                     // PRIORITY 2: Synced URLs (still cross-device but less reliable)
                     else if (article.cachedImage && article.cachedImage.url && !article.cachedImage.base64) {
@@ -2185,7 +2189,7 @@
                         statusText = '🔗 Synced URL';
                         imageSource = 'synced_url';
                         imagesFromBackup++;
-                        console.log(`✅ ${index}: Using SYNCED URL for "${article.title.substring(0, 30)}..."`);
+                        console.log(`✅ ${displayIndex}: Using SYNCED URL for "${article.title.substring(0, 30)}..."`);
                     }
                     // PRIORITY 3: Local cache (device specific)
                     else if (this.getCachedImage(article)) {
@@ -2194,7 +2198,7 @@
                         statusText = '💾 Local Cache';
                         imageSource = 'local_cache';
                         imagesFromCache++;
-                        console.log(`⚡ ${index}: Using LOCAL cache for "${article.title.substring(0, 30)}..."`);
+                        console.log(`⚡ ${displayIndex}: Using LOCAL cache for "${article.title.substring(0, 30)}..."`);
                     }
                     // PRIORITY 4: Article metadata (extract and sync immediately)
                     else if (this.getBestArticleImage(article)) {
@@ -2203,7 +2207,7 @@
                         cacheStatus = 'metadata';
                         statusText = '📄 Metadata';
                         imageSource = 'metadata';
-                        console.log(`📄 ${index}: Using METADATA image for "${article.title.substring(0, 30)}..." - will sync`);
+                        console.log(`📄 ${displayIndex}: Using METADATA image for "${article.title.substring(0, 30)}..." - will sync`);
 
                         // Store this image for cross-device sync IMMEDIATELY
                         setTimeout(() => this.setArticleImageAndCache(article, index, savedImage, 'saved'), 100);
@@ -2215,11 +2219,11 @@
                         statusText = isMobile ? '📱 Loading...' : '🔄 Loading';
                         imageSource = 'needs_extraction';
                         imagesNeedLoading++;
-                        console.log(`❌ ${index}: NO image found for "${article.title.substring(0, 30)}..." - needs extraction`);
+                        console.log(`❌ ${displayIndex}: NO image found for "${article.title.substring(0, 30)}..." - needs extraction`);
                     }
 
                     return `
-                    <div class="article-card" data-index="${index}" data-image-source="${imageSource}">
+                    <div class="article-card" data-index="${index}" data-original-index="${index}" data-image-source="${imageSource}">
                         <div class="article-image" id="image-${index}">
                             ${imageHTML}
                             <div class="cache-indicator ${cacheStatus}">
