@@ -2333,20 +2333,55 @@
             }
 
             searchArticles(query) {
-                if (!query) {
+                if (!query || query.trim() === '') {
                     this.displayArticles(this.articles);
+                    this.updateStatus(`Showing all ${this.articles.length} articles`, 'success');
                     return;
                 }
 
-                const filtered = this.articles.filter(article =>
-                    article.title.toLowerCase().includes(query.toLowerCase()) ||
-                    article.textContent.toLowerCase().includes(query.toLowerCase()) ||
-                    article.author.toLowerCase().includes(query.toLowerCase()) ||
-                    this.getDomain(article.url).toLowerCase().includes(query.toLowerCase())
-                );
+                const searchTerm = query.toLowerCase().trim();
+                console.log(`🔍 Searching for: "${searchTerm}"`);
 
+                const filtered = this.articles.filter(article => {
+                    // Search in title (always exists)
+                    const titleMatch = article.title && article.title.toLowerCase().includes(searchTerm);
+                    
+                    // Search in excerpt (usually exists)
+                    const excerptMatch = article.excerpt && article.excerpt.toLowerCase().includes(searchTerm);
+                    
+                    // Search in various content fields
+                    const contentFields = ['content', 'textContent', 'html', 'fullContent', 'body', 'readableContent'];
+                    const contentMatch = contentFields.some(field => 
+                        article[field] && typeof article[field] === 'string' && 
+                        article[field].toLowerCase().includes(searchTerm)
+                    );
+                    
+                    // Search in author (if exists)
+                    const authorMatch = article.author && article.author.toLowerCase().includes(searchTerm);
+                    
+                    // Search in domain
+                    const domainMatch = this.getDomain(article.url).toLowerCase().includes(searchTerm);
+                    
+                    // Search in URL
+                    const urlMatch = article.url && article.url.toLowerCase().includes(searchTerm);
+                    
+                    // Search in tags or categories (if they exist)
+                    const tagsMatch = article.tags && Array.isArray(article.tags) && 
+                        article.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+                    
+                    return titleMatch || excerptMatch || contentMatch || authorMatch || domainMatch || urlMatch || tagsMatch;
+                });
+
+                console.log(`🎯 Search results: ${filtered.length}/${this.articles.length} articles`);
                 this.displayArticles(filtered);
-                this.updateStatus(`Found ${filtered.length} articles matching "${query}"`, filtered.length > 0 ? 'success' : 'error');
+                
+                if (filtered.length === 0) {
+                    this.updateStatus(`No articles found matching "${query}". Try different keywords.`, 'error');
+                } else if (filtered.length === 1) {
+                    this.updateStatus(`Found 1 article matching "${query}"`, 'success');
+                } else {
+                    this.updateStatus(`Found ${filtered.length} articles matching "${query}"`, 'success');
+                }
             }
 
             openReader(index) {
