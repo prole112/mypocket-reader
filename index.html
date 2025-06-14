@@ -64,16 +64,6 @@
             opacity: 0.8;
         }
 
-        /* Dark mode sticky search */
-        [data-theme="dark"] .search-container {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-        }
-
-        [data-theme="dark"] .search-container.scrolled {
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-            border-bottom-color: var(--primary-color);
-        }
-
         [data-theme="dark"] .btn-secondary {
             background: var(--surface);
             color: var(--text-primary);
@@ -209,12 +199,11 @@
         .header {
             background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
             color: white;
-            padding: 15px 0; /* Reduced padding */
+            padding: 20px 0;
             box-shadow: var(--shadow);
             position: sticky;
             top: 0;
             z-index: 100;
-            min-height: 70px; /* Consistent minimum height */
         }
 
         .header-content {
@@ -275,25 +264,11 @@
             transform: translateY(-1px);
         }
 
-        /* Search - FIXED STICKY POSITIONING */
+        /* Search */
         .search-container {
-            padding: 20px 0; /* Reduced padding */
+            padding: 30px 0;
             background: var(--surface);
             border-bottom: 1px solid var(--border);
-            position: -webkit-sticky; /* Safari support */
-            position: sticky;
-            top: 70px; /* Match header min-height */
-            z-index: 90;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            width: 100%;
-        }
-
-        /* Enhanced sticky search effect */
-        .search-container.scrolled {
-            background: var(--surface);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            border-bottom: 2px solid var(--primary-color);
         }
 
         .search-box {
@@ -796,43 +771,37 @@
 
             /* Header improvements for mobile */
             .header {
-                padding: 10px 0; /* Further reduced for mobile */
-                position: sticky; /* Keep sticky on mobile too */
-                top: 0;
-                min-height: 50px; /* Smaller minimum height on mobile */
+                padding: 15px 0;
+                position: relative;
+                /* Remove sticky on mobile for better performance */
             }
 
             .header-content {
                 flex-direction: column;
                 text-align: center;
-                gap: 10px; /* Reduced gap */
+                gap: 15px;
             }
 
             .logo {
-                font-size: 1.4em; /* Slightly smaller */
-                margin-bottom: 5px;
+                font-size: 1.5em;
+                margin-bottom: 10px;
             }
 
             .header-actions {
                 flex-wrap: wrap;
                 justify-content: center;
-                gap: 6px;
+                gap: 8px;
             }
 
             .btn {
-                padding: 6px 12px; /* Smaller buttons */
-                font-size: 12px;
+                padding: 8px 16px;
+                font-size: 13px;
                 border-radius: 20px;
             }
 
-            /* FIXED: Mobile sticky search */
+            /* Search improvements */
             .search-container {
-                padding: 15px 0; /* Reduced padding on mobile */
-                position: -webkit-sticky; /* Safari mobile support */
-                position: sticky;
-                top: 50px; /* Match mobile header height */
-                z-index: 95;
-                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+                padding: 20px 0;
             }
 
             .search-input {
@@ -1348,47 +1317,9 @@
                 this.loadStoredToken();
                 this.loadThemePreference();
                 this.loadImageCache();
-                this.setupStickySearch(); // Add sticky search enhancement
             }
 
-            // NEW: Enhanced sticky search with visual feedback
-            setupStickySearch() {
-                const searchContainer = document.querySelector('.search-container');
-                if (!searchContainer) return;
-
-                // Detect mobile vs desktop for proper header height
-                const isMobile = window.innerWidth <= 768;
-                const headerHeight = isMobile ? 50 : 70;
-
-                // Add intersection observer for better sticky feedback
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            searchContainer.classList.remove('scrolled');
-                        } else {
-                            searchContainer.classList.add('scrolled');
-                        }
-                    });
-                }, {
-                    root: null,
-                    rootMargin: `-${headerHeight}px 0px 0px 0px`, // Use dynamic header height
-                    threshold: 0
-                });
-
-                // Create a sentinel element to track when search should be "scrolled"
-                const sentinel = document.createElement('div');
-                sentinel.style.height = '1px';
-                sentinel.style.position = 'absolute';
-                sentinel.style.top = `${headerHeight}px`; // Dynamic header height
-                sentinel.style.left = '0';
-                sentinel.style.width = '100%';
-                sentinel.style.pointerEvents = 'none';
-                document.body.appendChild(sentinel);
-
-                observer.observe(sentinel);
-                
-                console.log(`✅ Sticky search enhanced with ${headerHeight}px header height`);
-            }
+            setupEventListeners() {
                 document.getElementById('connectBtn').addEventListener('click', () => this.authenticate());
                 document.getElementById('refreshBtn').addEventListener('click', () => this.loadArticles());
                 document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
