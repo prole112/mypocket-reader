@@ -310,7 +310,7 @@
             color: #27ae60;
         }
 
-        /* Articles Grid - SMALLER TILES */
+        /* Articles Grid - 3 COLUMNS */
         .articles-section {
             padding: 40px 0;
             min-height: 60vh;
@@ -318,8 +318,10 @@
 
         .articles-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* REDUCED from 290px to 220px */
-            gap: 18px; /* REDUCED from 24px to 18px */
+            grid-template-columns: repeat(3, 1fr);
+            /* CHANGED: Exactly 3 columns instead of auto-fill */
+            gap: 24px;
+            /* CHANGED: Increased gap from 18px to 24px since we have more space */
             margin-top: 20px;
         }
 
@@ -376,12 +378,14 @@
         /* Organic shaped image area - SMALLER */
         .article-image {
             width: 100%;
-            height: 100px; /* REDUCED from 140px to 100px */
+            height: 100px;
+            /* REDUCED from 140px to 100px */
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5em; /* REDUCED from 2em to 1.5em */
+            font-size: 1.5em;
+            /* REDUCED from 2em to 1.5em */
             color: white;
             position: relative;
             overflow: hidden;
@@ -404,16 +408,19 @@
 
         /* Compact content area with organic feel - SMALLER */
         .article-content {
-            padding: 15px; /* REDUCED from 20px to 15px */
+            padding: 15px;
+            /* REDUCED from 20px to 15px */
             flex: 1;
             cursor: pointer;
             border-radius: 0 0 inherit inherit;
         }
 
         .article-title {
-            font-size: 1em; /* REDUCED from 1.1em to 1em */
+            font-size: 1em;
+            /* REDUCED from 1.1em to 1em */
             font-weight: 600;
-            margin-bottom: 6px; /* REDUCED from 8px to 6px */
+            margin-bottom: 6px;
+            /* REDUCED from 8px to 6px */
             line-height: 1.3;
             color: var(--text-primary);
             display: -webkit-box;
@@ -424,9 +431,11 @@
 
         .article-excerpt {
             color: var(--text-secondary);
-            font-size: 0.8em; /* REDUCED from 0.9em to 0.8em */
+            font-size: 0.8em;
+            /* REDUCED from 0.9em to 0.8em */
             line-height: 1.4;
-            margin-bottom: 10px; /* REDUCED from 12px to 10px */
+            margin-bottom: 10px;
+            /* REDUCED from 12px to 10px */
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
@@ -438,10 +447,13 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 6px; /* REDUCED from 8px to 6px */
+            gap: 6px;
+            /* REDUCED from 8px to 6px */
             color: var(--text-secondary);
-            font-size: 0.75em; /* REDUCED from 0.8em to 0.75em */
-            margin-bottom: 6px; /* REDUCED from 8px to 6px */
+            font-size: 0.75em;
+            /* REDUCED from 0.8em to 0.75em */
+            margin-bottom: 6px;
+            /* REDUCED from 8px to 6px */
         }
 
         .article-domain {
@@ -454,18 +466,23 @@
 
         .article-stats {
             display: flex;
-            gap: 10px; /* REDUCED from 12px to 10px */
-            font-size: 0.7em; /* REDUCED from 0.75em to 0.7em */
+            gap: 10px;
+            /* REDUCED from 12px to 10px */
+            font-size: 0.7em;
+            /* REDUCED from 0.75em to 0.7em */
             color: var(--text-secondary);
         }
 
         /* Floating organic action buttons - SMALLER */
         .article-actions {
             position: absolute;
-            top: 10px; /* REDUCED from 15px to 10px */
-            right: 10px; /* REDUCED from 15px to 10px */
+            top: 10px;
+            /* REDUCED from 15px to 10px */
+            right: 10px;
+            /* REDUCED from 15px to 10px */
             display: flex;
-            gap: 6px; /* REDUCED from 8px to 6px */
+            gap: 6px;
+            /* REDUCED from 8px to 6px */
             opacity: 0 !important;
             visibility: hidden;
             transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -475,15 +492,20 @@
         .action-btn {
             background: rgba(255, 255, 255, 0.95);
             border: 2px solid var(--border);
-            border-radius: 50%; /* Circular buttons for organic feel */
-            padding: 8px; /* REDUCED from 12px to 8px */
+            border-radius: 50%;
+            /* Circular buttons for organic feel */
+            padding: 8px;
+            /* REDUCED from 12px to 8px */
             cursor: pointer;
-            font-size: 14px; /* REDUCED from 16px to 14px */
+            font-size: 14px;
+            /* REDUCED from 16px to 14px */
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             backdrop-filter: blur(10px);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            min-width: 36px; /* REDUCED from 44px to 36px */
-            height: 36px; /* REDUCED from 44px to 36px */
+            min-width: 36px;
+            /* REDUCED from 44px to 36px */
+            height: 36px;
+            /* REDUCED from 44px to 36px */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -719,6 +741,15 @@
             color: white;
         }
 
+        /* Tablet responsive - 2 columns */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .articles-grid {
+                grid-template-columns: repeat(2, 1fr);
+                /* 2 columns on tablets */
+                gap: 20px;
+            }
+        }
+
         /* Enhanced Mobile Responsive Design */
         @media (max-width: 768px) {
             .container {
@@ -728,7 +759,8 @@
             /* Header improvements for mobile */
             .header {
                 padding: 15px 0;
-                position: relative; /* Remove sticky on mobile for better performance */
+                position: relative;
+                /* Remove sticky on mobile for better performance */
             }
 
             .header-content {
@@ -760,7 +792,8 @@
             }
 
             .search-input {
-                font-size: 16px; /* Prevent zoom on iOS */
+                font-size: 16px;
+                /* Prevent zoom on iOS */
                 padding: 12px 45px 12px 16px;
                 border-radius: 20px;
             }
@@ -778,7 +811,8 @@
             }
 
             .articles-grid {
-                display: block; /* Use block layout instead of grid for better mobile performance */
+                display: block;
+                /* Use block layout instead of grid for better mobile performance */
                 margin-top: 15px;
             }
 
@@ -804,7 +838,8 @@
             /* LARGER MOBILE IMAGE */
             .article-image {
                 width: 100% !important;
-                height: 140px !important; /* Increased from 100px */
+                height: 140px !important;
+                /* Increased from 100px */
                 border-radius: 20px 20px 0 0 !important;
                 position: relative;
             }
@@ -816,23 +851,27 @@
             }
 
             .article-title {
-                font-size: 1.25em !important; /* Much larger - was 1em */
+                font-size: 1.25em !important;
+                /* Much larger - was 1em */
                 font-weight: 600;
                 margin-bottom: 10px !important;
                 line-height: 1.4 !important;
                 color: var(--text-primary);
-                display: block !important; /* Remove text clamping on mobile */
+                display: block !important;
+                /* Remove text clamping on mobile */
                 -webkit-line-clamp: unset !important;
                 -webkit-box-orient: unset !important;
                 overflow: visible !important;
             }
 
             .article-excerpt {
-                font-size: 1em !important; /* Much larger - was 0.8em */
+                font-size: 1em !important;
+                /* Much larger - was 0.8em */
                 line-height: 1.5 !important;
                 margin-bottom: 15px !important;
                 color: var(--text-secondary);
-                display: block !important; /* Remove text clamping on mobile */
+                display: block !important;
+                /* Remove text clamping on mobile */
                 -webkit-line-clamp: unset !important;
                 -webkit-box-orient: unset !important;
                 overflow: visible !important;
@@ -845,14 +884,16 @@
                 flex-wrap: wrap;
                 gap: 8px;
                 color: var(--text-secondary);
-                font-size: 0.9em !important; /* Larger - was 0.75em */
+                font-size: 0.9em !important;
+                /* Larger - was 0.75em */
                 margin-bottom: 10px;
             }
 
             .article-stats {
                 display: flex;
                 gap: 15px;
-                font-size: 0.85em !important; /* Larger - was 0.7em */
+                font-size: 0.85em !important;
+                /* Larger - was 0.7em */
                 color: var(--text-secondary);
                 margin-bottom: 10px;
             }
@@ -928,11 +969,13 @@
 
             .reader-content {
                 padding: 20px;
-                font-size: 1.1em !important; /* Larger reading text */
+                font-size: 1.1em !important;
+                /* Larger reading text */
                 line-height: 1.7 !important;
                 flex: 1;
                 overflow-y: auto;
-                -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+                -webkit-overflow-scrolling: touch;
+                /* Smooth scrolling on iOS */
             }
 
             .close-reader {
@@ -945,7 +988,8 @@
 
             /* MOBILE SEARCH */
             .search-input {
-                font-size: 16px !important; /* Prevent zoom */
+                font-size: 16px !important;
+                /* Prevent zoom */
                 padding: 14px 50px 14px 18px;
             }
 
@@ -975,19 +1019,19 @@
             .article-title {
                 font-size: 1.15em !important;
             }
-            
+
             .article-excerpt {
                 font-size: 0.95em !important;
             }
-            
+
             .article-content {
                 padding: 16px !important;
             }
-            
+
             .header-actions {
                 gap: 6px;
             }
-            
+
             .btn {
                 padding: 6px 12px;
                 font-size: 12px;
@@ -998,17 +1042,20 @@
         @-moz-document url-prefix() {
             @media (max-width: 768px) {
                 .article-card {
-                    will-change: auto; /* Improve performance on Firefox mobile */
+                    will-change: auto;
+                    /* Improve performance on Firefox mobile */
                 }
-                
+
                 .articles-grid {
-                    transform: translateZ(0); /* Force hardware acceleration */
+                    transform: translateZ(0);
+                    /* Force hardware acceleration */
                 }
-                
+
                 .search-input {
-                    -moz-appearance: none; /* Remove Firefox mobile styling */
+                    -moz-appearance: none;
+                    /* Remove Firefox mobile styling */
                 }
-                
+
                 .btn {
                     -moz-appearance: none;
                 }
@@ -1039,21 +1086,41 @@
 
         /* Additional organic elements */
         @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-6px); }
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-6px);
+            }
         }
 
         /* Background pattern animation for generated placeholders */
         @keyframes floatPattern {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
         }
 
         /* Shimmer animation for loading placeholders */
         @keyframes shimmer {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
+            0% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.6;
+            }
         }
 
         .article-card:nth-child(7n+1) {
@@ -1113,7 +1180,8 @@
                     <button id="clearCacheBtn" class="btn btn-secondary" onclick="webReader.clearImageCache()">
                         <span>🗑️</span> Clear Cache
                     </button>
-                    <button id="syncBtn" class="btn btn-secondary" onclick="webReader.forceSyncImages()" style="display: none;">
+                    <button id="syncBtn" class="btn btn-secondary" onclick="webReader.forceSyncImages()"
+                        style="display: none;">
                         <span>🔄</span> Sync Images
                     </button>
                     <button id="debugBtn" class="btn btn-secondary" onclick="webReader.showDebugInfo()">
@@ -1191,7 +1259,7 @@
                 this.accessToken = null;
                 this.articles = [];
                 this.currentArticle = null;
-                
+
                 // Image cache system
                 this.imageCache = new Map();
                 this.cacheKey = 'mypocket_image_cache';
@@ -1359,7 +1427,7 @@
                 if (code && state) {
                     try {
                         this.updateStatus('🔐 Exchanging authorization code for tokens...', 'loading');
-                        
+
                         // Retrieve stored PKCE parameters
                         const { codeVerifier, state: storedState } = this.retrievePKCEParameters();
 
@@ -1374,23 +1442,23 @@
 
                         // Exchange authorization code for access token
                         const tokenResponse = await this.exchangeCodeForTokens(code, codeVerifier);
-                        
+
                         if (tokenResponse.access_token) {
                             this.accessToken = tokenResponse.access_token;
                             this.saveToken(tokenResponse.access_token);
-                            
+
                             // Save refresh token if provided
                             if (tokenResponse.refresh_token) {
                                 this.saveRefreshToken(tokenResponse.refresh_token);
                             }
-                            
+
                             this.updateConnectionStatus(true);
                             this.loadArticles();
-                            
+
                             // Clear PKCE parameters and URL
                             this.clearPKCEParameters();
                             window.history.replaceState({}, document.title, window.location.pathname);
-                            
+
                             this.updateStatus('✅ Secure authentication successful!', 'success');
                         } else {
                             throw new Error('No access token received from authorization server');
@@ -1408,7 +1476,7 @@
             // NEW: Exchange authorization code for access token using PKCE
             async exchangeCodeForTokens(authorizationCode, codeVerifier) {
                 const tokenEndpoint = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token';
-                
+
                 const tokenRequest = {
                     method: 'POST',
                     headers: {
@@ -1425,17 +1493,17 @@
                 };
 
                 console.log('🔐 Exchanging authorization code for tokens...');
-                
+
                 const response = await fetch(tokenEndpoint, tokenRequest);
-                
+
                 if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(`Token exchange failed: ${errorData.error} - ${errorData.error_description}`);
                 }
-                
+
                 const tokenData = await response.json();
                 console.log('✅ Token exchange successful');
-                
+
                 return tokenData;
             }
 
@@ -1472,7 +1540,7 @@
                 if (tokenTimestamp) {
                     const tokenAge = Date.now() - parseInt(tokenTimestamp);
                     const oneHour = 60 * 60 * 1000;
-                    
+
                     if (tokenAge > oneHour) {
                         console.log('🔄 Token expired, attempting refresh...');
                         const refreshSuccess = await this.refreshAccessToken();
@@ -1496,7 +1564,7 @@
 
                 try {
                     const tokenEndpoint = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/token';
-                    
+
                     const refreshRequest = {
                         method: 'POST',
                         headers: {
@@ -1511,29 +1579,29 @@
                     };
 
                     const response = await fetch(tokenEndpoint, refreshRequest);
-                    
+
                     if (!response.ok) {
                         console.log('Refresh token request failed');
                         return false;
                     }
-                    
+
                     const tokenData = await response.json();
-                    
+
                     if (tokenData.access_token) {
                         this.accessToken = tokenData.access_token;
                         this.saveToken(tokenData.access_token);
-                        
+
                         // Update refresh token if a new one was provided
                         if (tokenData.refresh_token) {
                             this.saveRefreshToken(tokenData.refresh_token);
                         }
-                        
+
                         console.log('✅ Token refreshed successfully');
                         return true;
                     }
-                    
+
                     return false;
-                    
+
                 } catch (error) {
                     console.error('Token refresh error:', error);
                     return false;
@@ -1586,22 +1654,22 @@
                 }
 
                 this.updateStatus('🔄 Force syncing all images to OneDrive...', 'loading');
-                
+
                 try {
                     let syncedCount = 0;
                     const totalArticles = this.articles.length;
 
                     for (let i = 0; i < this.articles.length; i++) {
                         const article = this.articles[i];
-                        
+
                         // If article doesn't have cached image, try to get it from local cache or extract
                         if (!article.cachedImage) {
                             let imageUrl = this.getCachedImage(article);
-                            
+
                             if (!imageUrl) {
                                 imageUrl = this.getBestArticleImage(article);
                             }
-                            
+
                             if (!imageUrl) {
                                 imageUrl = this.getCategoryBasedImage(article, i);
                             }
@@ -1635,12 +1703,12 @@
 
                     // Save to OneDrive
                     await this.updateOneDriveBackup();
-                    
+
                     this.updateStatus(`✅ Force sync complete! ${syncedCount}/${totalArticles} images synced to OneDrive`, 'success');
-                    
+
                     // Refresh display to show synced status
                     this.displayArticles(this.articles);
-                    
+
                 } catch (error) {
                     console.error('Force sync error:', error);
                     this.updateStatus(`❌ Force sync failed: ${error.message}`, 'error');
@@ -1654,23 +1722,23 @@
             }
 
             // ===== IMAGE CACHE SYSTEM =====
-            
+
             loadImageCache() {
                 try {
                     const cachedData = localStorage.getItem(this.cacheKey);
                     if (cachedData) {
                         const cache = JSON.parse(cachedData);
-                        
+
                         // Clean expired cache entries
                         const now = Date.now();
                         const expiryTime = this.cacheExpiryDays * 24 * 60 * 60 * 1000;
-                        
+
                         for (const [key, entry] of Object.entries(cache)) {
                             if (now - entry.timestamp < expiryTime) {
                                 this.imageCache.set(key, entry);
                             }
                         }
-                        
+
                         console.log(`📦 Loaded ${this.imageCache.size} cached images`);
                     }
                 } catch (error) {
@@ -1700,11 +1768,11 @@
             getCachedImage(article) {
                 const key = this.getCacheKey(article);
                 const cached = this.imageCache.get(key);
-                
+
                 if (cached) {
                     const now = Date.now();
                     const expiryTime = this.cacheExpiryDays * 24 * 60 * 60 * 1000;
-                    
+
                     if (now - cached.timestamp < expiryTime) {
                         console.log(`✅ Using cached image for: ${article.title.substring(0, 30)}...`);
                         return cached.imageUrl;
@@ -1714,7 +1782,7 @@
                         console.log(`⏰ Cache expired for: ${article.title.substring(0, 30)}...`);
                     }
                 }
-                
+
                 return null;
             }
 
@@ -1726,11 +1794,11 @@
                     domain: this.getDomain(article.url),
                     title: article.title.substring(0, 50)
                 });
-                
+
                 // Save to localStorage (debounced)
                 clearTimeout(this.cacheSaveTimeout);
                 this.cacheSaveTimeout = setTimeout(() => this.saveImageCache(), 1000);
-                
+
                 console.log(`💾 Cached image for: ${article.title.substring(0, 30)}...`);
             }
 
@@ -1739,17 +1807,17 @@
                     // Clear local cache
                     this.imageCache.clear();
                     localStorage.removeItem(this.cacheKey);
-                    
+
                     // Clear stored images from articles
                     this.articles.forEach(article => {
                         if (article.cachedImage) {
                             delete article.cachedImage;
                         }
                     });
-                    
+
                     this.updateStatus('🗑️ All image data cleared. Images will be re-downloaded and stored for cross-device access.', 'success');
                     console.log('🗑️ All image data cleared');
-                    
+
                     // Refresh display
                     this.displayArticles(this.articles);
                 }
@@ -1771,23 +1839,23 @@
             async convertImageToBase64(imageUrl) {
                 try {
                     console.log(`📸 Converting image to base64: ${imageUrl.substring(0, 50)}...`);
-                    
+
                     // Create a canvas to convert image to base64
                     const img = new Image();
                     img.crossOrigin = 'anonymous'; // Handle CORS
-                    
+
                     return new Promise((resolve, reject) => {
                         img.onload = () => {
                             try {
                                 const canvas = document.createElement('canvas');
                                 const ctx = canvas.getContext('2d');
-                                
+
                                 // Set canvas size (optimize for web display)
                                 const maxWidth = 400;
                                 const maxHeight = 250;
-                                
+
                                 let { width, height } = img;
-                                
+
                                 // Maintain aspect ratio while limiting size
                                 if (width > maxWidth) {
                                     height = (height * maxWidth) / width;
@@ -1797,17 +1865,17 @@
                                     width = (width * maxHeight) / height;
                                     height = maxHeight;
                                 }
-                                
+
                                 canvas.width = width;
                                 canvas.height = height;
-                                
+
                                 // Draw and convert to base64
                                 ctx.drawImage(img, 0, 0, width, height);
                                 const base64 = canvas.toDataURL('image/jpeg', 0.8); // Compress to 80% quality
-                                
+
                                 // Check size limit
                                 const sizeKB = Math.round(base64.length * 0.75 / 1024); // Rough base64 size calculation
-                                
+
                                 if (sizeKB > this.maxImageSizeKB) {
                                     console.log(`⚠️ Image too large (${sizeKB}KB), using URL only`);
                                     resolve({ url: imageUrl, size: sizeKB, stored: false });
@@ -1820,12 +1888,12 @@
                                 resolve({ url: imageUrl, stored: false });
                             }
                         };
-                        
+
                         img.onerror = () => {
                             console.log(`❌ Image load failed: ${imageUrl}`);
                             resolve({ url: imageUrl, stored: false });
                         };
-                        
+
                         img.src = imageUrl;
                     });
                 } catch (error) {
@@ -1845,7 +1913,7 @@
 
                 // Check if mobile for performance optimization
                 const isMobile = window.innerWidth <= 768;
-                
+
                 let imagesFromBackup = 0;
                 let imagesFromCache = 0;
                 let imagesNeedLoading = 0;
@@ -1893,7 +1961,7 @@
                         statusText = '📄 Metadata';
                         imageSource = 'metadata';
                         console.log(`📄 ${index}: Using METADATA image for "${article.title.substring(0, 30)}..." - will sync`);
-                        
+
                         // Store this image for cross-device sync IMMEDIATELY
                         setTimeout(() => this.setArticleImageAndCache(article, index, savedImage, 'saved'), 100);
                     }
@@ -1906,7 +1974,7 @@
                         imagesNeedLoading++;
                         console.log(`❌ ${index}: NO image found for "${article.title.substring(0, 30)}..." - needs extraction`);
                     }
-                    
+
                     return `
                     <div class="article-card" data-index="${index}" data-image-source="${imageSource}">
                         <div class="article-image" id="image-${index}">
@@ -1942,14 +2010,14 @@
                 `}).join('');
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
-                
+
                 // Enhanced status reporting with debugging
                 const totalReady = imagesFromBackup + imagesFromCache;
-                
+
                 console.log(`📊 IMAGE SUMMARY: ${imagesFromBackup} synced, ${imagesFromCache} cached, ${imagesNeedLoading} need loading`);
-                
+
                 if (imagesNeedLoading === 0) {
-                    const message = isMobile ? 
+                    const message = isMobile ?
                         `📱 ALL images ready! ${totalReady}/${articles.length} synced perfectly ✨` :
                         `✅ ALL images ready! ${imagesFromBackup} synced, ${imagesFromCache} cached ✨`;
                     this.updateStatus(message, 'success');
@@ -1958,7 +2026,7 @@
                         `📱 ${totalReady} ready instantly, extracting ${imagesNeedLoading} more...` :
                         `⚡ ${totalReady} ready instantly, extracting ${imagesNeedLoading} more...`;
                     this.updateStatus(message, 'loading');
-                    
+
                     // Load missing images - prioritize on mobile for faster completion
                     if (isMobile) {
                         setTimeout(() => this.loadMissingImages(articles), 500); // Start faster on mobile
@@ -2019,7 +2087,7 @@
             // Mobile-optimized image loading (SAME images, just optimized performance)
             async loadMissingImages(articles) {
                 console.log('🎨 SMART IMAGE LOADER - Loading same images for all devices...');
-                
+
                 const articlesNeedingImages = articles.filter((article, index) => {
                     // Check both stored backup images and local cache
                     const hasStoredImage = article.cachedImage && article.cachedImage.base64;
@@ -2035,21 +2103,21 @@
                 const isMobile = window.innerWidth <= 768;
                 let successCount = 0;
                 const totalNew = articlesNeedingImages.length;
-                
+
                 console.log(`🔄 Loading ${totalNew} SAME images${isMobile ? ' (mobile optimized)' : ''}`);
-                
+
                 // Mobile optimization: Load in smaller batches with longer delays for performance
                 // But extract the SAME real images, not fallbacks
                 const batchSize = isMobile ? 2 : 5; // Process fewer images at once on mobile
                 const delayBetweenImages = isMobile ? 800 : 300; // Longer delays on mobile
-                
+
                 for (let i = 0; i < articlesNeedingImages.length; i += batchSize) {
                     const batch = articlesNeedingImages.slice(i, i + batchSize);
-                    
+
                     // Process batch - SAME extraction process for both mobile and desktop
                     await Promise.all(batch.map(async (article) => {
                         const originalIndex = articles.findIndex(a => a === article);
-                        
+
                         try {
                             const success = await this.extractAndCacheRealImage(article, originalIndex);
                             if (success) successCount++;
@@ -2061,7 +2129,7 @@
                             successCount++;
                         }
                     }));
-                    
+
                     // Update progress with mobile-friendly messages
                     const progress = Math.round(((i + batchSize) / totalNew) * 100);
                     if (isMobile) {
@@ -2069,21 +2137,21 @@
                     } else {
                         this.updateStatus(`🔍 Loading new images... ${Math.min(i + batchSize, totalNew)}/${totalNew} (${progress}%)`, 'loading');
                     }
-                    
+
                     // Delay between batches (longer on mobile for better performance)
                     if (i + batchSize < articlesNeedingImages.length) {
                         await new Promise(resolve => setTimeout(resolve, delayBetweenImages));
                     }
                 }
-                
+
                 const totalCached = this.imageCache.size;
-                
+
                 if (isMobile) {
                     this.updateStatus(`📱 ${successCount} images loaded! Same as desktop 🎉`, 'success');
                 } else {
                     this.updateStatus(`✅ Loaded ${successCount}/${totalNew} new images! (${totalCached} total cached)`, 'success');
                 }
-                
+
                 console.log(`🎨 Image loading complete: ${successCount}/${totalNew} SAME images on both platforms`);
             }
 
@@ -2094,7 +2162,7 @@
 
                 // Update the DOM immediately
                 imageElement.innerHTML = this.createImageHTML(imageUrl, false);
-                
+
                 // Update cache indicator
                 const cacheIndicator = imageElement.querySelector('.cache-indicator');
                 if (cacheIndicator) {
@@ -2110,7 +2178,7 @@
                     try {
                         console.log(`🔄 Converting image for cross-device storage: ${article.title.substring(0, 30)}...`);
                         const imageData = await this.convertImageToBase64(imageUrl);
-                        
+
                         if (imageData.stored) {
                             // Find the article in our array and add image data
                             const articleIndex = this.articles.findIndex(a => a.url === article.url);
@@ -2122,9 +2190,9 @@
                                     size: imageData.size,
                                     source: source
                                 };
-                                
+
                                 console.log(`💾 Stored ${imageData.size}KB image in backup for cross-device sync`);
-                                
+
                                 // Update cache indicator to show it's stored for sync
                                 if (cacheIndicator) {
                                     cacheIndicator.textContent = '🌐 Synced';
@@ -2299,7 +2367,7 @@
                 document.getElementById('readerDate').textContent = this.formatDate(this.currentArticle.dateAdded);
                 document.getElementById('readerDomain').textContent = this.getDomain(this.currentArticle.url);
                 document.getElementById('readerTime').textContent = `${this.currentArticle.readTime || 1} min read`;
-                
+
                 // Show loading state first
                 document.getElementById('readerContent').innerHTML = `
                     <div style="text-align: center; padding: 40px;">
@@ -2310,7 +2378,7 @@
 
                 overlay.classList.add('active');
                 document.body.style.overflow = 'hidden';
-                
+
                 // Try to get content, fetch if needed
                 setTimeout(() => this.loadArticleContent(this.currentArticle), 100);
             }
@@ -2318,14 +2386,14 @@
             async loadArticleContent(article) {
                 console.log('🚀 CONTENT LOADER WITH CACHING');
                 const contentElement = document.getElementById('readerContent');
-                
+
                 // First try to get saved content
                 let content = this.getArticleContent(article);
-                
+
                 // If no saved content found, try to fetch from original URL
                 if (!content) {
                     console.log('🌐 No saved content found. Attempting to fetch from original URL...');
-                    
+
                     try {
                         // Show fetching status
                         contentElement.innerHTML = `
@@ -2340,10 +2408,10 @@
                                 </p>
                             </div>
                         `;
-                        
+
                         // Fetch content using proxy services
                         const fetchedContent = await this.fetchArticleContent(article.url);
-                        
+
                         if (fetchedContent && fetchedContent.trim()) {
                             content = fetchedContent;
                             console.log('✅ Successfully fetched article content');
@@ -2351,7 +2419,7 @@
                         } else {
                             throw new Error('No content extracted from fetched page');
                         }
-                        
+
                     } catch (error) {
                         console.log('❌ Failed to fetch content:', error.message);
                         this.updateStatus('❌ Could not fetch article content. Using fallback.', 'error');
@@ -2361,7 +2429,7 @@
                     console.log('✅ Using saved content');
                     this.updateStatus('✅ Article loaded from saved content', 'success');
                 }
-                
+
                 // Display the final content
                 contentElement.innerHTML = content;
             }
@@ -2369,18 +2437,18 @@
             async fetchArticleContent(url) {
                 try {
                     console.log(`🌐 Starting fetch for: ${url}`);
-                    
+
                     // Method 1: Try using AllOrigins proxy (most reliable)
                     try {
                         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
                         console.log(`Trying AllOrigins proxy...`);
-                        
+
                         const response = await fetch(proxyUrl);
-                        
+
                         if (response.ok) {
                             const data = await response.json();
                             const html = data.contents;
-                            
+
                             if (html && html.length > 1000) { // Ensure we got substantial content
                                 console.log(`✅ AllOrigins success: ${html.length} chars`);
                                 const extractedContent = this.extractContentFromHTML(html, url);
@@ -2392,17 +2460,17 @@
                     } catch (error) {
                         console.log(`AllOrigins failed: ${error.message}`);
                     }
-                    
+
                     // Method 2: Try CORS proxy
                     try {
                         const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
                         console.log(`Trying CORS proxy...`);
-                        
+
                         const response = await fetch(corsProxyUrl);
-                        
+
                         if (response.ok) {
                             const html = await response.text();
-                            
+
                             if (html && html.length > 1000) {
                                 console.log(`✅ CORS proxy success: ${html.length} chars`);
                                 const extractedContent = this.extractContentFromHTML(html, url);
@@ -2414,7 +2482,7 @@
                     } catch (error) {
                         console.log(`CORS proxy failed: ${error.message}`);
                     }
-                    
+
                     // Method 3: Try direct fetch (will likely fail due to CORS, but worth trying)
                     try {
                         console.log(`Trying direct fetch...`);
@@ -2424,7 +2492,7 @@
                                 'User-Agent': 'Mozilla/5.0 (compatible; MyPocket Reader)'
                             }
                         });
-                        
+
                         if (response.ok) {
                             const html = await response.text();
                             console.log(`✅ Direct fetch success: ${html.length} chars`);
@@ -2433,9 +2501,9 @@
                     } catch (error) {
                         console.log(`Direct fetch failed (expected): ${error.message}`);
                     }
-                    
+
                     throw new Error('All proxy methods failed to fetch content');
-                    
+
                 } catch (error) {
                     console.error('❌ All fetch methods failed:', error);
                     throw error;
@@ -2447,19 +2515,19 @@
                     // Create a temporary DOM to parse the HTML
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
-                    
+
                     // Remove unwanted elements
                     const unwantedSelectors = [
-                        'script', 'style', 'nav', 'header', 'footer', 
+                        'script', 'style', 'nav', 'header', 'footer',
                         '.sidebar', '.menu', '.navigation', '.comments',
                         '.advertisement', '.ads', '.social-share',
                         '[role="banner"]', '[role="navigation"]', '[role="complementary"]'
                     ];
-                    
+
                     unwantedSelectors.forEach(selector => {
                         doc.querySelectorAll(selector).forEach(el => el.remove());
                     });
-                    
+
                     // Try to find the main content using common selectors
                     const contentSelectors = [
                         'article',
@@ -2469,38 +2537,38 @@
                         '.entry', '.post', '.article-body',
                         'main', '#content', '#main'
                     ];
-                    
+
                     let contentElement = null;
-                    
+
                     for (const selector of contentSelectors) {
                         contentElement = doc.querySelector(selector);
                         if (contentElement && contentElement.textContent.trim().length > 200) {
                             break;
                         }
                     }
-                    
+
                     // If no main content found, try to get paragraphs from body
                     if (!contentElement || contentElement.textContent.trim().length < 200) {
                         const paragraphs = Array.from(doc.querySelectorAll('p'))
                             .filter(p => p.textContent.trim().length > 50)
                             .slice(0, 20); // Take first 20 substantial paragraphs
-                        
+
                         if (paragraphs.length > 0) {
                             const div = doc.createElement('div');
                             paragraphs.forEach(p => div.appendChild(p.cloneNode(true)));
                             contentElement = div;
                         }
                     }
-                    
+
                     if (contentElement) {
                         // Clean up the content
                         let content = contentElement.innerHTML;
-                        
+
                         // Fix relative URLs to absolute
                         const baseUrl = new URL(url).origin;
                         content = content.replace(/src="\/([^"]+)"/g, `src="${baseUrl}/$1"`);
                         content = content.replace(/href="\/([^"]+)"/g, `href="${baseUrl}/$1"`);
-                        
+
                         // Add a note about the source
                         content = `
                             <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
@@ -2511,12 +2579,12 @@
                             </div>
                             ${content}
                         `;
-                        
+
                         return content;
                     }
-                    
+
                     throw new Error('Could not extract readable content from page');
-                    
+
                 } catch (error) {
                     console.error('Content extraction error:', error);
                     throw error;
@@ -2566,17 +2634,17 @@
             // Get the best available content for reading - simplified version
             getArticleContent(article) {
                 console.log('📖 Checking for saved content...');
-                
+
                 // Try content fields in order
                 const contentFields = ['content', 'html', 'fullContent', 'textContent', 'body', 'readableContent', 'articleContent', 'savedContent'];
-                
+
                 for (const field of contentFields) {
                     if (article[field] && article[field].trim()) {
                         console.log(`✅ Found content in ${field} (${article[field].length} chars)`);
                         return article[field];
                     }
                 }
-                
+
                 // Look for any substantial text content
                 for (const [key, value] of Object.entries(article)) {
                     if (typeof value === 'string' && value.length > 200 && key !== 'excerpt' && key !== 'url') {
@@ -2584,7 +2652,7 @@
                         return value;
                     }
                 }
-                
+
                 console.log('❌ No saved content found');
                 return null;
             }
@@ -2803,7 +2871,7 @@
             getBestArticleImage(article) {
                 if (article.images && article.images.length > 0) {
                     let bestImage = article.images[0];
-                    
+
                     for (const img of article.images) {
                         if (img.width && img.height) {
                             if (img.width >= 300 && img.height >= 150) {
@@ -2812,25 +2880,25 @@
                             }
                         }
                     }
-                    
+
                     return bestImage.src || bestImage.url || bestImage;
                 }
-                
+
                 if (article.featuredImage) {
                     return article.featuredImage;
                 }
-                
+
                 if (article.image) {
                     return article.image;
                 }
-                
+
                 if (article.content) {
                     const imgMatch = article.content.match(/<img[^>]+src="([^"]+)"/i);
                     if (imgMatch && imgMatch[1]) {
                         return imgMatch[1];
                     }
                 }
-                
+
                 return null;
             }
 
@@ -2838,35 +2906,35 @@
             async fetchRealImageFromWebsite(url) {
                 try {
                     console.log(`🌐 Fetching webpage to extract image: ${url}`);
-                    
+
                     // Method 1: Try AllOrigins proxy
                     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
                     const response = await fetch(proxyUrl);
-                    
+
                     if (!response.ok) {
                         throw new Error('Failed to fetch webpage');
                     }
-                    
+
                     const data = await response.json();
                     const html = data.contents;
-                    
+
                     if (!html || html.length < 500) {
                         throw new Error('No substantial HTML content received');
                     }
-                    
+
                     // Parse the HTML and extract the best image
                     const extractedImageUrl = this.parseHTMLForBestImage(html, url);
-                    
+
                     if (extractedImageUrl) {
                         console.log(`🎯 Found image: ${extractedImageUrl}`);
                         return extractedImageUrl;
                     }
-                    
+
                     throw new Error('No suitable image found in webpage');
-                    
+
                 } catch (error) {
                     console.log(`❌ Website image extraction failed: ${error.message}`);
-                    
+
                     // Try alternative proxy methods
                     try {
                         return await this.tryAlternativeImageExtraction(url);
@@ -2883,7 +2951,7 @@
                     // Create a DOM parser
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
-                    
+
                     // Strategy 1: Look for Open Graph image (most reliable)
                     const ogImage = doc.querySelector('meta[property="og:image"]');
                     if (ogImage) {
@@ -2893,7 +2961,7 @@
                             return imageUrl;
                         }
                     }
-                    
+
                     // Strategy 2: Look for Twitter card image
                     const twitterImage = doc.querySelector('meta[name="twitter:image"], meta[property="twitter:image"]');
                     if (twitterImage) {
@@ -2903,7 +2971,7 @@
                             return imageUrl;
                         }
                     }
-                    
+
                     // Strategy 3: Look for article featured image
                     const featuredSelectors = [
                         '.featured-image img',
@@ -2916,7 +2984,7 @@
                         '.content img:first-of-type',
                         '.post-content img:first-of-type'
                     ];
-                    
+
                     for (const selector of featuredSelectors) {
                         const img = doc.querySelector(selector);
                         if (img) {
@@ -2930,21 +2998,21 @@
                             }
                         }
                     }
-                    
+
                     // Strategy 4: Look for the first substantial image in the content
                     const allImages = Array.from(doc.querySelectorAll('img')).filter(img => {
                         const src = img.getAttribute('src') || img.getAttribute('data-src');
                         const width = img.getAttribute('width') || img.style.width;
                         const height = img.getAttribute('height') || img.style.height;
-                        
+
                         // Filter out small images, icons, and logos
-                        return src && 
-                               !this.isIconOrLogo(src) && 
-                               !this.isSmallImage(width, height) &&
-                               !src.includes('avatar') &&
-                               !src.includes('profile');
+                        return src &&
+                            !this.isIconOrLogo(src) &&
+                            !this.isSmallImage(width, height) &&
+                            !src.includes('avatar') &&
+                            !src.includes('profile');
                     });
-                    
+
                     for (const img of allImages) {
                         const src = img.getAttribute('src') || img.getAttribute('data-src');
                         if (src) {
@@ -2955,10 +3023,10 @@
                             }
                         }
                     }
-                    
+
                     console.log(`❌ No suitable image found in HTML`);
                     return null;
-                    
+
                 } catch (error) {
                     console.error('HTML parsing error:', error);
                     return null;
@@ -2971,7 +3039,7 @@
                 try {
                     const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
                     const response = await fetch(corsProxyUrl);
-                    
+
                     if (response.ok) {
                         const html = await response.text();
                         const extractedImage = this.parseHTMLForBestImage(html, url);
@@ -2980,18 +3048,18 @@
                 } catch (error) {
                     console.log(`CORS proxy failed: ${error.message}`);
                 }
-                
+
                 // Method 2: Try to guess common image patterns based on URL
                 const guessedImage = this.guessImageFromUrl(url);
                 if (guessedImage) return guessedImage;
-                
+
                 throw new Error('All alternative extraction methods failed');
             }
 
             // Guess image from URL patterns (for known sites)
             guessImageFromUrl(url) {
                 const domain = this.getDomain(url).toLowerCase();
-                
+
                 // Medium articles often have predictable image patterns
                 if (domain.includes('medium.com')) {
                     // Try to extract the article ID and construct image URL
@@ -3000,7 +3068,7 @@
                         return `https://miro.medium.com/max/1400/1*${match[1]}.png`;
                     }
                 }
-                
+
                 // GitHub repository images
                 if (domain.includes('github.com')) {
                     const pathMatch = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
@@ -3008,7 +3076,7 @@
                         return `https://opengraph.githubassets.com/1/${pathMatch[1]}/${pathMatch[2]}`;
                     }
                 }
-                
+
                 // YouTube videos
                 if (domain.includes('youtube.com') || domain.includes('youtu.be')) {
                     const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
@@ -3016,51 +3084,51 @@
                         return `https://img.youtube.com/vi/${videoIdMatch[1]}/maxresdefault.jpg`;
                     }
                 }
-                
+
                 return null;
             }
 
             // Enhanced URL validation
             isValidImageUrl(url) {
                 if (!url || typeof url !== 'string') return false;
-                
+
                 // Must be a valid URL
                 try {
                     new URL(url);
                 } catch {
                     return false;
                 }
-                
+
                 // Must have common image extensions or be from known image services
                 const imagePattern = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i;
                 const imageServices = ['unsplash.com', 'images.unsplash.com', 'picsum.photos', 'via.placeholder.com'];
-                
+
                 return imagePattern.test(url) || imageServices.some(service => url.includes(service));
             }
 
             // Enhanced icon/logo detection
             isIconOrLogo(src) {
                 if (!src) return false;
-                
+
                 const iconPatterns = [
-                    'icon', 'logo', 'avatar', 'profile', 'favicon', 'sprite', 
+                    'icon', 'logo', 'avatar', 'profile', 'favicon', 'sprite',
                     'button', 'badge', 'social', 'thumb', 'thumbnail',
                     '/icons/', '/images/icons/', 'gravatar', 'user-content'
                 ];
-                
+
                 const srcLower = src.toLowerCase();
                 return iconPatterns.some(pattern => srcLower.includes(pattern)) ||
-                       srcLower.includes('.ico') ||
-                       (srcLower.includes('64x64') || srcLower.includes('32x32'));
+                    srcLower.includes('.ico') ||
+                    (srcLower.includes('64x64') || srcLower.includes('32x32'));
             }
 
             // Check if image dimensions suggest it's too small
             isSmallImage(width, height) {
                 if (!width && !height) return false;
-                
+
                 const w = parseInt(width) || 0;
                 const h = parseInt(height) || 0;
-                
+
                 return (w > 0 && w < 200) || (h > 0 && h < 150);
             }
 
@@ -3069,7 +3137,7 @@
                 const domain = this.getDomain(article.url).toLowerCase();
                 const title = article.title.toLowerCase();
                 const url = article.url.toLowerCase();
-                
+
                 // Create a consistent seed based on article content (NOT display order)
                 const articleSeed = article.url + article.title;
                 let hash = 0;
@@ -3081,88 +3149,88 @@
                 const consistentIndex = Math.abs(hash);
 
                 // Use reliable image services that work well with direct img tags
-                
+
                 // Technology/Programming
                 if (domain.includes('github') || domain.includes('stackoverflow') || domain.includes('dev.to') ||
                     title.includes('code') || title.includes('programming') || title.includes('javascript') || title.includes('react')) {
                     return `https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Business/Finance
                 if (domain.includes('business') || domain.includes('finance') || domain.includes('linkedin') ||
                     title.includes('business') || title.includes('finance') || title.includes('startup') || title.includes('entrepreneur')) {
                     return `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Design/Creative
-                if (domain.includes('dribbble') || domain.includes('behance') || 
+                if (domain.includes('dribbble') || domain.includes('behance') ||
                     title.includes('design') || title.includes('ui') || title.includes('ux') || title.includes('creative')) {
                     return `https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // News/Media
                 if (domain.includes('news') || domain.includes('bbc') || domain.includes('cnn') ||
                     title.includes('news') || title.includes('politics') || title.includes('media')) {
                     return `https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Travel/Adventure
                 if (title.includes('travel') || title.includes('vacation') || title.includes('adventure') || title.includes('journey')) {
                     return `https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Food/Cooking
                 if (title.includes('food') || title.includes('recipe') || title.includes('cooking') || title.includes('restaurant')) {
                     return `https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Health/Fitness
                 if (title.includes('health') || title.includes('fitness') || title.includes('exercise') || title.includes('wellness')) {
                     return `https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Science/Research
                 if (domain.includes('arxiv') || domain.includes('research') ||
                     title.includes('science') || title.includes('research') || title.includes('study') || title.includes('data')) {
                     return `https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Education/Learning
                 if (domain.includes('edu') || title.includes('learn') || title.includes('education') || title.includes('course')) {
                     return `https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Photography/Art
                 if (title.includes('photo') || title.includes('art') || title.includes('gallery') || title.includes('visual')) {
                     return `https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Technology (general)
                 if (domain.includes('tech') || title.includes('tech') || title.includes('digital') || title.includes('innovation')) {
                     return `https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Books/Reading/Writing
                 if (domain.includes('medium') || domain.includes('blog') ||
                     title.includes('book') || title.includes('read') || title.includes('write') || title.includes('story')) {
                     return `https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Music/Entertainment
                 if (title.includes('music') || title.includes('entertainment') || title.includes('movie') || title.includes('film')) {
                     return `https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Sports
                 if (title.includes('sport') || title.includes('game') || title.includes('team') || title.includes('player')) {
                     return `https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Nature/Environment
                 if (title.includes('nature') || title.includes('environment') || title.includes('climate') || title.includes('green')) {
                     return `https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
-                
+
                 // Default beautiful images based on CONSISTENT hash (not display order)
                 const defaultImages = [
                     'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Mountain landscape
@@ -3176,7 +3244,7 @@
                     'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=250&fit=crop&crop=center&q=80&auto=format', // Lake reflection
                     'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&h=250&fit=crop&crop=center&q=80&auto=format'  // Geometric pattern
                 ];
-                
+
                 // Use consistent index based on article content, not display position
                 return defaultImages[consistentIndex % defaultImages.length];
             }
@@ -3184,18 +3252,18 @@
             // Convert relative URLs to absolute
             makeAbsoluteUrl(imageUrl, baseUrl) {
                 if (!imageUrl) return null;
-                
+
                 try {
                     // If already absolute, return as-is
                     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
                         return imageUrl;
                     }
-                    
+
                     // Handle protocol-relative URLs
                     if (imageUrl.startsWith('//')) {
                         return 'https:' + imageUrl;
                     }
-                    
+
                     // If relative, make it absolute
                     const base = new URL(baseUrl);
                     return new URL(imageUrl, base.origin).href;
@@ -3208,7 +3276,7 @@
             // Smart icon selection based on domain
             getArticleIcon(url) {
                 const domain = this.getDomain(url).toLowerCase();
-                
+
                 const siteIcons = {
                     'youtube.com': '📺',
                     'github.com': '🐙',
@@ -3232,13 +3300,13 @@
                     'wikipedia.org': '📖',
                     'arxiv.org': '🎓',
                 };
-                
+
                 for (const [siteDomain, icon] of Object.entries(siteIcons)) {
                     if (domain.includes(siteDomain)) {
                         return icon;
                     }
                 }
-                
+
                 if (domain.includes('blog') || domain.includes('medium')) return '📝';
                 if (domain.includes('news')) return '📰';
                 if (domain.includes('tech')) return '💻';
@@ -3249,7 +3317,7 @@
                 if (domain.includes('shop') || domain.includes('store')) return '🛒';
                 if (domain.includes('book') || domain.includes('read')) return '📚';
                 if (domain.includes('learn') || domain.includes('edu')) return '🎓';
-                
+
                 return '📄';
             }
 
@@ -3321,11 +3389,11 @@
                 const totalStoredSizeKB = this.articles.reduce((total, article) => {
                     return total + (article.cachedImage ? article.cachedImage.size || 0 : 0);
                 }, 0);
-                
+
                 const hasRefreshToken = !!this.getRefreshToken();
                 const tokenTimestamp = localStorage.getItem('mypocket_token_timestamp');
                 const tokenAge = tokenTimestamp ? Math.round((Date.now() - parseInt(tokenTimestamp)) / 1000 / 60) : 'Unknown';
-                
+
                 const info = `
 MyPocket Web Reader Debug Info (PKCE Enabled):
 ===============================================
@@ -3421,10 +3489,10 @@ Cross-Device Image Features:
             toggleDarkMode() {
                 const currentTheme = document.documentElement.getAttribute('data-theme');
                 const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                
+
                 document.documentElement.setAttribute('data-theme', newTheme);
                 localStorage.setItem('theme', newTheme);
-                
+
                 this.updateDarkModeButton(newTheme);
                 this.updateStatus(
                     newTheme === 'dark' ? '🌙 Dark mode enabled' : '☀️ Light mode enabled',
@@ -3441,7 +3509,7 @@ Cross-Device Image Features:
             updateDarkModeButton(theme) {
                 const darkModeBtn = document.getElementById('darkModeBtn');
                 if (darkModeBtn) {
-                    darkModeBtn.innerHTML = theme === 'dark' 
+                    darkModeBtn.innerHTML = theme === 'dark'
                         ? '<span>☀️</span> Light Mode'
                         : '<span>🌙</span> Dark Mode';
                 }
