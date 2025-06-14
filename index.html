@@ -270,11 +270,10 @@
             background: var(--surface);
             border-bottom: 1px solid var(--border);
             position: sticky;
-            top: 0;
-            z-index: 95;
+            top: 80px; /* Position below the sticky header */
+            z-index: 90;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
         .search-box {
             position: relative;
