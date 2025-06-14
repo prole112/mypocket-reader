@@ -64,6 +64,16 @@
             opacity: 0.8;
         }
 
+        /* Dark mode sticky search */
+        [data-theme="dark"] .search-container {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        [data-theme="dark"] .search-container.scrolled {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+            border-bottom-color: var(--primary-color);
+        }
+
         [data-theme="dark"] .btn-secondary {
             background: var(--surface);
             color: var(--text-primary);
@@ -269,6 +279,18 @@
             padding: 30px 0;
             background: var(--surface);
             border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 100px; /* Below the header */
+            z-index: 90;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        /* Enhanced sticky search effect */
+        .search-container.scrolled {
+            background: var(--surface);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border-bottom: 2px solid var(--primary-color);
         }
 
         .search-box {
@@ -802,6 +824,10 @@
             /* Search improvements */
             .search-container {
                 padding: 20px 0;
+                position: sticky;
+                top: 0; /* Stick to very top on mobile since header isn't sticky */
+                z-index: 95;
+                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
             }
 
             .search-input {
