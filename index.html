@@ -1655,40 +1655,41 @@
                 }
             }
 
-            // NEW: Retry only failed images without disturbing working ones
+            // FIXED: Conservative retry that only targets genuinely failed images
             async retryFailedImages() {
                 if (!this.accessToken) {
                     this.updateStatus('❌ Please connect to OneDrive first', 'error');
                     return;
                 }
 
-                // Find articles with failed or missing images
+                // MUCH MORE CONSERVATIVE: Only target explicitly failed images
                 const articlesWithFailedImages = this.articles.filter((article, index) => {
-                    const imageElement = document.getElementById(`image-${index}`);
-                    if (!imageElement) return false;
-
-                    // Check if image failed to load or is using placeholder
-                    const img = imageElement.querySelector('img');
-                    const hasPlaceholder = imageElement.querySelector('div[style*="background: linear-gradient"]');
-                    const cacheIndicator = imageElement.querySelector('.cache-indicator');
-                    const isFailedStatus = cacheIndicator && (
-                        cacheIndicator.textContent.includes('Failed') || 
-                        cacheIndicator.textContent.includes('Error') ||
-                        cacheIndicator.textContent.includes('Loading')
-                    );
-
-                    // Consider failed if: no image, has placeholder, or failed status
-                    const hasFailed = !img || hasPlaceholder || isFailedStatus || this.failedImages.has(index);
+                    // Only consider images that are explicitly in our failed set
+                    // OR have explicit "Failed" indicator - nothing else
+                    const isExplicitlyFailed = this.failedImages.has(index);
                     
-                    return hasFailed;
+                    const imageElement = document.getElementById(`image-${index}`);
+                    const cacheIndicator = imageElement?.querySelector('.cache-indicator');
+                    const hasFailedIndicator = cacheIndicator && cacheIndicator.textContent.includes('❌ Failed');
+                    
+                    // ONLY process if explicitly marked as failed - be very conservative
+                    return isExplicitlyFailed || hasFailedIndicator;
                 });
 
                 if (articlesWithFailedImages.length === 0) {
-                    this.updateStatus('✅ No failed images found! All images loaded successfully.', 'success');
+                    this.updateStatus('✅ No explicitly failed images found. Use "Sync Images" for broader updates.', 'success');
                     return;
                 }
 
-                this.updateStatus(`🔄 Retrying ${articlesWithFailedImages.length} failed images without disturbing working ones...`, 'loading');
+                // Show confirmation with exact count
+                const proceed = confirm(`Retry ${articlesWithFailedImages.length} explicitly failed images?\n\nThis will ONLY affect images marked with "❌ Failed" status.\nWorking images will NOT be touched.\n\nProceed?`);
+                
+                if (!proceed) {
+                    this.updateStatus('Retry cancelled by user', 'error');
+                    return;
+                }
+
+                this.updateStatus(`🔄 Retrying ONLY ${articlesWithFailedImages.length} explicitly failed images...`, 'loading');
 
                 let retriedCount = 0;
                 let successCount = 0;
@@ -1699,12 +1700,12 @@
 
                     try {
                         retriedCount++;
-                        console.log(`🔄 Retrying image ${retriedCount}/${articlesWithFailedImages.length}: ${article.title.substring(0, 30)}...`);
+                        console.log(`🔄 Retrying FAILED image ${retriedCount}/${articlesWithFailedImages.length}: ${article.title.substring(0, 30)}...`);
 
                         // Clear from failed set
                         this.failedImages.delete(originalIndex);
 
-                        // Try multiple fallback strategies for failed images
+                        // Try to recover the failed image
                         const success = await this.tryAlternativeImageStrategies(article, originalIndex);
                         if (success) {
                             successCount++;
@@ -1712,12 +1713,10 @@
                         }
 
                         // Update progress
-                        if (retriedCount % 2 === 0) {
-                            this.updateStatus(`🔄 Retrying failed images... ${retriedCount}/${articlesWithFailedImages.length} (${successCount} recovered)`, 'loading');
-                        }
+                        this.updateStatus(`🔄 Retrying failed images... ${retriedCount}/${articlesWithFailedImages.length} (${successCount} recovered)`, 'loading');
 
                         // Small delay to prevent overwhelming
-                        await new Promise(resolve => setTimeout(resolve, 500));
+                        await new Promise(resolve => setTimeout(resolve, 300));
 
                     } catch (error) {
                         console.error(`Failed to retry image for ${article.title}:`, error);
@@ -1725,7 +1724,13 @@
                     }
                 }
 
-                // Update OneDrive backup if we recovered any images
+                const message = successCount > 0 
+                    ? `✅ Retry complete! Recovered ${successCount}/${articlesWithFailedImages.length} failed images. Working images were untouched.`
+                    : `⚠️ Could not recover the failed images - they may be permanently unavailable.`;
+
+                this.updateStatus(message, successCount > 0 ? 'success' : 'error');
+                
+                // Only update backup if we actually recovered images
                 if (successCount > 0 && this.accessToken) {
                     try {
                         await this.updateOneDriveBackup();
@@ -1734,12 +1739,6 @@
                         console.error('⚠️ Failed to save recovered images to backup:', error);
                     }
                 }
-
-                const message = successCount > 0 
-                    ? `✅ Retry complete! Recovered ${successCount}/${articlesWithFailedImages.length} failed images without disturbing working ones.`
-                    : `⚠️ Retry complete. Could not recover failed images - they may be permanently unavailable from their sources.`;
-
-                this.updateStatus(message, successCount > 0 ? 'success' : 'error');
             }
 
             // NEW: Try multiple alternative strategies for failed images
