@@ -318,7 +318,7 @@
 
         .articles-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(3, 1fr) !important;
             /* CHANGED: Exactly 3 columns instead of auto-fill */
             gap: 24px;
             /* CHANGED: Increased gap from 18px to 24px since we have more space */
@@ -742,9 +742,9 @@
         }
 
         /* Tablet responsive - 2 columns */
-        @media (min-width: 769px) and (max-width: 1024px) {
+        @media (min-width: 769px) and (max-width: 1100px) {
             .articles-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(2, 1fr) !important;
                 /* 2 columns on tablets */
                 gap: 20px;
             }
