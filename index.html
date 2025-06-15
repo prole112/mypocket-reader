@@ -292,6 +292,194 @@
             transform: translateY(-10px);
         }
 
+        /* Category Filter Styles */
+        .category-container {
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 89;
+            padding: 20px 0;
+        }
+
+        .category-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .category-container.hidden {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        .category-filter {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .category-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.2em;
+        }
+
+        .category-close-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+        }
+
+        .category-close-btn:hover {
+            background: var(--border);
+            color: var(--text-primary);
+            transform: scale(1.1);
+        }
+
+        .category-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .category-chip {
+            background: var(--background);
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            user-select: none;
+        }
+
+        .category-chip:hover {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .category-chip.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        .category-chip.show-all {
+            background: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        .category-chip.show-all:hover {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .category-count {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .category-chip:not(.active) .category-count {
+            background: var(--border);
+            color: var(--text-secondary);
+        }
+
+        /* Article Category Badge */
+        .article-category {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: 500;
+            z-index: 5;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            max-width: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Dark mode category styles */
+        [data-theme="dark"] .category-container {
+            background: var(--surface);
+            border-bottom-color: var(--border);
+        }
+
+        [data-theme="dark"] .category-header h3 {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .category-close-btn:hover {
+            background: #21262d;
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .category-chip {
+            background: var(--surface);
+            border-color: var(--border);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .category-chip:hover {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        [data-theme="dark"] .category-chip.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        [data-theme="dark"] .category-chip:not(.active) .category-count {
+            background: var(--border);
+            color: var(--text-secondary);
+        }
+
+        [data-theme="dark"] .article-category {
+            background: rgba(22, 27, 34, 0.9);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
         .search-box {
             position: relative;
             max-width: 600px;
@@ -856,6 +1044,39 @@
                 font-size: 16px;
             }
 
+            /* Category Filter Mobile */
+            .category-container {
+                padding: 15px 0;
+            }
+
+            .category-header h3 {
+                font-size: 1.1em;
+            }
+
+            .category-chips {
+                gap: 8px;
+            }
+
+            .category-chip {
+                padding: 6px 12px;
+                font-size: 0.8em;
+                border-radius: 16px;
+            }
+
+            .category-count {
+                font-size: 0.7em;
+                padding: 1px 4px;
+            }
+
+            .article-category {
+                top: 8px;
+                left: 8px;
+                padding: 3px 6px;
+                border-radius: 10px;
+                font-size: 0.65em;
+                max-width: 70px;
+            }
+
             /* Status bar */
             .status {
                 padding: 15px 0;
@@ -1238,6 +1459,9 @@
                     <button id="searchToggleBtn" class="btn btn-secondary" onclick="webReader.toggleSearch()">
                         <span>🔍</span> Search
                     </button>
+                    <button id="categoriesBtn" class="btn btn-secondary" onclick="webReader.toggleCategoryFilter()">
+                        <span>🏷️</span> Categories
+                    </button>
                     <button id="clearCacheBtn" class="btn btn-secondary" onclick="webReader.clearImageCache()">
                         <span>🗑️</span> Clear Cache
                     </button>
@@ -1273,6 +1497,21 @@
                 <input type="text" id="searchInput" class="search-input" placeholder="Search your saved articles..."
                     autocomplete="off">
                 <button class="search-close-btn" onclick="webReader.toggleSearch()" title="Close search">✕</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Category Filter (Initially Hidden) -->
+    <section class="category-container" id="categoryContainer" style="display: none;">
+        <div class="container">
+            <div class="category-filter">
+                <div class="category-header">
+                    <h3>📂 Filter by Category</h3>
+                    <button class="category-close-btn" onclick="webReader.toggleCategoryFilter()" title="Close categories">✕</button>
+                </div>
+                <div class="category-chips" id="categoryChips">
+                    <!-- Categories will be populated here -->
+                </div>
             </div>
         </div>
     </section>
@@ -1331,6 +1570,11 @@
                 this.currentDisplayedArticles = []; // Track what's currently displayed
                 this.failedImages = new Set(); // Track articles with failed images
 
+                // Auto-categorization system
+                this.categories = new Map(); // Store category counts
+                this.activeCategory = null; // Currently selected category filter
+                this.categoryKeywords = this.initializeCategoryKeywords();
+
                 // Image cache system
                 this.imageCache = new Map();
                 this.cacheKey = 'mypocket_image_cache';
@@ -1358,6 +1602,72 @@
                 } else {
                     return window.location.origin + window.location.pathname;
                 }
+            }
+
+            // Initialize category keywords for auto-categorization
+            initializeCategoryKeywords() {
+                return {
+                    'Technology': {
+                        icon: '💻',
+                        keywords: ['tech', 'programming', 'code', 'software', 'developer', 'javascript', 'python', 'react', 'api', 'github', 'stackoverflow', 'dev.to', 'coding', 'algorithm', 'database', 'web', 'mobile', 'app', 'framework', 'library', 'bug', 'debug', 'frontend', 'backend', 'fullstack'],
+                        domains: ['github.com', 'stackoverflow.com', 'dev.to', 'techcrunch.com', 'theverge.com', 'arstechnica.com', 'wired.com']
+                    },
+                    'Business': {
+                        icon: '💼',
+                        keywords: ['business', 'startup', 'entrepreneur', 'finance', 'investment', 'marketing', 'sales', 'strategy', 'management', 'leadership', 'company', 'revenue', 'profit', 'corporate', 'economics', 'market', 'industry', 'venture', 'funding', 'ipo'],
+                        domains: ['linkedin.com', 'forbes.com', 'bloomberg.com', 'businessinsider.com', 'harvard.business.review']
+                    },
+                    'Science': {
+                        icon: '🔬',
+                        keywords: ['science', 'research', 'study', 'data', 'analysis', 'experiment', 'discovery', 'theory', 'hypothesis', 'biology', 'chemistry', 'physics', 'medicine', 'health', 'climate', 'environment', 'space', 'astronomy', 'genetics'],
+                        domains: ['arxiv.org', 'nature.com', 'science.org', 'plos.org', 'pubmed.ncbi.nlm.nih.gov']
+                    },
+                    'Design': {
+                        icon: '🎨',
+                        keywords: ['design', 'ui', 'ux', 'user experience', 'interface', 'visual', 'graphic', 'creative', 'art', 'illustration', 'typography', 'color', 'layout', 'prototype', 'wireframe', 'figma', 'sketch', 'photoshop'],
+                        domains: ['dribbble.com', 'behance.net', 'medium.com/design', 'uxdesign.cc']
+                    },
+                    'News': {
+                        icon: '📰',
+                        keywords: ['news', 'breaking', 'report', 'journalist', 'media', 'politics', 'government', 'election', 'policy', 'world', 'international', 'national', 'local', 'current events', 'headline'],
+                        domains: ['bbc.com', 'cnn.com', 'nytimes.com', 'washingtonpost.com', 'guardian.co.uk', 'reuters.com', 'ap.org']
+                    },
+                    'Education': {
+                        icon: '🎓',
+                        keywords: ['education', 'learning', 'course', 'tutorial', 'lesson', 'teach', 'student', 'university', 'college', 'school', 'academic', 'knowledge', 'skill', 'training', 'certification', 'degree'],
+                        domains: ['coursera.org', 'edx.org', 'khanacademy.org', 'udemy.com', 'wikipedia.org']
+                    },
+                    'Entertainment': {
+                        icon: '🎬',
+                        keywords: ['entertainment', 'movie', 'film', 'tv', 'show', 'series', 'music', 'game', 'gaming', 'celebrity', 'review', 'trailer', 'streaming', 'netflix', 'spotify', 'youtube'],
+                        domains: ['youtube.com', 'netflix.com', 'spotify.com', 'imdb.com', 'ign.com', 'gamespot.com']
+                    },
+                    'Health': {
+                        icon: '🏥',
+                        keywords: ['health', 'medical', 'medicine', 'doctor', 'patient', 'treatment', 'disease', 'fitness', 'exercise', 'nutrition', 'diet', 'wellness', 'mental health', 'therapy', 'hospital', 'clinic'],
+                        domains: ['mayoclinic.org', 'webmd.com', 'healthline.com', 'nih.gov']
+                    },
+                    'Travel': {
+                        icon: '✈️',
+                        keywords: ['travel', 'trip', 'vacation', 'tourism', 'destination', 'flight', 'hotel', 'adventure', 'explore', 'culture', 'country', 'city', 'guide', 'review', 'itinerary'],
+                        domains: ['tripadvisor.com', 'booking.com', 'airbnb.com', 'lonelyplanet.com']
+                    },
+                    'Food': {
+                        icon: '🍳',
+                        keywords: ['food', 'recipe', 'cooking', 'chef', 'restaurant', 'cuisine', 'ingredient', 'meal', 'dish', 'kitchen', 'baking', 'culinary', 'nutrition', 'diet', 'taste'],
+                        domains: ['allrecipes.com', 'foodnetwork.com', 'epicurious.com', 'bonappetit.com']
+                    },
+                    'Sports': {
+                        icon: '⚽',
+                        keywords: ['sports', 'football', 'basketball', 'soccer', 'baseball', 'tennis', 'golf', 'athletics', 'team', 'player', 'game', 'match', 'tournament', 'championship', 'olympics'],
+                        domains: ['espn.com', 'sport.com', 'bleacherreport.com', 'nfl.com', 'nba.com']
+                    },
+                    'Personal': {
+                        icon: '📝',
+                        keywords: ['personal', 'blog', 'diary', 'opinion', 'thoughts', 'life', 'experience', 'story', 'memoir', 'reflection', 'journey', 'growth', 'self', 'mindfulness'],
+                        domains: ['medium.com', 'substack.com', 'wordpress.com', 'blogger.com']
+                    }
+                };
             }
 
             init() {
@@ -1400,6 +1710,18 @@
                         this.toggleSearch(false);
                     }
                 });
+
+                // Close category filter when clicking outside
+                document.addEventListener('click', (e) => {
+                    const categoryContainer = document.getElementById('categoryContainer');
+                    const categoriesBtn = document.getElementById('categoriesBtn');
+
+                    if (categoryContainer.style.display !== 'none' &&
+                        !categoryContainer.contains(e.target) &&
+                        !categoriesBtn.contains(e.target)) {
+                        this.toggleCategoryFilter(false);
+                    }
+                });
             }
 
             isInputFocused() {
@@ -1407,53 +1729,216 @@
                 return activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
             }
 
-            // NEW: Toggle search functionality
-            toggleSearch(forceState = null) {
-                const searchContainer = document.getElementById('searchContainer');
-                const searchInput = document.getElementById('searchInput');
-                const searchToggleBtn = document.getElementById('searchToggleBtn');
+            // ===== AUTO-CATEGORIZATION SYSTEM =====
 
-                const isCurrentlyVisible = searchContainer.style.display !== 'none';
+            // Automatically categorize an article based on content
+            categorizeArticle(article) {
+                const title = (article.title || '').toLowerCase();
+                const excerpt = (article.excerpt || '').toLowerCase();
+                const url = (article.url || '').toLowerCase();
+                const domain = this.getDomain(article.url).toLowerCase();
+                const content = this.getArticleContentForAnalysis(article).toLowerCase();
+
+                const textToAnalyze = `${title} ${excerpt} ${content}`.substring(0, 2000); // Limit analysis text
+                const scores = new Map();
+
+                // Score each category
+                for (const [categoryName, categoryData] of Object.entries(this.categoryKeywords)) {
+                    let score = 0;
+
+                    // Domain matching (highest weight)
+                    if (categoryData.domains.some(d => domain.includes(d))) {
+                        score += 100;
+                    }
+
+                    // Keyword matching in title (high weight)
+                    const titleWords = title.split(/\s+/);
+                    for (const keyword of categoryData.keywords) {
+                        if (titleWords.some(word => word.includes(keyword) || keyword.includes(word))) {
+                            score += 50;
+                        }
+                    }
+
+                    // Keyword matching in content (medium weight)
+                    for (const keyword of categoryData.keywords) {
+                        const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+                        const matches = textToAnalyze.match(regex);
+                        if (matches) {
+                            score += matches.length * 10;
+                        }
+                    }
+
+                    // URL path matching (low weight)
+                    for (const keyword of categoryData.keywords) {
+                        if (url.includes(keyword)) {
+                            score += 5;
+                        }
+                    }
+
+                    scores.set(categoryName, score);
+                }
+
+                // Find the best category
+                let bestCategory = 'Other';
+                let bestScore = 0;
+
+                for (const [category, score] of scores.entries()) {
+                    if (score > bestScore && score >= 20) { // Minimum threshold
+                        bestCategory = category;
+                        bestScore = score;
+                    }
+                }
+
+                // Store the category and confidence
+                article.category = bestCategory;
+                article.categoryScore = bestScore;
+
+                console.log(`📂 Categorized "${article.title.substring(0, 30)}..." as "${bestCategory}" (score: ${bestScore})`);
+                return bestCategory;
+            }
+
+            // Get article content for analysis (tries multiple content fields)
+            getArticleContentForAnalysis(article) {
+                const contentFields = ['content', 'textContent', 'excerpt', 'description', 'summary'];
+                
+                for (const field of contentFields) {
+                    if (article[field] && typeof article[field] === 'string' && article[field].length > 10) {
+                        return article[field];
+                    }
+                }
+                
+                return article.title || '';
+            }
+
+            // Re-categorize all articles and update category counts
+            recategorizeAllArticles() {
+                console.log('📂 Auto-categorizing all articles...');
+                this.categories.clear();
+
+                for (const article of this.articles) {
+                    const category = this.categorizeArticle(article);
+                    this.categories.set(category, (this.categories.get(category) || 0) + 1);
+                }
+
+                console.log(`📊 Categories found:`, Object.fromEntries(this.categories));
+                this.updateCategoryUI();
+            }
+
+            // Update the category filter UI
+            updateCategoryUI() {
+                const categoryChips = document.getElementById('categoryChips');
+                if (!categoryChips) return;
+
+                const sortedCategories = Array.from(this.categories.entries())
+                    .sort((a, b) => b[1] - a[1]); // Sort by count descending
+
+                const totalArticles = this.currentDisplayedArticles.length;
+
+                categoryChips.innerHTML = `
+                    <div class="category-chip show-all ${!this.activeCategory ? 'active' : ''}" 
+                         onclick="webReader.filterByCategory(null)">
+                        <span>📂</span>
+                        <span>All Articles</span>
+                        <span class="category-count">${totalArticles}</span>
+                    </div>
+                    ${sortedCategories.map(([category, count]) => {
+                        const categoryData = this.categoryKeywords[category] || { icon: '📄' };
+                        const isActive = this.activeCategory === category;
+                        return `
+                            <div class="category-chip ${isActive ? 'active' : ''}" 
+                                 onclick="webReader.filterByCategory('${category}')"
+                                 title="Show ${count} ${category.toLowerCase()} articles">
+                                <span>${categoryData.icon}</span>
+                                <span>${category}</span>
+                                <span class="category-count">${count}</span>
+                            </div>
+                        `;
+                    }).join('')}
+                `;
+            }
+
+            // Toggle category filter visibility
+            toggleCategoryFilter(forceState = null) {
+                const categoryContainer = document.getElementById('categoryContainer');
+                const categoriesBtn = document.getElementById('categoriesBtn');
+
+                const isCurrentlyVisible = categoryContainer.style.display !== 'none';
                 const shouldShow = forceState !== null ? forceState : !isCurrentlyVisible;
 
                 if (shouldShow) {
-                    // Show search
-                    searchContainer.style.display = 'block';
+                    // Ensure categories are up to date
+                    this.recategorizeAllArticles();
+
+                    // Show category filter
+                    categoryContainer.style.display = 'block';
                     setTimeout(() => {
-                        searchContainer.classList.add('visible');
-                        searchInput.focus();
+                        categoryContainer.classList.add('visible');
                     }, 10);
 
                     // Update button
-                    searchToggleBtn.innerHTML = '<span>🔍</span> Close Search';
-                    searchToggleBtn.style.background = 'var(--primary-color)';
-                    searchToggleBtn.style.color = 'white';
+                    categoriesBtn.innerHTML = '<span>🏷️</span> Close Categories';
+                    categoriesBtn.style.background = 'var(--secondary-color)';
+                    categoriesBtn.style.color = 'white';
 
-                    this.updateStatus('🔍 Search mode active - Type to search or press Escape to close', 'success');
+                    this.updateStatus('🏷️ Category filter active - Click a category to filter articles', 'success');
                 } else {
-                    // Hide search
-                    searchContainer.classList.remove('visible');
+                    // Hide category filter
+                    categoryContainer.classList.remove('visible');
                     setTimeout(() => {
-                        if (!searchContainer.classList.contains('visible')) {
-                            searchContainer.style.display = 'none';
+                        if (!categoryContainer.classList.contains('visible')) {
+                            categoryContainer.style.display = 'none';
                         }
                     }, 300);
 
                     // Update button
-                    searchToggleBtn.innerHTML = '<span>🔍</span> Search';
-                    searchToggleBtn.style.background = '';
-                    searchToggleBtn.style.color = '';
+                    categoriesBtn.innerHTML = '<span>🏷️</span> Categories';
+                    categoriesBtn.style.background = '';
+                    categoriesBtn.style.color = '';
 
-                    // Clear search if closing
-                    if (searchInput.value) {
-                        searchInput.value = '';
-                        this.searchArticles('');
+                    // Clear any active category filter if closing
+                    if (this.activeCategory) {
+                        this.filterByCategory(null);
                     }
-
-                    // Remove focus
-                    searchInput.blur();
                 }
             }
+
+            // Filter articles by category
+            filterByCategory(category) {
+                this.activeCategory = category;
+
+                let filtered;
+                if (!category) {
+                    // Show all articles
+                    filtered = this.articles;
+                } else {
+                    // Filter by specific category
+                    filtered = this.articles.filter(article => {
+                        // Auto-categorize if not already categorized
+                        if (!article.category) {
+                            this.categorizeArticle(article);
+                        }
+                        return article.category === category;
+                    });
+                }
+
+                this.currentDisplayedArticles = filtered;
+                this.displayArticles(filtered);
+
+                // Update category UI to show active state
+                this.updateCategoryUI();
+
+                // Update status
+                if (!category) {
+                    this.updateStatus(`📂 Showing all ${filtered.length} articles`, 'success');
+                } else {
+                    const categoryData = this.categoryKeywords[category] || { icon: '📄' };
+                    this.updateStatus(`${categoryData.icon} Showing ${filtered.length} ${category.toLowerCase()} articles`, 'success');
+                }
+
+                console.log(`📂 Filtered by category: ${category || 'All'} (${filtered.length} articles)`);
+            }
+
+            // ===== END AUTO-CATEGORIZATION SYSTEM =====
 
             // ===== PKCE IMPLEMENTATION =====
 
@@ -1796,6 +2281,54 @@
                     refreshBtn.style.display = 'none';
                     if (syncBtn) syncBtn.style.display = 'none';
                     if (retryFailedBtn) retryFailedBtn.style.display = 'none';
+                }
+            }
+
+            // NEW: Toggle search functionality
+            toggleSearch(forceState = null) {
+                const searchContainer = document.getElementById('searchContainer');
+                const searchInput = document.getElementById('searchInput');
+                const searchToggleBtn = document.getElementById('searchToggleBtn');
+
+                const isCurrentlyVisible = searchContainer.style.display !== 'none';
+                const shouldShow = forceState !== null ? forceState : !isCurrentlyVisible;
+
+                if (shouldShow) {
+                    // Show search
+                    searchContainer.style.display = 'block';
+                    setTimeout(() => {
+                        searchContainer.classList.add('visible');
+                        searchInput.focus();
+                    }, 10);
+
+                    // Update button
+                    searchToggleBtn.innerHTML = '<span>🔍</span> Close Search';
+                    searchToggleBtn.style.background = 'var(--primary-color)';
+                    searchToggleBtn.style.color = 'white';
+
+                    this.updateStatus('🔍 Search mode active - Type to search or press Escape to close', 'success');
+                } else {
+                    // Hide search
+                    searchContainer.classList.remove('visible');
+                    setTimeout(() => {
+                        if (!searchContainer.classList.contains('visible')) {
+                            searchContainer.style.display = 'none';
+                        }
+                    }, 300);
+
+                    // Update button
+                    searchToggleBtn.innerHTML = '<span>🔍</span> Search';
+                    searchToggleBtn.style.background = '';
+                    searchToggleBtn.style.color = '';
+
+                    // Clear search if closing
+                    if (searchInput.value) {
+                        searchInput.value = '';
+                        this.searchArticles('');
+                    }
+
+                    // Remove focus
+                    searchInput.blur();
                 }
             }
 
@@ -2525,6 +3058,7 @@ Want All Fresh Images → Use "Sync Images" button
                             <div class="cache-indicator ${cacheStatus}">
                                 ${statusText}
                             </div>
+                            ${this.getCategoryBadgeHTML(article)}
                         </div>
                         <div class="article-content" onclick="webReader.openReaderByDisplayIndex(${displayIndex})">
                             <h2 class="article-title">${this.escapeHtml(article.title)}</h2>
@@ -2580,6 +3114,22 @@ Want All Fresh Images → Use "Sync Images" button
                         this.loadMissingImages(articles);
                     }
                 }
+            }
+
+            getCategoryBadgeHTML(article) {
+                // Auto-categorize if not already categorized
+                if (!article.category) {
+                    this.categorizeArticle(article);
+                }
+
+                const category = article.category || 'Other';
+                const categoryData = this.categoryKeywords[category] || { icon: '📄' };
+
+                return `
+                    <div class="article-category" title="Category: ${category}">
+                        ${categoryData.icon} ${category}
+                    </div>
+                `;
             }
 
             createImageHTML(imageUrl, fromCache = false) {
@@ -2886,6 +3436,11 @@ Want All Fresh Images → Use "Sync Images" button
 
                     this.articles = backup.articles || [];
                     this.currentDisplayedArticles = this.articles; // Initialize displayed articles
+                    
+                    // Auto-categorize all articles on load
+                    console.log('📂 Auto-categorizing loaded articles...');
+                    this.recategorizeAllArticles();
+                    
                     this.displayArticles(this.articles);
 
                     const cacheStats = this.getCacheStats();
@@ -2909,6 +3464,12 @@ Want All Fresh Images → Use "Sync Images" button
             }
 
             searchArticles(query) {
+                // Clear any active category filter when searching
+                if (this.activeCategory && query.trim() !== '') {
+                    this.activeCategory = null;
+                    this.updateCategoryUI();
+                }
+
                 if (!query || query.trim() === '') {
                     this.currentDisplayedArticles = this.articles;
                     this.displayArticles(this.articles);
@@ -2948,7 +3509,13 @@ Want All Fresh Images → Use "Sync Images" button
                     const tagsMatch = article.tags && Array.isArray(article.tags) &&
                         article.tags.some(tag => tag.toLowerCase().includes(searchTerm));
 
-                    return titleMatch || excerptMatch || contentMatch || authorMatch || domainMatch || urlMatch || tagsMatch;
+                    // Search in category
+                    if (!article.category) {
+                        this.categorizeArticle(article);
+                    }
+                    const categoryMatch = article.category && article.category.toLowerCase().includes(searchTerm);
+
+                    return titleMatch || excerptMatch || contentMatch || authorMatch || domainMatch || urlMatch || tagsMatch || categoryMatch;
                 });
 
                 console.log(`🎯 Search results: ${filtered.length}/${this.articles.length} articles`);
@@ -4112,6 +4679,16 @@ Want All Fresh Images → Use "Sync Images" button
                 const searchContainer = document.getElementById('searchContainer');
                 const isSearchVisible = searchContainer.style.display !== 'none';
 
+                const categoryContainer = document.getElementById('categoryContainer');
+                const isCategoryVisible = categoryContainer.style.display !== 'none';
+
+                const categorizedArticles = this.articles.filter(a => a.category).length;
+                const categoryBreakdown = Array.from(this.categories.entries())
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5)
+                    .map(([cat, count]) => `${cat}: ${count}`)
+                    .join(', ');
+
                 const info = `
 MyPocket Web Reader Debug Info (PKCE Enabled):
 ===============================================
@@ -4149,6 +4726,14 @@ Host: ${window.location.host}
 - Keyboard Shortcuts: Ctrl/Cmd+K, / (open), Esc (close)
 - Click Outside: Enabled
 
+🏷️ CATEGORIZATION:
+- Auto-Categorization: Enabled
+- Categorized Articles: ${categorizedArticles}/${this.articles.length}
+- Categories Found: ${this.categories.size}
+- Top Categories: ${categoryBreakdown || 'None'}
+- Category Filter Visible: ${isCategoryVisible}
+- Active Category Filter: ${this.activeCategory || 'None'}
+
 💾 LOCAL CACHE:
 - Total Cached Images: ${cacheStats.total}
 - Memory Usage: ${Math.round(cacheStats.memoryUsage / 1024)} KB
@@ -4174,10 +4759,18 @@ Cross-Device Image Features:
 - Automatic compression to 80% quality
 - Works across all devices and browsers
 
+Auto-Categorization Features:
+- 12 intelligent categories with domain recognition
+- Multi-factor analysis (title, content, domain, URL)
+- Confidence scoring with minimum threshold
+- Visual category chips with article counts
+- Category-based filtering and search integration
+
 Search Features:
 - Toggle search with 🔍 button or Ctrl/Cmd+K or /
 - Close with Esc or click outside
-- Real-time filtering across title, content, domain, etc.
+- Real-time filtering across title, content, domain, categories
+- Category integration (search clears category filter)
                 `;
 
                 alert(info);
@@ -4192,6 +4785,10 @@ Search Features:
                     articlesCount: this.articles.length,
                     displayedCount: this.currentDisplayedArticles.length,
                     searchVisible: isSearchVisible,
+                    categoryVisible: isCategoryVisible,
+                    categorizedArticles: categorizedArticles,
+                    categoriesFound: this.categories.size,
+                    activeCategory: this.activeCategory,
                     cacheStats: cacheStats,
                     storedImages: storedImages,
                     crossDeviceEnabled: this.storeImagesInBackup
