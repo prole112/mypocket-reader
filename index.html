@@ -840,30 +840,10 @@
                 margin-top: 15px;
             }
 
-            /* Mobile Virtual Scrolling */
-            .virtual-scroll-container {
-                height: 70vh !important; /* Larger on mobile */
-                border-radius: 8px;
-            }
-
-            .virtual-scroll-controls {
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
-                padding: 12px 16px;
-                margin-bottom: 15px;
-            }
-
-            .virtual-scroll-info {
-                font-size: 0.8em !important;
-                order: 2;
-            }
-
-            .virtual-scroll-toggle {
-                order: 1;
-                padding: 10px 16px;
-                font-size: 0.9em;
-                width: 100%;
+            /* Simple Virtual Scrolling on Mobile */
+            .virtual-scroll-wrapper {
+                height: 60vh !important;
+                padding: 5px;
             }
 
             .article-card {
@@ -1163,6 +1143,9 @@
                     <button id="testBtn" class="btn btn-secondary" aria-label="Toggle test mode">
                         <span>👁️</span> Show Buttons
                     </button>
+                    <button id="createTestArticlesBtn" class="btn btn-secondary" aria-label="Create test articles">
+                        <span>🧪</span> Test Articles
+                    </button>
                     <button id="darkModeBtn" class="btn btn-secondary" aria-label="Toggle dark mode">
                         <span>🌙</span> Dark Mode
                     </button>
@@ -1229,173 +1212,83 @@
     </div>
 
     <script>
-        // Virtual Scrolling Manager
+        // Simple Virtual Scrolling Manager
         class VirtualScrollManager {
-            constructor(containerHeight = 600, itemHeight = 280, itemsPerRow = null) {
-                this.containerHeight = containerHeight;
-                this.itemHeight = itemHeight; // Estimated height including gap
-                this.itemsPerRow = itemsPerRow; // Will be calculated dynamically
-                this.buffer = 5; // Extra items to render outside viewport
-                this.scrollTop = 0;
+            constructor() {
                 this.isEnabled = false;
-                this.container = null;
-                this.viewport = null;
-                this.spacer = null;
-                this.lastCalculatedItemsPerRow = 4; // Default fallback
+                this.itemHeight = 300; // Approximate height per article card
+                this.containerHeight = 500; // Fixed container height
+                this.buffer = 2; // Extra items above/below viewport
+                this.scrollTop = 0;
+                this.articles = [];
+                this.renderCallback = null;
                 
                 this.onScroll = this.onScroll.bind(this);
-                this.calculateItemsPerRow = this.calculateItemsPerRow.bind(this);
-                
-                // Performance monitoring
-                this.renderCount = 0;
-                this.lastRenderTime = 0;
             }
 
-            calculateItemsPerRow(containerWidth = 1200) {
-                // Calculate based on CSS grid: minmax(220px, 1fr) with 18px gap
-                const minItemWidth = 220;
-                const gap = 18;
-                const availableWidth = containerWidth - 40; // Account for padding
-                
-                const itemsPerRow = Math.floor((availableWidth + gap) / (minItemWidth + gap));
-                this.lastCalculatedItemsPerRow = Math.max(1, itemsPerRow);
-                return this.lastCalculatedItemsPerRow;
-            }
-
-            init(container) {
+            init(container, articles, renderCallback) {
                 this.container = container;
-                this.setupVirtualScrollDOM();
-                this.calculateItemsPerRow(container.offsetWidth);
+                this.articles = articles;
+                this.renderCallback = renderCallback;
+                
+                if (this.isEnabled) {
+                    this.setupVirtualContainer();
+                }
             }
 
-            setupVirtualScrollDOM() {
+            setupVirtualContainer() {
+                const totalHeight = this.articles.length * this.itemHeight;
+                
                 this.container.innerHTML = `
-                    <div class="virtual-scroll-container" id="virtualScrollContainer">
-                        <div class="virtual-scroll-content" id="virtualScrollContent">
-                            <div class="virtual-scroll-spacer" id="virtualScrollSpacer"></div>
-                            <div class="virtual-scroll-viewport" id="virtualScrollViewport"></div>
+                    <div class="virtual-scroll-wrapper" style="height: ${this.containerHeight}px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px;">
+                        <div class="virtual-spacer" style="height: ${totalHeight}px; position: relative;">
+                            <div class="virtual-content" style="position: absolute; top: 0; left: 0; right: 0;"></div>
                         </div>
                     </div>
                 `;
 
-                this.scrollContainer = document.getElementById('virtualScrollContainer');
-                this.content = document.getElementById('virtualScrollContent');
-                this.spacer = document.getElementById('virtualScrollSpacer');
-                this.viewport = document.getElementById('virtualScrollViewport');
+                this.scrollWrapper = this.container.querySelector('.virtual-scroll-wrapper');
+                this.spacer = this.container.querySelector('.virtual-spacer');
+                this.content = this.container.querySelector('.virtual-content');
 
-                this.scrollContainer.addEventListener('scroll', this.onScroll);
-                window.addEventListener('resize', this.calculateItemsPerRow);
-            }
-
-            onScroll() {
-                this.scrollTop = this.scrollContainer.scrollTop;
+                this.scrollWrapper.addEventListener('scroll', this.onScroll);
                 this.render();
             }
 
-            calculateVisibleItems(totalItems) {
-                if (!this.isEnabled || totalItems === 0) {
-                    return {
-                        startIndex: 0,
-                        endIndex: totalItems,
-                        visibleItems: totalItems,
-                        totalHeight: 0,
-                        offsetY: 0
-                    };
-                }
-
-                this.itemsPerRow = this.lastCalculatedItemsPerRow;
-                const totalRows = Math.ceil(totalItems / this.itemsPerRow);
-                const visibleRows = Math.ceil(this.containerHeight / this.itemHeight);
-                
-                const startRow = Math.floor(this.scrollTop / this.itemHeight);
-                const endRow = Math.min(startRow + visibleRows + this.buffer, totalRows);
-                const safeStartRow = Math.max(0, startRow - this.buffer);
-
-                const startIndex = safeStartRow * this.itemsPerRow;
-                const endIndex = Math.min(endRow * this.itemsPerRow, totalItems);
-                
-                const totalHeight = totalRows * this.itemHeight;
-                const offsetY = safeStartRow * this.itemHeight;
-
-                return {
-                    startIndex,
-                    endIndex,
-                    visibleItems: endIndex - startIndex,
-                    totalHeight,
-                    offsetY,
-                    totalRows,
-                    visibleRows: endRow - safeStartRow
-                };
+            onScroll() {
+                this.scrollTop = this.scrollWrapper.scrollTop;
+                this.render();
             }
 
-            render(articles = [], renderFunction = null) {
-                if (!this.isEnabled || !articles.length) return;
-
-                const startTime = performance.now();
-                this.renderCount++;
-
-                const {
-                    startIndex,
-                    endIndex,
-                    totalHeight,
-                    offsetY,
-                    visibleItems,
-                    totalRows,
-                    visibleRows
-                } = this.calculateVisibleItems(articles.length);
-
-                // Update spacer height to maintain scroll position
-                this.spacer.style.height = `${totalHeight}px`;
-
-                // Get visible articles
-                const visibleArticles = articles.slice(startIndex, endIndex);
-
-                // Render visible articles
-                if (renderFunction) {
-                    const articlesHTML = renderFunction(visibleArticles, startIndex);
-                    this.viewport.innerHTML = `
-                        <div class="articles-grid" style="transform: translateY(${offsetY}px);">
-                            ${articlesHTML}
-                        </div>
-                    `;
+            getVisibleRange() {
+                if (!this.isEnabled) {
+                    return { start: 0, end: this.articles.length };
                 }
 
-                // Performance monitoring
-                const renderTime = performance.now() - startTime;
-                this.lastRenderTime = renderTime;
+                const start = Math.floor(this.scrollTop / this.itemHeight);
+                const visibleCount = Math.ceil(this.containerHeight / this.itemHeight);
+                
+                const startIndex = Math.max(0, start - this.buffer);
+                const endIndex = Math.min(this.articles.length, start + visibleCount + this.buffer);
 
-                // Show performance indicator if render is slow
-                if (renderTime > 16) { // More than one frame (60fps)
-                    this.showPerformanceWarning(renderTime, visibleItems, articles.length);
-                }
-
-                // Update debug info
-                this.updateDebugInfo(startIndex, endIndex, totalRows, visibleRows, renderTime);
+                return { start: startIndex, end: endIndex };
             }
 
-            showPerformanceWarning(renderTime, visibleItems, totalItems) {
-                let indicator = document.getElementById('performanceIndicator');
-                if (!indicator) {
-                    indicator = document.createElement('div');
-                    indicator.id = 'performanceIndicator';
-                    indicator.className = 'performance-indicator';
-                    document.body.appendChild(indicator);
-                }
+            render() {
+                if (!this.isEnabled || !this.renderCallback) return;
 
-                indicator.innerHTML = `
-                    🐌 Slow render: ${renderTime.toFixed(1)}ms<br>
-                    Showing ${visibleItems}/${totalItems} items
+                const { start, end } = this.getVisibleRange();
+                const visibleArticles = this.articles.slice(start, end);
+                const offsetY = start * this.itemHeight;
+
+                const html = this.renderCallback(visibleArticles, start);
+                this.content.innerHTML = `
+                    <div style="transform: translateY(${offsetY}px);">
+                        ${html}
+                    </div>
                 `;
-                indicator.classList.add('show');
 
-                setTimeout(() => {
-                    indicator.classList.remove('show');
-                }, 3000);
-            }
-
-            updateDebugInfo(startIndex, endIndex, totalRows, visibleRows, renderTime) {
-                // This could be used for debugging - currently silent
-                console.log(`Virtual Scroll: Items ${startIndex}-${endIndex}, Rows ${visibleRows}/${totalRows}, Render: ${renderTime.toFixed(2)}ms`);
+                console.log(`Virtual Scroll: Showing items ${start}-${end} of ${this.articles.length}`);
             }
 
             enable() {
@@ -1408,23 +1301,16 @@
                 console.log('⏸️ Virtual scrolling disabled');
             }
 
-            destroy() {
-                if (this.scrollContainer) {
-                    this.scrollContainer.removeEventListener('scroll', this.onScroll);
-                }
-                window.removeEventListener('resize', this.calculateItemsPerRow);
-            }
-
             getStats() {
+                const { start, end } = this.getVisibleRange();
                 return {
                     enabled: this.isEnabled,
-                    containerHeight: this.containerHeight,
+                    total: this.articles.length,
+                    visible: end - start,
+                    start,
+                    end,
                     itemHeight: this.itemHeight,
-                    itemsPerRow: this.lastCalculatedItemsPerRow,
-                    buffer: this.buffer,
-                    renderCount: this.renderCount,
-                    lastRenderTime: this.lastRenderTime,
-                    scrollTop: this.scrollTop
+                    containerHeight: this.containerHeight
                 };
             }
         }
@@ -2146,7 +2032,7 @@
                 this.authManager = new AuthenticationManager();
                 this.imageCacheManager = new ImageCacheManager();
                 this.loadingManager = new LoadingStateManager();
-                this.virtualScrollManager = new VirtualScrollManager(600, 280); // 600px height, ~280px per item
+                this.virtualScrollManager = new VirtualScrollManager(); // Simplified version
                 
                 // Article data
                 this.articles = [];
@@ -2203,6 +2089,7 @@
                 document.getElementById('helpBtn').addEventListener('click', () => this.showImageHelp());
                 document.getElementById('debugBtn').addEventListener('click', () => this.showDebugInfo());
                 document.getElementById('testBtn').addEventListener('click', () => this.toggleTestMode());
+                document.getElementById('createTestArticlesBtn').addEventListener('click', () => this.createTestArticles());
                 document.getElementById('darkModeBtn').addEventListener('click', () => this.toggleDarkMode());
                 document.getElementById('virtualScrollBtn').addEventListener('click', () => this.toggleVirtualScroll());
 
@@ -2550,51 +2437,129 @@
 
                 this.currentDisplayedArticles = articles;
 
-                // Show virtual scroll controls for large lists
-                const shouldShowVirtualScrollControls = articles.length > 20;
-                const virtualScrollControlsHTML = shouldShowVirtualScrollControls ? `
-                    <div class="virtual-scroll-controls">
-                        <div class="virtual-scroll-info">
-                            ${articles.length} articles • Virtual scrolling ${this.isVirtualScrollEnabled ? 'enabled' : 'available'}
-                            ${this.isVirtualScrollEnabled ? `• Rendering ~${this.virtualScrollManager.calculateVisibleItems(articles.length).visibleItems} visible items` : ''}
+                // Show virtual scroll toggle for lists with 50+ articles
+                const showVirtualControls = articles.length >= 50;
+                const virtualControlsHTML = showVirtualControls ? `
+                    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="color: var(--text-secondary); font-size: 0.9em;">
+                            📊 ${articles.length} articles loaded • ${this.isVirtualScrollEnabled ? 'Virtual scrolling active' : 'Normal scrolling'}
                         </div>
-                        <button class="virtual-scroll-toggle ${articles.length <= 20 ? 'disabled' : ''}" 
-                                onclick="webReader.toggleVirtualScroll()" 
-                                ${articles.length <= 20 ? 'disabled' : ''}>
-                            ${this.isVirtualScrollEnabled ? '📜 Disable Virtual Scroll' : '🚀 Enable Virtual Scroll'}
+                        <button onclick="webReader.toggleVirtualScroll()" 
+                                style="background: ${this.isVirtualScrollEnabled ? '#27ae60' : 'var(--primary-color)'}; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                            ${this.isVirtualScrollEnabled ? '📜 Disable Virtual' : '🚀 Enable Virtual'}
                         </button>
                     </div>
                 ` : '';
 
-                if (this.isVirtualScrollEnabled && articles.length > 20) {
-                    // Use virtual scrolling for large lists
-                    container.innerHTML = virtualScrollControlsHTML + '<div class="articles-grid-container" id="articlesGridContainer"></div>';
+                if (this.isVirtualScrollEnabled && articles.length >= 20) {
+                    // Virtual scrolling mode
+                    container.innerHTML = virtualControlsHTML + '<div id="virtualContainer"></div>';
                     
-                    const gridContainer = document.getElementById('articlesGridContainer');
-                    this.virtualScrollManager.init(gridContainer);
-                    this.virtualScrollManager.enable();
+                    const virtualContainer = document.getElementById('virtualContainer');
                     
-                    // Render function for virtual scroll
+                    // Simple render function for virtual scroll
                     const renderFunction = (visibleArticles, startIndex) => {
-                        return this.renderArticlesHTML(visibleArticles, startIndex);
+                        return visibleArticles.map((article, relativeIndex) => {
+                            const displayIndex = startIndex + relativeIndex;
+                            return this.createSingleArticleHTML(article, displayIndex);
+                        }).join('');
                     };
-                    
-                    this.virtualScrollManager.render(articles, renderFunction);
-                    
-                    // Load missing images for visible articles only
-                    this.processArticleImages(articles, true);
-                    
+
+                    this.virtualScrollManager.init(virtualContainer, articles, renderFunction);
+                    this.virtualScrollManager.enable();
+                    this.virtualScrollManager.render();
+
                 } else {
-                    // Use normal scrolling
-                    const articlesHTML = this.renderArticlesHTML(articles, 0);
-                    container.innerHTML = virtualScrollControlsHTML + `<div class="articles-grid" role="main" aria-label="Articles list">${articlesHTML}</div>`;
-                    
-                    // Load missing images for all articles
-                    this.processArticleImages(articles, false);
+                    // Normal scrolling mode
+                    const articlesHTML = articles.map((article, displayIndex) => {
+                        return this.createSingleArticleHTML(article, displayIndex);
+                    }).join('');
+
+                    container.innerHTML = virtualControlsHTML + `
+                        <div class="articles-grid" role="main" aria-label="Articles list">
+                            ${articlesHTML}
+                        </div>
+                    `;
                 }
 
-                // Re-setup accessibility for new elements
+                // Re-setup accessibility
                 this.setupAccessibility();
+
+                // Process images
+                this.processArticleImages(articles, this.isVirtualScrollEnabled && articles.length >= 20);
+            }
+
+            createSingleArticleHTML(article, displayIndex) {
+                const isMobile = window.innerWidth <= 768;
+                let imageHTML = '';
+                let cacheStatus = 'loading';
+                let statusText = '🔄 Loading';
+                let imageSource = 'none';
+
+                // Determine image source and status
+                if (article.cachedImage && article.cachedImage.base64) {
+                    imageHTML = this.createImageHTML(article.cachedImage.base64, true);
+                    cacheStatus = 'synced';
+                    statusText = '🌐 Synced';
+                    imageSource = 'synced_base64';
+                } else if (article.cachedImage && article.cachedImage.url && !article.cachedImage.base64) {
+                    imageHTML = this.createImageHTML(article.cachedImage.url, true);
+                    cacheStatus = 'synced';
+                    statusText = '🔗 Synced URL';
+                    imageSource = 'synced_url';
+                } else if (this.imageCacheManager.getCachedImage(article)) {
+                    imageHTML = this.createImageHTML(this.imageCacheManager.getCachedImage(article), true);
+                    cacheStatus = 'cached';
+                    statusText = '💾 Local Cache';
+                    imageSource = 'local_cache';
+                } else if (this.getBestArticleImage(article)) {
+                    const savedImage = this.getBestArticleImage(article);
+                    imageHTML = this.createImageHTML(savedImage, false);
+                    cacheStatus = 'metadata';
+                    statusText = '📄 Metadata';
+                    imageSource = 'metadata';
+                    setTimeout(() => this.setArticleImageAndCache(article, displayIndex, savedImage, 'saved'), 100);
+                } else {
+                    imageHTML = this.createPlaceholderHTML();
+                    cacheStatus = 'loading';
+                    statusText = isMobile ? '📱 Loading...' : '🔄 Loading';
+                    imageSource = 'needs_extraction';
+                }
+
+                return `
+                    <article class="article-card" data-index="${displayIndex}" data-image-source="${imageSource}" 
+                             tabindex="0" role="article" aria-label="Article: ${Utils.escapeHtml(article.title)}"
+                             style="margin-bottom: 20px;">
+                        <div class="article-image" id="image-${displayIndex}">
+                            ${imageHTML}
+                            <div class="cache-indicator ${cacheStatus}">
+                                ${statusText}
+                            </div>
+                        </div>
+                        <div class="article-content" onclick="webReader.openReaderByDisplayIndex(${displayIndex})">
+                            <h2 class="article-title">${Utils.escapeHtml(article.title)}</h2>
+                            <p class="article-excerpt">${Utils.escapeHtml(article.excerpt || '')}</p>
+                            <div class="article-meta">
+                                <span class="article-domain">🌐 ${Utils.getDomain(article.url)}</span>
+                                <span class="article-date">📅 ${Utils.formatDate(article.dateAdded)}</span>
+                            </div>
+                            <div class="article-stats">
+                                <span>⏱️ ${article.readTime || 1} min read</span>
+                                <span>📝 ${article.wordCount || 0} words</span>
+                            </div>
+                        </div>
+                        <div class="article-actions">
+                            <button class="action-btn read-btn" onclick="event.stopPropagation(); webReader.openReaderByDisplayIndex(${displayIndex})" 
+                                    title="Read article" aria-label="Read article">📖</button>
+                            <button class="action-btn refresh-image-btn" onclick="event.stopPropagation(); webReader.refreshSingleImage(${displayIndex})" 
+                                    title="Refresh this image" aria-label="Refresh image">🖼️</button>
+                            <button class="action-btn export-btn" onclick="event.stopPropagation(); webReader.exportArticleByDisplayIndex(${displayIndex})" 
+                                    title="Export article" aria-label="Export article">📤</button>
+                            <button class="action-btn delete-btn" onclick="event.stopPropagation(); webReader.deleteArticleByDisplayIndex(${displayIndex})" 
+                                    title="Delete article" aria-label="Delete article">🗑️</button>
+                        </div>
+                    </article>
+                `;
             }
 
             renderArticlesHTML(articles, startIndex = 0) {
@@ -2782,6 +2747,93 @@
                     }
 
                     // Small delay to prevent overwhelming
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+
+                this.updateStatus(`✅ Visible images loaded! Scroll to load more.`, 'success');
+            }
+
+            processArticleImages(articles, isVirtualScroll = false) {
+                const isMobile = window.innerWidth <= 768;
+                let imagesFromBackup = 0;
+                let imagesFromCache = 0;
+                let imagesNeedLoading = 0;
+
+                console.log('🎯 PROCESSING ARTICLE IMAGES:');
+
+                // Count image sources
+                articles.forEach(article => {
+                    if (article.cachedImage && article.cachedImage.base64) {
+                        imagesFromBackup++;
+                    } else if (article.cachedImage && article.cachedImage.url) {
+                        imagesFromBackup++;
+                    } else if (this.imageCacheManager.getCachedImage(article)) {
+                        imagesFromCache++;
+                    } else if (!this.getBestArticleImage(article)) {
+                        imagesNeedLoading++;
+                    }
+                });
+
+                const totalReady = imagesFromBackup + imagesFromCache;
+
+                console.log(`📊 IMAGE SUMMARY: ${imagesFromBackup} synced, ${imagesFromCache} cached, ${imagesNeedLoading} need loading`);
+
+                if (imagesNeedLoading === 0) {
+                    const message = `✅ ALL images ready! ${totalReady}/${articles.length} loaded ✨`;
+                    this.updateStatus(message, 'success');
+                } else {
+                    const message = `⚡ ${totalReady} ready instantly, extracting ${imagesNeedLoading} more...`;
+                    this.updateStatus(message, 'loading');
+
+                    // For virtual scroll, load images more carefully
+                    if (isVirtualScroll) {
+                        this.loadMissingImagesLazy(articles);
+                    } else {
+                        setTimeout(() => this.loadMissingImages(articles), isMobile ? 500 : 100);
+                    }
+                }
+            }
+
+            async loadMissingImagesLazy(articles) {
+                console.log('🔄 Loading images lazily for virtual scroll...');
+                
+                if (!this.isVirtualScrollEnabled) {
+                    this.loadMissingImages(articles);
+                    return;
+                }
+
+                // Get visible range from virtual scroll
+                const { start, end } = this.virtualScrollManager.getVisibleRange();
+                const visibleArticles = articles.slice(start, end);
+
+                const articlesNeedingImages = visibleArticles.filter((article) => {
+                    const hasStoredImage = article.cachedImage && article.cachedImage.base64;
+                    const hasCachedImage = this.imageCacheManager.getCachedImage(article);
+                    return !hasStoredImage && !hasCachedImage && !this.getBestArticleImage(article);
+                });
+
+                if (articlesNeedingImages.length === 0) {
+                    this.updateStatus(`✅ All visible images loaded!`, 'success');
+                    return;
+                }
+
+                console.log(`🔄 Loading ${articlesNeedingImages.length} visible images...`);
+
+                for (const article of articlesNeedingImages) {
+                    const displayIndex = articles.findIndex(a => a === article);
+                    
+                    try {
+                        await this.extractAndCacheRealImage(article, displayIndex);
+                        
+                        // Re-render virtual scroll to show updated image
+                        if (this.isVirtualScrollEnabled) {
+                            this.virtualScrollManager.render();
+                        }
+                    } catch (error) {
+                        console.error(`Failed to extract image for article ${displayIndex}:`, error);
+                    }
+
+                    // Small delay
                     await new Promise(resolve => setTimeout(resolve, 200));
                 }
 
@@ -4019,6 +4071,43 @@
                 status.className = `status ${type}`;
             }
 
+            createTestArticles() {
+                const counts = [50, 100, 200, 500];
+                const count = counts[Math.floor(Math.random() * counts.length)];
+                
+                if (!confirm(`Create ${count} test articles for virtual scrolling demo?\n\n⚠️ This will replace your current articles temporarily.`)) {
+                    return;
+                }
+
+                console.log(`🧪 Creating ${count} test articles...`);
+                
+                this.articles = [];
+                for (let i = 1; i <= count; i++) {
+                    const article = {
+                        title: `Test Article ${i}: Lorem Ipsum Dolor Sit Amet`,
+                        excerpt: `This is a test article excerpt for article number ${i}. It contains sample text to demonstrate the virtual scrolling functionality with a large number of articles.`,
+                        url: `https://example.com/article-${i}`,
+                        dateAdded: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
+                        readTime: Math.floor(Math.random() * 10) + 1,
+                        wordCount: Math.floor(Math.random() * 2000) + 100,
+                        domain: 'example.com',
+                        // Random images for testing
+                        images: [{
+                            src: `https://picsum.photos/400/250?random=${i}`,
+                            width: 400,
+                            height: 250
+                        }]
+                    };
+                    this.articles.push(article);
+                }
+
+                this.currentDisplayedArticles = this.articles;
+                NotificationManager.success(`🧪 Created ${count} test articles! Perfect for testing virtual scrolling.`);
+                
+                // Display the test articles
+                this.displayArticles(this.articles);
+            }
+
             // UI Features
             toggleTestMode() {
                 document.body.classList.toggle('test-mode');
@@ -4068,8 +4157,8 @@
 
             showImageHelp() {
                 const helpText = `
-MyPocket Enhanced Image System Help:
-====================================
+MyPocket Enhanced Reader Help:
+==============================
 
 🖼️ IMAGE STATUS INDICATORS:
 • 🌐 Synced - Stored across all devices
@@ -4080,7 +4169,6 @@ MyPocket Enhanced Image System Help:
 🔧 AVAILABLE ACTIONS:
 
 1️⃣ INDIVIDUAL IMAGE REFRESH (🖼️ button):
-   • Use when an image loaded but shows wrong content
    • Click the 🖼️ button on any article card
    • Tries to find the correct image for that article
 
@@ -4092,23 +4180,28 @@ MyPocket Enhanced Image System Help:
    • Forces refresh of ALL images
    • Stores images for cross-device access
 
-🎯 WHEN TO USE EACH:
-Wrong but Working Image → Use 🖼️ (Individual Refresh)
-Red "❌ Failed" Status → Use "Retry Failed" button  
-Want All Fresh Images → Use "Sync Images" button
-
 ⌨️ KEYBOARD SHORTCUTS:
 • / or Ctrl/Cmd+K - Open search
 • j/k - Navigate between articles
 • Enter - Open focused article
 • Esc - Close search/reader
 
-🔧 ENHANCED FEATURES:
-• Improved error handling with notifications
-• Better loading states with progress bars
-• Enhanced accessibility with keyboard navigation
-• Smart image caching with cross-device sync
-• Debounced search for better performance
+📜 VIRTUAL SCROLLING:
+• Automatically suggested for 50+ articles
+• Click "🚀 Enable Virtual" to activate
+• Only renders visible articles for better performance
+• Perfect for large article collections
+
+🧪 TESTING FEATURES:
+• Click "🧪 Test Articles" to create demo articles
+• Use this to test virtual scrolling with large lists
+• Creates 50-500 random articles with images
+
+🎯 WHEN TO USE VIRTUAL SCROLLING:
+• Large article collections (50+ articles)
+• Slow device or browser performance
+• Want smoother scrolling experience
+• Better battery life on mobile
                 `;
 
                 alert(helpText);
@@ -4163,13 +4256,11 @@ Version: 5.0 (Enhanced with Virtual Scrolling)
 
 📜 VIRTUAL SCROLLING:
 - Enabled: ${virtualScrollStats.enabled}
-- Container Height: ${virtualScrollStats.containerHeight}px
+- Total Articles: ${virtualScrollStats.total}
+- Currently Visible: ${virtualScrollStats.visible}
+- Visible Range: ${virtualScrollStats.start}-${virtualScrollStats.end}
 - Item Height: ${virtualScrollStats.itemHeight}px
-- Items Per Row: ${virtualScrollStats.itemsPerRow}
-- Buffer: ${virtualScrollStats.buffer} items
-- Render Count: ${virtualScrollStats.renderCount}
-- Last Render Time: ${virtualScrollStats.lastRenderTime.toFixed(2)}ms
-- Current Scroll: ${virtualScrollStats.scrollTop}px
+- Container Height: ${virtualScrollStats.containerHeight}px
 
 💾 LOCAL CACHE:
 - Total Cached Images: ${cacheStats.total}
@@ -4195,9 +4286,9 @@ Version: 5.0 (Enhanced with Virtual Scrolling)
 - Virtual scroll threshold: 20+ articles
 
 💡 VIRTUAL SCROLLING BENEFITS:
-- Renders only visible items (${virtualScrollStats.enabled ? `~${Math.ceil(virtualScrollStats.containerHeight / virtualScrollStats.itemHeight) * virtualScrollStats.itemsPerRow}` : 'N/A'} max)
+- Renders only visible items (~${virtualScrollStats.visible} max instead of ${virtualScrollStats.total})
 - Constant DOM size regardless of article count
-- Smooth scrolling with large datasets
+- Smooth scrolling with large datasets  
 - Reduced memory usage for image loading
 - Better performance on mobile devices
 
