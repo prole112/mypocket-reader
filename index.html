@@ -1567,8 +1567,8 @@
                 this.renderCount++;
                 this.updatePerformanceStats();
 
-                // Load images for newly rendered items
-                this.loadVisibleImages();
+                // FIXED: Load images for newly rendered items that need loading
+                setTimeout(() => this.loadVisibleImages(), 100);
             }
 
             renderItem(article, index) {
@@ -1580,7 +1580,7 @@
                 let statusText = '🔄 Loading';
                 let imageSource = 'none';
 
-                // Image priority logic (same as original)
+                // FIXED: Comprehensive image priority logic
                 if (article.cachedImage && article.cachedImage.base64) {
                     imageHTML = this.createImageHTML(article.cachedImage.base64, true);
                     cacheStatus = 'synced';
@@ -1591,7 +1591,28 @@
                     cacheStatus = 'synced';
                     statusText = '🔗 Synced URL';
                     imageSource = 'synced_url';
+                } else if (webReader && webReader.getCachedImage(article)) {
+                    // Check local cache
+                    imageHTML = this.createImageHTML(webReader.getCachedImage(article), true);
+                    cacheStatus = 'cached';
+                    statusText = '💾 Local Cache';
+                    imageSource = 'local_cache';
+                } else if (webReader && webReader.getBestArticleImage(article)) {
+                    // Check for saved metadata images
+                    const savedImage = webReader.getBestArticleImage(article);
+                    imageHTML = this.createImageHTML(savedImage, false);
+                    cacheStatus = 'metadata';
+                    statusText = '📄 Metadata';
+                    imageSource = 'metadata';
+                    
+                    // IMPORTANT: Trigger caching for cross-device sync
+                    setTimeout(() => {
+                        if (webReader && webReader.setArticleImageAndCache) {
+                            webReader.setArticleImageAndCache(article, index, savedImage, 'saved');
+                        }
+                    }, 100);
                 } else {
+                    // Really needs loading
                     imageHTML = this.createPlaceholderHTML();
                     cacheStatus = 'loading';
                     statusText = this.isMobile ? '📱 Loading...' : '🔄 Loading';
@@ -1704,13 +1725,55 @@
             }
 
             loadVisibleImages() {
-                // Trigger image loading for newly visible items
-                if (webReader && webReader.loadMissingImages) {
+                // FIXED: Properly trigger image loading for newly visible items that need images
+                if (webReader && webReader.extractAndCacheRealImage) {
+                    // Get currently visible items that need image loading
                     const visibleItems = this.items.slice(this.visibleStartIndex, this.visibleEndIndex + 1);
-                    // Only load images that actually need loading
-                    const itemsNeedingImages = visibleItems.filter(item => !item.cachedImage);
+                    
+                    // Filter for items that actually need image extraction
+                    const itemsNeedingImages = visibleItems.filter((item, localIndex) => {
+                        const actualIndex = this.visibleStartIndex + localIndex;
+                        
+                        // Check if really needs loading (no cached image, no stored image, no metadata image)
+                        const hasStoredImage = item.cachedImage && (item.cachedImage.base64 || item.cachedImage.url);
+                        const hasCachedImage = webReader.getCachedImage && webReader.getCachedImage(item);
+                        const hasMetadataImage = webReader.getBestArticleImage && webReader.getBestArticleImage(item);
+                        
+                        const needsLoading = !hasStoredImage && !hasCachedImage && !hasMetadataImage;
+                        
+                        if (needsLoading) {
+                            console.log(`🔄 Virtual Scroll: Item ${actualIndex} needs loading - Title: ${item.title.substring(0, 30)}...`);
+                        }
+                        
+                        return needsLoading;
+                    });
+
                     if (itemsNeedingImages.length > 0) {
-                        setTimeout(() => webReader.loadMissingImages(itemsNeedingImages), 100);
+                        console.log(`🔄 Virtual Scroll: Loading ${itemsNeedingImages.length} visible images that need extraction...`);
+                        
+                        // Load these images with a small delay to not block rendering
+                        setTimeout(() => {
+                            itemsNeedingImages.forEach((item, localIndex) => {
+                                const actualIndex = this.visibleStartIndex + visibleItems.indexOf(item);
+                                if (actualIndex >= 0) {
+                                    console.log(`🌐 Virtual Scroll: Starting extraction for item ${actualIndex}: ${item.title.substring(0, 30)}...`);
+                                    webReader.extractAndCacheRealImage(item, actualIndex).then(success => {
+                                        if (success) {
+                                            console.log(`✅ Virtual Scroll: Successfully loaded image for item ${actualIndex}`);
+                                        } else {
+                                            console.log(`⚠️ Virtual Scroll: Failed to load image for item ${actualIndex}, using fallback`);
+                                        }
+                                    }).catch(error => {
+                                        console.error(`❌ Virtual Scroll: Error loading image for article ${actualIndex}:`, error);
+                                        // Use fallback image
+                                        const fallbackImage = webReader.getCategoryBasedImage(item, actualIndex);
+                                        webReader.setArticleImageAndCache(item, actualIndex, fallbackImage, 'fallback');
+                                    });
+                                }
+                            });
+                        }, 200);
+                    } else {
+                        console.log(`✅ Virtual Scroll: All ${visibleItems.length} visible items already have images`);
                     }
                 }
             }
@@ -2506,23 +2569,43 @@
                 // Store what we're currently displaying
                 this.currentDisplayedArticles = articles;
 
+                // FIXED: Properly count images that are actually ready vs need loading
+                let imagesFromBackup = 0;
+                let imagesFromCache = 0;
+                let imagesFromMetadata = 0;
+                let imagesNeedLoading = 0;
+
+                articles.forEach(article => {
+                    if (article.cachedImage && article.cachedImage.base64) {
+                        imagesFromBackup++;
+                    } else if (article.cachedImage && article.cachedImage.url) {
+                        imagesFromBackup++;
+                    } else if (this.getCachedImage(article)) {
+                        imagesFromCache++;
+                    } else if (this.getBestArticleImage(article)) {
+                        imagesFromMetadata++;
+                    } else {
+                        imagesNeedLoading++;
+                    }
+                });
+
                 // Update virtual scrolling with new articles
                 if (this.virtualScrollManager) {
                     this.virtualScrollManager.setItems(articles);
                     
-                    const imagesFromBackup = articles.filter(a => a.cachedImage && a.cachedImage.base64).length;
-                    const imagesFromCache = articles.filter(a => !a.cachedImage && this.getCachedImage(a)).length;
-                    const imagesNeedLoading = articles.length - imagesFromBackup - imagesFromCache;
+                    const totalReady = imagesFromBackup + imagesFromCache + imagesFromMetadata;
                     
-                    console.log(`⚡ VIRTUAL SCROLL: ${imagesFromBackup} synced, ${imagesFromCache} cached, ${imagesNeedLoading} need loading`);
+                    console.log(`⚡ VIRTUAL SCROLL: ${imagesFromBackup} synced, ${imagesFromCache} cached, ${imagesFromMetadata} metadata, ${imagesNeedLoading} need loading`);
                     
                     if (imagesNeedLoading === 0) {
                         this.updateStatus(`⚡ Virtual Scroll: ALL ${articles.length} images ready instantly! 🚀`, 'success');
                     } else {
-                        this.updateStatus(`⚡ Virtual Scroll: ${imagesFromBackup + imagesFromCache} ready, loading ${imagesNeedLoading} more...`, 'loading');
+                        this.updateStatus(`⚡ Virtual Scroll: ${totalReady} ready instantly, extracting ${imagesNeedLoading} more...`, 'loading');
                         
-                        // Load missing images for virtual scroll
-                        setTimeout(() => this.loadMissingImages(articles), 200);
+                        // FIXED: Actually trigger background image loading for items that need it
+                        setTimeout(() => {
+                            this.loadMissingImages(articles);
+                        }, 500); // Small delay to let visible items load first via virtual scroll
                     }
                 } else {
                     console.error('Virtual scroll manager not initialized');
@@ -2543,19 +2626,20 @@
                     </div>`;
             }
 
-            // Mobile-optimized image loading (SAME images, just optimized performance)
+            // FIXED: Enhanced image loading with proper progress tracking
             async loadMissingImages(articles) {
-                console.log('🎨 VIRTUAL SCROLL IMAGE LOADER - Ultra-fast loading...');
+                console.log('🎨 VIRTUAL SCROLL IMAGE LOADER - Loading background images...');
 
                 const articlesNeedingImages = articles.filter((article, index) => {
-                    // Check both stored backup images and local cache
-                    const hasStoredImage = article.cachedImage && article.cachedImage.base64;
+                    // Check all possible image sources
+                    const hasStoredImage = article.cachedImage && (article.cachedImage.base64 || article.cachedImage.url);
                     const hasCachedImage = this.getCachedImage(article);
-                    return !hasStoredImage && !hasCachedImage;
+                    const hasMetadataImage = this.getBestArticleImage(article);
+                    return !hasStoredImage && !hasCachedImage && !hasMetadataImage;
                 });
 
                 if (articlesNeedingImages.length === 0) {
-                    this.updateStatus(`✅ Virtual Scroll: All images loaded!`, 'success');
+                    this.updateStatus(`✅ Virtual Scroll: All images are ready!`, 'success');
                     return;
                 }
 
@@ -2563,17 +2647,21 @@
                 let successCount = 0;
                 const totalNew = articlesNeedingImages.length;
 
-                console.log(`🔄 Virtual Scroll: Loading ${totalNew} images${isMobile ? ' (mobile optimized)' : ''}`);
+                console.log(`🔄 Virtual Scroll: Loading ${totalNew} images that need extraction${isMobile ? ' (mobile optimized)' : ''}`);
 
-                // Virtual scroll optimization: Only load visible images first, then load others in background
-                const visibleItems = this.virtualScrollManager ? this.virtualScrollManager.getVisibleItems() : articlesNeedingImages.slice(0, 20);
+                // Get visible and background items
+                const visibleItems = this.virtualScrollManager ? 
+                    this.virtualScrollManager.getVisibleItems().filter(item => articlesNeedingImages.includes(item)) : 
+                    articlesNeedingImages.slice(0, 20);
+                
                 const backgroundItems = articlesNeedingImages.filter(item => !visibleItems.includes(item));
 
-                // Load visible images first (priority)
-                console.log(`⚡ Loading ${visibleItems.length} visible images first...`);
+                console.log(`⚡ Loading ${visibleItems.length} visible images first, then ${backgroundItems.length} background images...`);
+
+                // Load visible images first (priority) - but only if they're not already loading
                 for (const article of visibleItems) {
-                    if (articlesNeedingImages.includes(article)) {
-                        const originalIndex = articles.findIndex(a => a === article);
+                    const originalIndex = articles.findIndex(a => a === article);
+                    if (originalIndex !== -1) {
                         try {
                             const success = await this.extractAndCacheRealImage(article, originalIndex);
                             if (success) successCount++;
@@ -2587,9 +2675,14 @@
                 }
 
                 // Update status after visible images
-                this.updateStatus(`⚡ Virtual Scroll: ${successCount} visible images loaded, ${backgroundItems.length} loading in background...`, 'loading');
+                if (backgroundItems.length > 0) {
+                    this.updateStatus(`⚡ Virtual Scroll: ${successCount} visible images loaded, loading ${backgroundItems.length} in background...`, 'loading');
+                } else {
+                    this.updateStatus(`⚡ Virtual Scroll: ${successCount} images loaded successfully! 🚀`, 'success');
+                    return;
+                }
 
-                // Load background images in smaller batches
+                // Load background images in smaller batches with progress updates
                 const batchSize = isMobile ? 3 : 5;
                 const delayBetweenBatches = isMobile ? 1000 : 500;
 
@@ -2598,21 +2691,25 @@
 
                     await Promise.all(batch.map(async (article) => {
                         const originalIndex = articles.findIndex(a => a === article);
-                        try {
-                            const success = await this.extractAndCacheRealImage(article, originalIndex);
-                            if (success) successCount++;
-                        } catch (error) {
-                            console.error(`Failed to extract image for article ${originalIndex}:`, error);
-                            const fallbackImage = this.getCategoryBasedImage(article, originalIndex);
-                            this.setArticleImageAndCache(article, originalIndex, fallbackImage, 'fallback');
-                            successCount++;
+                        if (originalIndex !== -1) {
+                            try {
+                                const success = await this.extractAndCacheRealImage(article, originalIndex);
+                                if (success) successCount++;
+                            } catch (error) {
+                                console.error(`Failed to extract image for article ${originalIndex}:`, error);
+                                const fallbackImage = this.getCategoryBasedImage(article, originalIndex);
+                                this.setArticleImageAndCache(article, originalIndex, fallbackImage, 'fallback');
+                                successCount++;
+                            }
                         }
                     }));
 
-                    // Update progress
+                    // Update progress every few batches
                     const totalProcessed = visibleItems.length + Math.min(i + batchSize, backgroundItems.length);
-                    if (i + batchSize < backgroundItems.length) {
-                        this.updateStatus(`⚡ Virtual Scroll: ${totalProcessed}/${totalNew} images processed...`, 'loading');
+                    const remaining = totalNew - totalProcessed;
+                    
+                    if (remaining > 0) {
+                        this.updateStatus(`⚡ Virtual Scroll: ${totalProcessed}/${totalNew} images loaded, ${remaining} remaining...`, 'loading');
                         await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
                     }
                 }
