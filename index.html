@@ -1245,41 +1245,41 @@
                     📚 MyPocket Web Reader <span style="font-size: 0.6em; opacity: 0.8;">⚡Virtual Scroll</span>
                 </div>
                 <div class="header-actions">
-                    <button id="connectBtn" class="btn btn-primary">
+                    <button id="connectBtn" class="btn btn-primary" onclick="if(window.webReader) window.webReader.authenticate()">
                         <span id="connectIcon">🔐</span>
                         <span id="connectText">Secure Connect</span>
                     </button>
-                    <button id="refreshBtn" class="btn btn-secondary" style="display: none;">
+                    <button id="refreshBtn" class="btn btn-secondary" style="display: none;" onclick="if(window.webReader) window.webReader.loadArticles()">
                         <span>🔄</span> Refresh
                     </button>
-                    <button id="searchToggleBtn" class="btn btn-secondary">
+                    <button id="searchToggleBtn" class="btn btn-secondary" onclick="if(window.webReader) window.webReader.toggleSearch()">
                         <span>🔍</span> Search
                     </button>
-                    <button id="clearCacheBtn" class="btn btn-secondary">
+                    <button id="clearCacheBtn" class="btn btn-secondary" onclick="if(window.webReader) window.webReader.clearImageCache()">
                         <span>🗑️</span> Clear Cache
                     </button>
-                    <button id="syncBtn" class="btn btn-secondary" style="display: none;">
+                    <button id="syncBtn" class="btn btn-secondary" style="display: none;" onclick="if(window.webReader) window.webReader.forceSyncImages()">
                         <span>🔄</span> Sync Images
                     </button>
-                    <button id="retryFailedBtn" class="btn btn-secondary" style="display: none;">
+                    <button id="retryFailedBtn" class="btn btn-secondary" style="display: none;" onclick="if(window.webReader) window.webReader.retryFailedImages()">
                         <span>🔄</span> Retry Failed
                     </button>
-                    <button id="helpBtn" class="btn btn-secondary">
+                    <button id="helpBtn" class="btn btn-secondary" onclick="if(window.webReader) window.webReader.showImageHelp()">
                         <span>❓</span> Image Help
                     </button>
-                    <button id="debugBtn" class="btn btn-secondary">
+                    <button id="debugBtn" class="btn btn-secondary" onclick="if(window.webReader) window.webReader.toggleDebugMode()">
                         <span>🔧</span> Debug
                     </button>
-                    <button id="testConnectionBtn" class="btn btn-secondary">
+                    <button id="testConnectionBtn" class="btn btn-secondary" onclick="if(window.webReader) window.webReader.testConnection()">
                         <span>🔌</span> Test Connect
                     </button>
-                    <button id="testImagesBtn" class="btn btn-secondary">
+                    <button id="testImagesBtn" class="btn btn-secondary" onclick="if(window.webReader) window.webReader.testImageLoading()">
                         <span>🖼️</span> Test Images
                     </button>
-                    <button id="testBtn" class="btn btn-secondary">
+                    <button id="testBtn" class="btn btn-secondary" onclick="if(window.webReader) window.webReader.toggleTestMode()">
                         <span>👁️</span> Show Buttons
                     </button>
-                    <button id="darkModeBtn" class="btn btn-secondary">
+                    <button id="darkModeBtn" class="btn btn-secondary" onclick="if(window.webReader) window.webReader.toggleDarkMode()">
                         <span>🌙</span> Dark Mode
                     </button>
                 </div>
@@ -1293,7 +1293,7 @@
             <div class="search-box">
                 <input type="text" id="searchInput" class="search-input" placeholder="Search your saved articles..."
                     autocomplete="off">
-                <button class="search-close-btn" id="searchCloseBtn" title="Close search">✕</button>
+                <button class="search-close-btn" onclick="if(window.webReader) window.webReader.toggleSearch(false)" title="Close search">✕</button>
             </div>
         </div>
     </section>
@@ -2106,71 +2106,16 @@
             setupEventListeners() {
                 console.log('🔧 Setting up event listeners...');
                 
-                // Connect button - with detailed debugging
-                const connectBtn = document.getElementById('connectBtn');
-                if (connectBtn) {
-                    connectBtn.addEventListener('click', (e) => {
-                        console.log('🔐 Connect button clicked!');
-                        e.preventDefault();
-                        try {
-                            this.authenticate();
-                        } catch (error) {
-                            console.error('❌ Authentication error:', error);
-                            alert(`Authentication Error: ${error.message}`);
-                        }
-                    });
-                    console.log('✅ Connect button listener attached');
-                } else {
-                    console.error('❌ Connect button not found!');
-                }
-
-                // All other buttons
-                const buttonConfigs = [
-                    { id: 'refreshBtn', method: 'loadArticles', label: 'Refresh' },
-                    { id: 'searchToggleBtn', method: 'toggleSearch', label: 'Search Toggle' },
-                    { id: 'clearCacheBtn', method: 'clearImageCache', label: 'Clear Cache' },
-                    { id: 'syncBtn', method: 'forceSyncImages', label: 'Sync Images' },
-                    { id: 'retryFailedBtn', method: 'retryFailedImages', label: 'Retry Failed' },
-                    { id: 'helpBtn', method: 'showImageHelp', label: 'Help' },
-                    { id: 'debugBtn', method: 'toggleDebugMode', label: 'Debug' },
-                    { id: 'testConnectionBtn', method: 'testConnection', label: 'Test Connection' },
-                    { id: 'testImagesBtn', method: 'testImageLoading', label: 'Test Images' },
-                    { id: 'testBtn', method: 'toggleTestMode', label: 'Test Mode' },
-                    { id: 'darkModeBtn', method: 'toggleDarkMode', label: 'Dark Mode' }
-                ];
-
-                buttonConfigs.forEach(config => {
-                    const button = document.getElementById(config.id);
-                    if (button && this[config.method]) {
-                        button.addEventListener('click', (e) => {
-                            console.log(`🔘 ${config.label} button clicked`);
-                            e.preventDefault();
-                            try {
-                                this[config.method]();
-                            } catch (error) {
-                                console.error(`❌ ${config.label} error:`, error);
-                            }
-                        });
-                        console.log(`✅ ${config.label} button listener attached`);
-                    } else if (button) {
-                        console.warn(`⚠️ Method ${config.method} not found for ${config.label} button`);
-                    }
-                });
-
-                // Search input and close button
+                // Search input only (buttons use inline onclick)
                 const searchInput = document.getElementById('searchInput');
                 if (searchInput) {
                     searchInput.addEventListener('input', (e) => this.searchArticles(e.target.value));
                     console.log('✅ Search input listener attached');
+                } else {
+                    console.error('❌ Search input not found!');
                 }
 
-                const searchCloseBtn = document.getElementById('searchCloseBtn');
-                if (searchCloseBtn) {
-                    searchCloseBtn.addEventListener('click', () => this.toggleSearch(false));
-                    console.log('✅ Search close button listener attached');
-                }
-
-                // Reader buttons
+                // Reader buttons (these don't have inline handlers)
                 const closeReader = document.getElementById('closeReader');
                 if (closeReader) {
                     closeReader.addEventListener('click', () => this.closeReader());
@@ -2209,7 +2154,7 @@
                     }
                 });
 
-                console.log('✅ All event listeners set up successfully');
+                console.log('✅ Essential event listeners set up successfully');
             }
 
             isInputFocused() {
@@ -3415,8 +3360,65 @@ Want All Fresh Images → Use "Sync Images" button
                 alert(helpText);
             }
 
-            // NEW: Test connection functionality
-            testConnection() {
+            // NEW: Simple test for button functionality
+            testButtonFunctionality() {
+                console.log('🧪 TESTING button functionality...');
+                
+                const results = {
+                    webReaderExists: !!window.webReader,
+                    methods: {},
+                    buttons: {}
+                };
+                
+                // Test critical methods
+                const criticalMethods = ['authenticate', 'toggleSearch', 'toggleDarkMode', 'testConnection'];
+                criticalMethods.forEach(method => {
+                    results.methods[method] = typeof window.webReader[method] === 'function';
+                });
+                
+                // Test button elements and their onclick handlers
+                const criticalButtons = ['connectBtn', 'searchToggleBtn', 'darkModeBtn', 'testConnectionBtn'];
+                criticalButtons.forEach(id => {
+                    const btn = document.getElementById(id);
+                    results.buttons[id] = {
+                        exists: !!btn,
+                        hasOnclick: btn ? !!btn.getAttribute('onclick') : false,
+                        onclick: btn ? btn.getAttribute('onclick') : null
+                    };
+                });
+                
+                console.log('🧪 Test results:', results);
+                
+                // Create a readable summary
+                const summary = `
+🧪 BUTTON FUNCTIONALITY TEST:
+============================
+
+✅ Global Setup:
+- window.webReader exists: ${results.webReaderExists ? 'YES' : 'NO'}
+
+✅ Critical Methods:
+${criticalMethods.map(method => 
+    `- ${method}: ${results.methods[method] ? 'YES' : 'NO'}`
+).join('\n')}
+
+✅ Button Setup:
+${criticalButtons.map(id => {
+    const btn = results.buttons[id];
+    return `- ${id}: ${btn.exists ? 'Found' : 'Missing'} | onclick: ${btn.hasOnclick ? 'YES' : 'NO'}`;
+}).join('\n')}
+
+${results.webReaderExists && Object.values(results.methods).every(Boolean) && 
+  Object.values(results.buttons).every(btn => btn.exists && btn.hasOnclick) ? 
+  '🎉 ALL TESTS PASSED - Buttons should work!' : 
+  '❌ ISSUES FOUND - Check console for details'}
+                `;
+                
+                console.log(summary);
+                alert(summary);
+                
+                return results;
+            }
                 console.log('🧪 TESTING connection...');
                 
                 // Test basic setup
@@ -4586,37 +4588,40 @@ Search Features:
 
         let webReader;
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🔄 DOM Content Loaded - Initializing...');
+            console.log('🔄 DOM Content Loaded - Initializing MyPocket Web Reader...');
             
             try {
+                // Create the webReader instance immediately  
                 webReader = new MyPocketWebReader();
                 window.webReader = webReader;
                 
-                // Make sure all global functions are available with error checking
-                const methods = [
-                    'clearImageCache', 'forceSyncImages', 'retryFailedImages', 
-                    'showImageHelp', 'toggleDebugMode', 'testConnection', 'testImageLoading', 
-                    'toggleTestMode', 'toggleDarkMode', 'toggleSearch'
-                ];
-                
-                methods.forEach(method => {
-                    if (webReader[method]) {
-                        window.webReader[method] = webReader[method].bind(webReader);
-                    } else {
-                        console.warn(`⚠️ Method ${method} not found on webReader`);
-                    }
-                });
-                
                 console.log('✅ MyPocket Web Reader with Virtual Scrolling initialized!');
-                console.log('✅ Available methods:', Object.keys(window.webReader).filter(k => typeof window.webReader[k] === 'function'));
+                console.log('✅ webReader available globally:', !!window.webReader);
+                
+                // Test some methods
+                console.log('✅ authenticate method:', typeof webReader.authenticate === 'function');
+                console.log('✅ toggleSearch method:', typeof webReader.toggleSearch === 'function');
+                console.log('✅ toggleDarkMode method:', typeof webReader.toggleDarkMode === 'function');
                 
                 // Test the connect button
                 const connectBtn = document.getElementById('connectBtn');
                 if (connectBtn) {
                     console.log('✅ Connect button found and ready');
+                    console.log('✅ Connect button onclick:', connectBtn.getAttribute('onclick'));
                 } else {
                     console.error('❌ Connect button not found!');
                 }
+                
+                // Test a few other buttons
+                const testButtons = ['searchToggleBtn', 'darkModeBtn', 'testConnectionBtn'];
+                testButtons.forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (btn) {
+                        console.log(`✅ ${id} found with onclick:`, btn.getAttribute('onclick'));
+                    } else {
+                        console.error(`❌ ${id} not found!`);
+                    }
+                });
                 
             } catch (error) {
                 console.error('❌ Failed to initialize MyPocket Web Reader:', error);
