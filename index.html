@@ -1249,36 +1249,36 @@
                         <span id="connectIcon">🔐</span>
                         <span id="connectText">Secure Connect</span>
                     </button>
-                    <button id="refreshBtn" class="btn btn-secondary" style="display: none;">
+                    <button id="refreshBtn" class="btn btn-secondary" style="display: none;" onclick="webReader && webReader.loadArticles()">
                         <span>🔄</span> Refresh
                     </button>
-                    <button id="searchToggleBtn" class="btn btn-secondary" onclick="webReader.toggleSearch()">
+                    <button id="searchToggleBtn" class="btn btn-secondary" onclick="webReader && webReader.toggleSearch()">
                         <span>🔍</span> Search
                     </button>
-                    <button id="clearCacheBtn" class="btn btn-secondary" onclick="webReader.clearImageCache()">
+                    <button id="clearCacheBtn" class="btn btn-secondary" onclick="webReader && webReader.clearImageCache()">
                         <span>🗑️</span> Clear Cache
                     </button>
-                    <button id="syncBtn" class="btn btn-secondary" onclick="webReader.forceSyncImages()"
+                    <button id="syncBtn" class="btn btn-secondary" onclick="webReader && webReader.forceSyncImages()"
                         style="display: none;">
                         <span>🔄</span> Sync Images
                     </button>
-                    <button id="retryFailedBtn" class="btn btn-secondary" onclick="webReader.retryFailedImages()"
+                    <button id="retryFailedBtn" class="btn btn-secondary" onclick="webReader && webReader.retryFailedImages()"
                         style="display: none;">
                         <span>🔄</span> Retry Failed
                     </button>
-                    <button id="helpBtn" class="btn btn-secondary" onclick="webReader.showImageHelp()">
+                    <button id="helpBtn" class="btn btn-secondary" onclick="webReader && webReader.showImageHelp()">
                         <span>❓</span> Image Help
                     </button>
-                    <button id="debugBtn" class="btn btn-secondary" onclick="webReader.toggleDebugMode()">
+                    <button id="debugBtn" class="btn btn-secondary" onclick="webReader && webReader.toggleDebugMode()">
                         <span>🔧</span> Debug
                     </button>
-                    <button id="testImagesBtn" class="btn btn-secondary" onclick="webReader.testImageLoading()">
+                    <button id="testImagesBtn" class="btn btn-secondary" onclick="webReader && webReader.testImageLoading()">
                         <span>🖼️</span> Test Images
                     </button>
-                    <button id="testBtn" class="btn btn-secondary" onclick="webReader.toggleTestMode()">
+                    <button id="testBtn" class="btn btn-secondary" onclick="webReader && webReader.toggleTestMode()">
                         <span>👁️</span> Show Buttons
                     </button>
-                    <button id="darkModeBtn" class="btn btn-secondary" onclick="webReader.toggleDarkMode()">
+                    <button id="darkModeBtn" class="btn btn-secondary" onclick="webReader && webReader.toggleDarkMode()">
                         <span>🌙</span> Dark Mode
                     </button>
                 </div>
@@ -1292,7 +1292,7 @@
             <div class="search-box">
                 <input type="text" id="searchInput" class="search-input" placeholder="Search your saved articles..."
                     autocomplete="off">
-                <button class="search-close-btn" onclick="webReader.toggleSearch()" title="Close search">✕</button>
+                <button class="search-close-btn" onclick="webReader && webReader.toggleSearch()" title="Close search">✕</button>
             </div>
         </div>
     </section>
@@ -2065,22 +2065,30 @@
             }
 
             init() {
+                console.log('🚀 Initializing MyPocket Web Reader...');
                 this.setupEventListeners();
                 this.checkAuthFromURL();
                 this.loadStoredToken();
                 this.loadThemePreference();
                 this.loadImageCache();
                 
-                // Initialize virtual scrolling
-                this.initVirtualScrolling();
+                // Initialize virtual scrolling after a short delay
+                setTimeout(() => {
+                    this.initVirtualScrolling();
+                }, 500);
+                
+                console.log('✅ MyPocket Web Reader initialized successfully');
             }
 
             initVirtualScrolling() {
-                // Wait for DOM to be ready
-                setTimeout(() => {
+                try {
                     this.virtualScrollManager = new VirtualScrollManager('#articlesContainer', 300, 5);
                     console.log('⚡ Virtual Scrolling initialized!');
-                }, 100);
+                } catch (error) {
+                    console.error('❌ Virtual Scrolling initialization failed:', error);
+                    // Continue without virtual scrolling
+                    this.virtualScrollManager = null;
+                }
             }
 
             getRedirectUri() {
@@ -2126,6 +2134,8 @@
                         this.toggleSearch(false);
                     }
                 });
+
+                console.log('✅ Event listeners set up successfully');
             }
 
             isInputFocused() {
@@ -3323,9 +3333,14 @@ Want All Fresh Images → Use "Sync Images" button
             // NEW: Test image loading functionality
             testImageLoading() {
                 console.log('🧪 TESTING image loading...');
+                console.log('🔍 webReader instance:', !!webReader);
+                console.log('🔍 virtualScrollManager:', !!this.virtualScrollManager);
+                console.log('🔍 connectBtn element:', !!document.getElementById('connectBtn'));
+                console.log('🔍 Current articles:', this.articles.length);
                 
                 if (!this.virtualScrollManager) {
-                    alert('❌ Virtual scroll manager not initialized!');
+                    alert('❌ Virtual scroll manager not initialized!\n\nTrying to initialize it now...');
+                    this.initVirtualScrolling();
                     return;
                 }
                 
@@ -3333,7 +3348,7 @@ Want All Fresh Images → Use "Sync Images" button
                 console.log(`👀 Found ${visibleItems.length} visible items`);
                 
                 if (visibleItems.length === 0) {
-                    alert('❌ No visible items found!');
+                    alert('❌ No visible items found!\n\nMake sure you have:\n1. Connected to OneDrive\n2. Loaded some articles\n3. Articles are visible on screen');
                     return;
                 }
                 
@@ -3377,12 +3392,14 @@ Want All Fresh Images → Use "Sync Images" button
                 ];
                 
                 console.log('🧪 Testing fallback image generation...');
-                dummyArticles.forEach((article, index) => {
-                    const fallback = this.virtualScrollManager.getFallbackImage(article, index);
-                    console.log(`🎨 Article ${index} (${article.title}) -> ${fallback}`);
-                });
+                if (this.virtualScrollManager) {
+                    dummyArticles.forEach((article, index) => {
+                        const fallback = this.virtualScrollManager.getFallbackImage(article, index);
+                        console.log(`🎨 Article ${index} (${article.title}) -> ${fallback}`);
+                    });
+                }
                 
-                alert(`🧪 Test complete! Check console for detailed results.\n\nTesting:\n- Virtual scroll visibility\n- Image loading triggers\n- Fallback image generation\n\nSee console for details.`);
+                alert(`🧪 Test complete! Check console for detailed results.\n\nTesting:\n- webReader instance: ${!!webReader}\n- Virtual scroll: ${!!this.virtualScrollManager}\n- Event listeners: ${!!document.getElementById('connectBtn')}\n- Articles loaded: ${this.articles.length}\n\nSee console for details.`);
             }
                 this.debugMode = !this.debugMode;
                 const debugBtn = document.getElementById('debugBtn');
@@ -4406,9 +4423,42 @@ Search Features:
 
         let webReader;
         document.addEventListener('DOMContentLoaded', () => {
-            webReader = new MyPocketWebReader();
-            window.webReader = webReader;
-            console.log('⚡ MyPocket Web Reader with Virtual Scrolling initialized!');
+            console.log('🔄 DOM Content Loaded - Initializing...');
+            
+            try {
+                webReader = new MyPocketWebReader();
+                window.webReader = webReader;
+                
+                // Make sure all global functions are available with error checking
+                const methods = [
+                    'clearImageCache', 'forceSyncImages', 'retryFailedImages', 
+                    'showImageHelp', 'toggleDebugMode', 'testImageLoading', 
+                    'toggleTestMode', 'toggleDarkMode', 'toggleSearch'
+                ];
+                
+                methods.forEach(method => {
+                    if (webReader[method]) {
+                        window.webReader[method] = webReader[method].bind(webReader);
+                    } else {
+                        console.warn(`⚠️ Method ${method} not found on webReader`);
+                    }
+                });
+                
+                console.log('✅ MyPocket Web Reader with Virtual Scrolling initialized!');
+                console.log('✅ Available methods:', Object.keys(window.webReader).filter(k => typeof window.webReader[k] === 'function'));
+                
+                // Test the connect button
+                const connectBtn = document.getElementById('connectBtn');
+                if (connectBtn) {
+                    console.log('✅ Connect button found and ready');
+                } else {
+                    console.error('❌ Connect button not found!');
+                }
+                
+            } catch (error) {
+                console.error('❌ Failed to initialize MyPocket Web Reader:', error);
+                document.getElementById('status').innerHTML = `❌ Initialization failed: ${error.message}`;
+            }
         });
     </script>
 </body>
