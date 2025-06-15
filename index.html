@@ -1,10 +1,59 @@
-<!DOCTYPE html>
+<!-- Simple PWA Manifest (inline) -->
+    <script>
+        // Create simple manifest for PWA support if served over HTTPS
+        if (window.location.protocol === 'https:') {
+            const manifest = {
+                name: "MyPocket Web Reader",
+                short_name: "MyPocket",
+                description: "Your personal article reader with cross-device sync",
+                start_url: ".",
+                display: "standalone",
+                background_color: "#0d1117",
+                theme_color: "#ee5a24",
+                icons: [
+                    {
+                        src: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='24' fill='%23ee5a24'/%3E%3Ctext x='96' y='120' font-family='system-ui' font-size='72' fill='white' text-anchor='middle'%3E📖%3C/text%3E%3C/svg%3E",
+                        sizes: "192x192",
+                        type: "image/svg+xml"
+                    }
+                ]
+            };
+            
+            const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+            const manifestURL = URL.createObjectURL(manifestBlob);
+            
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = manifestURL;
+            document.head.appendChild(link);
+            
+            console.log('📱 Simple PWA manifest added (HTTPS detected)');
+        }
+    </script><!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyPocket - Web Reader</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIk15UG9ja2V0IFdlYiBSZWFkZXIiLAogICJzaG9ydF9uYW1lIjogIk15UG9ja2V0IiwKICAiZGVzY3JpcHRpb24iOiAiWW91ciBwZXJzb25hbCBhcnRpY2xlIHJlYWRlciB3aXRoIGNyb3NzLWRldmljZSBzeW5jIGFuZCBvZmZsaW5lIHJlYWRpbmciLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzBkMTExNyIsCiAgInRoZW1lX2NvbG9yIjogIiNlZTVhMjQiLAogICJvcmllbnRhdGlvbiI6ICJwb3J0cmFpdC1wcmltYXJ5IiwKICAiY2F0ZWdvcmllcyI6IFsicHJvZHVjdGl2aXR5IiwgInJlYWRpbmciLCAibmV3cyJdLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUIzYVdSMGFEMGlOalFpSUdobGFXZG9kRDBpTmpRaUlIWnBaWGRDYjNnOUlqQWdNQ0EyTkNBMk5DSWdabWxzYkQwaVlpTXZnNEFBQUFCSlJVNUVya0pnZ2c9PSIsCiAgICAgICJzaXplcyI6ICI2NHg2NCIsCiAgICAgICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiCiAgICB9LAogICAgewogICAgICAic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjNhV1IwYUQwaU1USTRJaUJvWldsbmFIUTlJakV5T0NJZ2RtbGxkMEp2ZUQwaU1DQXdJREV5T0NBeU9DSWdabWxzYkQwaVlpTXZnNEFBQUFCSlJVNUVya0pnZ2c9PSIsCiAgICAgICJzaXplcyI6ICIxMjh4MTI4IiwKICAgICAgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIKICAgIH0sCiAgICB7CiAgICAgICJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCM2FXUjBhRDBpTlRFeUlpQm9aV2xuYUhROUlqVXhNaUlnZG1sbGQwSnZlRDBpTUNBd0lEVXhNaUExTVRJaUlHWnBiR3c5SWlObE1UQmpNR1FKSWo0S1BISmxZM1FnZUQwaU1TSWdlVDBpTVNJZ2QybGtkR2c5SWpVeE1DSWdhR1ZwWjJoMFBTSTFNVEFpSUhKNFBTSTFJaUJtYVd4c1BTSWpZak5oWXpNemN3PT0iLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiCiAgICB9CiAgXSwKICAic2NyZWVuc2hvdHMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCM2FXUjBhRDBpT0RBd0lpQm9aV2xuYUhROUlqUTRNQ0lnZG1sbGQwSnZlRDBpTUNBd0lEZ3dNQ0EwT0RBaUlHWnBiR3c5SWk5bmNtRmthV1Z1ZEQ0aUlHbGtQU0puY21Ga2FXVnVkQ0krSUdOamJDNWZZWEowYVdOc1pTMW5jbWxrSUh0bWIyNTBPbmRsYVdkb2REcGlaV3hrT3pjek9DMGdjeTA1TURBeExUZ2dabVJpTFRjME9ERXRkelprTkRZdGNpNDNOaTFqZEhsS0oxVjVabHBzVEZONU9qSTFPUzFCUkZvd01rNW1TekZOZGl0d2VITU8yZ2daMDhtQjZEM1NpVXl5amlqS1JKM1NrUzNmZjJ2RkZCbXlTZjVobkdaSUhPeVJTaTJGR2hHNDQ1NEtpJTNEJTNEIiwKICAgICAgInNpemVzIjogIjgwMHg0ODAiLAogICAgICAidHlwZSI6ICJpbWFnZS9zdmcreG1sIiwKICAgICAgImZvcm1fZmFjdG9yIjogIndpZGUiLAogICAgICAibGFiZWwiOiAiRGVza3RvcCBWaWV3IgogICAgfQogIF0KfQ==">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#ee5a24">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="MyPocket">
+    <meta name="msapplication-TileColor" content="#ee5a24">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIHJ4PSIyNCIgZmlsbD0iI2VlNWEyNCIvPjx0ZXh0IHg9IjY0IiB5PSI3NCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSI0OCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfk5o8L3RleHQ+PC9zdmc+">
+    
+    <!-- Preload Critical Resources -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com" as="dns-prefetch">
+    <link rel="preconnect" href="https://images.unsplash.com">
     <style>
         * {
             margin: 0;
@@ -269,6 +318,17 @@
             transform: translateY(-1px);
         }
 
+        /* Offline mode button states */
+        #offlineBtn.offline-mode {
+            background: var(--primary-color) !important;
+            color: white !important;
+        }
+
+        #offlineBtn.no-connection {
+            background: #ffa726 !important;
+            color: white !important;
+        }
+
         /* Search Toggle Animation */
         .search-container {
             opacity: 0;
@@ -359,19 +419,118 @@
             color: #27ae60;
         }
 
-        /* Articles Grid - SMALLER TILES */
+        /* Articles Grid - VIRTUAL SCROLLING OPTIMIZED */
         .articles-section {
             padding: 40px 0;
             min-height: 60vh;
         }
 
+        /* Virtual scroll container */
+        .virtual-scroll-container {
+            height: 70vh; /* Fixed height for virtual scrolling */
+            overflow-y: auto;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            position: relative;
+        }
+
+        .virtual-scroll-content {
+            position: relative;
+            width: 100%;
+        }
+
+        .virtual-spacer-top {
+            width: 100%;
+        }
+
+        .virtual-spacer-bottom {
+            width: 100%;
+        }
+
         .articles-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            /* REDUCED from 290px to 220px */
             gap: 18px;
-            /* REDUCED from 24px to 18px */
-            margin-top: 20px;
+            padding: 0 20px;
+            position: relative;
+        }
+
+        /* Virtual scroll performance optimizations */
+        .virtual-scroll-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .virtual-scroll-container::-webkit-scrollbar-track {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        .virtual-scroll-container::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        .virtual-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #d84315;
+        }
+
+        /* Batch loading indicator */
+        .batch-loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .batch-loading .loading-spinner {
+            margin-right: 10px;
+        }
+
+        /* Virtual scroll metrics */
+        .virtual-scroll-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            z-index: 10;
+            display: none;
+        }
+
+        .virtual-scroll-info.debug-mode {
+            display: block;
+        }
+
+        /* Performance mode toggle */
+        .performance-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 0 20px;
+        }
+
+        .performance-toggle {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s ease;
+        }
+
+        .performance-toggle:hover {
+            background: var(--border);
+        }
+
+        .performance-toggle.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
         }
 
         /* ORGANIC SHAPED TILES - SMALLER VERSION */
@@ -868,10 +1027,24 @@
                 padding: 20px 0;
             }
 
+            .virtual-scroll-container {
+                height: 60vh; /* Smaller on mobile */
+            }
+
             .articles-grid {
                 display: block;
                 /* Use block layout instead of grid for better mobile performance */
-                margin-top: 15px;
+                padding: 0 12px;
+            }
+
+            .performance-controls {
+                padding: 0 12px;
+                margin-bottom: 15px;
+            }
+
+            .performance-toggle {
+                font-size: 0.8em;
+                padding: 6px 12px;
             }
 
             /* COMPLETELY REDESIGNED MOBILE CARDS */
@@ -1258,6 +1431,12 @@
                     <button id="testBtn" class="btn btn-secondary" onclick="webReader.toggleTestMode()">
                         <span>👁️</span> Show Buttons
                     </button>
+                    <button id="diagBtn" class="btn btn-secondary" onclick="webReader.runDiagnostics()" title="Run click diagnostics">
+                        <span>🔬</span> Diagnose
+                    </button>
+                    <button id="testClickBtn" class="btn btn-secondary" onclick="webReader.testFirstArticleClick()" title="Test clicking first article">
+                        <span>🧪</span> Test Click
+                    </button>
                     <button id="darkModeBtn" class="btn btn-secondary" onclick="webReader.toggleDarkMode()">
                         <span>🌙</span> Dark Mode
                     </button>
@@ -1270,8 +1449,7 @@
     <section class="search-container" id="searchContainer" style="display: none;">
         <div class="container">
             <div class="search-box">
-                <input type="text" id="searchInput" class="search-input" placeholder="Search your saved articles..."
-                    autocomplete="off">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search your saved articles..." autocomplete="off">
                 <button class="search-close-btn" onclick="webReader.toggleSearch()" title="Close search">✕</button>
             </div>
         </div>
@@ -1285,11 +1463,43 @@
     <!-- Articles -->
     <section class="articles-section">
         <div class="container">
+            <!-- Performance Controls -->
+            <div class="performance-controls" id="performanceControls" style="display: none;">
+                <button class="performance-toggle active" onclick="webReader.setBatchSize(20)">
+                    ⚡ Fast (20)
+                </button>
+                <button class="performance-toggle" onclick="webReader.setBatchSize(50)">
+                    🔄 Balanced (50)
+                </button>
+                <button class="performance-toggle" onclick="webReader.setBatchSize(100)">
+                    📊 More (100)
+                </button>
+                <button class="performance-toggle" onclick="webReader.toggleVirtualScrollDebug()">
+                    🔧 Debug
+                </button>
+            </div>
+
             <div id="articlesContainer">
-                <div class="empty-state">
-                    <div class="empty-state-icon">📖</div>
-                    <h3>Welcome to MyPocket Web Reader</h3>
-                    <p>Connect to OneDrive to access your saved articles from anywhere!</p>
+                <!-- Virtual Scroll Container -->
+                <div class="virtual-scroll-container" id="virtualScrollContainer" style="display: none;">
+                    <div class="virtual-scroll-info" id="virtualScrollInfo">
+                        Batch: <span id="currentBatchInfo">0</span>/<span id="totalBatchInfo">0</span> | 
+                        Rendered: <span id="renderedItemsInfo">0</span>/<span id="totalItemsInfo">0</span>
+                    </div>
+                    <div class="virtual-scroll-content" id="virtualScrollContent">
+                        <div class="virtual-spacer-top" id="virtualSpacerTop"></div>
+                        <div class="articles-grid" id="virtualArticlesGrid"></div>
+                        <div class="virtual-spacer-bottom" id="virtualSpacerBottom"></div>
+                    </div>
+                </div>
+
+                <!-- Traditional Container (fallback) -->
+                <div id="traditionalContainer">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📖</div>
+                        <h3>Welcome to MyPocket Web Reader</h3>
+                        <p>Connect to OneDrive to access your saved articles from anywhere!</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1346,6 +1556,17 @@
                 this.codeChallenge = null;
                 this.state = null;
 
+                // Virtual scrolling properties
+                this.virtualScrollEnabled = false; // Temporarily disabled for debugging
+                this.itemsPerBatch = 20; // Articles to render at once
+                this.batchBuffer = 10; // Extra items above/below viewport
+                this.currentBatch = 0;
+                this.totalBatches = 0;
+                this.virtualContainer = null;
+                this.scrollObserver = null;
+                this.itemHeights = new Map(); // Cache item heights for better performance
+                this.estimatedItemHeight = 320; // Estimated height for calculations
+
                 this.init();
             }
 
@@ -1366,6 +1587,35 @@
                 this.loadStoredToken();
                 this.loadThemePreference();
                 this.loadImageCache();
+                this.initializeVirtualScrolling();
+                
+                console.log('🚀 MyPocket Web Reader initialized (simplified mode)');
+            }
+
+            initializeVirtualScrolling() {
+                // Set initial virtual scrolling state
+                const virtualScrollBtn = document.getElementById('virtualScrollBtn');
+                const virtualScrollIcon = document.getElementById('virtualScrollIcon');
+                const virtualScrollText = document.getElementById('virtualScrollText');
+                
+                if (this.virtualScrollEnabled) {
+                    virtualScrollIcon.textContent = '⚡';
+                    virtualScrollText.textContent = 'Virtual ON';
+                    virtualScrollBtn.style.background = 'var(--primary-color)';
+                    virtualScrollBtn.style.color = 'white';
+                } else {
+                    virtualScrollIcon.textContent = '📊';
+                    virtualScrollText.textContent = 'Virtual OFF';
+                    virtualScrollBtn.style.background = '';
+                    virtualScrollBtn.style.color = '';
+                }
+                
+                console.log('⚡ Virtual scrolling initialized:', {
+                    enabled: this.virtualScrollEnabled,
+                    itemsPerBatch: this.itemsPerBatch,
+                    bufferSize: this.batchBuffer,
+                    estimatedHeight: this.estimatedItemHeight
+                });
             }
 
             setupEventListeners() {
@@ -1374,7 +1624,7 @@
                 document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
                 document.getElementById('closeReader').addEventListener('click', () => this.closeReader());
                 document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
-
+                
                 // Search toggle keyboard shortcuts
                 document.addEventListener('keydown', (e) => {
                     // Ctrl/Cmd + K or / to open search
@@ -1393,9 +1643,9 @@
                 document.addEventListener('click', (e) => {
                     const searchContainer = document.getElementById('searchContainer');
                     const searchToggleBtn = document.getElementById('searchToggleBtn');
-
-                    if (searchContainer.style.display !== 'none' &&
-                        !searchContainer.contains(e.target) &&
+                    
+                    if (searchContainer.style.display !== 'none' && 
+                        !searchContainer.contains(e.target) && 
                         !searchToggleBtn.contains(e.target)) {
                         this.toggleSearch(false);
                     }
@@ -1412,10 +1662,10 @@
                 const searchContainer = document.getElementById('searchContainer');
                 const searchInput = document.getElementById('searchInput');
                 const searchToggleBtn = document.getElementById('searchToggleBtn');
-
+                
                 const isCurrentlyVisible = searchContainer.style.display !== 'none';
                 const shouldShow = forceState !== null ? forceState : !isCurrentlyVisible;
-
+                
                 if (shouldShow) {
                     // Show search
                     searchContainer.style.display = 'block';
@@ -1423,12 +1673,12 @@
                         searchContainer.classList.add('visible');
                         searchInput.focus();
                     }, 10);
-
+                    
                     // Update button
                     searchToggleBtn.innerHTML = '<span>🔍</span> Close Search';
                     searchToggleBtn.style.background = 'var(--primary-color)';
                     searchToggleBtn.style.color = 'white';
-
+                    
                     this.updateStatus('🔍 Search mode active - Type to search or press Escape to close', 'success');
                 } else {
                     // Hide search
@@ -1438,18 +1688,18 @@
                             searchContainer.style.display = 'none';
                         }
                     }, 300);
-
+                    
                     // Update button
                     searchToggleBtn.innerHTML = '<span>🔍</span> Search';
                     searchToggleBtn.style.background = '';
                     searchToggleBtn.style.color = '';
-
+                    
                     // Clear search if closing
                     if (searchInput.value) {
                         searchInput.value = '';
                         this.searchArticles('');
                     }
-
+                    
                     // Remove focus
                     searchInput.blur();
                 }
@@ -2899,13 +3149,22 @@ Want All Fresh Images → Use "Sync Images" button
             }
 
             displayEmptyState() {
-                const container = document.getElementById('articlesContainer');
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📖</div>
-                        <h3>No articles found</h3>
-                        <p>Use the MyPocket browser extension to save articles, then refresh this page.</p>
-                    </div>`;
+                const virtualContainer = document.getElementById('virtualScrollContainer');
+                const traditionalContainer = document.getElementById('traditionalContainer');
+                
+                // Hide virtual scroll container
+                if (virtualContainer) virtualContainer.style.display = 'none';
+                
+                // Show empty state in traditional container
+                if (traditionalContainer) {
+                    traditionalContainer.style.display = 'block';
+                    traditionalContainer.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📖</div>
+                            <h3>No articles found</h3>
+                            <p>Use the MyPocket browser extension to save articles, then refresh this page.</p>
+                        </div>`;
+                }
             }
 
             searchArticles(query) {
@@ -2966,13 +3225,25 @@ Want All Fresh Images → Use "Sync Images" button
                 }
             }
 
-            // FIXED: New functions that work with display indices
+            // FIXED: New functions that work with display indices (with debugging)
             openReaderByDisplayIndex(displayIndex) {
+                console.log(`🔍 Opening reader for display index: ${displayIndex}`, {
+                    currentDisplayedArticles: this.currentDisplayedArticles.length,
+                    virtualScrollEnabled: this.virtualScrollEnabled,
+                    requestedIndex: displayIndex
+                });
+
                 const article = this.currentDisplayedArticles[displayIndex];
                 if (!article) {
-                    console.error('Article not found at display index:', displayIndex);
+                    console.error('❌ Article not found at display index:', displayIndex, {
+                        availableIndices: this.currentDisplayedArticles.length,
+                        displayIndex: displayIndex
+                    });
+                    this.updateStatus(`❌ Error: Article not found (index ${displayIndex})`, 'error');
                     return;
                 }
+
+                console.log(`✅ Found article: "${article.title.substring(0, 50)}..."`);
 
                 this.currentArticle = article;
                 const overlay = document.getElementById('readerOverlay');
@@ -2999,9 +3270,12 @@ Want All Fresh Images → Use "Sync Images" button
             }
 
             exportArticleByDisplayIndex(displayIndex) {
+                console.log(`📤 Exporting article at display index: ${displayIndex}`);
+
                 const article = this.currentDisplayedArticles[displayIndex];
                 if (!article) {
-                    console.error('Article not found at display index:', displayIndex);
+                    console.error('❌ Article not found at display index:', displayIndex);
+                    this.updateStatus(`❌ Error: Article not found for export (index ${displayIndex})`, 'error');
                     return;
                 }
 
@@ -3017,9 +3291,12 @@ Want All Fresh Images → Use "Sync Images" button
             }
 
             async deleteArticleByDisplayIndex(displayIndex) {
+                console.log(`🗑️ Deleting article at display index: ${displayIndex}`);
+
                 const article = this.currentDisplayedArticles[displayIndex];
                 if (!article) {
-                    console.error('Article not found at display index:', displayIndex);
+                    console.error('❌ Article not found at display index:', displayIndex);
+                    this.updateStatus(`❌ Error: Article not found for deletion (index ${displayIndex})`, 'error');
                     return;
                 }
 
@@ -3489,6 +3766,299 @@ Want All Fresh Images → Use "Sync Images" button
 
                 console.log(`✅ Backup saved with ${articlesWithImages.length} images (${Math.round(totalImageSizeKB)}KB)`);
                 return await uploadResponse.json();
+            }
+
+            // ===== VIRTUAL SCROLLING IMPLEMENTATION =====
+
+            toggleVirtualScroll() {
+                this.virtualScrollEnabled = !this.virtualScrollEnabled;
+                
+                const virtualScrollBtn = document.getElementById('virtualScrollBtn');
+                const virtualScrollIcon = document.getElementById('virtualScrollIcon');
+                const virtualScrollText = document.getElementById('virtualScrollText');
+                const performanceControls = document.getElementById('performanceControls');
+                
+                if (this.virtualScrollEnabled) {
+                    virtualScrollIcon.textContent = '⚡';
+                    virtualScrollText.textContent = 'Virtual ON';
+                    virtualScrollBtn.style.background = 'var(--primary-color)';
+                    virtualScrollBtn.style.color = 'white';
+                    performanceControls.style.display = 'flex';
+                    this.updateStatus('⚡ Virtual scrolling enabled - Better performance for large lists', 'success');
+                } else {
+                    virtualScrollIcon.textContent = '📊';
+                    virtualScrollText.textContent = 'Virtual OFF';
+                    virtualScrollBtn.style.background = '';
+                    virtualScrollBtn.style.color = '';
+                    performanceControls.style.display = 'none';
+                    this.updateStatus('📊 Traditional scrolling enabled - All items rendered', 'loading');
+                }
+                
+                // Re-render articles with new mode
+                this.displayArticles(this.currentDisplayedArticles);
+            }
+
+            setBatchSize(size) {
+                this.itemsPerBatch = size;
+                this.currentBatch = 0;
+                
+                // Update active button
+                const buttons = document.querySelectorAll('.performance-toggle');
+                buttons.forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                
+                this.updateStatus(`⚡ Batch size set to ${size} items`, 'success');
+                
+                // Re-render with new batch size
+                if (this.virtualScrollEnabled) {
+                    this.displayArticles(this.currentDisplayedArticles);
+                }
+            }
+
+            toggleVirtualScrollDebug() {
+                const debugInfo = document.getElementById('virtualScrollInfo');
+                debugInfo.classList.toggle('debug-mode');
+                
+                const isDebug = debugInfo.classList.contains('debug-mode');
+                this.updateStatus(isDebug ? '🔧 Virtual scroll debug ON' : '🔧 Virtual scroll debug OFF', 'loading');
+            }
+
+            setupVirtualScrolling() {
+                if (!this.virtualScrollEnabled) return;
+
+                const container = document.getElementById('virtualScrollContainer');
+                if (!container) return;
+
+                // Remove existing listener
+                if (this.scrollObserver) {
+                    container.removeEventListener('scroll', this.scrollObserver);
+                }
+
+                // Create scroll observer with throttling for performance
+                this.scrollObserver = this.throttle((e) => {
+                    this.handleVirtualScroll();
+                }, 16); // ~60fps
+
+                container.addEventListener('scroll', this.scrollObserver);
+                
+                // Initial render
+                this.handleVirtualScroll();
+            }
+
+            handleVirtualScroll() {
+                const container = document.getElementById('virtualScrollContainer');
+                const content = document.getElementById('virtualScrollContent');
+                
+                if (!container || !content) return;
+
+                const scrollTop = container.scrollTop;
+                const containerHeight = container.clientHeight;
+                const itemHeight = this.estimatedItemHeight;
+                
+                // Calculate grid columns for accurate batch calculation
+                const gridElement = document.getElementById('virtualArticlesGrid');
+                const gridStyles = window.getComputedStyle(gridElement);
+                const gridTemplateColumns = gridStyles.gridTemplateColumns;
+                const columnsCount = gridTemplateColumns.split(' ').length;
+                
+                // Calculate which batch should be visible
+                const itemsPerRow = columnsCount;
+                const rowsPerBatch = Math.ceil(this.itemsPerBatch / itemsPerRow);
+                const batchHeight = rowsPerBatch * itemHeight;
+                
+                const newBatch = Math.floor(scrollTop / batchHeight);
+                
+                // Only update if batch changed
+                if (newBatch !== this.currentBatch) {
+                    this.currentBatch = newBatch;
+                    this.renderVirtualBatch();
+                }
+                
+                // Update debug info
+                this.updateVirtualScrollDebug();
+            }
+
+            renderVirtualBatch() {
+                const articles = this.currentDisplayedArticles;
+                if (!articles.length) return;
+
+                // Calculate batch boundaries with buffer
+                const startIndex = Math.max(0, this.currentBatch * this.itemsPerBatch - this.batchBuffer);
+                const endIndex = Math.min(articles.length, (this.currentBatch + 1) * this.itemsPerBatch + this.batchBuffer);
+                
+                const visibleArticles = articles.slice(startIndex, endIndex);
+                
+                // Update spacers for smooth scrolling illusion
+                this.updateVirtualSpacers(startIndex, endIndex, articles.length);
+                
+                // Render visible articles
+                this.renderArticlesBatch(visibleArticles, startIndex);
+                
+                console.log(`🔄 Virtual scroll: Rendered batch ${this.currentBatch + 1}/${this.totalBatches} (items ${startIndex}-${endIndex}/${articles.length})`);
+            }
+
+            updateVirtualSpacers(startIndex, endIndex, totalItems) {
+                const spacerTop = document.getElementById('virtualSpacerTop');
+                const spacerBottom = document.getElementById('virtualSpacerBottom');
+                
+                if (!spacerTop || !spacerBottom) return;
+                
+                // Calculate heights based on estimated item height
+                const topHeight = startIndex * this.estimatedItemHeight;
+                const bottomHeight = (totalItems - endIndex) * this.estimatedItemHeight;
+                
+                spacerTop.style.height = `${topHeight}px`;
+                spacerBottom.style.height = `${bottomHeight}px`;
+            }
+
+            renderArticlesBatch(articles, startIndex) {
+                const grid = document.getElementById('virtualArticlesGrid');
+                if (!grid) return;
+
+                const isMobile = window.innerWidth <= 768;
+                
+                const articlesHTML = articles.map((article, batchIndex) => {
+                    const originalIndex = startIndex + batchIndex;
+                    const displayIndex = startIndex + batchIndex; // This is the index in currentDisplayedArticles
+                    
+                    let imageHTML = '';
+                    let cacheStatus = 'loading';
+                    let statusText = '🔄 Loading';
+                    let imageSource = 'none';
+
+                    // Same image prioritization as before
+                    if (article.cachedImage && article.cachedImage.base64) {
+                        imageHTML = this.createImageHTML(article.cachedImage.base64, true);
+                        cacheStatus = 'synced';
+                        statusText = '🌐 Synced';
+                        imageSource = 'synced_base64';
+                    } else if (article.cachedImage && article.cachedImage.url && !article.cachedImage.base64) {
+                        imageHTML = this.createImageHTML(article.cachedImage.url, true);
+                        cacheStatus = 'synced';
+                        statusText = '🔗 Synced URL';
+                        imageSource = 'synced_url';
+                    } else if (this.getCachedImage(article)) {
+                        imageHTML = this.createImageHTML(this.getCachedImage(article), true);
+                        cacheStatus = 'cached';
+                        statusText = '💾 Local Cache';
+                        imageSource = 'local_cache';
+                    } else if (this.getBestArticleImage(article)) {
+                        const savedImage = this.getBestArticleImage(article);
+                        imageHTML = this.createImageHTML(savedImage, false);
+                        cacheStatus = 'metadata';
+                        statusText = '📄 Metadata';
+                        imageSource = 'metadata';
+                        setTimeout(() => this.setArticleImageAndCache(article, originalIndex, savedImage, 'saved'), 100);
+                    } else {
+                        imageHTML = this.createPlaceholderHTML();
+                        cacheStatus = 'loading';
+                        statusText = isMobile ? '📱 Loading...' : '🔄 Loading';
+                        imageSource = 'needs_extraction';
+                    }
+
+                    return `
+                    <div class="article-card" data-index="${originalIndex}" data-display-index="${displayIndex}" data-image-source="${imageSource}">
+                        <div class="article-image" id="image-${originalIndex}">
+                            ${imageHTML}
+                            <div class="cache-indicator ${cacheStatus}">
+                                ${statusText}
+                            </div>
+                        </div>
+                        <div class="article-content" onclick="webReader.openReaderByDisplayIndex(${displayIndex})">
+                            <h2 class="article-title">${this.escapeHtml(article.title)}</h2>
+                            <p class="article-excerpt">${this.escapeHtml(article.excerpt)}</p>
+                            <div class="article-meta">
+                                <span class="article-domain">🌐 ${this.getDomain(article.url)}</span>
+                                <span class="article-date">📅 ${this.formatDate(article.dateAdded)}</span>
+                            </div>
+                            <div class="article-stats">
+                                <span>⏱️ ${article.readTime || 1} min read</span>
+                                <span>📝 ${article.wordCount || 0} words</span>
+                            </div>
+                        </div>
+                        <div class="article-actions">
+                            <button class="action-btn read-btn" onclick="event.stopPropagation(); webReader.openReaderByDisplayIndex(${displayIndex})" title="Read article">
+                                📖
+                            </button>
+                            <button class="action-btn refresh-image-btn" onclick="event.stopPropagation(); webReader.refreshSingleImage(${originalIndex}, ${displayIndex})" title="Refresh this image">
+                                🖼️
+                            </button>
+                            <button class="action-btn export-btn" onclick="event.stopPropagation(); webReader.exportArticleByDisplayIndex(${displayIndex})" title="Export article">
+                                📤
+                            </button>
+                            <button class="action-btn delete-btn" onclick="event.stopPropagation(); webReader.deleteArticleByDisplayIndex(${displayIndex})" title="Delete article">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                `;
+                }).join('');
+
+                grid.innerHTML = articlesHTML;
+                
+                // Update estimated height based on actual rendered items
+                setTimeout(() => this.updateEstimatedHeight(), 100);
+            }
+
+            updateEstimatedHeight() {
+                const grid = document.getElementById('virtualArticlesGrid');
+                if (!grid || !grid.children.length) return;
+                
+                // Calculate average height of rendered items
+                let totalHeight = 0;
+                let itemCount = 0;
+                
+                Array.from(grid.children).forEach(card => {
+                    const height = card.offsetHeight;
+                    if (height > 0) {
+                        totalHeight += height;
+                        itemCount++;
+                    }
+                });
+                
+                if (itemCount > 0) {
+                    this.estimatedItemHeight = Math.ceil(totalHeight / itemCount);
+                    console.log(`📏 Updated estimated item height: ${this.estimatedItemHeight}px`);
+                }
+            }
+
+            updateVirtualScrollDebug() {
+                const debugInfo = document.getElementById('virtualScrollInfo');
+                if (!debugInfo || !debugInfo.classList.contains('debug-mode')) return;
+                
+                const currentBatchInfo = document.getElementById('currentBatchInfo');
+                const totalBatchInfo = document.getElementById('totalBatchInfo');
+                const renderedItemsInfo = document.getElementById('renderedItemsInfo');
+                const totalItemsInfo = document.getElementById('totalItemsInfo');
+                
+                if (currentBatchInfo) currentBatchInfo.textContent = this.currentBatch + 1;
+                if (totalBatchInfo) totalBatchInfo.textContent = this.totalBatches;
+                if (totalItemsInfo) totalItemsInfo.textContent = this.currentDisplayedArticles.length;
+                
+                // Calculate rendered items
+                const grid = document.getElementById('virtualArticlesGrid');
+                const renderedCount = grid ? grid.children.length : 0;
+                if (renderedItemsInfo) renderedItemsInfo.textContent = renderedCount;
+            }
+
+            // Throttle function for performance
+            throttle(func, delay) {
+                let timeoutId;
+                let lastExecTime = 0;
+                return function (...args) {
+                    const currentTime = Date.now();
+                    
+                    if (currentTime - lastExecTime > delay) {
+                        func.apply(this, args);
+                        lastExecTime = currentTime;
+                    } else {
+                        clearTimeout(timeoutId);
+                        timeoutId = setTimeout(() => {
+                            func.apply(this, args);
+                            lastExecTime = Date.now();
+                        }, delay - (currentTime - lastExecTime));
+                    }
+                };
             }
 
             createArticleHTML(article) {
@@ -4113,8 +4683,8 @@ Want All Fresh Images → Use "Sync Images" button
                 const isSearchVisible = searchContainer.style.display !== 'none';
 
                 const info = `
-MyPocket Web Reader Debug Info (PKCE Enabled):
-===============================================
+MyPocket Web Reader Debug Info (Simplified + PKCE + Virtual Scroll):
+===================================================================
 
 Current URL: ${window.location.href}
 Redirect URI: ${this.redirectUri}
@@ -4128,6 +4698,15 @@ Host: ${window.location.host}
 - Anti-CSRF Protection: Enabled (state parameter)
 - Code Challenge Method: SHA256
 - Token Storage: localStorage (access), sessionStorage (PKCE params)
+
+⚡ VIRTUAL SCROLLING:
+- Virtual Scroll Enabled: ${this.virtualScrollEnabled}
+- Items Per Batch: ${this.itemsPerBatch}
+- Current Batch: ${this.currentBatch + 1}/${this.totalBatches}
+- Buffer Size: ${this.batchBuffer} items
+- Estimated Item Height: ${this.estimatedItemHeight}px
+- Total Articles: ${this.currentDisplayedArticles.length}
+- Rendered Articles: ${this.virtualScrollEnabled ? Math.min(this.itemsPerBatch + this.batchBuffer * 2, this.currentDisplayedArticles.length) : this.currentDisplayedArticles.length}
 
 🎫 TOKEN STATUS:
 - Has Access Token: ${!!this.accessToken}
@@ -4161,6 +4740,14 @@ Host: ${window.location.host}
 ✅ Automatic token refresh
 ✅ Secure parameter storage
 
+⚡ VIRTUAL SCROLL BENEFITS:
+✅ Renders only visible items (${this.itemsPerBatch} at a time)
+✅ Smooth scrolling with thousands of articles
+✅ Constant memory usage regardless of list size
+✅ Configurable batch sizes (20/50/100)
+✅ Debug mode for performance monitoring
+✅ Automatic fallback for small lists (<30 items)
+
 Azure AD Setup for PKCE:
 1. App Registration → Authentication
 2. Add Web platform: ${this.redirectUri}
@@ -4168,20 +4755,28 @@ Azure AD Setup for PKCE:
 4. Set redirect URI exactly: ${this.redirectUri}
 5. PKCE is automatically supported for public clients
 
-Cross-Device Image Features:
-- Images stored in OneDrive backup for instant loading
-- Base64 encoding with ${this.maxImageSizeKB}KB size limit
-- Automatic compression to 80% quality
-- Works across all devices and browsers
+Virtual Scrolling Usage:
+1. Automatically enabled for 30+ articles
+2. Use ⚡ button to toggle on/off
+3. Adjust batch size with performance controls
+4. Enable debug mode to see metrics
+5. Works with search and filtering
 
 Search Features:
 - Toggle search with 🔍 button or Ctrl/Cmd+K or /
 - Close with Esc or click outside
 - Real-time filtering across title, content, domain, etc.
+- Works with virtual scrolling
+
+Clicking Issues? Try:
+1. Click 🔬 Diagnose to check article rendering
+2. Enable 👁️ Test Mode for always-visible buttons
+3. Check browser console for JavaScript errors
+4. Ensure articles are loaded before clicking
                 `;
 
                 alert(info);
-                console.log('🔧 PKCE Debug Info:', {
+                console.log('🔧 Simplified Debug Info:', {
                     currentUrl: window.location.href,
                     redirectUri: this.redirectUri,
                     authMethod: 'Authorization Code + PKCE',
@@ -4194,7 +4789,14 @@ Search Features:
                     searchVisible: isSearchVisible,
                     cacheStats: cacheStats,
                     storedImages: storedImages,
-                    crossDeviceEnabled: this.storeImagesInBackup
+                    crossDeviceEnabled: this.storeImagesInBackup,
+                    // Virtual Scrolling Info
+                    virtualScrollEnabled: this.virtualScrollEnabled,
+                    itemsPerBatch: this.itemsPerBatch,
+                    currentBatch: this.currentBatch + 1,
+                    totalBatches: this.totalBatches,
+                    bufferSize: this.batchBuffer,
+                    estimatedItemHeight: this.estimatedItemHeight
                 });
             }
 
@@ -4209,9 +4811,29 @@ Search Features:
                         : '<span>👁️</span> Show Buttons';
                 }
 
+                // Enhanced test mode with click debugging
+                if (isTestMode) {
+                    // Add click event logging
+                    document.addEventListener('click', this.testModeClickHandler = (e) => {
+                        if (e.target.closest('.article-card')) {
+                            const card = e.target.closest('.article-card');
+                            const displayIndex = card.dataset.displayIndex;
+                            const originalIndex = card.dataset.index;
+                            console.log('🔍 Test Mode Click:', {
+                                target: e.target.tagName + (e.target.className ? '.' + e.target.className : ''),
+                                card: card,
+                                displayIndex: displayIndex,
+                                originalIndex: originalIndex,
+                                currentDisplayedCount: this.currentDisplayedArticles.length,
+                                virtualScrollEnabled: this.virtualScrollEnabled
+                            });
+                        }
+                    });
+                }
+
                 this.updateStatus(
                     isTestMode
-                        ? '🔍 Test mode ON - Action buttons always visible'
+                        ? '🔍 Test mode ON - Action buttons always visible + click debugging enabled'
                         : '👁️ Test mode OFF - Action buttons show on hover',
                     'success'
                 );
@@ -4238,6 +4860,93 @@ Search Features:
                 this.updateDarkModeButton(savedTheme);
             }
 
+            runDiagnostics() {
+                console.log('🔬 Running click diagnostics...');
+                
+                const virtualContainer = document.getElementById('virtualScrollContainer');
+                const traditionalContainer = document.getElementById('traditionalContainer');
+                const virtualGrid = document.getElementById('virtualArticlesGrid');
+                const articleCards = document.querySelectorAll('.article-card');
+                
+                const diagnostics = {
+                    displayedArticles: this.currentDisplayedArticles.length,
+                    totalArticles: this.articles.length,
+                    virtualScrollEnabled: this.virtualScrollEnabled,
+                    containers: {
+                        virtualVisible: virtualContainer ? virtualContainer.style.display !== 'none' : false,
+                        traditionalVisible: traditionalContainer ? traditionalContainer.style.display !== 'none' : false,
+                        virtualExists: !!virtualContainer,
+                        traditionalExists: !!traditionalContainer
+                    },
+                    renderedCards: articleCards.length,
+                    firstCardData: articleCards.length > 0 ? {
+                        displayIndex: articleCards[0].dataset.displayIndex,
+                        originalIndex: articleCards[0].dataset.index,
+                        hasClickHandler: articleCards[0].querySelector('.article-content')?.onclick ? 'yes' : 'no'
+                    } : 'no cards found'
+                };
+                
+                console.table(diagnostics);
+                
+                const summary = `
+Diagnostics Summary:
+===================
+📊 Articles: ${diagnostics.displayedArticles} displayed / ${diagnostics.totalArticles} total
+⚡ Virtual Scroll: ${diagnostics.virtualScrollEnabled ? 'ON' : 'OFF'}
+📦 Containers: Virtual=${diagnostics.containers.virtualVisible}, Traditional=${diagnostics.containers.traditionalVisible}
+🎴 Rendered Cards: ${diagnostics.renderedCards}
+
+${diagnostics.renderedCards > 0 ? `
+First Card Info:
+- Display Index: ${diagnostics.firstCardData.displayIndex}
+- Original Index: ${diagnostics.firstCardData.originalIndex}  
+- Click Handler: ${diagnostics.firstCardData.hasClickHandler}
+` : '❌ No cards rendered!'}
+
+${diagnostics.renderedCards === 0 ? '🚨 ISSUE: No article cards are rendered!' : ''}
+${!diagnostics.containers.virtualVisible && !diagnostics.containers.traditionalVisible ? '🚨 ISSUE: No container is visible!' : ''}
+                `;
+                
+                alert(summary);
+                this.updateStatus('🔬 Diagnostics complete - Check console for details', 'success');
+                
+                // Test click on first card if available
+                if (articleCards.length > 0) {
+                    console.log('🧪 Testing click on first card...');
+                    const firstCard = articleCards[0];
+                    const clickEvent = new MouseEvent('click', { bubbles: true });
+                    const result = firstCard.querySelector('.article-content')?.dispatchEvent(clickEvent);
+                    console.log('🧪 Click test result:', result);
+                }
+            }
+
+            // Simple click test function
+            testFirstArticleClick() {
+                console.log('🔍 Testing first article click...');
+                
+                const articleCards = document.querySelectorAll('.article-card');
+                console.log(`Found ${articleCards.length} article cards`);
+                
+                if (articleCards.length === 0) {
+                    console.error('❌ No article cards found!');
+                    alert('No article cards found! Make sure articles are loaded first.');
+                    return;
+                }
+                
+                const firstCard = articleCards[0];
+                const displayIndex = firstCard.dataset.displayIndex;
+                console.log(`First card display index: ${displayIndex}`);
+                console.log(`Current displayed articles count: ${this.currentDisplayedArticles.length}`);
+                
+                if (displayIndex && this.currentDisplayedArticles[displayIndex]) {
+                    console.log(`✅ Article found: ${this.currentDisplayedArticles[displayIndex].title}`);
+                    this.openReaderByDisplayIndex(parseInt(displayIndex));
+                } else {
+                    console.error('❌ Article not found in currentDisplayedArticles array');
+                    console.log('Available articles:', this.currentDisplayedArticles.map((a, i) => `${i}: ${a.title.substring(0, 30)}...`));
+                }
+            }
+
             updateDarkModeButton(theme) {
                 const darkModeBtn = document.getElementById('darkModeBtn');
                 if (darkModeBtn) {
@@ -4245,6 +4954,62 @@ Search Features:
                         ? '<span>☀️</span> Light Mode'
                         : '<span>🌙</span> Dark Mode';
                 }
+            }
+
+            // Enhanced backup (simplified - no PWA data)
+            async updateOneDriveBackup() {
+                if (!this.accessToken) {
+                    throw new Error('Not connected to OneDrive');
+                }
+
+                // Calculate backup size with images
+                const articlesWithImages = this.articles.filter(a => a.cachedImage);
+                const totalImageSizeKB = articlesWithImages.reduce((total, article) => {
+                    return total + (article.cachedImage ? article.cachedImage.size || 0 : 0);
+                }, 0);
+
+                console.log(`📦 Creating backup with ${articlesWithImages.length} stored images (${Math.round(totalImageSizeKB)}KB)`);
+
+                const backup = {
+                    articles: this.articles, // This includes cachedImage data
+                    settings: {
+                        storeImagesInBackup: this.storeImagesInBackup,
+                        maxImageSizeKB: this.maxImageSizeKB
+                    },
+                    exportDate: new Date().toISOString(),
+                    version: "4.3", // Simplified version
+                    deviceInfo: {
+                        browser: "MyPocket Web Reader (Simplified)",
+                        platform: navigator.platform,
+                        timestamp: Date.now(),
+                        articleCount: this.articles.length,
+                        storedImages: articlesWithImages.length,
+                        totalImageSizeKB: Math.round(totalImageSizeKB),
+                        authMethod: "Authorization Code + PKCE"
+                    }
+                };
+
+                const fileName = `mypocket-backup-${new Date().toISOString().split('T')[0]}.json`;
+                const fileContent = JSON.stringify(backup, null, 2);
+
+                const uploadUrl = `https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket/${fileName}:/content`;
+
+                const uploadResponse = await fetch(uploadUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${this.accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: fileContent
+                });
+
+                if (!uploadResponse.ok) {
+                    const errorText = await uploadResponse.text();
+                    throw new Error(`Failed to update OneDrive backup: ${uploadResponse.status} - ${errorText}`);
+                }
+
+                console.log(`✅ Backup saved with ${articlesWithImages.length} images (${Math.round(totalImageSizeKB)}KB)`);
+                return await uploadResponse.json();
             }
         }
 
