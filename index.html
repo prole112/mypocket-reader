@@ -1447,8 +1447,7 @@
                     <button id="testBtn" class="btn btn-secondary" onclick="webReader.toggleTestMode()">
                         <span>👁️</span> Show Buttons
                     </button>
-                    <button id="generateBtn" class="btn btn-secondary" onclick="webReader.generateSampleData()"
-                        style="display: none;">
+                    <button id="generateBtn" class="btn btn-secondary" onclick="webReader.generateSampleData()">
                         <span>🎲</span> Generate Sample
                     </button>
                     <button id="darkModeBtn" class="btn btn-secondary" onclick="webReader.toggleDarkMode()">
@@ -1499,7 +1498,7 @@
 
     <!-- Status -->
     <div class="status" id="status">
-        Connect to OneDrive to view your saved articles
+        🚀 MyPocket Web Reader loaded. Open browser console (F12) for debugging info. Click "🔐 Secure Connect" to authenticate with OneDrive.
     </div>
 
     <!-- Articles -->
@@ -1627,14 +1626,35 @@
             }
 
             init() {
-                this.setupEventListeners();
-                this.checkAuthFromURL();
-                this.loadStoredToken();
-                this.loadThemePreference();
-                this.loadImageCache();
-                this.initializeVirtualScrolling();
+                console.log('🚀 Initializing MyPocket Web Reader...');
+                
+                try {
+                    this.setupEventListeners();
+                    this.checkAuthFromURL();
+                    this.loadStoredToken();
+                    this.loadThemePreference();
+                    this.loadImageCache();
+                    this.initializeVirtualScrolling();
 
-                console.log('🚀 MyPocket Web Reader initialized with Virtual Scrolling');
+                    console.log('✅ MyPocket Web Reader initialized successfully');
+                    console.log('🔧 Debug Info:', {
+                        redirectUri: this.redirectUri,
+                        clientId: this.clientId,
+                        hasStoredToken: !!this.accessToken,
+                        virtualScrollEnabled: this.virtualScrollEnabled
+                    });
+
+                    // Set initial status
+                    if (this.accessToken) {
+                        this.updateStatus('✅ Connected to OneDrive. Loading articles...', 'success');
+                    } else {
+                        this.updateStatus('Connect to OneDrive to view your saved articles', '');
+                    }
+
+                } catch (error) {
+                    console.error('❌ Initialization error:', error);
+                    this.updateStatus('❌ Error initializing application. Please refresh the page.', 'error');
+                }
             }
 
             initializeVirtualScrolling() {
@@ -1978,11 +1998,36 @@
             }
 
             setupEventListeners() {
-                document.getElementById('connectBtn').addEventListener('click', () => this.authenticate());
-                document.getElementById('refreshBtn').addEventListener('click', () => this.loadArticles());
-                document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
-                document.getElementById('closeReader').addEventListener('click', () => this.closeReader());
-                document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
+                // OneDrive connection
+                const connectBtn = document.getElementById('connectBtn');
+                if (connectBtn) {
+                    connectBtn.addEventListener('click', () => {
+                        console.log('🔵 Connect button clicked');
+                        this.authenticate();
+                    });
+                } else {
+                    console.error('❌ Connect button not found!');
+                }
+
+                const refreshBtn = document.getElementById('refreshBtn');
+                if (refreshBtn) {
+                    refreshBtn.addEventListener('click', () => this.loadArticles());
+                }
+
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.addEventListener('input', (e) => this.searchArticles(e.target.value));
+                }
+
+                const closeReader = document.getElementById('closeReader');
+                if (closeReader) {
+                    closeReader.addEventListener('click', () => this.closeReader());
+                }
+
+                const openOriginal = document.getElementById('openOriginal');
+                if (openOriginal) {
+                    openOriginal.addEventListener('click', () => this.openOriginal());
+                }
 
                 // Search toggle keyboard shortcuts
                 document.addEventListener('keydown', (e) => {
@@ -2003,12 +2048,14 @@
                     const searchContainer = document.getElementById('searchContainer');
                     const searchToggleBtn = document.getElementById('searchToggleBtn');
 
-                    if (searchContainer.style.display !== 'none' &&
+                    if (searchContainer && searchContainer.style.display !== 'none' &&
                         !searchContainer.contains(e.target) &&
                         !searchToggleBtn.contains(e.target)) {
                         this.toggleSearch(false);
                     }
                 });
+
+                console.log('✅ Event listeners setup complete');
             }
 
             isInputFocused() {
@@ -2120,20 +2167,30 @@
 
             // ENHANCED: Secure authentication with PKCE
             async authenticate() {
+                console.log('🔵 Starting authentication process...');
+                console.log('🔵 Redirect URI:', this.redirectUri);
+                console.log('🔵 Client ID:', this.clientId);
+
                 if (!this.redirectUri || (!this.redirectUri.startsWith('http://') && !this.redirectUri.startsWith('https://'))) {
+                    const errorMsg = `❌ Invalid redirect URI: ${this.redirectUri}`;
+                    console.error(errorMsg);
                     this.updateStatus('❌ Invalid redirect URI. Please open this page via HTTP/HTTPS.', 'error');
-                    console.error('🔴 Invalid redirect URI:', this.redirectUri);
                     alert(`Redirect URI Error:\n\nCurrent URI: ${this.redirectUri}\n\nPlease:\n1. Open this page via HTTP/HTTPS (not file://)\n2. Register this exact URI in Azure AD\n3. Use a web server to serve this file`);
                     return;
                 }
 
                 try {
                     this.updateStatus('🔐 Generating secure authentication parameters...', 'loading');
+                    console.log('🔵 Generating PKCE parameters...');
 
                     // Generate PKCE parameters
                     this.codeVerifier = this.generateCodeVerifier();
                     this.codeChallenge = await this.generateCodeChallenge(this.codeVerifier);
                     this.state = this.generateState();
+
+                    console.log('🔵 PKCE parameters generated successfully');
+                    console.log('🔵 Code Challenge (preview):', this.codeChallenge.substring(0, 20) + '...');
+                    console.log('🔵 State (preview):', this.state.substring(0, 20) + '...');
 
                     // Store parameters securely
                     this.storePKCEParameters(this.codeVerifier, this.state);
@@ -2149,32 +2206,38 @@
                         `code_challenge_method=S256&` +  // SHA256 method
                         `response_mode=query`;  // Use query instead of fragment
 
-                    console.log('🔐 PKCE Auth URL generated');
-                    console.log('🔐 Code Challenge:', this.codeChallenge.substring(0, 20) + '...');
-                    console.log('🔐 State:', this.state.substring(0, 20) + '...');
+                    console.log('🔵 Authorization URL constructed:', authUrl.substring(0, 100) + '...');
 
                     this.updateStatus('🔄 Redirecting to secure Microsoft login...', 'loading');
 
                     setTimeout(() => {
+                        console.log('🔵 Redirecting to Microsoft login...');
                         window.location.href = authUrl;
                     }, 1000);
 
                 } catch (error) {
-                    console.error('PKCE generation error:', error);
+                    console.error('❌ PKCE generation error:', error);
                     this.updateStatus('❌ Error generating secure authentication. Please try again.', 'error');
+                    alert(`Authentication Error: ${error.message}\n\nPlease check the browser console for more details and try again.`);
                 }
             }
 
             // ENHANCED: Handle authorization code from redirect
             async checkAuthFromURL() {
+                console.log('🔵 Checking for auth code in URL...');
+                console.log('🔵 Current URL:', window.location.href);
+                
                 const urlParams = new URLSearchParams(window.location.search);
                 const code = urlParams.get('code');
                 const state = urlParams.get('state');
                 const error = urlParams.get('error');
                 const errorDescription = urlParams.get('error_description');
 
+                console.log('🔵 URL Parameters:', { code: !!code, state: !!state, error, errorDescription });
+
                 // Check for errors first
                 if (error) {
+                    console.error('❌ OAuth error:', error, errorDescription);
                     this.updateStatus(`❌ Authentication error: ${error} - ${errorDescription || 'Unknown error'}`, 'error');
                     this.clearPKCEParameters();
                     // Clean URL
@@ -2184,11 +2247,14 @@
 
                 // If we have an authorization code, exchange it for tokens
                 if (code && state) {
+                    console.log('🔵 Found authorization code, starting token exchange...');
+                    
                     try {
                         this.updateStatus('🔐 Exchanging authorization code for tokens...', 'loading');
 
                         // Retrieve stored PKCE parameters
                         const { codeVerifier, state: storedState } = this.retrievePKCEParameters();
+                        console.log('🔵 Retrieved PKCE parameters:', { hasCodeVerifier: !!codeVerifier, hasStoredState: !!storedState });
 
                         // Verify state parameter (anti-CSRF protection)
                         if (!storedState || state !== storedState) {
@@ -2199,10 +2265,13 @@
                             throw new Error('Code verifier not found. Please try authenticating again.');
                         }
 
+                        console.log('🔵 State verification passed, exchanging code for tokens...');
+
                         // Exchange authorization code for access token
                         const tokenResponse = await this.exchangeCodeForTokens(code, codeVerifier);
 
                         if (tokenResponse.access_token) {
+                            console.log('✅ Token exchange successful');
                             this.accessToken = tokenResponse.access_token;
                             this.saveToken(tokenResponse.access_token);
 
@@ -2224,11 +2293,13 @@
                         }
 
                     } catch (error) {
-                        console.error('Token exchange error:', error);
+                        console.error('❌ Token exchange error:', error);
                         this.updateStatus(`❌ Token exchange failed: ${error.message}`, 'error');
                         this.clearPKCEParameters();
                         window.history.replaceState({}, document.title, window.location.pathname);
                     }
+                } else {
+                    console.log('🔵 No authorization code found in URL');
                 }
             }
 
@@ -2368,18 +2439,40 @@
             }
 
             loadStoredToken() {
+                console.log('🔵 Checking for stored access token...');
+                
                 this.accessToken = localStorage.getItem('mypocket_access_token');
+                const tokenTimestamp = localStorage.getItem('mypocket_token_timestamp');
+                const refreshToken = localStorage.getItem('mypocket_refresh_token');
+                
+                console.log('🔵 Stored token info:', {
+                    hasAccessToken: !!this.accessToken,
+                    hasRefreshToken: !!refreshToken,
+                    tokenTimestamp: tokenTimestamp,
+                    tokenAge: tokenTimestamp ? Math.round((Date.now() - parseInt(tokenTimestamp)) / 1000 / 60) + ' minutes' : 'N/A'
+                });
+
                 if (this.accessToken) {
+                    console.log('✅ Found stored access token, checking validity...');
                     this.updateConnectionStatus(true);
+                    
                     // Check token validity and load articles
                     this.ensureValidToken().then(isValid => {
                         if (isValid) {
+                            console.log('✅ Stored token is valid, loading articles...');
                             this.loadArticles();
                         } else {
+                            console.log('❌ Stored token is invalid or expired');
                             this.updateConnectionStatus(false);
                             this.updateStatus('Stored token expired. Please reconnect.', 'error');
                         }
+                    }).catch(error => {
+                        console.error('❌ Error validating token:', error);
+                        this.updateConnectionStatus(false);
+                        this.updateStatus('Error validating stored token. Please reconnect.', 'error');
                     });
+                } else {
+                    console.log('🔵 No stored access token found');
                 }
             }
 
