@@ -840,6 +840,32 @@
                 margin-top: 15px;
             }
 
+            /* Mobile Virtual Scrolling */
+            .virtual-scroll-container {
+                height: 70vh !important; /* Larger on mobile */
+                border-radius: 8px;
+            }
+
+            .virtual-scroll-controls {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+                padding: 12px 16px;
+                margin-bottom: 15px;
+            }
+
+            .virtual-scroll-info {
+                font-size: 0.8em !important;
+                order: 2;
+            }
+
+            .virtual-scroll-toggle {
+                order: 1;
+                padding: 10px 16px;
+                font-size: 0.9em;
+                width: 100%;
+            }
+
             .article-card {
                 display: block !important;
                 width: 100% !important;
@@ -1140,6 +1166,9 @@
                     <button id="darkModeBtn" class="btn btn-secondary" aria-label="Toggle dark mode">
                         <span>🌙</span> Dark Mode
                     </button>
+                    <button id="virtualScrollBtn" class="btn btn-secondary" aria-label="Toggle virtual scrolling">
+                        <span>📜</span> Virtual Scroll
+                    </button>
                 </div>
             </div>
         </div>
@@ -1200,7 +1229,205 @@
     </div>
 
     <script>
-        // Configuration
+        // Virtual Scrolling Manager
+        class VirtualScrollManager {
+            constructor(containerHeight = 600, itemHeight = 280, itemsPerRow = null) {
+                this.containerHeight = containerHeight;
+                this.itemHeight = itemHeight; // Estimated height including gap
+                this.itemsPerRow = itemsPerRow; // Will be calculated dynamically
+                this.buffer = 5; // Extra items to render outside viewport
+                this.scrollTop = 0;
+                this.isEnabled = false;
+                this.container = null;
+                this.viewport = null;
+                this.spacer = null;
+                this.lastCalculatedItemsPerRow = 4; // Default fallback
+                
+                this.onScroll = this.onScroll.bind(this);
+                this.calculateItemsPerRow = this.calculateItemsPerRow.bind(this);
+                
+                // Performance monitoring
+                this.renderCount = 0;
+                this.lastRenderTime = 0;
+            }
+
+            calculateItemsPerRow(containerWidth = 1200) {
+                // Calculate based on CSS grid: minmax(220px, 1fr) with 18px gap
+                const minItemWidth = 220;
+                const gap = 18;
+                const availableWidth = containerWidth - 40; // Account for padding
+                
+                const itemsPerRow = Math.floor((availableWidth + gap) / (minItemWidth + gap));
+                this.lastCalculatedItemsPerRow = Math.max(1, itemsPerRow);
+                return this.lastCalculatedItemsPerRow;
+            }
+
+            init(container) {
+                this.container = container;
+                this.setupVirtualScrollDOM();
+                this.calculateItemsPerRow(container.offsetWidth);
+            }
+
+            setupVirtualScrollDOM() {
+                this.container.innerHTML = `
+                    <div class="virtual-scroll-container" id="virtualScrollContainer">
+                        <div class="virtual-scroll-content" id="virtualScrollContent">
+                            <div class="virtual-scroll-spacer" id="virtualScrollSpacer"></div>
+                            <div class="virtual-scroll-viewport" id="virtualScrollViewport"></div>
+                        </div>
+                    </div>
+                `;
+
+                this.scrollContainer = document.getElementById('virtualScrollContainer');
+                this.content = document.getElementById('virtualScrollContent');
+                this.spacer = document.getElementById('virtualScrollSpacer');
+                this.viewport = document.getElementById('virtualScrollViewport');
+
+                this.scrollContainer.addEventListener('scroll', this.onScroll);
+                window.addEventListener('resize', this.calculateItemsPerRow);
+            }
+
+            onScroll() {
+                this.scrollTop = this.scrollContainer.scrollTop;
+                this.render();
+            }
+
+            calculateVisibleItems(totalItems) {
+                if (!this.isEnabled || totalItems === 0) {
+                    return {
+                        startIndex: 0,
+                        endIndex: totalItems,
+                        visibleItems: totalItems,
+                        totalHeight: 0,
+                        offsetY: 0
+                    };
+                }
+
+                this.itemsPerRow = this.lastCalculatedItemsPerRow;
+                const totalRows = Math.ceil(totalItems / this.itemsPerRow);
+                const visibleRows = Math.ceil(this.containerHeight / this.itemHeight);
+                
+                const startRow = Math.floor(this.scrollTop / this.itemHeight);
+                const endRow = Math.min(startRow + visibleRows + this.buffer, totalRows);
+                const safeStartRow = Math.max(0, startRow - this.buffer);
+
+                const startIndex = safeStartRow * this.itemsPerRow;
+                const endIndex = Math.min(endRow * this.itemsPerRow, totalItems);
+                
+                const totalHeight = totalRows * this.itemHeight;
+                const offsetY = safeStartRow * this.itemHeight;
+
+                return {
+                    startIndex,
+                    endIndex,
+                    visibleItems: endIndex - startIndex,
+                    totalHeight,
+                    offsetY,
+                    totalRows,
+                    visibleRows: endRow - safeStartRow
+                };
+            }
+
+            render(articles = [], renderFunction = null) {
+                if (!this.isEnabled || !articles.length) return;
+
+                const startTime = performance.now();
+                this.renderCount++;
+
+                const {
+                    startIndex,
+                    endIndex,
+                    totalHeight,
+                    offsetY,
+                    visibleItems,
+                    totalRows,
+                    visibleRows
+                } = this.calculateVisibleItems(articles.length);
+
+                // Update spacer height to maintain scroll position
+                this.spacer.style.height = `${totalHeight}px`;
+
+                // Get visible articles
+                const visibleArticles = articles.slice(startIndex, endIndex);
+
+                // Render visible articles
+                if (renderFunction) {
+                    const articlesHTML = renderFunction(visibleArticles, startIndex);
+                    this.viewport.innerHTML = `
+                        <div class="articles-grid" style="transform: translateY(${offsetY}px);">
+                            ${articlesHTML}
+                        </div>
+                    `;
+                }
+
+                // Performance monitoring
+                const renderTime = performance.now() - startTime;
+                this.lastRenderTime = renderTime;
+
+                // Show performance indicator if render is slow
+                if (renderTime > 16) { // More than one frame (60fps)
+                    this.showPerformanceWarning(renderTime, visibleItems, articles.length);
+                }
+
+                // Update debug info
+                this.updateDebugInfo(startIndex, endIndex, totalRows, visibleRows, renderTime);
+            }
+
+            showPerformanceWarning(renderTime, visibleItems, totalItems) {
+                let indicator = document.getElementById('performanceIndicator');
+                if (!indicator) {
+                    indicator = document.createElement('div');
+                    indicator.id = 'performanceIndicator';
+                    indicator.className = 'performance-indicator';
+                    document.body.appendChild(indicator);
+                }
+
+                indicator.innerHTML = `
+                    🐌 Slow render: ${renderTime.toFixed(1)}ms<br>
+                    Showing ${visibleItems}/${totalItems} items
+                `;
+                indicator.classList.add('show');
+
+                setTimeout(() => {
+                    indicator.classList.remove('show');
+                }, 3000);
+            }
+
+            updateDebugInfo(startIndex, endIndex, totalRows, visibleRows, renderTime) {
+                // This could be used for debugging - currently silent
+                console.log(`Virtual Scroll: Items ${startIndex}-${endIndex}, Rows ${visibleRows}/${totalRows}, Render: ${renderTime.toFixed(2)}ms`);
+            }
+
+            enable() {
+                this.isEnabled = true;
+                console.log('🚀 Virtual scrolling enabled');
+            }
+
+            disable() {
+                this.isEnabled = false;
+                console.log('⏸️ Virtual scrolling disabled');
+            }
+
+            destroy() {
+                if (this.scrollContainer) {
+                    this.scrollContainer.removeEventListener('scroll', this.onScroll);
+                }
+                window.removeEventListener('resize', this.calculateItemsPerRow);
+            }
+
+            getStats() {
+                return {
+                    enabled: this.isEnabled,
+                    containerHeight: this.containerHeight,
+                    itemHeight: this.itemHeight,
+                    itemsPerRow: this.lastCalculatedItemsPerRow,
+                    buffer: this.buffer,
+                    renderCount: this.renderCount,
+                    lastRenderTime: this.lastRenderTime,
+                    scrollTop: this.scrollTop
+                };
+            }
+        }
         const CONFIG = {
             API: {
                 MICROSOFT_CLIENT_ID: '436e8796-8c40-47c3-9ad5-b8882f3ef7f7',
@@ -1919,6 +2146,7 @@
                 this.authManager = new AuthenticationManager();
                 this.imageCacheManager = new ImageCacheManager();
                 this.loadingManager = new LoadingStateManager();
+                this.virtualScrollManager = new VirtualScrollManager(600, 280); // 600px height, ~280px per item
                 
                 // Article data
                 this.articles = [];
@@ -1928,6 +2156,7 @@
                 // UI state
                 this.searchQuery = '';
                 this.isSearchVisible = false;
+                this.isVirtualScrollEnabled = false; // Start with virtual scrolling disabled
                 
                 // Debounced search
                 this.debouncedSearch = Utils.debounce(
@@ -1943,6 +2172,7 @@
                     this.setupEventListeners();
                     this.setupAccessibility();
                     this.loadThemePreference();
+                    this.loadVirtualScrollPreference();
                     
                     // Check for auth callback first
                     const authSuccess = await this.authManager.checkAuthFromURL();
@@ -1974,6 +2204,7 @@
                 document.getElementById('debugBtn').addEventListener('click', () => this.showDebugInfo());
                 document.getElementById('testBtn').addEventListener('click', () => this.toggleTestMode());
                 document.getElementById('darkModeBtn').addEventListener('click', () => this.toggleDarkMode());
+                document.getElementById('virtualScrollBtn').addEventListener('click', () => this.toggleVirtualScroll());
 
                 // Search events
                 document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -2319,14 +2550,58 @@
 
                 this.currentDisplayedArticles = articles;
 
+                // Show virtual scroll controls for large lists
+                const shouldShowVirtualScrollControls = articles.length > 20;
+                const virtualScrollControlsHTML = shouldShowVirtualScrollControls ? `
+                    <div class="virtual-scroll-controls">
+                        <div class="virtual-scroll-info">
+                            ${articles.length} articles • Virtual scrolling ${this.isVirtualScrollEnabled ? 'enabled' : 'available'}
+                            ${this.isVirtualScrollEnabled ? `• Rendering ~${this.virtualScrollManager.calculateVisibleItems(articles.length).visibleItems} visible items` : ''}
+                        </div>
+                        <button class="virtual-scroll-toggle ${articles.length <= 20 ? 'disabled' : ''}" 
+                                onclick="webReader.toggleVirtualScroll()" 
+                                ${articles.length <= 20 ? 'disabled' : ''}>
+                            ${this.isVirtualScrollEnabled ? '📜 Disable Virtual Scroll' : '🚀 Enable Virtual Scroll'}
+                        </button>
+                    </div>
+                ` : '';
+
+                if (this.isVirtualScrollEnabled && articles.length > 20) {
+                    // Use virtual scrolling for large lists
+                    container.innerHTML = virtualScrollControlsHTML + '<div class="articles-grid-container" id="articlesGridContainer"></div>';
+                    
+                    const gridContainer = document.getElementById('articlesGridContainer');
+                    this.virtualScrollManager.init(gridContainer);
+                    this.virtualScrollManager.enable();
+                    
+                    // Render function for virtual scroll
+                    const renderFunction = (visibleArticles, startIndex) => {
+                        return this.renderArticlesHTML(visibleArticles, startIndex);
+                    };
+                    
+                    this.virtualScrollManager.render(articles, renderFunction);
+                    
+                    // Load missing images for visible articles only
+                    this.processArticleImages(articles, true);
+                    
+                } else {
+                    // Use normal scrolling
+                    const articlesHTML = this.renderArticlesHTML(articles, 0);
+                    container.innerHTML = virtualScrollControlsHTML + `<div class="articles-grid" role="main" aria-label="Articles list">${articlesHTML}</div>`;
+                    
+                    // Load missing images for all articles
+                    this.processArticleImages(articles, false);
+                }
+
+                // Re-setup accessibility for new elements
+                this.setupAccessibility();
+            }
+
+            renderArticlesHTML(articles, startIndex = 0) {
                 const isMobile = window.innerWidth <= 768;
-                let imagesFromBackup = 0;
-                let imagesFromCache = 0;
-                let imagesNeedLoading = 0;
 
-                console.log('🎯 DISPLAYING ARTICLES - Image Source Priority Check:');
-
-                const articlesHTML = articles.map((article, displayIndex) => {
+                return articles.map((article, relativeIndex) => {
+                    const displayIndex = startIndex + relativeIndex;
                     let imageHTML = '';
                     let cacheStatus = 'loading';
                     let statusText = '🔄 Loading';
@@ -2338,7 +2613,6 @@
                         cacheStatus = 'synced';
                         statusText = '🌐 Synced';
                         imageSource = 'synced_base64';
-                        imagesFromBackup++;
                     }
                     // Priority 2: Synced URLs
                     else if (article.cachedImage && article.cachedImage.url && !article.cachedImage.base64) {
@@ -2346,7 +2620,6 @@
                         cacheStatus = 'synced';
                         statusText = '🔗 Synced URL';
                         imageSource = 'synced_url';
-                        imagesFromBackup++;
                     }
                     // Priority 3: Local cache
                     else if (this.imageCacheManager.getCachedImage(article)) {
@@ -2354,7 +2627,6 @@
                         cacheStatus = 'cached';
                         statusText = '💾 Local Cache';
                         imageSource = 'local_cache';
-                        imagesFromCache++;
                     }
                     // Priority 4: Article metadata
                     else if (this.getBestArticleImage(article)) {
@@ -2371,7 +2643,6 @@
                         cacheStatus = 'loading';
                         statusText = isMobile ? '📱 Loading...' : '🔄 Loading';
                         imageSource = 'needs_extraction';
-                        imagesNeedLoading++;
                     }
 
                     return `
@@ -2415,11 +2686,28 @@
                         </div>
                     </article>
                 `}).join('');
+            }
 
-                container.innerHTML = `<div class="articles-grid" role="main" aria-label="Articles list">${articlesHTML}</div>`;
+            processArticleImages(articles, isVirtualScroll = false) {
+                const isMobile = window.innerWidth <= 768;
+                let imagesFromBackup = 0;
+                let imagesFromCache = 0;
+                let imagesNeedLoading = 0;
 
-                // Re-setup accessibility for new elements
-                this.setupAccessibility();
+                console.log('🎯 PROCESSING ARTICLE IMAGES - Image Source Priority Check:');
+
+                // Count image sources
+                articles.forEach(article => {
+                    if (article.cachedImage && article.cachedImage.base64) {
+                        imagesFromBackup++;
+                    } else if (article.cachedImage && article.cachedImage.url) {
+                        imagesFromBackup++;
+                    } else if (this.imageCacheManager.getCachedImage(article)) {
+                        imagesFromCache++;
+                    } else if (!this.getBestArticleImage(article)) {
+                        imagesNeedLoading++;
+                    }
+                });
 
                 const totalReady = imagesFromBackup + imagesFromCache;
 
@@ -2436,15 +2724,93 @@
                         `⚡ ${totalReady} ready instantly, extracting ${imagesNeedLoading} more...`;
                     this.updateStatus(message, 'loading');
 
-                    if (isMobile) {
-                        setTimeout(() => this.loadMissingImages(articles), 500);
+                    if (isVirtualScroll) {
+                        // For virtual scroll, only load images for currently visible items
+                        this.loadMissingImagesLazy(articles);
                     } else {
-                        this.loadMissingImages(articles);
+                        // For normal scroll, load all missing images
+                        if (isMobile) {
+                            setTimeout(() => this.loadMissingImages(articles), 500);
+                        } else {
+                            this.loadMissingImages(articles);
+                        }
                     }
                 }
             }
 
-            createImageHTML(imageUrl, fromCache = false) {
+            async loadMissingImagesLazy(articles) {
+                // For virtual scrolling - only load images that are currently visible
+                console.log('🔄 Loading images lazily for virtual scroll...');
+                
+                if (!this.isVirtualScrollEnabled) {
+                    this.loadMissingImages(articles);
+                    return;
+                }
+
+                const { startIndex, endIndex } = this.virtualScrollManager.calculateVisibleItems(articles.length);
+                const visibleArticles = articles.slice(startIndex, endIndex);
+
+                const articlesNeedingImages = visibleArticles.filter((article, index) => {
+                    const hasStoredImage = article.cachedImage && article.cachedImage.base64;
+                    const hasCachedImage = this.imageCacheManager.getCachedImage(article);
+                    return !hasStoredImage && !hasCachedImage;
+                });
+
+                if (articlesNeedingImages.length === 0) {
+                    this.updateStatus(`✅ All visible images loaded!`, 'success');
+                    return;
+                }
+
+                console.log(`🔄 Loading ${articlesNeedingImages.length} visible images...`);
+
+                for (const article of articlesNeedingImages) {
+                    const displayIndex = articles.findIndex(a => a === article);
+                    
+                    try {
+                        const success = await this.extractAndCacheRealImage(article, displayIndex);
+                        if (success) {
+                            // Re-render virtual scroll to show updated image
+                            if (this.isVirtualScrollEnabled) {
+                                const renderFunction = (visibleArticles, startIndex) => {
+                                    return this.renderArticlesHTML(visibleArticles, startIndex);
+                                };
+                                this.virtualScrollManager.render(this.currentDisplayedArticles, renderFunction);
+                            }
+                        }
+                    } catch (error) {
+                        console.error(`Failed to extract image for article ${displayIndex}:`, error);
+                    }
+
+                    // Small delay to prevent overwhelming
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+
+                this.updateStatus(`✅ Visible images loaded! Scroll to load more.`, 'success');
+            }
+
+            toggleVirtualScroll() {
+                this.isVirtualScrollEnabled = !this.isVirtualScrollEnabled;
+                
+                const virtualScrollBtn = document.getElementById('virtualScrollBtn');
+                if (virtualScrollBtn) {
+                    virtualScrollBtn.innerHTML = this.isVirtualScrollEnabled 
+                        ? '<span>📜</span> Virtual: ON'
+                        : '<span>📜</span> Virtual: OFF';
+                }
+
+                // Save preference
+                localStorage.setItem('mypocket_virtual_scroll', this.isVirtualScrollEnabled.toString());
+
+                if (this.isVirtualScrollEnabled) {
+                    NotificationManager.success('Virtual scrolling enabled! Better performance for large lists.');
+                } else {
+                    NotificationManager.success('Virtual scrolling disabled. Showing all articles.');
+                    this.virtualScrollManager.disable();
+                }
+
+                // Re-render articles with new scrolling mode
+                this.displayArticles(this.currentDisplayedArticles);
+            }
                 return `
                     <img src="${imageUrl}" 
                          alt="Article image" 
@@ -3759,6 +4125,8 @@ Want All Fresh Images → Use "Sync Images" button
                 const tokenTimestamp = localStorage.getItem(CONFIG.STORAGE.KEYS.TOKEN_TIMESTAMP);
                 const tokenAge = tokenTimestamp ? Math.round((Date.now() - parseInt(tokenTimestamp)) / 1000 / 60) : 'Unknown';
 
+                const virtualScrollStats = this.virtualScrollManager.getStats();
+
                 const info = `
 MyPocket Enhanced Web Reader Debug Info:
 ========================================
@@ -3766,7 +4134,7 @@ MyPocket Enhanced Web Reader Debug Info:
 Current URL: ${window.location.href}
 Redirect URI: ${this.authManager.redirectUri}
 Client ID: ${this.authManager.clientId}
-Version: 5.0 (Enhanced)
+Version: 5.0 (Enhanced with Virtual Scrolling)
 
 🔐 SECURITY (PKCE):
 - Authentication Method: Authorization Code + PKCE
@@ -3793,6 +4161,16 @@ Version: 5.0 (Enhanced)
 - Search Query: "${this.searchQuery}"
 - Debounce Delay: ${CONFIG.UI.SEARCH_DEBOUNCE_MS}ms
 
+📜 VIRTUAL SCROLLING:
+- Enabled: ${virtualScrollStats.enabled}
+- Container Height: ${virtualScrollStats.containerHeight}px
+- Item Height: ${virtualScrollStats.itemHeight}px
+- Items Per Row: ${virtualScrollStats.itemsPerRow}
+- Buffer: ${virtualScrollStats.buffer} items
+- Render Count: ${virtualScrollStats.renderCount}
+- Last Render Time: ${virtualScrollStats.lastRenderTime.toFixed(2)}ms
+- Current Scroll: ${virtualScrollStats.scrollTop}px
+
 💾 LOCAL CACHE:
 - Total Cached Images: ${cacheStats.total}
 - Memory Usage: ${Math.round(cacheStats.memoryUsage / 1024)} KB
@@ -3807,37 +4185,49 @@ Version: 5.0 (Enhanced)
 - Keyboard Navigation: ✅
 - Debounced Search: ✅
 - Progress Indicators: ✅
+- Virtual Scrolling: ✅
 
 ⚡ PERFORMANCE:
 - Utils debouncing: ${CONFIG.UI.SEARCH_DEBOUNCE_MS}ms
 - Animation duration: ${CONFIG.UI.ANIMATION_DURATION}ms
 - Notification duration: ${CONFIG.UI.NOTIFICATION_DURATION}ms
 - Retry mechanism: 3 attempts with exponential backoff
+- Virtual scroll threshold: 20+ articles
+
+💡 VIRTUAL SCROLLING BENEFITS:
+- Renders only visible items (${virtualScrollStats.enabled ? `~${Math.ceil(virtualScrollStats.containerHeight / virtualScrollStats.itemHeight) * virtualScrollStats.itemsPerRow}` : 'N/A'} max)
+- Constant DOM size regardless of article count
+- Smooth scrolling with large datasets
+- Reduced memory usage for image loading
+- Better performance on mobile devices
 
 Cross-Device Features:
 - Enhanced image storage with better compression
 - Automatic OneDrive sync after image updates
 - Consistent fallback images across devices
 - Improved error recovery
+- Smart virtual scrolling for performance
                 `;
 
                 alert(info);
-                console.log('🔧 Enhanced Debug Info:', {
+                console.log('🔧 Enhanced Debug Info with Virtual Scrolling:', {
                     version: '5.0',
                     architecture: 'Modular',
                     enhancements: [
                         'Error Management',
-                        'Loading States',
+                        'Loading States', 
                         'Notifications',
                         'Accessibility',
                         'Keyboard Navigation',
-                        'Debounced Search'
+                        'Debounced Search',
+                        'Virtual Scrolling'
                     ],
                     articleStats: {
                         total: this.articles.length,
                         displayed: this.currentDisplayedArticles.length,
                         withImages: storedImages
                     },
+                    virtualScrollStats: virtualScrollStats,
                     config: CONFIG
                 });
             }
