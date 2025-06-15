@@ -1249,36 +1249,37 @@
                         <span id="connectIcon">🔐</span>
                         <span id="connectText">Secure Connect</span>
                     </button>
-                    <button id="refreshBtn" class="btn btn-secondary" style="display: none;" onclick="webReader && webReader.loadArticles()">
+                    <button id="refreshBtn" class="btn btn-secondary" style="display: none;">
                         <span>🔄</span> Refresh
                     </button>
-                    <button id="searchToggleBtn" class="btn btn-secondary" onclick="webReader && webReader.toggleSearch()">
+                    <button id="searchToggleBtn" class="btn btn-secondary">
                         <span>🔍</span> Search
                     </button>
-                    <button id="clearCacheBtn" class="btn btn-secondary" onclick="webReader && webReader.clearImageCache()">
+                    <button id="clearCacheBtn" class="btn btn-secondary">
                         <span>🗑️</span> Clear Cache
                     </button>
-                    <button id="syncBtn" class="btn btn-secondary" onclick="webReader && webReader.forceSyncImages()"
-                        style="display: none;">
+                    <button id="syncBtn" class="btn btn-secondary" style="display: none;">
                         <span>🔄</span> Sync Images
                     </button>
-                    <button id="retryFailedBtn" class="btn btn-secondary" onclick="webReader && webReader.retryFailedImages()"
-                        style="display: none;">
+                    <button id="retryFailedBtn" class="btn btn-secondary" style="display: none;">
                         <span>🔄</span> Retry Failed
                     </button>
-                    <button id="helpBtn" class="btn btn-secondary" onclick="webReader && webReader.showImageHelp()">
+                    <button id="helpBtn" class="btn btn-secondary">
                         <span>❓</span> Image Help
                     </button>
-                    <button id="debugBtn" class="btn btn-secondary" onclick="webReader && webReader.toggleDebugMode()">
+                    <button id="debugBtn" class="btn btn-secondary">
                         <span>🔧</span> Debug
                     </button>
-                    <button id="testImagesBtn" class="btn btn-secondary" onclick="webReader && webReader.testImageLoading()">
+                    <button id="testConnectionBtn" class="btn btn-secondary">
+                        <span>🔌</span> Test Connect
+                    </button>
+                    <button id="testImagesBtn" class="btn btn-secondary">
                         <span>🖼️</span> Test Images
                     </button>
-                    <button id="testBtn" class="btn btn-secondary" onclick="webReader && webReader.toggleTestMode()">
+                    <button id="testBtn" class="btn btn-secondary">
                         <span>👁️</span> Show Buttons
                     </button>
-                    <button id="darkModeBtn" class="btn btn-secondary" onclick="webReader && webReader.toggleDarkMode()">
+                    <button id="darkModeBtn" class="btn btn-secondary">
                         <span>🌙</span> Dark Mode
                     </button>
                 </div>
@@ -1292,7 +1293,7 @@
             <div class="search-box">
                 <input type="text" id="searchInput" class="search-input" placeholder="Search your saved articles..."
                     autocomplete="off">
-                <button class="search-close-btn" onclick="webReader && webReader.toggleSearch()" title="Close search">✕</button>
+                <button class="search-close-btn" id="searchCloseBtn" title="Close search">✕</button>
             </div>
         </div>
     </section>
@@ -2103,11 +2104,84 @@
             }
 
             setupEventListeners() {
-                document.getElementById('connectBtn').addEventListener('click', () => this.authenticate());
-                document.getElementById('refreshBtn').addEventListener('click', () => this.loadArticles());
-                document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
-                document.getElementById('closeReader').addEventListener('click', () => this.closeReader());
-                document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
+                console.log('🔧 Setting up event listeners...');
+                
+                // Connect button - with detailed debugging
+                const connectBtn = document.getElementById('connectBtn');
+                if (connectBtn) {
+                    connectBtn.addEventListener('click', (e) => {
+                        console.log('🔐 Connect button clicked!');
+                        e.preventDefault();
+                        try {
+                            this.authenticate();
+                        } catch (error) {
+                            console.error('❌ Authentication error:', error);
+                            alert(`Authentication Error: ${error.message}`);
+                        }
+                    });
+                    console.log('✅ Connect button listener attached');
+                } else {
+                    console.error('❌ Connect button not found!');
+                }
+
+                // All other buttons
+                const buttonConfigs = [
+                    { id: 'refreshBtn', method: 'loadArticles', label: 'Refresh' },
+                    { id: 'searchToggleBtn', method: 'toggleSearch', label: 'Search Toggle' },
+                    { id: 'clearCacheBtn', method: 'clearImageCache', label: 'Clear Cache' },
+                    { id: 'syncBtn', method: 'forceSyncImages', label: 'Sync Images' },
+                    { id: 'retryFailedBtn', method: 'retryFailedImages', label: 'Retry Failed' },
+                    { id: 'helpBtn', method: 'showImageHelp', label: 'Help' },
+                    { id: 'debugBtn', method: 'toggleDebugMode', label: 'Debug' },
+                    { id: 'testConnectionBtn', method: 'testConnection', label: 'Test Connection' },
+                    { id: 'testImagesBtn', method: 'testImageLoading', label: 'Test Images' },
+                    { id: 'testBtn', method: 'toggleTestMode', label: 'Test Mode' },
+                    { id: 'darkModeBtn', method: 'toggleDarkMode', label: 'Dark Mode' }
+                ];
+
+                buttonConfigs.forEach(config => {
+                    const button = document.getElementById(config.id);
+                    if (button && this[config.method]) {
+                        button.addEventListener('click', (e) => {
+                            console.log(`🔘 ${config.label} button clicked`);
+                            e.preventDefault();
+                            try {
+                                this[config.method]();
+                            } catch (error) {
+                                console.error(`❌ ${config.label} error:`, error);
+                            }
+                        });
+                        console.log(`✅ ${config.label} button listener attached`);
+                    } else if (button) {
+                        console.warn(`⚠️ Method ${config.method} not found for ${config.label} button`);
+                    }
+                });
+
+                // Search input and close button
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.addEventListener('input', (e) => this.searchArticles(e.target.value));
+                    console.log('✅ Search input listener attached');
+                }
+
+                const searchCloseBtn = document.getElementById('searchCloseBtn');
+                if (searchCloseBtn) {
+                    searchCloseBtn.addEventListener('click', () => this.toggleSearch(false));
+                    console.log('✅ Search close button listener attached');
+                }
+
+                // Reader buttons
+                const closeReader = document.getElementById('closeReader');
+                if (closeReader) {
+                    closeReader.addEventListener('click', () => this.closeReader());
+                    console.log('✅ Close reader listener attached');
+                }
+
+                const openOriginal = document.getElementById('openOriginal');
+                if (openOriginal) {
+                    openOriginal.addEventListener('click', () => this.openOriginal());
+                    console.log('✅ Open original listener attached');
+                }
 
                 // Search toggle keyboard shortcuts
                 document.addEventListener('keydown', (e) => {
@@ -2128,14 +2202,14 @@
                     const searchContainer = document.getElementById('searchContainer');
                     const searchToggleBtn = document.getElementById('searchToggleBtn');
 
-                    if (searchContainer.style.display !== 'none' &&
+                    if (searchContainer && searchContainer.style.display !== 'none' &&
                         !searchContainer.contains(e.target) &&
-                        !searchToggleBtn.contains(e.target)) {
+                        searchToggleBtn && !searchToggleBtn.contains(e.target)) {
                         this.toggleSearch(false);
                     }
                 });
 
-                console.log('✅ Event listeners set up successfully');
+                console.log('✅ All event listeners set up successfully');
             }
 
             isInputFocused() {
@@ -2245,11 +2319,16 @@
                 console.log('🗑️ PKCE parameters cleared');
             }
 
-            // ENHANCED: Secure authentication with PKCE
+            // ENHANCED: Secure authentication with PKCE + debugging
             async authenticate() {
+                console.log('🔐 Starting authentication process...');
+                console.log('🔍 Redirect URI:', this.redirectUri);
+                console.log('🔍 Client ID:', this.clientId);
+                
                 if (!this.redirectUri || (!this.redirectUri.startsWith('http://') && !this.redirectUri.startsWith('https://'))) {
+                    const errorMsg = `❌ Invalid redirect URI: ${this.redirectUri}`;
+                    console.error(errorMsg);
                     this.updateStatus('❌ Invalid redirect URI. Please open this page via HTTP/HTTPS.', 'error');
-                    console.error('🔴 Invalid redirect URI:', this.redirectUri);
                     alert(`Redirect URI Error:\n\nCurrent URI: ${this.redirectUri}\n\nPlease:\n1. Open this page via HTTP/HTTPS (not file://)\n2. Register this exact URI in Azure AD\n3. Use a web server to serve this file`);
                     return;
                 }
@@ -2258,9 +2337,12 @@
                     this.updateStatus('🔐 Generating secure authentication parameters...', 'loading');
 
                     // Generate PKCE parameters
+                    console.log('🔐 Generating PKCE parameters...');
                     this.codeVerifier = this.generateCodeVerifier();
                     this.codeChallenge = await this.generateCodeChallenge(this.codeVerifier);
                     this.state = this.generateState();
+
+                    console.log('🔐 PKCE parameters generated successfully');
 
                     // Store parameters securely
                     this.storePKCEParameters(this.codeVerifier, this.state);
@@ -2276,19 +2358,22 @@
                         `code_challenge_method=S256&` +  // SHA256 method
                         `response_mode=query`;  // Use query instead of fragment
 
-                    console.log('🔐 PKCE Auth URL generated');
+                    console.log('🔐 Authorization URL built successfully');
                     console.log('🔐 Code Challenge:', this.codeChallenge.substring(0, 20) + '...');
                     console.log('🔐 State:', this.state.substring(0, 20) + '...');
 
                     this.updateStatus('🔄 Redirecting to secure Microsoft login...', 'loading');
 
+                    console.log('🚀 Redirecting to Microsoft login in 1 second...');
                     setTimeout(() => {
+                        console.log('🚀 NOW redirecting to:', authUrl.substring(0, 100) + '...');
                         window.location.href = authUrl;
                     }, 1000);
 
                 } catch (error) {
-                    console.error('PKCE generation error:', error);
+                    console.error('❌ PKCE generation error:', error);
                     this.updateStatus('❌ Error generating secure authentication. Please try again.', 'error');
+                    alert(`Authentication Error: ${error.message}\n\nPlease try again or check the console for more details.`);
                 }
             }
 
@@ -3330,8 +3415,86 @@ Want All Fresh Images → Use "Sync Images" button
                 alert(helpText);
             }
 
-            // NEW: Test image loading functionality
-            testImageLoading() {
+            // NEW: Test connection functionality
+            testConnection() {
+                console.log('🧪 TESTING connection...');
+                
+                // Test basic setup
+                console.log('🔍 Client ID:', this.clientId);
+                console.log('🔍 Redirect URI:', this.redirectUri);
+                console.log('🔍 Current URL:', window.location.href);
+                console.log('🔍 Protocol:', window.location.protocol);
+                console.log('🔍 Host:', window.location.host);
+                
+                // Test PKCE generation
+                try {
+                    const testVerifier = this.generateCodeVerifier();
+                    console.log('✅ Code verifier generation works:', testVerifier.substring(0, 20) + '...');
+                    
+                    this.generateCodeChallenge(testVerifier).then(challenge => {
+                        console.log('✅ Code challenge generation works:', challenge.substring(0, 20) + '...');
+                    }).catch(error => {
+                        console.error('❌ Code challenge generation failed:', error);
+                    });
+                    
+                    const testState = this.generateState();
+                    console.log('✅ State generation works:', testState.substring(0, 20) + '...');
+                    
+                } catch (error) {
+                    console.error('❌ PKCE generation test failed:', error);
+                }
+                
+                // Test URL validation
+                const isValidRedirect = this.redirectUri && (this.redirectUri.startsWith('http://') || this.redirectUri.startsWith('https://'));
+                console.log('🔍 Redirect URI valid:', isValidRedirect);
+                
+                // Test event listeners
+                const connectBtn = document.getElementById('connectBtn');
+                console.log('🔍 Connect button found:', !!connectBtn);
+                console.log('🔍 Connect button onclick:', connectBtn ? connectBtn.onclick : 'null');
+                
+                if (connectBtn) {
+                    console.log('🧪 Testing button click...');
+                    // Don't actually click, just test the method
+                    try {
+                        console.log('🔐 authenticate method exists:', typeof this.authenticate === 'function');
+                        if (isValidRedirect) {
+                            console.log('✅ Connection test passed - should work when clicked');
+                        } else {
+                            console.log('❌ Invalid redirect URI - this is the problem');
+                        }
+                    } catch (error) {
+                        console.error('❌ Method test failed:', error);
+                    }
+                }
+                
+                // Show results
+                const results = `
+🧪 CONNECTION TEST RESULTS:
+========================
+
+✅ Basic Setup:
+- Client ID: ${this.clientId ? 'Present' : 'Missing'}
+- Redirect URI: ${this.redirectUri}
+- Valid Redirect: ${isValidRedirect ? 'YES' : 'NO'}
+
+✅ Page Setup:
+- Protocol: ${window.location.protocol}
+- Host: ${window.location.host}
+- Full URL: ${window.location.href}
+
+✅ Button Setup:
+- Connect button: ${connectBtn ? 'Found' : 'Missing'}
+- Method exists: ${typeof this.authenticate === 'function' ? 'YES' : 'NO'}
+
+${isValidRedirect ? 
+    '🎉 SHOULD WORK: Everything looks good!' : 
+    '❌ PROBLEM: Invalid redirect URI - make sure you\'re using HTTP/HTTPS'}
+                `;
+                
+                console.log(results);
+                alert(results);
+            }
                 console.log('🧪 TESTING image loading...');
                 console.log('🔍 webReader instance:', !!webReader);
                 console.log('🔍 virtualScrollManager:', !!this.virtualScrollManager);
@@ -4432,7 +4595,7 @@ Search Features:
                 // Make sure all global functions are available with error checking
                 const methods = [
                     'clearImageCache', 'forceSyncImages', 'retryFailedImages', 
-                    'showImageHelp', 'toggleDebugMode', 'testImageLoading', 
+                    'showImageHelp', 'toggleDebugMode', 'testConnection', 'testImageLoading', 
                     'toggleTestMode', 'toggleDarkMode', 'toggleSearch'
                 ];
                 
