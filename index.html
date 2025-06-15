@@ -1598,7 +1598,7 @@
                 this.state = null;
 
                 // ENHANCED: Virtual scrolling properties
-                this.virtualScrollEnabled = true; // Start enabled for demo
+                this.virtualScrollEnabled = false; // Start disabled, enable for large datasets or manually
                 this.virtualItemHeight = 220; // Estimated height per item
                 this.virtualBufferSize = 10; // Extra items above/below viewport
                 this.virtualContainerHeight = 0;
@@ -1634,21 +1634,6 @@
                 this.loadImageCache();
                 this.initializeVirtualScrolling();
 
-                // Show virtual controls and sample data button by default for demo
-                const virtualControls = document.getElementById('virtualControls');
-                const generateBtn = document.getElementById('generateBtn');
-                
-                if (virtualControls) {
-                    virtualControls.classList.add('visible');
-                }
-                
-                if (generateBtn) {
-                    generateBtn.style.display = 'inline-flex';
-                }
-
-                // Show initial status about virtual scrolling
-                this.updateStatus('⚡ Virtual scrolling enabled. Click "Generate Sample" to test with 1000+ articles!', 'success');
-
                 console.log('🚀 MyPocket Web Reader initialized with Virtual Scrolling');
             }
 
@@ -1656,6 +1641,18 @@
                 this.measureVirtualContainer();
                 this.setupVirtualScrollListeners();
                 this.startVirtualFPSTracking();
+                
+                // Set initial virtual scrolling button state
+                const virtualToggle = document.getElementById('virtualToggle');
+                if (virtualToggle) {
+                    if (this.virtualScrollEnabled) {
+                        virtualToggle.classList.add('active');
+                        virtualToggle.innerHTML = '<span>⚡</span> Enabled';
+                    } else {
+                        virtualToggle.classList.remove('active');
+                        virtualToggle.innerHTML = '<span>📊</span> Disabled';
+                    }
+                }
                 
                 console.log('⚡ Virtual scrolling initialized:', {
                     enabled: this.virtualScrollEnabled,
@@ -3077,9 +3074,21 @@ Want All Fresh Images → Use "Sync Images" button
                 // Store what we're currently displaying
                 this.currentDisplayedArticles = articles;
 
-                // Always show virtual controls for demo purposes
+                // Show virtual controls for larger datasets
                 const virtualControls = document.getElementById('virtualControls');
-                virtualControls.classList.add('visible');
+                if (articles.length >= 30) {
+                    virtualControls.classList.add('visible');
+                    // Auto-enable virtual scrolling for large datasets
+                    if (!this.virtualScrollEnabled && articles.length >= 100) {
+                        this.virtualScrollEnabled = true;
+                        const toggle = document.getElementById('virtualToggle');
+                        toggle.classList.add('active');
+                        toggle.innerHTML = '<span>⚡</span> Enabled';
+                        this.updateStatus(`⚡ Auto-enabled virtual scrolling for ${articles.length} articles`, 'success');
+                    }
+                } else {
+                    virtualControls.classList.remove('visible');
+                }
 
                 console.log(`🎯 Displaying ${articles.length} articles, virtual scrolling: ${this.virtualScrollEnabled ? 'ON' : 'OFF'}`);
 
@@ -3287,7 +3296,7 @@ Want All Fresh Images → Use "Sync Images" button
             }
 
             displayEmptyState() {
-                // Hide virtual controls
+                // Hide virtual controls when no articles
                 const virtualControls = document.getElementById('virtualControls');
                 virtualControls.classList.remove('visible');
 
