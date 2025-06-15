@@ -1598,7 +1598,7 @@
                 this.state = null;
 
                 // ENHANCED: Virtual scrolling properties
-                this.virtualScrollEnabled = false; // Start disabled, enable for large datasets
+                this.virtualScrollEnabled = true; // Start enabled for demo
                 this.virtualItemHeight = 220; // Estimated height per item
                 this.virtualBufferSize = 10; // Extra items above/below viewport
                 this.virtualContainerHeight = 0;
@@ -1634,6 +1634,21 @@
                 this.loadImageCache();
                 this.initializeVirtualScrolling();
 
+                // Show virtual controls and sample data button by default for demo
+                const virtualControls = document.getElementById('virtualControls');
+                const generateBtn = document.getElementById('generateBtn');
+                
+                if (virtualControls) {
+                    virtualControls.classList.add('visible');
+                }
+                
+                if (generateBtn) {
+                    generateBtn.style.display = 'inline-flex';
+                }
+
+                // Show initial status about virtual scrolling
+                this.updateStatus('⚡ Virtual scrolling enabled. Click "Generate Sample" to test with 1000+ articles!', 'success');
+
                 console.log('🚀 MyPocket Web Reader initialized with Virtual Scrolling');
             }
 
@@ -1653,9 +1668,15 @@
             measureVirtualContainer() {
                 const wrapper = document.getElementById('virtualWrapper');
                 if (wrapper) {
-                    this.virtualContainerHeight = wrapper.clientHeight || 600; // Default fallback
+                    // Force a minimum height for testing
+                    const computedHeight = wrapper.clientHeight;
+                    this.virtualContainerHeight = Math.max(computedHeight, 400); // Minimum 400px
                     this.virtualVisibleCount = Math.ceil(this.virtualContainerHeight / this.virtualItemHeight) + this.virtualBufferSize;
                     console.log(`📏 Virtual container measured: ${this.virtualContainerHeight}px, visible items: ${this.virtualVisibleCount}`);
+                } else {
+                    console.error('❌ Virtual wrapper not found for measurement');
+                    this.virtualContainerHeight = 600; // Fallback
+                    this.virtualVisibleCount = Math.ceil(this.virtualContainerHeight / this.virtualItemHeight) + this.virtualBufferSize;
                 }
             }
 
@@ -1736,7 +1757,12 @@
 
             renderVirtualItems(range) {
                 const list = document.getElementById('virtualList');
-                if (!list) return;
+                if (!list) {
+                    console.error('❌ Virtual list not found');
+                    return;
+                }
+                
+                console.log(`🔄 Rendering virtual items ${range.start}-${range.end}`);
                 
                 // Remove items outside the visible range
                 this.cleanupVirtualItems(range);
@@ -1745,16 +1771,21 @@
                 for (let i = range.start; i < range.end; i++) {
                     if (!this.virtualRenderedItems.has(i)) {
                         const item = this.createVirtualItem(this.currentDisplayedArticles[i], i);
-                        list.appendChild(item);
-                        this.virtualRenderedItems.set(i, item);
+                        if (item) {
+                            list.appendChild(item);
+                            this.virtualRenderedItems.set(i, item);
+                        }
                     }
                     
                     // Update position
                     const item = this.virtualRenderedItems.get(i);
                     if (item) {
                         item.style.transform = `translateY(${i * this.virtualItemHeight}px)`;
+                        item.style.height = `${this.virtualItemHeight}px`;
                     }
                 }
+                
+                console.log(`✅ Rendered ${this.virtualRenderedItems.size} virtual items`);
             }
 
             cleanupVirtualItems(range) {
@@ -1775,70 +1806,49 @@
             }
 
             createVirtualItem(article, displayIndex) {
+                if (!article) {
+                    console.error('❌ No article provided for virtual item');
+                    return null;
+                }
+
                 const item = document.createElement('div');
                 item.className = 'virtual-item';
+                item.style.height = `${this.virtualItemHeight}px`;
                 
                 // Find original index in main articles array for actions
                 const originalIndex = this.articles.findIndex(a => 
                     a.url === article.url && a.title === article.title
-                );
+                ) || displayIndex;
 
                 // Generate article HTML with proper image handling
                 let imageHTML = '';
                 let cacheStatus = 'loading';
                 let statusText = '🔄 Loading';
 
-                // Same image prioritization as traditional mode
-                if (article.cachedImage && article.cachedImage.base64) {
-                    imageHTML = this.createImageHTML(article.cachedImage.base64, true);
-                    cacheStatus = 'synced';
-                    statusText = '🌐 Synced';
-                } else if (article.cachedImage && article.cachedImage.url && !article.cachedImage.base64) {
-                    imageHTML = this.createImageHTML(article.cachedImage.url, true);
-                    cacheStatus = 'synced';
-                    statusText = '🔗 Synced URL';
-                } else if (this.getCachedImage(article)) {
-                    imageHTML = this.createImageHTML(this.getCachedImage(article), true);
-                    cacheStatus = 'cached';
-                    statusText = '💾 Local Cache';
-                } else if (this.getBestArticleImage(article)) {
-                    const savedImage = this.getBestArticleImage(article);
-                    imageHTML = this.createImageHTML(savedImage, false);
-                    cacheStatus = 'metadata';
-                    statusText = '📄 Metadata';
-                    setTimeout(() => this.setArticleImageAndCache(article, originalIndex, savedImage, 'saved'), 100);
-                } else {
-                    imageHTML = this.createPlaceholderHTML();
-                    cacheStatus = 'loading';
-                    statusText = '🔄 Loading';
-                }
+                // Simple fallback image for virtual scrolling demo
+                imageHTML = this.createImageHTML(this.getCategoryBasedImage(article, displayIndex), false);
+                cacheStatus = 'cached';
+                statusText = '🎨 Generated';
 
-                item.innerHTML = `
-                    <div class="article-card" data-index="${originalIndex}" data-display-index="${displayIndex}">
-                        <div class="article-image" id="image-${originalIndex}">
+                const cardHTML = `
+                    <div class="article-card" data-index="${originalIndex}" data-display-index="${displayIndex}" style="height: ${this.virtualItemHeight - 20}px; margin: 10px; overflow: hidden;">
+                        <div class="article-image" id="image-${originalIndex}" style="height: 100px;">
                             ${imageHTML}
                             <div class="cache-indicator ${cacheStatus}">
                                 ${statusText}
                             </div>
                         </div>
-                        <div class="article-content" onclick="webReader.openReaderByDisplayIndex(${displayIndex})">
-                            <h2 class="article-title">${this.escapeHtml(article.title)}</h2>
-                            <p class="article-excerpt">${this.escapeHtml(article.excerpt)}</p>
-                            <div class="article-meta">
+                        <div class="article-content" onclick="webReader.openReaderByDisplayIndex(${displayIndex})" style="padding: 10px; height: ${this.virtualItemHeight - 140}px; overflow: hidden;">
+                            <h2 class="article-title" style="font-size: 0.9em; margin-bottom: 5px;">${this.escapeHtml(article.title)}</h2>
+                            <p class="article-excerpt" style="font-size: 0.8em; margin-bottom: 8px;">${this.escapeHtml(article.excerpt || 'No excerpt available')}</p>
+                            <div class="article-meta" style="font-size: 0.7em;">
                                 <span class="article-domain">🌐 ${this.getDomain(article.url)}</span>
-                                <span class="article-date">📅 ${this.formatDate(article.dateAdded)}</span>
-                            </div>
-                            <div class="article-stats">
-                                <span>⏱️ ${article.readTime || 1} min read</span>
-                                <span>📝 ${article.wordCount || 0} words</span>
+                                <span class="article-date">📅 ${this.formatDate(article.dateAdded || new Date().toISOString())}</span>
                             </div>
                         </div>
                         <div class="article-actions">
                             <button class="action-btn read-btn" onclick="event.stopPropagation(); webReader.openReaderByDisplayIndex(${displayIndex})" title="Read article">
                                 📖
-                            </button>
-                            <button class="action-btn refresh-image-btn" onclick="event.stopPropagation(); webReader.refreshSingleImage(${originalIndex}, ${displayIndex})" title="Refresh this image">
-                                🖼️
                             </button>
                             <button class="action-btn export-btn" onclick="event.stopPropagation(); webReader.exportArticleByDisplayIndex(${displayIndex})" title="Export article">
                                 📤
@@ -1849,7 +1859,10 @@
                         </div>
                     </div>
                 `;
+
+                item.innerHTML = cardHTML;
                 
+                console.log(`✅ Created virtual item ${displayIndex}: ${article.title.substring(0, 30)}...`);
                 return item;
             }
 
@@ -2382,6 +2395,15 @@
                 const retryFailedBtn = document.getElementById('retryFailedBtn');
                 const generateBtn = document.getElementById('generateBtn');
 
+            updateConnectionStatus(connected) {
+                const connectBtn = document.getElementById('connectBtn');
+                const connectIcon = document.getElementById('connectIcon');
+                const connectText = document.getElementById('connectText');
+                const refreshBtn = document.getElementById('refreshBtn');
+                const syncBtn = document.getElementById('syncBtn');
+                const retryFailedBtn = document.getElementById('retryFailedBtn');
+                const generateBtn = document.getElementById('generateBtn');
+
                 if (connected) {
                     connectIcon.textContent = '✅';
                     connectText.textContent = 'Connected (PKCE)';
@@ -2399,6 +2421,7 @@
                     if (retryFailedBtn) retryFailedBtn.style.display = 'none';
                     if (generateBtn) generateBtn.style.display = 'inline-flex'; // Show sample data when not connected
                 }
+            }
             }
 
             // NEW: Refresh a single image that's working but wrong
@@ -3054,24 +3077,14 @@ Want All Fresh Images → Use "Sync Images" button
                 // Store what we're currently displaying
                 this.currentDisplayedArticles = articles;
 
-                // Show/hide virtual controls based on article count
+                // Always show virtual controls for demo purposes
                 const virtualControls = document.getElementById('virtualControls');
-                if (articles.length >= 30) {
-                    virtualControls.classList.add('visible');
-                    // Auto-enable virtual scrolling for large datasets if not already enabled
-                    if (!this.virtualScrollEnabled && articles.length >= 100) {
-                        this.virtualScrollEnabled = true;
-                        const toggle = document.getElementById('virtualToggle');
-                        toggle.classList.add('active');
-                        toggle.innerHTML = '<span>⚡</span> Enabled';
-                        this.updateStatus(`⚡ Auto-enabled virtual scrolling for ${articles.length} articles`, 'success');
-                    }
-                } else {
-                    virtualControls.classList.remove('visible');
-                }
+                virtualControls.classList.add('visible');
+
+                console.log(`🎯 Displaying ${articles.length} articles, virtual scrolling: ${this.virtualScrollEnabled ? 'ON' : 'OFF'}`);
 
                 // Choose display mode based on virtual scrolling setting
-                if (this.virtualScrollEnabled && articles.length > 0) {
+                if (this.virtualScrollEnabled) {
                     this.displayVirtualArticles(articles);
                 } else {
                     this.displayTraditionalArticles(articles);
@@ -3085,11 +3098,20 @@ Want All Fresh Images → Use "Sync Images" button
                 const virtualWrapper = document.getElementById('virtualWrapper');
                 const traditionalContainer = document.getElementById('traditionalContainer');
                 
-                virtualWrapper.style.display = 'block';
-                traditionalContainer.style.display = 'none';
+                if (virtualWrapper && traditionalContainer) {
+                    virtualWrapper.style.display = 'block';
+                    traditionalContainer.style.display = 'none';
+                } else {
+                    console.error('❌ Virtual scroll containers not found!');
+                    return;
+                }
+
+                // Measure container if not already done
+                if (this.virtualContainerHeight === 0) {
+                    this.measureVirtualContainer();
+                }
 
                 // Update virtual scrolling dimensions and render
-                this.measureVirtualContainer();
                 this.calculateVirtualDimensions();
                 
                 // Clear existing rendered items
@@ -3097,6 +3119,9 @@ Want All Fresh Images → Use "Sync Images" button
                 const virtualList = document.getElementById('virtualList');
                 if (virtualList) {
                     virtualList.innerHTML = '';
+                } else {
+                    console.error('❌ Virtual list container not found!');
+                    return;
                 }
 
                 // Reset scroll position
@@ -3104,6 +3129,9 @@ Want All Fresh Images → Use "Sync Images" button
                 if (container) {
                     container.scrollTop = 0;
                     this.virtualScrollTop = 0;
+                } else {
+                    console.error('❌ Virtual scroll container not found!');
+                    return;
                 }
 
                 // Initial render
@@ -3111,7 +3139,9 @@ Want All Fresh Images → Use "Sync Images" button
 
                 // Status update with performance info
                 const renderedCount = this.virtualRenderedItems.size;
-                this.updateStatus(`⚡ Virtual scrolling: showing ${renderedCount} of ${articles.length} articles (${this.virtualItemHeight}px each)`, 'success');
+                this.updateStatus(`⚡ Virtual scrolling active: ${renderedCount} visible of ${articles.length} articles`, 'success');
+                
+                console.log(`✅ Virtual scrolling initialized: ${renderedCount} items rendered`);
             }
 
             displayTraditionalArticles(articles) {
