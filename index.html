@@ -662,28 +662,6 @@
             color: var(--text-secondary);
         }
 
-        /* Article Category Badge */
-        .article-category {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.7em;
-            font-weight: 500;
-            z-index: 5;
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            max-width: 80px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
         /* Dark mode category styles */
         [data-theme="dark"] .category-container {
             background: var(--surface);
@@ -720,12 +698,6 @@
         [data-theme="dark"] .category-chip:not(.active) .category-count {
             background: var(--border);
             color: var(--text-secondary);
-        }
-
-        [data-theme="dark"] .article-category {
-            background: rgba(22, 27, 34, 0.9);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
         }
 
         .search-box {
@@ -1403,15 +1375,6 @@
                 padding: 1px 4px;
             }
 
-            .article-category {
-                top: 8px;
-                left: 8px;
-                padding: 3px 6px;
-                border-radius: 10px;
-                font-size: 0.65em;
-                max-width: 70px;
-            }
-
             /* Status bar */
             .status {
                 padding: 15px 0;
@@ -2061,63 +2024,58 @@
                 return {
                     'Technology': {
                         icon: '💻',
-                        keywords: ['tech', 'programming', 'code', 'software', 'developer', 'javascript', 'python', 'react', 'api', 'github', 'stackoverflow', 'dev.to', 'coding', 'algorithm', 'database', 'web', 'mobile', 'app', 'framework', 'library', 'bug', 'debug', 'frontend', 'backend', 'fullstack'],
-                        domains: ['github.com', 'stackoverflow.com', 'dev.to', 'techcrunch.com', 'theverge.com', 'arstechnica.com', 'wired.com']
+                        keywords: ['tech', 'technology', 'programming', 'code', 'coding', 'software', 'developer', 'development', 'javascript', 'python', 'react', 'vue', 'angular', 'node', 'api', 'github', 'stackoverflow', 'coding', 'algorithm', 'database', 'web', 'mobile', 'app', 'application', 'framework', 'library', 'bug', 'debug', 'frontend', 'backend', 'fullstack', 'devops', 'cloud', 'aws', 'azure', 'docker', 'kubernetes', 'microservices', 'serverless', 'machine learning', 'artificial intelligence', 'ai', 'ml', 'data science', 'blockchain', 'cryptocurrency', 'bitcoin', 'cybersecurity', 'security', 'hacking', 'penetration testing'],
+                        domains: ['github.com', 'stackoverflow.com', 'dev.to', 'techcrunch.com', 'theverge.com', 'arstechnica.com', 'wired.com', 'hacker-news.firebaseapp.com', 'news.ycombinator.com', 'medium.com', 'hackernoon.com', 'freecodecamp.org', 'codepen.io', 'replit.com', 'glitch.com', 'netlify.com', 'vercel.com', 'heroku.com']
                     },
                     'Business': {
                         icon: '💼',
-                        keywords: ['business', 'startup', 'entrepreneur', 'finance', 'investment', 'marketing', 'sales', 'strategy', 'management', 'leadership', 'company', 'revenue', 'profit', 'corporate', 'economics', 'market', 'industry', 'venture', 'funding', 'ipo'],
-                        domains: ['linkedin.com', 'forbes.com', 'bloomberg.com', 'businessinsider.com', 'harvard.business.review']
+                        keywords: ['business', 'startup', 'entrepreneur', 'entrepreneurship', 'finance', 'financial', 'investment', 'investing', 'marketing', 'sales', 'strategy', 'management', 'leadership', 'company', 'revenue', 'profit', 'corporate', 'economics', 'market', 'industry', 'venture', 'funding', 'ipo', 'stocks', 'trading', 'cryptocurrency', 'fintech', 'saas', 'b2b', 'b2c', 'productivity', 'workflow', 'automation', 'remote work', 'freelancing', 'consulting', 'networking', 'career', 'job', 'hiring', 'hr', 'human resources'],
+                        domains: ['linkedin.com', 'forbes.com', 'bloomberg.com', 'businessinsider.com', 'harvard.business.review', 'hbr.org', 'entrepreneur.com', 'inc.com', 'fastcompany.com', 'techcrunch.com', 'crunchbase.com', 'angellist.com', 'producthunt.com', 'ycombinator.com', 'stripe.com', 'shopify.com']
                     },
                     'Science': {
                         icon: '🔬',
-                        keywords: ['science', 'research', 'study', 'data', 'analysis', 'experiment', 'discovery', 'theory', 'hypothesis', 'biology', 'chemistry', 'physics', 'medicine', 'health', 'climate', 'environment', 'space', 'astronomy', 'genetics'],
-                        domains: ['arxiv.org', 'nature.com', 'science.org', 'plos.org', 'pubmed.ncbi.nlm.nih.gov']
+                        keywords: ['science', 'scientific', 'research', 'study', 'data', 'analysis', 'experiment', 'discovery', 'theory', 'hypothesis', 'biology', 'chemistry', 'physics', 'medicine', 'medical', 'health', 'healthcare', 'climate', 'environment', 'environmental', 'space', 'astronomy', 'genetics', 'psychology', 'neuroscience', 'quantum', 'nuclear', 'biochemistry', 'biotechnology', 'pharmaceutical', 'vaccine', 'covid', 'pandemic', 'evolution', 'ecology', 'sustainability', 'renewable energy', 'solar', 'wind energy'],
+                        domains: ['arxiv.org', 'nature.com', 'science.org', 'plos.org', 'pubmed.ncbi.nlm.nih.gov', 'ncbi.nlm.nih.gov', 'sciencedirect.com', 'springer.com', 'wiley.com', 'cell.com', 'thelancet.com', 'nejm.org', 'scientificamerican.com', 'nationalgeographic.com', 'nasa.gov', 'nih.gov', 'cdc.gov']
                     },
                     'Design': {
                         icon: '🎨',
-                        keywords: ['design', 'ui', 'ux', 'user experience', 'interface', 'visual', 'graphic', 'creative', 'art', 'illustration', 'typography', 'color', 'layout', 'prototype', 'wireframe', 'figma', 'sketch', 'photoshop'],
-                        domains: ['dribbble.com', 'behance.net', 'medium.com/design', 'uxdesign.cc']
+                        keywords: ['design', 'designer', 'ui', 'ux', 'user experience', 'user interface', 'interface', 'visual', 'graphic', 'creative', 'art', 'artist', 'illustration', 'typography', 'color', 'layout', 'prototype', 'wireframe', 'figma', 'sketch', 'photoshop', 'adobe', 'branding', 'logo', 'icon', 'website design', 'web design', 'mobile design', 'app design', 'product design', 'industrial design', 'fashion', 'architecture', 'interior design', 'photography', 'video', 'animation'],
+                        domains: ['dribbble.com', 'behance.net', 'medium.com', 'uxdesign.cc', 'designbetter.co', 'smashingmagazine.com', 'awwwards.com', 'cssdesignawards.com', 'siteinspire.com', 'pinterest.com', 'unsplash.com', 'adobe.com', 'figma.com', 'invisionapp.com', 'framer.com']
                     },
                     'News': {
                         icon: '📰',
-                        keywords: ['news', 'breaking', 'report', 'journalist', 'media', 'politics', 'government', 'election', 'policy', 'world', 'international', 'national', 'local', 'current events', 'headline'],
-                        domains: ['bbc.com', 'cnn.com', 'nytimes.com', 'washingtonpost.com', 'guardian.co.uk', 'reuters.com', 'ap.org']
+                        keywords: ['news', 'breaking', 'breaking news', 'report', 'reporter', 'journalist', 'journalism', 'media', 'politics', 'political', 'government', 'election', 'policy', 'world', 'international', 'national', 'local', 'current events', 'headline', 'press', 'investigation', 'crisis', 'conflict', 'war', 'peace', 'diplomacy', 'economy', 'economic', 'recession', 'inflation', 'gdp', 'unemployment', 'stock market', 'breaking', 'urgent', 'live', 'update'],
+                        domains: ['bbc.com', 'cnn.com', 'nytimes.com', 'washingtonpost.com', 'theguardian.com', 'reuters.com', 'ap.org', 'npr.org', 'pbs.org', 'abcnews.go.com', 'cbsnews.com', 'nbcnews.com', 'foxnews.com', 'usatoday.com', 'wsj.com', 'ft.com', 'economist.com', 'politico.com', 'axios.com', 'vox.com']
                     },
                     'Education': {
                         icon: '🎓',
-                        keywords: ['education', 'learning', 'course', 'tutorial', 'lesson', 'teach', 'student', 'university', 'college', 'school', 'academic', 'knowledge', 'skill', 'training', 'certification', 'degree'],
-                        domains: ['coursera.org', 'edx.org', 'khanacademy.org', 'udemy.com', 'wikipedia.org']
+                        keywords: ['education', 'educational', 'learning', 'learn', 'course', 'courses', 'tutorial', 'tutorials', 'lesson', 'lessons', 'teach', 'teaching', 'teacher', 'student', 'university', 'college', 'school', 'academic', 'academia', 'knowledge', 'skill', 'skills', 'training', 'certification', 'certificate', 'degree', 'bachelor', 'master', 'phd', 'doctorate', 'mooc', 'online learning', 'e-learning', 'study', 'studying', 'exam', 'test', 'quiz', 'homework', 'assignment', 'research'],
+                        domains: ['coursera.org', 'edx.org', 'khanacademy.org', 'udemy.com', 'wikipedia.org', 'mit.edu', 'stanford.edu', 'harvard.edu', 'berkeley.edu', 'yale.edu', 'oxford.ac.uk', 'cambridge.org', 'skillshare.com', 'lynda.com', 'pluralsight.com', 'codecademy.com', 'duolingo.com', 'masterclass.com']
                     },
                     'Entertainment': {
                         icon: '🎬',
-                        keywords: ['entertainment', 'movie', 'film', 'tv', 'show', 'series', 'music', 'game', 'gaming', 'celebrity', 'review', 'trailer', 'streaming', 'netflix', 'spotify', 'youtube'],
-                        domains: ['youtube.com', 'netflix.com', 'spotify.com', 'imdb.com', 'ign.com', 'gamespot.com']
+                        keywords: ['entertainment', 'movie', 'movies', 'film', 'films', 'cinema', 'tv', 'television', 'show', 'shows', 'series', 'episode', 'season', 'music', 'song', 'album', 'artist', 'band', 'concert', 'festival', 'game', 'games', 'gaming', 'video games', 'esports', 'streaming', 'netflix', 'amazon prime', 'disney', 'hulu', 'spotify', 'apple music', 'youtube', 'twitch', 'celebrity', 'celebrities', 'hollywood', 'broadway', 'theater', 'comedy', 'humor', 'funny', 'meme', 'viral'],
+                        domains: ['youtube.com', 'netflix.com', 'spotify.com', 'imdb.com', 'ign.com', 'gamespot.com', 'polygon.com', 'kotaku.com', 'variety.com', 'hollywoodreporter.com', 'ew.com', 'rollingstone.com', 'billboard.com', 'pitchfork.com', 'reddit.com', 'twitch.tv', 'steam.com', 'epicgames.com', 'rotten-tomatoes.com']
                     },
                     'Health': {
                         icon: '🏥',
-                        keywords: ['health', 'medical', 'medicine', 'doctor', 'patient', 'treatment', 'disease', 'fitness', 'exercise', 'nutrition', 'diet', 'wellness', 'mental health', 'therapy', 'hospital', 'clinic'],
-                        domains: ['mayoclinic.org', 'webmd.com', 'healthline.com', 'nih.gov']
+                        keywords: ['health', 'healthy', 'healthcare', 'medical', 'medicine', 'doctor', 'physician', 'patient', 'hospital', 'clinic', 'treatment', 'therapy', 'disease', 'illness', 'symptoms', 'diagnosis', 'cure', 'medication', 'drug', 'pharmaceutical', 'fitness', 'exercise', 'workout', 'gym', 'running', 'yoga', 'nutrition', 'diet', 'food', 'vitamins', 'supplements', 'wellness', 'mental health', 'depression', 'anxiety', 'stress', 'mindfulness', 'meditation', 'sleep', 'weight loss', 'weight gain', 'muscle', 'cardio'],
+                        domains: ['mayoclinic.org', 'webmd.com', 'healthline.com', 'nih.gov', 'cdc.gov', 'who.int', 'medicalnewstoday.com', 'everydayhealth.com', 'health.com', 'prevention.com', 'menshealth.com', 'womenshealthmag.com', 'self.com', 'shape.com', 'fitbit.com', 'myfitnesspal.com', 'headspace.com', 'calm.com']
                     },
                     'Travel': {
                         icon: '✈️',
-                        keywords: ['travel', 'trip', 'vacation', 'tourism', 'destination', 'flight', 'hotel', 'adventure', 'explore', 'culture', 'country', 'city', 'guide', 'review', 'itinerary'],
-                        domains: ['tripadvisor.com', 'booking.com', 'airbnb.com', 'lonelyplanet.com']
+                        keywords: ['travel', 'traveling', 'trip', 'vacation', 'holiday', 'tourism', 'tourist', 'destination', 'flight', 'flights', 'airline', 'airport', 'hotel', 'accommodation', 'booking', 'airbnb', 'hostel', 'resort', 'adventure', 'explore', 'exploring', 'backpacking', 'hiking', 'camping', 'road trip', 'cruise', 'culture', 'cultural', 'country', 'city', 'guide', 'travel guide', 'itinerary', 'budget travel', 'luxury travel', 'solo travel', 'family travel', 'business travel'],
+                        domains: ['tripadvisor.com', 'booking.com', 'airbnb.com', 'expedia.com', 'kayak.com', 'skyscanner.com', 'hotels.com', 'agoda.com', 'lonelyplanet.com', 'fodors.com', 'frommers.com', 'roughguides.com', 'timeout.com', 'cntraveler.com', 'travelandleisure.com', 'nationalgeographic.com', 'nomadicmatt.com', 'backpacker.com']
                     },
                     'Food': {
                         icon: '🍳',
-                        keywords: ['food', 'recipe', 'cooking', 'chef', 'restaurant', 'cuisine', 'ingredient', 'meal', 'dish', 'kitchen', 'baking', 'culinary', 'nutrition', 'diet', 'taste'],
-                        domains: ['allrecipes.com', 'foodnetwork.com', 'epicurious.com', 'bonappetit.com']
+                        keywords: ['food', 'recipe', 'recipes', 'cooking', 'cook', 'chef', 'kitchen', 'restaurant', 'restaurants', 'dining', 'cuisine', 'culinary', 'ingredient', 'ingredients', 'meal', 'meals', 'dish', 'dishes', 'baking', 'bake', 'bread', 'cake', 'dessert', 'nutrition', 'diet', 'healthy eating', 'vegetarian', 'vegan', 'gluten-free', 'organic', 'local food', 'farm to table', 'foodie', 'wine', 'beer', 'cocktail', 'beverage', 'coffee', 'tea', 'breakfast', 'lunch', 'dinner'],
+                        domains: ['allrecipes.com', 'foodnetwork.com', 'epicurious.com', 'bonappetit.com', 'seriouseats.com', 'food52.com', 'tasty.co', 'delish.com', 'eatingwell.com', 'cookinglight.com', 'yummly.com', 'thespruceeats.com', 'saveur.com', 'foodandwine.com', 'chowhound.com', 'yelp.com', 'zomato.com', 'opentable.com']
                     },
-                    'Sports': {
-                        icon: '⚽',
-                        keywords: ['sports', 'football', 'basketball', 'soccer', 'baseball', 'tennis', 'golf', 'athletics', 'team', 'player', 'game', 'match', 'tournament', 'championship', 'olympics'],
-                        domains: ['espn.com', 'sport.com', 'bleacherreport.com', 'nfl.com', 'nba.com']
-                    },
-                    'Personal': {
-                        icon: '📝',
-                        keywords: ['personal', 'blog', 'diary', 'opinion', 'thoughts', 'life', 'experience', 'story', 'memoir', 'reflection', 'journey', 'growth', 'self', 'mindfulness'],
-                        domains: ['medium.com', 'substack.com', 'wordpress.com', 'blogger.com']
+                    'Lifestyle': {
+                        icon: '🏠',
+                        keywords: ['lifestyle', 'life', 'living', 'home', 'house', 'apartment', 'decor', 'decoration', 'interior', 'furniture', 'diy', 'crafts', 'gardening', 'pets', 'family', 'parenting', 'relationships', 'dating', 'marriage', 'wedding', 'fashion', 'style', 'beauty', 'skincare', 'makeup', 'hair', 'shopping', 'personal development', 'self-improvement', 'habits', 'productivity', 'organization', 'minimalism', 'sustainability', 'eco-friendly', 'green living'],
+                        domains: ['pinterest.com', 'instagram.com', 'buzzfeed.com', 'refinery29.com', 'popsugar.com', 'cosmopolitan.com', 'elle.com', 'vogue.com', 'marieclaire.com', 'goodhousekeeping.com', 'countryliving.com', 'apartmenttherapy.com', 'houzz.com', 'realsimple.com', 'oprah.com', 'goop.com', 'theeverygirl.com', 'cupcakesandcashmere.com']
                     }
                 };
             }
@@ -2387,23 +2345,36 @@
                 const domain = this.getDomain(article.url).toLowerCase();
                 const content = this.getArticleContentForAnalysis(article).toLowerCase();
 
-                const textToAnalyze = `${title} ${excerpt} ${content}`.substring(0, 2000); // Limit analysis text
+                const textToAnalyze = `${title} ${excerpt} ${content}`.substring(0, 3000); // Increased analysis text
                 const scores = new Map();
 
                 // Score each category
                 for (const [categoryName, categoryData] of Object.entries(this.categoryKeywords)) {
                     let score = 0;
 
-                    // Domain matching (highest weight)
-                    if (categoryData.domains.some(d => domain.includes(d))) {
-                        score += 100;
+                    // Domain matching (highest weight) - exact matches get highest score
+                    const exactDomainMatch = categoryData.domains.some(d => domain === d || domain.includes(d));
+                    if (exactDomainMatch) {
+                        score += 200; // Increased from 100
                     }
 
-                    // Keyword matching in title (high weight)
+                    // Keyword matching in title (very high weight) - titles are most important
                     const titleWords = title.split(/\s+/);
                     for (const keyword of categoryData.keywords) {
-                        if (titleWords.some(word => word.includes(keyword) || keyword.includes(word))) {
-                            score += 50;
+                        // Exact word match in title
+                        if (title.includes(` ${keyword} `) || title.startsWith(`${keyword} `) || title.endsWith(` ${keyword}`)) {
+                            score += 100; // Increased from 50
+                        }
+                        // Partial match in title
+                        else if (titleWords.some(word => word.includes(keyword) || keyword.includes(word))) {
+                            score += 40; // Increased from 25
+                        }
+                    }
+
+                    // Keyword matching in excerpt (high weight)
+                    for (const keyword of categoryData.keywords) {
+                        if (excerpt.includes(` ${keyword} `) || excerpt.startsWith(`${keyword} `) || excerpt.endsWith(` ${keyword}`)) {
+                            score += 30;
                         }
                     }
 
@@ -2412,36 +2383,59 @@
                         const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
                         const matches = textToAnalyze.match(regex);
                         if (matches) {
-                            score += matches.length * 10;
+                            score += Math.min(matches.length * 8, 40); // Cap at 40 points to prevent spam
                         }
                     }
 
-                    // URL path matching (low weight)
+                    // URL path matching (low weight but still useful)
                     for (const keyword of categoryData.keywords) {
                         if (url.includes(keyword)) {
-                            score += 5;
+                            score += 10; // Increased from 5
                         }
+                    }
+
+                    // Bonus for multiple keyword matches (shows topic relevance)
+                    const matchedKeywords = categoryData.keywords.filter(keyword => 
+                        textToAnalyze.includes(keyword)
+                    );
+                    if (matchedKeywords.length >= 3) {
+                        score += 25; // Bonus for multiple relevant keywords
                     }
 
                     scores.set(categoryName, score);
                 }
 
-                // Find the best category
-                let bestCategory = 'Other';
+                // Find the best category with improved threshold
+                let bestCategory = 'Lifestyle'; // Changed default from 'Other' to 'Lifestyle'
                 let bestScore = 0;
+                let secondBestScore = 0;
 
-                for (const [category, score] of scores.entries()) {
-                    if (score > bestScore && score >= 20) { // Minimum threshold
-                        bestCategory = category;
-                        bestScore = score;
-                    }
+                // Sort scores to find top two
+                const sortedScores = Array.from(scores.entries()).sort((a, b) => b[1] - a[1]);
+                
+                if (sortedScores.length >= 1) {
+                    bestScore = sortedScores[0][1];
+                    bestCategory = sortedScores[0][0];
+                }
+                if (sortedScores.length >= 2) {
+                    secondBestScore = sortedScores[1][1];
+                }
+
+                // Only assign category if there's a clear winner and minimum threshold
+                const minThreshold = 30; // Increased from 20
+                const confidenceGap = bestScore - secondBestScore;
+                
+                if (bestScore < minThreshold || (confidenceGap < 15 && bestScore < 60)) {
+                    bestCategory = 'Lifestyle'; // Default fallback
+                    bestScore = 0;
                 }
 
                 // Store the category and confidence
                 article.category = bestCategory;
                 article.categoryScore = bestScore;
+                article.categoryConfidence = confidenceGap;
 
-                console.log(`📂 Categorized "${article.title.substring(0, 30)}..." as "${bestCategory}" (score: ${bestScore})`);
+                console.log(`📂 Categorized "${article.title.substring(0, 30)}..." as "${bestCategory}" (score: ${bestScore}, confidence: ${confidenceGap})`);
                 return bestCategory;
             }
 
@@ -3770,7 +3764,6 @@ Want All Fresh Images → Use "Sync Images" button
                             <div class="cache-indicator ${cacheStatus}">
                                 ${statusText}
                             </div>
-                            ${this.getCategoryBadgeHTML(article)}
                         </div>
                         <div class="article-content" onclick="webReader.openReaderByDisplayIndex(${displayIndex})">
                             <h2 class="article-title">${this.escapeHtml(article.title)}</h2>
@@ -3826,22 +3819,6 @@ Want All Fresh Images → Use "Sync Images" button
                         this.loadMissingImages(articles);
                     }
                 }
-            }
-
-            getCategoryBadgeHTML(article) {
-                // Auto-categorize if not already categorized
-                if (!article.category) {
-                    this.categorizeArticle(article);
-                }
-
-                const category = article.category || 'Other';
-                const categoryData = this.categoryKeywords[category] || { icon: '📄' };
-
-                return `
-                    <div class="article-category" title="Category: ${category}">
-                        ${categoryData.icon} ${category}
-                    </div>
-                `;
             }
 
             createImageHTML(imageUrl, fromCache = false) {
