@@ -192,6 +192,123 @@
             line-height: 1.6;
             color: var(--text-primary);
             background: var(--background);
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            color: white;
+        }
+
+        .sidebar-logo {
+            font-size: 1.4em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .connection-status {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85em;
+        }
+
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+
+        .nav-section {
+            margin-bottom: 30px;
+        }
+
+        .nav-section-title {
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin: 0 20px 12px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-size: 14px;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: var(--background);
+            border-left-color: var(--primary-color);
+        }
+
+        .nav-item.active {
+            background: var(--background);
+            border-left-color: var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .nav-item .icon {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .nav-item .label {
+            flex: 1;
+        }
+
+        .nav-item .badge {
+            background: var(--primary-color);
+            color: white;
+            font-size: 0.7em;
+            padding: 2px 6px;
+            border-radius: 8px;
+            min-width: 16px;
+            text-align: center;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            min-height: 100vh;
         }
 
         .container {
@@ -200,37 +317,105 @@
             padding: 0 20px;
         }
 
-        /* Header */
+        /* Header - simplified */
         .header {
-            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
-            color: white;
+            background: var(--surface);
+            color: var(--text-primary);
             padding: 20px 0;
-            box-shadow: var(--shadow);
+            border-bottom: 1px solid var(--border);
             position: sticky;
             top: 0;
-            z-index: 100;
+            z-index: 90;
         }
 
         .header-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
         }
 
-        .logo {
-            font-size: 1.8em;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .header-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: var(--text-primary);
         }
 
         .header-actions {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
+        }
+
+        /* Dark mode sidebar */
+        [data-theme="dark"] .sidebar {
+            background: var(--surface);
+            border-right-color: var(--border);
+        }
+
+        [data-theme="dark"] .sidebar-header {
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+        }
+
+        [data-theme="dark"] .nav-item {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .nav-item:hover {
+            background: var(--background);
+        }
+
+        [data-theme="dark"] .nav-item.active {
+            background: var(--background);
+            color: var(--primary-color);
+        }
+
+        /* Mobile responsive - hide sidebar on small screens */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .mobile-menu-btn {
+                display: block !important;
+            }
+            
+            /* Mobile overlay backdrop */
+            .mobile-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 150;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+            }
+            
+            .mobile-overlay.active {
+                opacity: 1;
+                visibility: visible;
+            }
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 8px;
         }
 
         .btn {
@@ -972,28 +1157,32 @@
                 padding: 0 12px;
             }
 
+            /* Sidebar mobile styles */
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                z-index: 200;
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .mobile-menu-btn {
+                display: block !important;
+            }
+
             /* Header improvements for mobile */
             .header {
                 padding: 15px 0;
-                position: relative;
-                /* Remove sticky on mobile for better performance */
             }
 
-            .header-content {
-                flex-direction: column;
-                text-align: center;
-                gap: 15px;
-            }
-
-            .logo {
-                font-size: 1.5em;
-                margin-bottom: 10px;
-            }
-
-            .header-actions {
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 8px;
+            .header-title {
+                font-size: 1.3em;
             }
 
             .btn {
@@ -1043,15 +1232,6 @@
             .category-count {
                 font-size: 0.7em;
                 padding: 1px 4px;
-            }
-
-            .article-category {
-                top: 8px;
-                left: 8px;
-                padding: 3px 6px;
-                border-radius: 10px;
-                font-size: 0.65em;
-                max-width: 70px;
             }
 
             /* Status bar */
@@ -2226,6 +2406,9 @@
                 if (header && dynamicCount > 0) {
                     header.textContent = `📂 Filter by Category (${dynamicCount} discovered)`;
                 }
+                
+                // Update sidebar counts
+                this.updateSidebarCounts();
             }
 
             // Enhanced category badge with confidence indicators
@@ -2353,6 +2536,19 @@
                         this.toggleCategoryFilter(false);
                     }
                 });
+
+                // Close mobile menu when clicking on overlay
+                document.addEventListener('click', (e) => {
+                    const sidebar = document.getElementById('sidebar');
+                    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+                    
+                    if (window.innerWidth <= 768 && 
+                        sidebar.classList.contains('mobile-open') &&
+                        !sidebar.contains(e.target) && 
+                        !mobileMenuBtn?.contains(e.target)) {
+                        this.toggleMobileMenu();
+                    }
+                });
             }
 
             isInputFocused() {
@@ -2378,10 +2574,9 @@
                         categoryContainer.classList.add('visible');
                     }, 10);
 
-                    // Update button
-                    categoriesBtn.innerHTML = '<span>🏷️</span> Close Categories';
-                    categoriesBtn.style.background = 'var(--secondary-color)';
-                    categoriesBtn.style.color = 'white';
+                    // Update navigation
+                    this.setActiveNavItem('categoriesBtn');
+                    document.getElementById('pageTitle').textContent = 'Categories';
 
                     this.updateStatus('🏷️ Category filter active - Click a category to filter articles', 'success');
                 } else {
@@ -2393,14 +2588,9 @@
                         }
                     }, 300);
 
-                    // Update button
-                    categoriesBtn.innerHTML = '<span>🏷️</span> Categories';
-                    categoriesBtn.style.background = '';
-                    categoriesBtn.style.color = '';
-
                     // Clear any active category filter if closing
                     if (this.activeCategory) {
-                        this.filterByCategory(null);
+                        this.showAllArticles();
                     }
                 }
             }
@@ -2728,24 +2918,99 @@
                 const connectBtn = document.getElementById('connectBtn');
                 const connectIcon = document.getElementById('connectIcon');
                 const connectText = document.getElementById('connectText');
+                const connectionStatus = document.getElementById('connectionStatus');
                 const refreshBtn = document.getElementById('refreshBtn');
                 const syncBtn = document.getElementById('syncBtn');
                 const retryFailedBtn = document.getElementById('retryFailedBtn');
 
                 if (connected) {
                     connectIcon.textContent = '✅';
-                    connectText.textContent = 'Connected (PKCE)';
-                    connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
-                    refreshBtn.style.display = 'inline-flex';
-                    if (syncBtn) syncBtn.style.display = 'inline-flex';
-                    if (retryFailedBtn) retryFailedBtn.style.display = 'inline-flex';
+                    connectText.textContent = 'Connected';
+                    connectionStatus.style.background = 'rgba(39, 174, 96, 0.2)';
+                    connectionStatus.style.borderColor = '#27ae60';
+                    connectionStatus.style.color = '#27ae60';
+                    
+                    // Update sidebar button
+                    connectBtn.querySelector('.label').textContent = 'Connected to OneDrive';
+                    connectBtn.querySelector('.icon').textContent = '✅';
+                    
+                    refreshBtn.style.display = 'block';
+                    if (syncBtn) syncBtn.style.display = 'block';
+                    if (retryFailedBtn) retryFailedBtn.style.display = 'block';
                 } else {
                     connectIcon.textContent = '🔐';
-                    connectText.textContent = 'Secure Connect';
-                    connectBtn.style.background = 'rgba(255,255,255,0.2)';
+                    connectText.textContent = 'Not Connected';
+                    connectionStatus.style.background = 'rgba(255, 255, 255, 0.1)';
+                    connectionStatus.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                    connectionStatus.style.color = 'white';
+                    
+                    // Update sidebar button
+                    connectBtn.querySelector('.label').textContent = 'Connect to OneDrive';
+                    connectBtn.querySelector('.icon').textContent = '☁️';
+                    
                     refreshBtn.style.display = 'none';
                     if (syncBtn) syncBtn.style.display = 'none';
                     if (retryFailedBtn) retryFailedBtn.style.display = 'none';
+                }
+            }
+
+            // NEW: Show all articles (default view)
+            showAllArticles() {
+                this.activeCategory = null;
+                this.currentDisplayedArticles = this.articles;
+                this.displayArticles(this.articles);
+                
+                // Update navigation
+                this.setActiveNavItem('allArticlesBtn');
+                document.getElementById('pageTitle').textContent = 'All Articles';
+                
+                // Close category filter if open
+                this.toggleCategoryFilter(false);
+                
+                this.updateStatus(`Showing all ${this.articles.length} articles`, 'success');
+            }
+
+            // NEW: Toggle mobile menu
+            toggleMobileMenu() {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('mobileOverlay');
+                const isOpen = sidebar.classList.contains('mobile-open');
+                
+                if (isOpen) {
+                    sidebar.classList.remove('mobile-open');
+                    overlay.classList.remove('active');
+                } else {
+                    sidebar.classList.add('mobile-open');
+                    overlay.classList.add('active');
+                }
+            }
+
+            // NEW: Set active navigation item
+            setActiveNavItem(activeId) {
+                // Remove active class from all nav items
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Add active class to selected item
+                const activeItem = document.getElementById(activeId);
+                if (activeItem) {
+                    activeItem.classList.add('active');
+                }
+            }
+
+            // NEW: Update article counts in sidebar
+            updateSidebarCounts() {
+                const allCount = document.getElementById('allArticleCount');
+                const categoryCountElement = document.getElementById('categoryCount');
+                
+                if (allCount) {
+                    allCount.textContent = this.articles.length;
+                }
+                
+                if (categoryCountElement) {
+                    const totalCategories = this.categories.size + this.dynamicCategories.size;
+                    categoryCountElement.textContent = totalCategories;
                 }
             }
 
@@ -2766,10 +3031,9 @@
                         searchInput.focus();
                     }, 10);
 
-                    // Update button
-                    searchToggleBtn.innerHTML = '<span>🔍</span> Close Search';
-                    searchToggleBtn.style.background = 'var(--primary-color)';
-                    searchToggleBtn.style.color = 'white';
+                    // Update navigation
+                    this.setActiveNavItem('searchToggleBtn');
+                    document.getElementById('pageTitle').textContent = 'Search Articles';
 
                     this.updateStatus('🔍 Search mode active - Type to search or press Escape to close', 'success');
                 } else {
@@ -2781,16 +3045,14 @@
                         }
                     }, 300);
 
-                    // Update button
-                    searchToggleBtn.innerHTML = '<span>🔍</span> Search';
-                    searchToggleBtn.style.background = '';
-                    searchToggleBtn.style.color = '';
-
                     // Clear search if closing
                     if (searchInput.value) {
                         searchInput.value = '';
                         this.searchArticles('');
                     }
+
+                    // Return to all articles view
+                    this.showAllArticles();
 
                     // Remove focus
                     searchInput.blur();
@@ -3916,6 +4178,9 @@ Want All Fresh Images → Use "Sync Images" button
                     this.recategorizeAllArticles();
 
                     this.displayArticles(this.articles);
+                    
+                    // Update sidebar counts
+                    this.updateSidebarCounts();
 
                     const cacheStats = this.getCacheStats();
                     const storedImages = this.articles.filter(a => a.cachedImage).length;
@@ -5339,9 +5604,16 @@ AI Categorization Algorithm:
 
                 const testBtn = document.getElementById('testBtn');
                 if (testBtn) {
-                    testBtn.innerHTML = isTestMode
-                        ? '<span>👁️</span> Hide Buttons'
-                        : '<span>👁️</span> Show Buttons';
+                    const iconSpan = testBtn.querySelector('.icon');
+                    const labelSpan = testBtn.querySelector('.label');
+                    
+                    if (isTestMode) {
+                        iconSpan.textContent = '👁️';
+                        labelSpan.textContent = 'Hide Buttons';
+                    } else {
+                        iconSpan.textContent = '👁️';
+                        labelSpan.textContent = 'Show Buttons';
+                    }
                 }
 
                 this.updateStatus(
@@ -5376,9 +5648,16 @@ AI Categorization Algorithm:
             updateDarkModeButton(theme) {
                 const darkModeBtn = document.getElementById('darkModeBtn');
                 if (darkModeBtn) {
-                    darkModeBtn.innerHTML = theme === 'dark'
-                        ? '<span>☀️</span> Light Mode'
-                        : '<span>🌙</span> Dark Mode';
+                    const iconSpan = darkModeBtn.querySelector('.icon');
+                    const labelSpan = darkModeBtn.querySelector('.label');
+                    
+                    if (theme === 'dark') {
+                        iconSpan.textContent = '☀️';
+                        labelSpan.textContent = 'Light Mode';
+                    } else {
+                        iconSpan.textContent = '🌙';
+                        labelSpan.textContent = 'Dark Mode';
+                    }
                 }
             }
         }
