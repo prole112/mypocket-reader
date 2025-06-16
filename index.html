@@ -1962,8 +1962,53 @@
     </div>
 
     <script>
+        // Debug function available immediately
+        window.debugMyPocket = function() {
+            console.log('🔧 DEBUG: Checking all elements...');
+            const elements = {
+                'sidebar': document.getElementById('sidebar'),
+                'connectBtnSidebar': document.getElementById('connectBtnSidebar'),
+                'connectionStatusSidebar': document.getElementById('connectionStatusSidebar'),
+                'connectionIcon': document.getElementById('connectionIcon'),
+                'connectionText': document.getElementById('connectionText'),
+                'refreshNavBtn': document.getElementById('refreshNavBtn'),
+                'syncNavBtn': document.getElementById('syncNavBtn'),
+                'retryNavBtn': document.getElementById('retryNavBtn'),
+                'allArticlesNav': document.getElementById('allArticlesNav'),
+                'searchNavBtn': document.getElementById('searchNavBtn'),
+                'categoriesNavBtn': document.getElementById('categoriesNavBtn'),
+                'status': document.getElementById('status'),
+                'mainContent': document.getElementById('mainContent')
+            };
+
+            console.log('🔍 Element check results:');
+            for (const [name, element] of Object.entries(elements)) {
+                if (element) {
+                    console.log(`✅ ${name}: Found`);
+                } else {
+                    console.log(`❌ ${name}: NOT FOUND`);
+                }
+            }
+
+            // Check if webReader exists
+            if (window.webReader) {
+                console.log('✅ webReader: Initialized');
+                console.log('📊 webReader properties:', {
+                    accessToken: !!window.webReader.accessToken,
+                    articles: window.webReader.articles ? window.webReader.articles.length : 0,
+                    redirectUri: window.webReader.redirectUri
+                });
+            } else {
+                console.log('❌ webReader: NOT INITIALIZED');
+            }
+
+            return elements;
+        };
+
         class MyPocketWebReader {
             constructor() {
+                console.log('🏗️ Creating MyPocketWebReader instance...');
+                
                 this.clientId = '436e8796-8c40-47c3-9ad5-b8882f3ef7f7';
                 this.redirectUri = this.getRedirectUri();
                 console.log('🔵 Redirect URI:', this.redirectUri);
@@ -1994,6 +2039,7 @@
                 this.codeChallenge = null;
                 this.state = null;
 
+                console.log('✅ MyPocketWebReader constructor complete');
                 this.init();
             }
 
@@ -2874,6 +2920,22 @@
                 }
 
                 return elements;
+            }
+
+            // Test authentication method
+            testAuth() {
+                console.log('🧪 Testing authentication...');
+                console.log('📍 Redirect URI:', this.redirectUri);
+                console.log('🔑 Client ID:', this.clientId);
+                
+                // Test if we can generate PKCE parameters
+                try {
+                    const testVerifier = this.generateCodeVerifier();
+                    console.log('✅ Code verifier generation: OK');
+                    console.log('✅ Authentication setup: Ready');
+                } catch (error) {
+                    console.error('❌ Authentication setup failed:', error);
+                }
             }
 
             updateConnectionStatus(connected) {
@@ -5475,30 +5537,67 @@ Search Features:
         }
 
         let webReader;
+        
+        // Initialize when DOM is ready
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('📄 DOM Content Loaded - Initializing MyPocket...');
+            console.log('📄 DOM Content Loaded - Starting initialization...');
+            
             try {
+                // Test if elements exist first
+                const connectBtn = document.getElementById('connectBtnSidebar');
+                if (!connectBtn) {
+                    console.error('❌ Critical: Connect button not found in DOM!');
+                    console.log('🔍 Available elements with "connect" in ID:');
+                    const allElements = document.querySelectorAll('[id*="connect"]');
+                    allElements.forEach(el => console.log('  -', el.id));
+                    
+                    // Try to show error in UI
+                    const status = document.getElementById('status');
+                    if (status) {
+                        status.textContent = '❌ UI elements not found. Please refresh the page.';
+                        status.className = 'status error';
+                    }
+                    return;
+                }
+                
+                console.log('✅ Critical elements found, initializing...');
                 webReader = new MyPocketWebReader();
                 window.webReader = webReader;
-                console.log('✅ MyPocket Web Reader initialized successfully');
                 
-                // Add debug function to global scope
+                // Make debug function available
                 window.debugElements = () => webReader.debugElements();
                 
-                // Test connection to elements immediately
+                console.log('✅ MyPocket Web Reader initialized successfully');
+                
+                // Test connection immediately
                 setTimeout(() => {
-                    console.log('🔧 Testing element connections...');
-                    webReader.debugElements();
-                }, 1000);
+                    console.log('🧪 Running initial element test...');
+                    window.debugMyPocket();
+                }, 500);
                 
             } catch (error) {
-                console.error('❌ Failed to initialize MyPocket Web Reader:', error);
+                console.error('❌ CRITICAL ERROR during initialization:', error);
+                console.error('Error stack:', error.stack);
+                
                 // Show error in UI
                 const status = document.getElementById('status');
                 if (status) {
-                    status.textContent = `❌ Initialization failed: ${error.message}`;
+                    status.textContent = `❌ Failed to start: ${error.message}`;
                     status.className = 'status error';
                 }
+                
+                // Make debug available even if init failed
+                window.webReader = null;
+                alert(`MyPocket failed to start!\n\nError: ${error.message}\n\nPlease:\n1. Check browser console for details\n2. Try refreshing the page\n3. Ensure you're using a modern browser`);
+            }
+        });
+        
+        // Fallback: Make debug available immediately
+        window.addEventListener('load', () => {
+            if (!window.debugMyPocket) {
+                console.error('❌ Debug function not available - script may have failed to load');
+            } else {
+                console.log('✅ Debug function available: try debugMyPocket() in console');
             }
         });
     </script>
