@@ -2085,11 +2085,31 @@
 
             setupEventListeners() {
                 // Sidebar connect button
-                document.getElementById('connectBtnSidebar').addEventListener('click', () => this.authenticate());
-                document.getElementById('refreshNavBtn').addEventListener('click', () => this.loadArticles());
-                document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
-                document.getElementById('closeReader').addEventListener('click', () => this.closeReader());
-                document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
+                const connectBtnSidebar = document.getElementById('connectBtnSidebar');
+                if (connectBtnSidebar) {
+                    connectBtnSidebar.addEventListener('click', () => this.authenticate());
+                }
+
+                // Navigation buttons
+                const refreshNavBtn = document.getElementById('refreshNavBtn');
+                if (refreshNavBtn) {
+                    refreshNavBtn.addEventListener('click', () => this.loadArticles());
+                }
+
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.addEventListener('input', (e) => this.searchArticles(e.target.value));
+                }
+
+                const closeReader = document.getElementById('closeReader');
+                if (closeReader) {
+                    closeReader.addEventListener('click', () => this.closeReader());
+                }
+
+                const openOriginal = document.getElementById('openOriginal');
+                if (openOriginal) {
+                    openOriginal.addEventListener('click', () => this.openOriginal());
+                }
 
                 // Search toggle keyboard shortcuts
                 document.addEventListener('keydown', (e) => {
@@ -2112,7 +2132,8 @@
                     const searchContainer = document.getElementById('searchContainer');
                     const searchNavBtn = document.getElementById('searchNavBtn');
 
-                    if (searchContainer.style.display !== 'none' &&
+                    if (searchContainer && searchNavBtn && 
+                        searchContainer.style.display !== 'none' &&
                         !searchContainer.contains(e.target) &&
                         !searchNavBtn.contains(e.target)) {
                         this.toggleSearch(false);
@@ -2124,7 +2145,8 @@
                     const categoryContainer = document.getElementById('categoryContainer');
                     const categoriesNavBtn = document.getElementById('categoriesNavBtn');
 
-                    if (categoryContainer.style.display !== 'none' &&
+                    if (categoryContainer && categoriesNavBtn &&
+                        categoryContainer.style.display !== 'none' &&
                         !categoryContainer.contains(e.target) &&
                         !categoriesNavBtn.contains(e.target)) {
                         this.toggleCategoryFilter(false);
@@ -2140,6 +2162,7 @@
                 this.sidebarCollapsed = false;
                 this.updateSidebarState();
                 this.updateMobileMenu();
+                this.updateArticleCounts(); // Initialize counts
             }
 
             // Setup mobile menu
@@ -2147,10 +2170,12 @@
                 const mobileMenuBtn = document.getElementById('mobileMenuBtn');
                 const isMobile = window.innerWidth <= 768;
                 
-                if (isMobile) {
-                    mobileMenuBtn.style.display = 'flex';
-                } else {
-                    mobileMenuBtn.style.display = 'none';
+                if (mobileMenuBtn) {
+                    if (isMobile) {
+                        mobileMenuBtn.style.display = 'flex';
+                    } else {
+                        mobileMenuBtn.style.display = 'none';
+                    }
                 }
 
                 // Update on resize
@@ -2163,11 +2188,13 @@
                 const mobileMenuBtn = document.getElementById('mobileMenuBtn');
                 const isMobile = window.innerWidth <= 768;
                 
-                if (isMobile) {
-                    mobileMenuBtn.style.display = 'flex';
-                } else {
-                    mobileMenuBtn.style.display = 'none';
-                    this.closeMobileSidebar(); // Close mobile sidebar when switching to desktop
+                if (mobileMenuBtn) {
+                    if (isMobile) {
+                        mobileMenuBtn.style.display = 'flex';
+                    } else {
+                        mobileMenuBtn.style.display = 'none';
+                        this.closeMobileSidebar(); // Close mobile sidebar when switching to desktop
+                    }
                 }
             }
 
@@ -2182,14 +2209,16 @@
                 const mainContent = document.getElementById('mainContent');
                 const toggleIcon = document.getElementById('sidebarToggleIcon');
 
-                if (this.sidebarCollapsed) {
-                    sidebar.classList.add('collapsed');
-                    mainContent.classList.add('sidebar-collapsed');
-                    toggleIcon.textContent = '▶';
-                } else {
-                    sidebar.classList.remove('collapsed');
-                    mainContent.classList.remove('sidebar-collapsed');
-                    toggleIcon.textContent = '◀';
+                if (sidebar && mainContent && toggleIcon) {
+                    if (this.sidebarCollapsed) {
+                        sidebar.classList.add('collapsed');
+                        mainContent.classList.add('sidebar-collapsed');
+                        toggleIcon.textContent = '▶';
+                    } else {
+                        sidebar.classList.remove('collapsed');
+                        mainContent.classList.remove('sidebar-collapsed');
+                        toggleIcon.textContent = '◀';
+                    }
                 }
             }
 
@@ -2198,8 +2227,8 @@
                 const sidebar = document.getElementById('sidebar');
                 const overlay = document.getElementById('sidebarOverlay');
                 
-                sidebar.classList.add('open');
-                overlay.classList.add('active');
+                if (sidebar) sidebar.classList.add('open');
+                if (overlay) overlay.classList.add('active');
                 document.body.style.overflow = 'hidden';
             }
 
@@ -2207,8 +2236,8 @@
                 const sidebar = document.getElementById('sidebar');
                 const overlay = document.getElementById('sidebarOverlay');
                 
-                sidebar.classList.remove('open');
-                overlay.classList.remove('active');
+                if (sidebar) sidebar.classList.remove('open');
+                if (overlay) overlay.classList.remove('active');
                 document.body.style.overflow = 'auto';
             }
 
@@ -2219,7 +2248,7 @@
                 
                 // Clear search
                 const searchInput = document.getElementById('searchInput');
-                if (searchInput.value) {
+                if (searchInput && searchInput.value) {
                     searchInput.value = '';
                 }
 
@@ -2241,16 +2270,22 @@
             updateNavigation() {
                 // Remove active class from all nav items
                 document.querySelectorAll('.nav-item').forEach(item => {
-                    item.classList.remove('active');
+                    if (item) item.classList.remove('active');
                 });
 
                 // Set active based on current state
-                if (!this.activeCategory && !document.getElementById('searchContainer').classList.contains('visible')) {
-                    document.getElementById('allArticlesNav').classList.add('active');
-                } else if (document.getElementById('searchContainer').classList.contains('visible')) {
-                    document.getElementById('searchNavBtn').classList.add('active');
-                } else if (document.getElementById('categoryContainer').classList.contains('visible')) {
-                    document.getElementById('categoriesNavBtn').classList.add('active');
+                const searchContainer = document.getElementById('searchContainer');
+                const categoryContainer = document.getElementById('categoryContainer');
+                const allArticlesNav = document.getElementById('allArticlesNav');
+                const searchNavBtn = document.getElementById('searchNavBtn');
+                const categoriesNavBtn = document.getElementById('categoriesNavBtn');
+
+                if (!this.activeCategory && (!searchContainer || !searchContainer.classList.contains('visible'))) {
+                    if (allArticlesNav) allArticlesNav.classList.add('active');
+                } else if (searchContainer && searchContainer.classList.contains('visible')) {
+                    if (searchNavBtn) searchNavBtn.classList.add('active');
+                } else if (categoryContainer && categoryContainer.classList.contains('visible')) {
+                    if (categoriesNavBtn) categoriesNavBtn.classList.add('active');
                 }
             }
 
