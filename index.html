@@ -215,8 +215,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
+            padding-left: 60px; /* Account for sidebar */
         }
 
         .logo {
@@ -227,10 +226,259 @@
             gap: 10px;
         }
 
-        .header-actions {
+        .header-right {
             display: flex;
             align-items: center;
             gap: 15px;
+        }
+
+        /* Left Sidebar - Pocket Style */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            z-index: 101;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-220px);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--background);
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .sidebar-toggle {
+            position: absolute;
+            right: -40px;
+            top: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0 8px 8px 0;
+            padding: 8px;
+            cursor: pointer;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+            z-index: 102;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+
+        .nav-section {
+            margin-bottom: 30px;
+        }
+
+        .nav-section-title {
+            padding: 0 20px 10px;
+            font-size: 0.8em;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            letter-spacing: 0.5px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .nav-item:hover {
+            background: var(--background);
+            color: var(--primary-color);
+        }
+
+        .nav-item.active {
+            background: var(--primary-color);
+            color: white;
+            border-right: 3px solid var(--secondary-color);
+        }
+
+        .nav-item .icon {
+            width: 20px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .nav-item .text {
+            flex: 1;
+        }
+
+        .nav-item .badge {
+            background: var(--border);
+            color: var(--text-secondary);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: 500;
+        }
+
+        .nav-item.active .badge {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        /* Connection Status in Sidebar */
+        .connection-panel {
+            padding: 15px 20px;
+            margin: 10px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .connection-status-sidebar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9em;
+        }
+
+        .connection-status-sidebar.connected {
+            color: #27ae60;
+        }
+
+        .connection-status-sidebar.disconnected {
+            color: #e74c3c;
+        }
+
+        .connect-btn-sidebar {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+        }
+
+        .connect-btn-sidebar:hover {
+            background: var(--secondary-color);
+            transform: translateY(-1px);
+        }
+
+        .connect-btn-sidebar.connected {
+            background: #27ae60;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.sidebar-collapsed {
+            margin-left: 60px;
+        }
+
+        /* Mobile Sidebar */
+        .mobile-header {
+            display: none;
+        }
+
+        /* Dark mode sidebar styles */
+        [data-theme="dark"] .sidebar {
+            background: var(--surface);
+            border-right-color: var(--border);
+        }
+
+        [data-theme="dark"] .sidebar-header {
+            background: var(--background);
+            border-bottom-color: var(--border);
+        }
+
+        [data-theme="dark"] .sidebar-brand {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .sidebar-toggle {
+            background: var(--surface);
+            border-color: var(--border);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .sidebar-toggle:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        [data-theme="dark"] .nav-section-title {
+            color: var(--text-secondary);
+        }
+
+        [data-theme="dark"] .nav-item {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .nav-item:hover {
+            background: var(--background);
+            color: var(--primary-color);
+        }
+
+        [data-theme="dark"] .nav-item.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        [data-theme="dark"] .nav-item .badge {
+            background: var(--border);
+            color: var(--text-secondary);
+        }
+
+        [data-theme="dark"] .nav-item.active .badge {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        [data-theme="dark"] .connection-panel {
+            border-top-color: var(--border);
+            border-bottom-color: var(--border);
+        }
+
+        [data-theme="dark"] .connect-btn-sidebar {
+            background: var(--primary-color);
+        }
+
+        [data-theme="dark"] .connect-btn-sidebar:hover {
+            background: var(--secondary-color);
         }
 
         .btn {
@@ -995,39 +1243,125 @@
                 padding: 0 12px;
             }
 
-            /* Header improvements for mobile */
+            /* Mobile Sidebar */
+            .sidebar {
+                transform: translateX(-100%);
+                width: 100%;
+                max-width: 280px;
+                z-index: 105;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+            }
+
+            .sidebar-toggle {
+                display: none;
+            }
+
+            /* Mobile Header */
             .header {
                 padding: 15px 0;
-                position: relative;
-                /* Remove sticky on mobile for better performance */
+                position: fixed;
+                width: 100%;
+                top: 0;
+                z-index: 104;
             }
 
             .header-content {
-                flex-direction: column;
-                text-align: center;
-                gap: 15px;
+                padding-left: 20px;
+                padding-right: 20px;
             }
 
-            .logo {
-                font-size: 1.5em;
-                margin-bottom: 10px;
-            }
-
-            .header-actions {
-                flex-wrap: wrap;
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
                 justify-content: center;
-                gap: 8px;
+                background: rgba(255, 255, 255, 0.2);
+                border: none;
+                border-radius: 6px;
+                color: white;
+                padding: 8px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            .mobile-menu-btn:hover {
+                background: rgba(255, 255, 255, 0.3);
+            }
+
+            /* Main Content Mobile */
+            .main-content {
+                margin-left: 0;
+                padding-top: 80px; /* Account for fixed header */
+            }
+
+            .main-content.sidebar-collapsed {
+                margin-left: 0;
+            }
+
+            /* Mobile Overlay */
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 103;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+            }
+
+            .sidebar-overlay.active {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            /* Header improvements for mobile */
+            .logo {
+                font-size: 1.4em;
+            }
+
+            .header-right {
+                gap: 10px;
+            }
+
+            .mobile-menu-btn {
+                display: none;
+                align-items: center;
+                justify-content: center;
+                background: rgba(255, 255, 255, 0.2);
+                border: none;
+                border-radius: 6px;
+                color: white;
+                padding: 8px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                font-size: 18px;
+                width: 36px;
+                height: 36px;
+            }
+
+            .mobile-menu-btn:hover {
+                background: rgba(255, 255, 255, 0.3);
             }
 
             .btn {
-                padding: 8px 16px;
-                font-size: 13px;
+                padding: 6px 12px;
+                font-size: 12px;
                 border-radius: 20px;
             }
 
             /* Search improvements */
             .search-container {
                 padding: 20px 0;
+                top: 80px; /* Account for fixed header */
             }
 
             .search-input {
@@ -1047,6 +1381,7 @@
             /* Category Filter Mobile */
             .category-container {
                 padding: 15px 0;
+                top: 80px; /* Account for fixed header */
             }
 
             .category-header h3 {
@@ -1218,6 +1553,7 @@
             /* MOBILE READER IMPROVEMENTS */
             .reader-overlay {
                 padding: 0;
+                z-index: 106;
             }
 
             .reader-container {
@@ -1441,98 +1777,166 @@
 </head>
 
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    📚 MyPocket Web Reader
-                </div>
-                <div class="header-actions">
-                    <button id="connectBtn" class="btn btn-primary">
-                        <span id="connectIcon">🔐</span>
-                        <span id="connectText">Secure Connect</span>
-                    </button>
-                    <button id="refreshBtn" class="btn btn-secondary" style="display: none;">
-                        <span>🔄</span> Refresh
-                    </button>
-                    <button id="searchToggleBtn" class="btn btn-secondary" onclick="webReader.toggleSearch()">
-                        <span>🔍</span> Search
-                    </button>
-                    <button id="categoriesBtn" class="btn btn-secondary" onclick="webReader.toggleCategoryFilter()">
-                        <span>🏷️</span> Categories
-                    </button>
-                    <button id="clearCacheBtn" class="btn btn-secondary" onclick="webReader.clearImageCache()">
-                        <span>🗑️</span> Clear Cache
-                    </button>
-                    <button id="syncBtn" class="btn btn-secondary" onclick="webReader.forceSyncImages()"
-                        style="display: none;">
-                        <span>🔄</span> Sync Images
-                    </button>
-                    <button id="retryFailedBtn" class="btn btn-secondary" onclick="webReader.retryFailedImages()"
-                        style="display: none;">
-                        <span>🔄</span> Retry Failed
-                    </button>
-                    <button id="helpBtn" class="btn btn-secondary" onclick="webReader.showImageHelp()">
-                        <span>❓</span> Image Help
-                    </button>
-                    <button id="debugBtn" class="btn btn-secondary" onclick="webReader.showDebugInfo()">
-                        <span>🔧</span> Debug
-                    </button>
-                    <button id="testBtn" class="btn btn-secondary" onclick="webReader.toggleTestMode()">
-                        <span>👁️</span> Show Buttons
-                    </button>
-                    <button id="darkModeBtn" class="btn btn-secondary" onclick="webReader.toggleDarkMode()">
-                        <span>🌙</span> Dark Mode
-                    </button>
-                </div>
+    <!-- Left Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                <span>📚</span>
+                <span>MyPocket</span>
             </div>
         </div>
-    </header>
 
-    <!-- Search (Initially Hidden) -->
-    <section class="search-container" id="searchContainer" style="display: none;">
-        <div class="container">
-            <div class="search-box">
-                <input type="text" id="searchInput" class="search-input" placeholder="Search your saved articles..."
-                    autocomplete="off">
-                <button class="search-close-btn" onclick="webReader.toggleSearch()" title="Close search">✕</button>
+        <!-- Connection Status -->
+        <div class="connection-panel">
+            <div class="connection-status-sidebar" id="connectionStatusSidebar">
+                <span id="connectionIcon">🔐</span>
+                <span id="connectionText">Not Connected</span>
             </div>
+            <button id="connectBtnSidebar" class="connect-btn-sidebar">
+                Secure Connect
+            </button>
         </div>
-    </section>
 
-    <!-- Category Filter (Initially Hidden) -->
-    <section class="category-container" id="categoryContainer" style="display: none;">
-        <div class="container">
-            <div class="category-filter">
-                <div class="category-header">
-                    <h3>📂 Filter by Category</h3>
-                    <button class="category-close-btn" onclick="webReader.toggleCategoryFilter()" title="Close categories">✕</button>
-                </div>
-                <div class="category-chips" id="categoryChips">
-                    <!-- Categories will be populated here -->
-                </div>
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+            <!-- Main Actions -->
+            <div class="nav-section">
+                <div class="nav-section-title">Library</div>
+                <button class="nav-item" id="allArticlesNav" onclick="webReader.showAllArticles()">
+                    <span class="icon">📖</span>
+                    <span class="text">All Articles</span>
+                    <span class="badge" id="allArticlesBadge">0</span>
+                </button>
+                <button class="nav-item" id="searchNavBtn" onclick="webReader.toggleSearch()">
+                    <span class="icon">🔍</span>
+                    <span class="text">Search</span>
+                </button>
+                <button class="nav-item" id="categoriesNavBtn" onclick="webReader.toggleCategoryFilter()">
+                    <span class="icon">🏷️</span>
+                    <span class="text">Categories</span>
+                    <span class="badge" id="categoryBadge">0</span>
+                </button>
             </div>
-        </div>
-    </section>
 
-    <!-- Status -->
-    <div class="status" id="status">
-        Connect to OneDrive to view your saved articles
+            <!-- Tools -->
+            <div class="nav-section">
+                <div class="nav-section-title">Tools</div>
+                <button class="nav-item" id="refreshNavBtn" onclick="webReader.loadArticles()">
+                    <span class="icon">🔄</span>
+                    <span class="text">Refresh</span>
+                </button>
+                <button class="nav-item" id="syncNavBtn" onclick="webReader.forceSyncImages()">
+                    <span class="icon">🌐</span>
+                    <span class="text">Sync Images</span>
+                </button>
+                <button class="nav-item" id="retryNavBtn" onclick="webReader.retryFailedImages()">
+                    <span class="icon">🔁</span>
+                    <span class="text">Retry Failed</span>
+                </button>
+                <button class="nav-item" onclick="webReader.clearImageCache()">
+                    <span class="icon">🗑️</span>
+                    <span class="text">Clear Cache</span>
+                </button>
+            </div>
+
+            <!-- Settings -->
+            <div class="nav-section">
+                <div class="nav-section-title">Settings</div>
+                <button class="nav-item" onclick="webReader.toggleDarkMode()">
+                    <span class="icon" id="darkModeIcon">🌙</span>
+                    <span class="text" id="darkModeText">Dark Mode</span>
+                </button>
+                <button class="nav-item" onclick="webReader.toggleTestMode()">
+                    <span class="icon">👁️</span>
+                    <span class="text">Show Buttons</span>
+                </button>
+                <button class="nav-item" onclick="webReader.showImageHelp()">
+                    <span class="icon">❓</span>
+                    <span class="text">Image Help</span>
+                </button>
+                <button class="nav-item" onclick="webReader.showDebugInfo()">
+                    <span class="icon">🔧</span>
+                    <span class="text">Debug Info</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Sidebar Toggle -->
+        <button class="sidebar-toggle" id="sidebarToggle" onclick="webReader.toggleSidebar()">
+            <span id="sidebarToggleIcon">◀</span>
+        </button>
     </div>
 
-    <!-- Articles -->
-    <section class="articles-section">
-        <div class="container">
-            <div id="articlesContainer">
-                <div class="empty-state">
-                    <div class="empty-state-icon">📖</div>
-                    <h3>Welcome to MyPocket Web Reader</h3>
-                    <p>Connect to OneDrive to access your saved articles from anywhere!</p>
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="webReader.closeMobileSidebar()"></div>
+
+    <!-- Main Content Area -->
+    <div class="main-content" id="mainContent">
+        <!-- Header -->
+        <header class="header">
+            <div class="container">
+                <div class="header-content">
+                    <!-- Mobile Menu Button -->
+                    <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="webReader.openMobileSidebar()" style="display: none;">
+                        <span>☰</span>
+                    </button>
+                    
+                    <div class="logo">
+                        MyPocket Web Reader
+                    </div>
+                    
+                    <div class="header-right">
+                        <!-- Keep minimal actions in header -->
+                        <span id="headerStatus" class="header-status">Ready</span>
+                    </div>
                 </div>
             </div>
+        </header>
+
+        <!-- Search (Initially Hidden) -->
+        <section class="search-container" id="searchContainer" style="display: none;">
+            <div class="container">
+                <div class="search-box">
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search your saved articles..."
+                        autocomplete="off">
+                    <button class="search-close-btn" onclick="webReader.toggleSearch()" title="Close search">✕</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Category Filter (Initially Hidden) -->
+        <section class="category-container" id="categoryContainer" style="display: none;">
+            <div class="container">
+                <div class="category-filter">
+                    <div class="category-header">
+                        <h3>📂 Filter by Category</h3>
+                        <button class="category-close-btn" onclick="webReader.toggleCategoryFilter()" title="Close categories">✕</button>
+                    </div>
+                    <div class="category-chips" id="categoryChips">
+                        <!-- Categories will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Status -->
+        <div class="status" id="status">
+            Connect to OneDrive to view your saved articles
         </div>
-    </section>
+
+        <!-- Articles -->
+        <section class="articles-section">
+            <div class="container">
+                <div id="articlesContainer">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📖</div>
+                        <h3>Welcome to MyPocket Web Reader</h3>
+                        <p>Connect to OneDrive to access your saved articles from anywhere!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
 
     <!-- Reader Overlay -->
     <div class="reader-overlay" id="readerOverlay">
@@ -1676,11 +2080,13 @@
                 this.loadStoredToken();
                 this.loadThemePreference();
                 this.loadImageCache();
+                this.initializeSidebar();
             }
 
             setupEventListeners() {
-                document.getElementById('connectBtn').addEventListener('click', () => this.authenticate());
-                document.getElementById('refreshBtn').addEventListener('click', () => this.loadArticles());
+                // Sidebar connect button
+                document.getElementById('connectBtnSidebar').addEventListener('click', () => this.authenticate());
+                document.getElementById('refreshNavBtn').addEventListener('click', () => this.loadArticles());
                 document.getElementById('searchInput').addEventListener('input', (e) => this.searchArticles(e.target.value));
                 document.getElementById('closeReader').addEventListener('click', () => this.closeReader());
                 document.getElementById('openOriginal').addEventListener('click', () => this.openOriginal());
@@ -1696,17 +2102,19 @@
                         this.toggleSearch(true);
                     } else if (e.key === 'Escape') {
                         this.toggleSearch(false);
+                        this.toggleCategoryFilter(false);
+                        this.closeMobileSidebar();
                     }
                 });
 
                 // Close search when clicking outside
                 document.addEventListener('click', (e) => {
                     const searchContainer = document.getElementById('searchContainer');
-                    const searchToggleBtn = document.getElementById('searchToggleBtn');
+                    const searchNavBtn = document.getElementById('searchNavBtn');
 
                     if (searchContainer.style.display !== 'none' &&
                         !searchContainer.contains(e.target) &&
-                        !searchToggleBtn.contains(e.target)) {
+                        !searchNavBtn.contains(e.target)) {
                         this.toggleSearch(false);
                     }
                 });
@@ -1714,14 +2122,136 @@
                 // Close category filter when clicking outside
                 document.addEventListener('click', (e) => {
                     const categoryContainer = document.getElementById('categoryContainer');
-                    const categoriesBtn = document.getElementById('categoriesBtn');
+                    const categoriesNavBtn = document.getElementById('categoriesNavBtn');
 
                     if (categoryContainer.style.display !== 'none' &&
                         !categoryContainer.contains(e.target) &&
-                        !categoriesBtn.contains(e.target)) {
+                        !categoriesNavBtn.contains(e.target)) {
                         this.toggleCategoryFilter(false);
                     }
                 });
+
+                // Mobile menu setup
+                this.setupMobileMenu();
+            }
+
+            // Initialize sidebar functionality
+            initializeSidebar() {
+                this.sidebarCollapsed = false;
+                this.updateSidebarState();
+                this.updateMobileMenu();
+            }
+
+            // Setup mobile menu
+            setupMobileMenu() {
+                const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+                const isMobile = window.innerWidth <= 768;
+                
+                if (isMobile) {
+                    mobileMenuBtn.style.display = 'flex';
+                } else {
+                    mobileMenuBtn.style.display = 'none';
+                }
+
+                // Update on resize
+                window.addEventListener('resize', () => {
+                    this.updateMobileMenu();
+                });
+            }
+
+            updateMobileMenu() {
+                const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+                const isMobile = window.innerWidth <= 768;
+                
+                if (isMobile) {
+                    mobileMenuBtn.style.display = 'flex';
+                } else {
+                    mobileMenuBtn.style.display = 'none';
+                    this.closeMobileSidebar(); // Close mobile sidebar when switching to desktop
+                }
+            }
+
+            // Sidebar toggle functionality
+            toggleSidebar() {
+                this.sidebarCollapsed = !this.sidebarCollapsed;
+                this.updateSidebarState();
+            }
+
+            updateSidebarState() {
+                const sidebar = document.getElementById('sidebar');
+                const mainContent = document.getElementById('mainContent');
+                const toggleIcon = document.getElementById('sidebarToggleIcon');
+
+                if (this.sidebarCollapsed) {
+                    sidebar.classList.add('collapsed');
+                    mainContent.classList.add('sidebar-collapsed');
+                    toggleIcon.textContent = '▶';
+                } else {
+                    sidebar.classList.remove('collapsed');
+                    mainContent.classList.remove('sidebar-collapsed');
+                    toggleIcon.textContent = '◀';
+                }
+            }
+
+            // Mobile sidebar functionality
+            openMobileSidebar() {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                
+                sidebar.classList.add('open');
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+
+            closeMobileSidebar() {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+
+            // Show all articles (navigation function)
+            showAllArticles() {
+                // Clear any active filters
+                this.activeCategory = null;
+                
+                // Clear search
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput.value) {
+                    searchInput.value = '';
+                }
+
+                // Hide any open panels
+                this.toggleSearch(false);
+                this.toggleCategoryFilter(false);
+
+                // Show all articles
+                this.currentDisplayedArticles = this.articles;
+                this.displayArticles(this.articles);
+                
+                // Update navigation
+                this.updateNavigation();
+                
+                this.updateStatus(`📖 Showing all ${this.articles.length} articles`, 'success');
+            }
+
+            // Update navigation active states
+            updateNavigation() {
+                // Remove active class from all nav items
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+
+                // Set active based on current state
+                if (!this.activeCategory && !document.getElementById('searchContainer').classList.contains('visible')) {
+                    document.getElementById('allArticlesNav').classList.add('active');
+                } else if (document.getElementById('searchContainer').classList.contains('visible')) {
+                    document.getElementById('searchNavBtn').classList.add('active');
+                } else if (document.getElementById('categoryContainer').classList.contains('visible')) {
+                    document.getElementById('categoriesNavBtn').classList.add('active');
+                }
             }
 
             isInputFocused() {
@@ -3441,6 +3971,9 @@ Want All Fresh Images → Use "Sync Images" button
                     console.log('📂 Auto-categorizing loaded articles...');
                     this.recategorizeAllArticles();
                     
+                    // Update sidebar counts
+                    this.updateArticleCounts();
+                    
                     this.displayArticles(this.articles);
 
                     const cacheStats = this.getCacheStats();
@@ -4721,10 +5254,13 @@ Host: ${window.location.host}
 - Total Stored Image Size: ${Math.round(totalStoredSizeKB)}KB
 - Failed Images: ${this.failedImages.size}
 
-🔍 SEARCH STATUS:
+🔍 SEARCH & NAVIGATION:
 - Search Visible: ${isSearchVisible}
-- Keyboard Shortcuts: Ctrl/Cmd+K, / (open), Esc (close)
-- Click Outside: Enabled
+- Category Filter Visible: ${isCategoryVisible}
+- Sidebar Collapsed: ${this.sidebarCollapsed || false}
+- Mobile Sidebar: ${window.innerWidth <= 768 ? 'Yes' : 'No'}
+- Keyboard Shortcuts: Ctrl/Cmd+K, / (search), Esc (close)
+- Navigation Active States: Updated
 
 🏷️ CATEGORIZATION:
 - Auto-Categorization: Enabled
@@ -4836,11 +5372,17 @@ Search Features:
             }
 
             updateDarkModeButton(theme) {
-                const darkModeBtn = document.getElementById('darkModeBtn');
-                if (darkModeBtn) {
-                    darkModeBtn.innerHTML = theme === 'dark'
-                        ? '<span>☀️</span> Light Mode'
-                        : '<span>🌙</span> Dark Mode';
+                const darkModeIcon = document.getElementById('darkModeIcon');
+                const darkModeText = document.getElementById('darkModeText');
+                
+                if (darkModeIcon && darkModeText) {
+                    if (theme === 'dark') {
+                        darkModeIcon.textContent = '☀️';
+                        darkModeText.textContent = 'Light Mode';
+                    } else {
+                        darkModeIcon.textContent = '🌙';
+                        darkModeText.textContent = 'Dark Mode';
+                    }
                 }
             }
         }
