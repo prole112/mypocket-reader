@@ -1962,6 +1962,8 @@
     </div>
 
     <script>
+        console.log('🚀 MyPocket Web Reader script starting...');
+        
         // Debug function available immediately
         window.debugMyPocket = function() {
             console.log('🔧 DEBUG: Checking all elements...');
@@ -2146,10 +2148,20 @@
                     console.error('❌ Connect button not found!');
                 }
 
-                // Navigation buttons
+                // Navigation buttons - these exist in the HTML
                 const refreshNavBtn = document.getElementById('refreshNavBtn');
                 if (refreshNavBtn) {
                     refreshNavBtn.addEventListener('click', () => this.loadArticles());
+                }
+
+                const syncNavBtn = document.getElementById('syncNavBtn');
+                if (syncNavBtn) {
+                    syncNavBtn.addEventListener('click', () => this.forceSyncImages());
+                }
+
+                const retryNavBtn = document.getElementById('retryNavBtn');
+                if (retryNavBtn) {
+                    retryNavBtn.addEventListener('click', () => this.retryFailedImages());
                 }
 
                 const searchInput = document.getElementById('searchInput');
@@ -2220,6 +2232,20 @@
                 this.updateSidebarState();
                 this.updateMobileMenu();
                 this.updateArticleCounts(); // Initialize counts
+            }
+
+            // Update article counts in sidebar
+            updateArticleCounts() {
+                const allArticlesBadge = document.getElementById('allArticlesBadge');
+                const categoryBadge = document.getElementById('categoryBadge');
+
+                if (allArticlesBadge) {
+                    allArticlesBadge.textContent = this.articles.length;
+                }
+
+                if (categoryBadge) {
+                    categoryBadge.textContent = this.categories.size;
+                }
             }
 
             // Setup mobile menu
@@ -2482,7 +2508,12 @@
             // Toggle category filter visibility
             toggleCategoryFilter(forceState = null) {
                 const categoryContainer = document.getElementById('categoryContainer');
-                const categoriesBtn = document.getElementById('categoriesBtn');
+                const categoriesNavBtn = document.getElementById('categoriesNavBtn');
+
+                if (!categoryContainer || !categoriesNavBtn) {
+                    console.error('Category filter elements not found');
+                    return;
+                }
 
                 const isCurrentlyVisible = categoryContainer.style.display !== 'none';
                 const shouldShow = forceState !== null ? forceState : !isCurrentlyVisible;
@@ -2497,10 +2528,8 @@
                         categoryContainer.classList.add('visible');
                     }, 10);
 
-                    // Update button
-                    categoriesBtn.innerHTML = '<span>🏷️</span> Close Categories';
-                    categoriesBtn.style.background = 'var(--secondary-color)';
-                    categoriesBtn.style.color = 'white';
+                    // Update navigation
+                    this.updateNavigation();
 
                     this.updateStatus('🏷️ Category filter active - Click a category to filter articles', 'success');
                 } else {
@@ -2512,15 +2541,13 @@
                         }
                     }, 300);
 
-                    // Update button
-                    categoriesBtn.innerHTML = '<span>🏷️</span> Categories';
-                    categoriesBtn.style.background = '';
-                    categoriesBtn.style.color = '';
-
                     // Clear any active category filter if closing
                     if (this.activeCategory) {
                         this.filterByCategory(null);
                     }
+
+                    // Update navigation
+                    this.updateNavigation();
                 }
             }
 
@@ -2939,27 +2966,32 @@
             }
 
             updateConnectionStatus(connected) {
-                const connectBtn = document.getElementById('connectBtn');
-                const connectIcon = document.getElementById('connectIcon');
-                const connectText = document.getElementById('connectText');
-                const refreshBtn = document.getElementById('refreshBtn');
-                const syncBtn = document.getElementById('syncBtn');
-                const retryFailedBtn = document.getElementById('retryFailedBtn');
+                // Use the correct IDs that actually exist in the HTML
+                const connectBtn = document.getElementById('connectBtnSidebar');
+                const connectIcon = document.getElementById('connectionIcon');
+                const connectText = document.getElementById('connectionText');
+                const connectionStatusSidebar = document.getElementById('connectionStatusSidebar');
 
                 if (connected) {
-                    connectIcon.textContent = '✅';
-                    connectText.textContent = 'Connected (PKCE)';
-                    connectBtn.style.background = 'rgba(39, 174, 96, 0.8)';
-                    refreshBtn.style.display = 'inline-flex';
-                    if (syncBtn) syncBtn.style.display = 'inline-flex';
-                    if (retryFailedBtn) retryFailedBtn.style.display = 'inline-flex';
+                    if (connectIcon) connectIcon.textContent = '✅';
+                    if (connectText) connectText.textContent = 'Connected (PKCE)';
+                    if (connectBtn) {
+                        connectBtn.style.background = '#27ae60';
+                        connectBtn.textContent = 'Connected ✅';
+                    }
+                    if (connectionStatusSidebar) {
+                        connectionStatusSidebar.className = 'connection-status-sidebar connected';
+                    }
                 } else {
-                    connectIcon.textContent = '🔐';
-                    connectText.textContent = 'Secure Connect';
-                    connectBtn.style.background = 'rgba(255,255,255,0.2)';
-                    refreshBtn.style.display = 'none';
-                    if (syncBtn) syncBtn.style.display = 'none';
-                    if (retryFailedBtn) retryFailedBtn.style.display = 'none';
+                    if (connectIcon) connectIcon.textContent = '🔐';
+                    if (connectText) connectText.textContent = 'Not Connected';
+                    if (connectBtn) {
+                        connectBtn.style.background = '';
+                        connectBtn.textContent = 'Secure Connect';
+                    }
+                    if (connectionStatusSidebar) {
+                        connectionStatusSidebar.className = 'connection-status-sidebar disconnected';
+                    }
                 }
             }
 
@@ -2967,7 +2999,12 @@
             toggleSearch(forceState = null) {
                 const searchContainer = document.getElementById('searchContainer');
                 const searchInput = document.getElementById('searchInput');
-                const searchToggleBtn = document.getElementById('searchToggleBtn');
+                const searchNavBtn = document.getElementById('searchNavBtn');
+
+                if (!searchContainer || !searchInput || !searchNavBtn) {
+                    console.error('Search elements not found');
+                    return;
+                }
 
                 const isCurrentlyVisible = searchContainer.style.display !== 'none';
                 const shouldShow = forceState !== null ? forceState : !isCurrentlyVisible;
@@ -2980,10 +3017,8 @@
                         searchInput.focus();
                     }, 10);
 
-                    // Update button
-                    searchToggleBtn.innerHTML = '<span>🔍</span> Close Search';
-                    searchToggleBtn.style.background = 'var(--primary-color)';
-                    searchToggleBtn.style.color = 'white';
+                    // Update navigation
+                    this.updateNavigation();
 
                     this.updateStatus('🔍 Search mode active - Type to search or press Escape to close', 'success');
                 } else {
@@ -2995,11 +3030,6 @@
                         }
                     }, 300);
 
-                    // Update button
-                    searchToggleBtn.innerHTML = '<span>🔍</span> Search';
-                    searchToggleBtn.style.background = '';
-                    searchToggleBtn.style.color = '';
-
                     // Clear search if closing
                     if (searchInput.value) {
                         searchInput.value = '';
@@ -3008,6 +3038,9 @@
 
                     // Remove focus
                     searchInput.blur();
+
+                    // Update navigation
+                    this.updateNavigation();
                 }
             }
 
@@ -5566,6 +5599,7 @@ Search Features:
                 
                 // Make debug function available
                 window.debugElements = () => webReader.debugElements();
+                window.testAuth = () => webReader.testAuth();
                 
                 console.log('✅ MyPocket Web Reader initialized successfully');
                 
