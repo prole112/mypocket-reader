@@ -414,39 +414,9 @@
             color: var(--text-secondary);
         }
 
-        /* Enhanced AI Category Badge */
+        /* Article Category Badge - HIDDEN by default */
         .article-category {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.7em;
-            font-weight: 500;
-            z-index: 5;
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            max-width: 80px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        /* AI Category confidence indicator */
-        .article-category.high-confidence {
-            background: rgba(76, 175, 80, 0.9);
-        }
-
-        .article-category.medium-confidence {
-            background: rgba(255, 152, 0, 0.9);
-        }
-
-        .article-category.low-confidence {
-            background: rgba(158, 158, 158, 0.9);
+            display: none !important;
         }
 
         /* Dark mode category styles */
@@ -485,12 +455,6 @@
         [data-theme="dark"] .category-chip:not(.active) .category-count {
             background: var(--border);
             color: var(--text-secondary);
-        }
-
-        [data-theme="dark"] .article-category {
-            background: rgba(22, 27, 34, 0.9);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
         }
 
         .search-box {
@@ -1459,7 +1423,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    🤖 MyPocket AI Reader
+                    📚 MyPocket Web Reader
                 </div>
                 <div class="header-actions">
                     <button id="connectBtn" class="btn btn-primary">
@@ -1473,7 +1437,7 @@
                         <span>🔍</span> Search
                     </button>
                     <button id="categoriesBtn" class="btn btn-secondary" onclick="webReader.toggleCategoryFilter()">
-                        <span>🤖</span> AI Categories
+                        <span>🏷️</span> Categories
                     </button>
                     <button id="clearCacheBtn" class="btn btn-secondary" onclick="webReader.clearImageCache()">
                         <span>🗑️</span> Clear Cache
@@ -1519,7 +1483,7 @@
         <div class="container">
             <div class="category-filter">
                 <div class="category-header">
-                    <h3>🤖 AI-Powered Categories</h3>
+                    <h3>📂 Filter by Category</h3>
                     <button class="category-close-btn" onclick="webReader.toggleCategoryFilter()"
                         title="Close categories">✕</button>
                 </div>
@@ -1593,7 +1557,7 @@
                 
                 // AI categorization settings
                 this.enableDynamicCategories = true;
-                this.minCategoryConfidence = 20;
+                this.minCategoryConfidence = 40; // Increased threshold for better accuracy
                 this.maxCategories = 15;
 
                 // Image cache system
@@ -1664,25 +1628,37 @@
                         icon: '💻',
                         priority: 'high',
                         keywords: [
-                            // Core programming
                             'programming', 'code', 'coding', 'development', 'developer', 'software', 'algorithm',
                             'javascript', 'python', 'java', 'react', 'nodejs', 'api', 'database', 'sql',
                             'frontend', 'backend', 'fullstack', 'framework', 'library', 'github', 'git',
                             'open source', 'debugging', 'testing', 'deployment', 'devops', 'cloud',
-                            // Tech companies and platforms
-                            'google', 'microsoft', 'apple', 'amazon', 'facebook', 'meta', 'twitter',
-                            'netflix', 'uber', 'airbnb', 'spotify', 'slack', 'zoom', 'salesforce',
-                            // Emerging tech
                             'artificial intelligence', 'machine learning', 'ai', 'ml', 'blockchain',
                             'cryptocurrency', 'bitcoin', 'ethereum', 'nft', 'metaverse', 'vr', 'ar',
                             'virtual reality', 'augmented reality', 'iot', 'internet of things',
-                            // Mobile and web
                             'mobile', 'android', 'ios', 'web development', 'responsive', 'pwa',
-                            'app development', 'xamarin', 'flutter', 'react native'
+                            'app development', 'xamarin', 'flutter', 'react native', 'tech', 'digital'
                         ],
                         domains: ['github.com', 'stackoverflow.com', 'dev.to', 'techcrunch.com', 'theverge.com', 
                                 'arstechnica.com', 'wired.com', 'hacker-news.firebaseio.com', 'news.ycombinator.com',
                                 'medium.com/tag/technology', 'freecodecamp.org', 'codepen.io']
+                    },
+                    'Politics': {
+                        icon: '🏛️',
+                        priority: 'high',
+                        keywords: [
+                            'politics', 'political', 'government', 'election', 'voting', 'democracy', 'republican',
+                            'democratic', 'congress', 'senate', 'house', 'president', 'prime minister', 'minister',
+                            'policy', 'legislation', 'law', 'bill', 'campaign', 'candidate', 'politician',
+                            'parliament', 'capitol', 'white house', 'administration', 'cabinet', 'supreme court',
+                            'judicial', 'executive', 'legislative', 'impeachment', 'scandal', 'corruption',
+                            'debate', 'rally', 'protest', 'activism', 'conservative', 'liberal', 'progressive',
+                            'libertarian', 'socialist', 'communist', 'fascist', 'authoritarian', 'totalitarian',
+                            'diplomatic', 'diplomacy', 'international relations', 'foreign policy', 'treaty',
+                            'sanctions', 'embargo', 'summit', 'nato', 'un', 'united nations', 'eu', 'brexit'
+                        ],
+                        domains: ['politico.com', 'washingtonpost.com/politics', 'cnn.com/politics', 
+                                'foxnews.com/politics', 'bbc.com/news/politics', 'reuters.com/politics',
+                                'apnews.com/politics', 'npr.org/politics', 'thehill.com', 'rollcall.com']
                     },
                     'Business': {
                         icon: '💼',
@@ -1707,7 +1683,7 @@
                         keywords: [
                             'science', 'research', 'study', 'experiment', 'discovery', 'theory', 'hypothesis',
                             'biology', 'chemistry', 'physics', 'mathematics', 'statistics', 'data science',
-                            'medicine', 'health', 'medical', 'clinical', 'pharmaceutical', 'drug', 'vaccine',
+                            'medicine', 'medical', 'clinical', 'pharmaceutical', 'drug', 'vaccine',
                             'climate', 'environment', 'sustainability', 'renewable energy', 'solar', 'wind',
                             'space', 'astronomy', 'nasa', 'spacex', 'mars', 'rocket', 'satellite',
                             'genetics', 'dna', 'genome', 'crispr', 'biotechnology', 'biotech',
@@ -1738,12 +1714,9 @@
                         priority: 'medium',
                         keywords: [
                             'news', 'breaking news', 'current events', 'journalism', 'reporter', 'media',
-                            'politics', 'political', 'government', 'election', 'voting', 'democracy',
-                            'policy', 'legislation', 'congress', 'senate', 'president', 'prime minister',
-                            'international', 'global', 'world', 'country', 'nation', 'diplomatic',
-                            'economy', 'economic', 'gdp', 'inflation', 'recession', 'employment',
-                            'crisis', 'conflict', 'war', 'peace', 'security', 'terrorism',
-                            'social', 'society', 'culture', 'community', 'public', 'civil rights'
+                            'international', 'global', 'world', 'country', 'nation', 'crisis', 'conflict', 
+                            'war', 'peace', 'security', 'terrorism', 'social', 'society', 'culture', 
+                            'community', 'public', 'civil rights', 'breaking', 'latest', 'update', 'report'
                         ],
                         domains: ['bbc.com', 'cnn.com', 'nytimes.com', 'washingtonpost.com', 'guardian.co.uk',
                                 'reuters.com', 'ap.org', 'npr.org', 'wsj.com', 'ft.com', 'economist.com']
@@ -1862,7 +1835,7 @@
                 // Combine all text for analysis
                 const fullText = `${title} ${excerpt} ${content}`.substring(0, 5000);
                 
-                console.log(`🤖 AI Categorizing: "${article.title.substring(0, 50)}..."`);
+                console.log(`🤖 Auto-categorizing: "${article.title.substring(0, 50)}..."`);
 
                 // Extract keywords using TF-IDF-like algorithm
                 const extractedKeywords = this.extractKeywords(fullText);
@@ -1879,7 +1852,7 @@
                 article.categoryConfidence = result.confidence;
                 article.extractedKeywords = extractedKeywords.slice(0, 10); // Store top keywords
                 
-                console.log(`🎯 AI Result: "${result.category}" (confidence: ${result.confidence}%, keywords: ${extractedKeywords.slice(0, 3).join(', ')})`);
+                console.log(`🎯 Result: "${result.category}" (confidence: ${result.confidence}, score: ${Math.round(result.score)})`);
                 
                 return result.category;
             }
@@ -1938,69 +1911,86 @@
                        word.includes('tech') || word.includes('science') || word.includes('digital');
             }
 
-            // Calculate sophisticated category scores
+            // Calculate sophisticated category scores with improved accuracy
             calculateCategoryScores(article, fullText, extractedKeywords, domain, url) {
                 const scores = new Map();
+                const title = article.title.toLowerCase();
 
                 for (const [categoryName, categoryData] of Object.entries(this.categoryKeywords)) {
                     let score = 0;
                     let matches = [];
 
-                    // 1. Domain matching (highest weight - 100 points)
+                    // 1. Domain matching (highest weight - 150 points)
                     if (categoryData.domains.some(d => domain.includes(d))) {
-                        score += 100;
+                        score += 150;
                         matches.push(`domain:${domain}`);
                     }
 
-                    // 2. Direct keyword matching in extracted keywords (high weight - 50 points)
+                    // 2. Title exact word matching (very high weight - 100 points per match)
+                    const titleWords = title.split(/\s+/);
+                    for (const keyword of categoryData.keywords) {
+                        const keywordLower = keyword.toLowerCase();
+                        
+                        // Exact title word match
+                        if (titleWords.includes(keywordLower)) {
+                            score += 100;
+                            matches.push(`title-exact:${keyword}`);
+                        }
+                        // Title contains keyword
+                        else if (title.includes(keywordLower)) {
+                            score += 60;
+                            matches.push(`title-contains:${keyword}`);
+                        }
+                    }
+
+                    // 3. Direct keyword matching in extracted keywords (high weight - 80 points)
                     for (const keyword of categoryData.keywords) {
                         if (extractedKeywords.includes(keyword.toLowerCase())) {
-                            score += 50;
-                            matches.push(`keyword:${keyword}`);
+                            score += 80;
+                            matches.push(`extracted:${keyword}`);
                         }
                     }
 
-                    // 3. Semantic matching in title (high weight - 30-60 points)
-                    const title = article.title.toLowerCase();
+                    // 4. Content matching with frequency weighting (medium weight - 5-30 points)
                     for (const keyword of categoryData.keywords) {
-                        if (title.includes(keyword)) {
-                            const titleBoost = title.split(' ').includes(keyword) ? 60 : 30;
-                            score += titleBoost;
-                            matches.push(`title:${keyword}`);
-                        }
-                    }
-
-                    // 4. Content matching with context awareness (medium weight - 10-25 points)
-                    for (const keyword of categoryData.keywords) {
-                        const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+                        const regex = new RegExp(`\\b${keyword.toLowerCase()}\\b`, 'gi');
                         const contentMatches = fullText.match(regex);
                         if (contentMatches) {
-                            const contextScore = Math.min(contentMatches.length * 10, 25);
+                            // Diminishing returns for multiple matches
+                            const contextScore = Math.min(contentMatches.length * 5, 30);
                             score += contextScore;
                             matches.push(`content:${keyword}(${contentMatches.length}x)`);
                         }
                     }
 
-                    // 5. URL path analysis (low weight - 5 points)
+                    // 5. URL path analysis (low weight - 10 points)
                     for (const keyword of categoryData.keywords) {
-                        if (url.includes(keyword)) {
-                            score += 5;
+                        if (url.includes(keyword.toLowerCase())) {
+                            score += 10;
                             matches.push(`url:${keyword}`);
                         }
                     }
 
-                    // 6. Compound keyword bonus (phrases like "machine learning", "web development")
+                    // 6. Compound keyword bonus for exact phrase matches
                     const compoundKeywords = categoryData.keywords.filter(k => k.includes(' '));
                     for (const compound of compoundKeywords) {
-                        if (fullText.includes(compound)) {
-                            score += 40; // Bonus for exact phrase matches
-                            matches.push(`compound:${compound}`);
+                        if (title.includes(compound.toLowerCase())) {
+                            score += 120; // Big bonus for exact phrase in title
+                            matches.push(`compound-title:${compound}`);
+                        } else if (fullText.includes(compound.toLowerCase())) {
+                            score += 60; // Medium bonus for exact phrase in content
+                            matches.push(`compound-content:${compound}`);
                         }
                     }
 
-                    // 7. Priority boost for important categories
+                    // 7. Category priority boost
                     if (categoryData.priority === 'high') {
-                        score *= 1.1;
+                        score *= 1.05; // Small boost for important categories
+                    }
+
+                    // 8. Anti-spam: Penalize if article seems too generic
+                    if (matches.length === 0 && score < 20) {
+                        score = 0; // Clear weak matches
                     }
 
                     scores.set(categoryName, { score, matches });
@@ -2009,7 +1999,7 @@
                 return scores;
             }
 
-            // Select the best category with confidence calculation
+            // Select the best category with improved confidence calculation
             selectBestCategory(categoryScores) {
                 let bestCategory = 'Other';
                 let bestScore = 0;
@@ -2029,13 +2019,19 @@
                     secondBestScore = sortedScores[1][1].score;
                 }
 
-                // Calculate confidence based on score difference
+                // Calculate confidence with stricter thresholds
                 let confidence = 'low';
-                if (bestScore >= 80) {
+                const scoreDifference = bestScore - secondBestScore;
+                
+                if (bestScore >= 120 && scoreDifference >= 40) {
                     confidence = 'high';
-                } else if (bestScore >= 40 && bestScore > secondBestScore * 1.5) {
+                } else if (bestScore >= 80 && scoreDifference >= 25) {
                     confidence = 'medium';
-                } else if (bestScore >= this.minCategoryConfidence) {
+                } else if (bestScore >= this.minCategoryConfidence && scoreDifference >= 15) {
+                    confidence = 'low';
+                } else {
+                    // Not confident enough, use "Other"
+                    bestCategory = 'Other';
                     confidence = 'low';
                 }
 
@@ -2043,6 +2039,7 @@
                     category: bestCategory,
                     score: bestScore,
                     confidence: confidence,
+                    scoreDifference: scoreDifference,
                     allScores: sortedScores.slice(0, 3) // Keep top 3 for debugging
                 };
             }
@@ -2135,9 +2132,9 @@
                 return '📋'; // Default icon
             }
 
-            // Re-categorize all articles with enhanced AI
+            // Re-categorize all articles with enhanced intelligence
             recategorizeAllArticles() {
-                console.log('🤖 AI re-categorizing all articles...');
+                console.log('📂 Auto-categorizing all articles...');
                 this.categories.clear();
                 this.dynamicCategories.clear();
 
@@ -2156,7 +2153,7 @@
                     allCategories.set(dynCat, dynData.articles.length);
                 }
 
-                console.log(`🧠 AI categorization complete: ${allCategories.size} categories found`);
+                console.log(`🧠 Categorization complete: ${allCategories.size} categories found`);
                 console.log(`📊 Distribution:`, Object.fromEntries(allCategories));
                 
                 this.updateCategoryUI();
@@ -2224,10 +2221,10 @@
                     }).join('')}
                 `;
 
-                // Update header to show AI capabilities
+                // Update header to show category capabilities
                 const header = categoryChips.parentElement.querySelector('.category-header h3');
-                if (header) {
-                    header.textContent = `🤖 AI-Powered Categories${aiIndicator}`;
+                if (header && dynamicCount > 0) {
+                    header.textContent = `📂 Filter by Category (${dynamicCount} discovered)`;
                 }
             }
 
@@ -2382,11 +2379,11 @@
                     }, 10);
 
                     // Update button
-                    categoriesBtn.innerHTML = '<span>🤖</span> Close AI Categories';
+                    categoriesBtn.innerHTML = '<span>🏷️</span> Close Categories';
                     categoriesBtn.style.background = 'var(--secondary-color)';
                     categoriesBtn.style.color = 'white';
 
-                    this.updateStatus('🤖 AI category filter active - Click a category to filter articles', 'success');
+                    this.updateStatus('🏷️ Category filter active - Click a category to filter articles', 'success');
                 } else {
                     // Hide category filter
                     categoryContainer.classList.remove('visible');
@@ -2397,7 +2394,7 @@
                     }, 300);
 
                     // Update button
-                    categoriesBtn.innerHTML = '<span>🤖</span> AI Categories';
+                    categoriesBtn.innerHTML = '<span>🏷️</span> Categories';
                     categoriesBtn.style.background = '';
                     categoriesBtn.style.color = '';
 
@@ -3552,7 +3549,6 @@ Want All Fresh Images → Use "Sync Images" button
                             <div class="cache-indicator ${cacheStatus}">
                                 ${statusText}
                             </div>
-                            ${this.getCategoryBadgeHTML(article)}
                         </div>
                         <div class="article-content" onclick="webReader.openReaderByDisplayIndex(${displayIndex})">
                             <h2 class="article-title">${this.escapeHtml(article.title)}</h2>
@@ -3858,7 +3854,7 @@ Want All Fresh Images → Use "Sync Images" button
                 }
 
                 try {
-                    this.updateStatus('🤖 Loading articles for AI analysis... ⏳', 'loading');
+                    this.updateStatus('Loading articles... ⏳', 'loading');
 
                     const listResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children', {
                         headers: {
@@ -3916,7 +3912,7 @@ Want All Fresh Images → Use "Sync Images" button
                     this.currentDisplayedArticles = this.articles; // Initialize displayed articles
 
                     // Auto-categorize all articles on load with AI
-                    console.log('🤖 AI categorizing loaded articles...');
+                    console.log('📂 Auto-categorizing loaded articles...');
                     this.recategorizeAllArticles();
 
                     this.displayArticles(this.articles);
@@ -3924,9 +3920,9 @@ Want All Fresh Images → Use "Sync Images" button
                     const cacheStats = this.getCacheStats();
                     const storedImages = this.articles.filter(a => a.cachedImage).length;
                     const dynamicCount = this.dynamicCategories.size;
-                    const aiIndicator = dynamicCount > 0 ? ` (${dynamicCount} AI-discovered categories)` : '';
+                    const aiIndicator = dynamicCount > 0 ? ` (${dynamicCount} auto-discovered categories)` : '';
                     
-                    this.updateStatus(`🤖 Loaded ${this.articles.length} articles from ${latestFile.name} (${storedImages} with stored images, ${cacheStats.total} locally cached)${aiIndicator}`, 'success');
+                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name} (${storedImages} with stored images, ${cacheStats.total} locally cached)${aiIndicator}`, 'success');
 
                 } catch (error) {
                     console.error('Error loading articles:', error);
@@ -3938,9 +3934,9 @@ Want All Fresh Images → Use "Sync Images" button
                 const container = document.getElementById('articlesContainer');
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">🤖</div>
+                        <div class="empty-state-icon">📖</div>
                         <h3>No articles found</h3>
-                        <p>Use the MyPocket browser extension to save articles, then refresh this page to see AI-powered categorization!</p>
+                        <p>Use the MyPocket browser extension to save articles, then refresh this page to see intelligent categorization!</p>
                     </div>`;
             }
 
@@ -3955,13 +3951,13 @@ Want All Fresh Images → Use "Sync Images" button
                     this.currentDisplayedArticles = this.articles;
                     this.displayArticles(this.articles);
                     if (this.articles.length > 0) {
-                        this.updateStatus(`🤖 Showing all ${this.articles.length} articles`, 'success');
+                        this.updateStatus(`Showing all ${this.articles.length} articles`, 'success');
                     }
                     return;
                 }
 
                 const searchTerm = query.toLowerCase().trim();
-                console.log(`🔍 AI-enhanced searching for: "${searchTerm}"`);
+                console.log(`🔍 Enhanced searching for: "${searchTerm}"`);
 
                 const filtered = this.articles.filter(article => {
                     // Search in title (always exists)
@@ -4003,18 +3999,18 @@ Want All Fresh Images → Use "Sync Images" button
                     return titleMatch || excerptMatch || contentMatch || authorMatch || domainMatch || urlMatch || tagsMatch || categoryMatch || keywordMatch;
                 });
 
-                console.log(`🎯 AI search results: ${filtered.length}/${this.articles.length} articles`);
+                console.log(`🎯 Search results: ${filtered.length}/${this.articles.length} articles`);
 
                 // FIXED: Store the filtered articles and display them
                 this.currentDisplayedArticles = filtered;
                 this.displayArticles(filtered);
 
                 if (filtered.length === 0) {
-                    this.updateStatus(`🤖 No articles found matching "${query}". Try different keywords or check AI categories.`, 'error');
+                    this.updateStatus(`No articles found matching "${query}". Try different keywords or check categories.`, 'error');
                 } else if (filtered.length === 1) {
-                    this.updateStatus(`🤖 Found 1 article matching "${query}"`, 'success');
+                    this.updateStatus(`Found 1 article matching "${query}"`, 'success');
                 } else {
-                    this.updateStatus(`🤖 Found ${filtered.length} articles matching "${query}"`, 'success');
+                    this.updateStatus(`Found ${filtered.length} articles matching "${query}"`, 'success');
                 }
             }
 
@@ -4039,7 +4035,7 @@ Want All Fresh Images → Use "Sync Images" button
                 document.getElementById('readerContent').innerHTML = `
                     <div style="text-align: center; padding: 40px;">
                         <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
-                        <p>🤖 AI analyzing article content...</p>
+                        <p>Checking for article content...</p>
                     </div>
                 `;
 
@@ -4098,7 +4094,7 @@ Want All Fresh Images → Use "Sync Images" button
                         this.currentDisplayedArticles.splice(displayIndex, 1);
 
                         if (this.accessToken) {
-                            this.updateStatus('🤖 Updating AI categories and OneDrive backup...', 'loading');
+                            this.updateStatus('🏷️ Updating categories and OneDrive backup...', 'loading');
                             await this.updateOneDriveBackup();
                             // Recategorize after deletion
                             this.recategorizeAllArticles();
@@ -4132,7 +4128,7 @@ Want All Fresh Images → Use "Sync Images" button
                 document.getElementById('readerContent').innerHTML = `
                     <div style="text-align: center; padding: 40px;">
                         <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
-                        <p>🤖 AI analyzing article content...</p>
+                        <p>Checking for article content...</p>
                     </div>
                 `;
 
@@ -4144,7 +4140,7 @@ Want All Fresh Images → Use "Sync Images" button
             }
 
             async loadArticleContent(article) {
-                console.log('🚀 CONTENT LOADER WITH AI CACHING');
+                console.log('🚀 CONTENT LOADER WITH CACHING');
                 const contentElement = document.getElementById('readerContent');
 
                 // First try to get saved content
@@ -4164,7 +4160,7 @@ Want All Fresh Images → Use "Sync Images" button
                                     Loading from ${this.getDomain(article.url)}
                                 </p>
                                 <p style="font-size: 0.8em; color: var(--text-secondary);">
-                                    🤖 AI will analyze content after loading...
+                                    This may take a few seconds...
                                 </p>
                             </div>
                         `;
@@ -4175,7 +4171,7 @@ Want All Fresh Images → Use "Sync Images" button
                         if (fetchedContent && fetchedContent.trim()) {
                             content = fetchedContent;
                             console.log('✅ Successfully fetched article content');
-                            this.updateStatus('✅ Article content loaded and analyzed by AI!', 'success');
+                            this.updateStatus('✅ Article content loaded successfully!', 'success');
                         } else {
                             throw new Error('No content extracted from fetched page');
                         }
@@ -4329,11 +4325,11 @@ Want All Fresh Images → Use "Sync Images" button
                         content = content.replace(/src="\/([^"]+)"/g, `src="${baseUrl}/$1"`);
                         content = content.replace(/href="\/([^"]+)"/g, `href="${baseUrl}/$1"`);
 
-                        // Add a note about the source with AI indicator
+                        // Add a note about the source
                         content = `
                             <div style="background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                                 <p style="margin: 0; font-size: 0.9em;">
-                                    <strong>🤖 Content fetched and analyzed by AI</strong><br>
+                                    <strong>📡 Content fetched from original source</strong><br>
                                     This article content was retrieved in real-time from <a href="${url}" target="_blank" style="color: #1976d2;">${this.getDomain(url)}</a>
                                 </p>
                             </div>
@@ -4461,7 +4457,7 @@ Want All Fresh Images → Use "Sync Images" button
                         }
 
                         if (this.accessToken) {
-                            this.updateStatus('🤖 Updating AI categories and OneDrive backup...', 'loading');
+                            this.updateStatus('🏷️ Updating categories and OneDrive backup...', 'loading');
                             await this.updateOneDriveBackup();
                             // Recategorize after deletion
                             this.recategorizeAllArticles();
