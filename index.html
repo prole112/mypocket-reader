@@ -2457,13 +2457,18 @@
                 console.log('📂 Auto-categorizing all articles...');
                 this.categories.clear();
 
+                // Categorize each article and count them
                 for (const article of this.articles) {
                     const category = this.categorizeArticle(article);
                     this.categories.set(category, (this.categories.get(category) || 0) + 1);
                 }
 
                 console.log(`📊 Categories found:`, Object.fromEntries(this.categories));
-                this.updateCategoryUI();
+                
+                // Update UI after categorization is complete
+                setTimeout(() => {
+                    this.updateCategoryUI();
+                }, 10);
             }
 
             // Update the category filter UI
@@ -2474,11 +2479,14 @@
                 const sortedCategories = Array.from(this.categories.entries())
                     .sort((a, b) => b[1] - a[1]); // Sort by count descending
 
-                const totalArticles = this.currentDisplayedArticles.length;
+                // Use total articles count, not current displayed articles
+                const totalArticles = this.articles.length;
+
+                console.log(`🎨 Updating category UI with ${sortedCategories.length} categories`);
 
                 categoryChips.innerHTML = `
                     <div class="category-chip show-all ${!this.activeCategory ? 'active' : ''}" 
-                         onclick="webReader.filterByCategory(null)">
+                         data-category="null">
                         <span>📂</span>
                         <span>All Articles</span>
                         <span class="category-count">${totalArticles}</span>
@@ -2488,7 +2496,7 @@
                         const isActive = this.activeCategory === category;
                         return `
                             <div class="category-chip ${isActive ? 'active' : ''}" 
-                                 onclick="webReader.filterByCategory('${category}')"
+                                 data-category="${category}"
                                  title="Show ${count} ${category.toLowerCase()} articles">
                                 <span>${categoryData.icon}</span>
                                 <span>${category}</span>
@@ -2497,6 +2505,19 @@
                         `;
                     }).join('')}
                 `;
+
+                // Add event listeners after HTML is created
+                categoryChips.querySelectorAll('.category-chip').forEach(chip => {
+                    chip.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const category = chip.getAttribute('data-category');
+                        console.log(`🖱️ Category chip clicked: "${category}"`);
+                        this.filterByCategory(category === 'null' ? null : category);
+                    });
+                });
+
+                console.log(`✅ Category UI updated with event listeners`);
             }
 
             // Toggle category filter visibility
@@ -2513,6 +2534,8 @@
                 const shouldShow = forceState !== null ? forceState : !isCurrentlyVisible;
 
                 if (shouldShow) {
+                    console.log('🏷️ Opening category filter...');
+                    
                     // Ensure categories are up to date
                     this.recategorizeAllArticles();
 
@@ -2527,6 +2550,8 @@
 
                     this.updateStatus('🏷️ Category filter active - Click a category to filter articles', 'success');
                 } else {
+                    console.log('🏷️ Closing category filter...');
+                    
                     // Hide category filter
                     categoryContainer.classList.remove('visible');
                     setTimeout(() => {
@@ -2537,6 +2562,7 @@
 
                     // Clear any active category filter if closing
                     if (this.activeCategory) {
+                        console.log('🏷️ Clearing active category filter');
                         this.filterByCategory(null);
                     }
 
@@ -2547,21 +2573,42 @@
 
             // Filter articles by category
             filterByCategory(category) {
+                console.log(`🎯 FILTERING BY CATEGORY: "${category}"`);
                 this.activeCategory = category;
 
                 let filtered;
                 if (!category) {
                     // Show all articles
                     filtered = this.articles;
+                    console.log(`📂 Showing all ${filtered.length} articles`);
                 } else {
-                    // Filter by specific category
-                    filtered = this.articles.filter(article => {
-                        // Auto-categorize if not already categorized
+                    // ENSURE ALL ARTICLES ARE CATEGORIZED FIRST
+                    console.log(`🔍 Ensuring all articles are categorized before filtering...`);
+                    this.articles.forEach((article, index) => {
                         if (!article.category) {
                             this.categorizeArticle(article);
+                            console.log(`📂 Article ${index}: "${article.title.substring(0, 30)}..." categorized as "${article.category}"`);
                         }
-                        return article.category === category;
                     });
+
+                    // Filter by specific category
+                    filtered = this.articles.filter(article => {
+                        const matches = article.category === category;
+                        if (matches) {
+                            console.log(`✅ MATCH: "${article.title.substring(0, 30)}..." is in category "${category}"`);
+                        }
+                        return matches;
+                    });
+
+                    console.log(`🎯 Found ${filtered.length} articles in category "${category}"`);
+                    
+                    // Debug: Show what categories we actually have
+                    const categoryCounts = {};
+                    this.articles.forEach(article => {
+                        const cat = article.category || 'Uncategorized';
+                        categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+                    });
+                    console.log(`📊 Available categories:`, categoryCounts);
                 }
 
                 this.currentDisplayedArticles = filtered;
@@ -2570,15 +2617,22 @@
                 // Update category UI to show active state
                 this.updateCategoryUI();
 
+                // Update navigation
+                this.updateNavigation();
+
                 // Update status
                 if (!category) {
                     this.updateStatus(`📂 Showing all ${filtered.length} articles`, 'success');
                 } else {
                     const categoryData = this.categoryKeywords[category] || { icon: '📄' };
-                    this.updateStatus(`${categoryData.icon} Showing ${filtered.length} ${category.toLowerCase()} articles`, 'success');
+                    if (filtered.length === 0) {
+                        this.updateStatus(`❌ No articles found in "${category}" category. Try a different category.`, 'error');
+                    } else {
+                        this.updateStatus(`${categoryData.icon} Showing ${filtered.length} ${category.toLowerCase()} articles`, 'success');
+                    }
                 }
 
-                console.log(`📂 Filtered by category: ${category || 'All'} (${filtered.length} articles)`);
+                console.log(`📂 Filter complete: ${filtered.length} articles displayed`);
             }
 
             // ===== END AUTO-CATEGORIZATION SYSTEM =====
@@ -5381,6 +5435,11 @@ Want All Fresh Images → Use "Sync Images" button
                     .map(([cat, count]) => `${cat}: ${count}`)
                     .join(', ');
 
+                // NEW: Category debugging info
+                const categoryDebug = this.articles.slice(0, 5).map(article => 
+                    `"${article.title.substring(0, 40)}..." → ${article.category || 'Not categorized'} (score: ${article.categoryScore || 0})`
+                ).join('\n');
+
                 const info = `
 MyPocket Web Reader Debug Info (PKCE Enabled):
 ===============================================
@@ -5421,13 +5480,16 @@ Host: ${window.location.host}
 - Keyboard Shortcuts: Ctrl/Cmd+K, / (search), Esc (close)
 - Navigation Active States: Updated
 
-🏷️ CATEGORIZATION:
+🏷️ CATEGORIZATION DEBUG:
 - Auto-Categorization: Enabled
 - Categorized Articles: ${categorizedArticles}/${this.articles.length}
 - Categories Found: ${this.categories.size}
 - Top Categories: ${categoryBreakdown || 'None'}
 - Category Filter Visible: ${isCategoryVisible}
 - Active Category Filter: ${this.activeCategory || 'None'}
+
+Sample Categorizations:
+${categoryDebug}
 
 💾 LOCAL CACHE:
 - Total Cached Images: ${cacheStats.total}
@@ -5441,31 +5503,8 @@ Host: ${window.location.host}
 ✅ Automatic token refresh
 ✅ Secure parameter storage
 
-Azure AD Setup for PKCE:
-1. App Registration → Authentication
-2. Add Web platform: ${this.redirectUri}
-3. Enable "Access tokens" and "ID tokens"
-4. Set redirect URI exactly: ${this.redirectUri}
-5. PKCE is automatically supported for public clients
-
-Cross-Device Image Features:
-- Images stored in OneDrive backup for instant loading
-- Base64 encoding with ${this.maxImageSizeKB}KB size limit
-- Automatic compression to 80% quality
-- Works across all devices and browsers
-
-Auto-Categorization Features:
-- 12 intelligent categories with domain recognition
-- Multi-factor analysis (title, content, domain, URL)
-- Confidence scoring with minimum threshold
-- Visual category chips with article counts
-- Category-based filtering and search integration
-
-Search Features:
-- Toggle search with 🔍 button or Ctrl/Cmd+K or /
-- Close with Esc or click outside
-- Real-time filtering across title, content, domain, categories
-- Category integration (search clears category filter)
+CATEGORY DEBUGGING:
+To test categories, try: webReader.debugCategories()
                 `;
 
                 alert(info);
@@ -5488,6 +5527,42 @@ Search Features:
                     storedImages: storedImages,
                     crossDeviceEnabled: this.storeImagesInBackup
                 });
+            }
+
+            // NEW: Debug categories function
+            debugCategories() {
+                console.log('🔍 CATEGORY DEBUG INFO:');
+                console.log(`Total articles: ${this.articles.length}`);
+                console.log(`Categories found: ${this.categories.size}`);
+                console.log(`Active category: ${this.activeCategory || 'None'}`);
+                
+                // Show all categories and counts
+                console.log('📊 Category breakdown:');
+                for (const [category, count] of this.categories.entries()) {
+                    console.log(`  ${category}: ${count} articles`);
+                }
+                
+                // Show first few articles and their categories
+                console.log('📄 Sample article categorizations:');
+                this.articles.slice(0, 10).forEach((article, index) => {
+                    console.log(`  ${index + 1}. "${article.title.substring(0, 50)}..." → ${article.category || 'Not categorized'} (score: ${article.categoryScore || 0})`);
+                });
+                
+                // Test filtering
+                if (this.activeCategory) {
+                    const filtered = this.articles.filter(a => a.category === this.activeCategory);
+                    console.log(`🎯 Articles in "${this.activeCategory}" category: ${filtered.length}`);
+                    filtered.forEach((article, index) => {
+                        console.log(`  ${index + 1}. "${article.title.substring(0, 50)}..."`);
+                    });
+                }
+                
+                return {
+                    totalArticles: this.articles.length,
+                    categoriesFound: this.categories.size,
+                    activeCategory: this.activeCategory,
+                    categories: Object.fromEntries(this.categories)
+                };
             }
 
             toggleTestMode() {
@@ -5577,6 +5652,7 @@ Search Features:
                 // Make debug function available
                 window.debugElements = () => webReader.debugElements();
                 window.testAuth = () => webReader.testAuth();
+                window.debugCategories = () => webReader.debugCategories();
                 
                 console.log('✅ MyPocket Web Reader initialized successfully');
                 
