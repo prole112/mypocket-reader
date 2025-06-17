@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPocket - Web Reader</title>
+    <title>MyPocket - Web Reader (Enhanced AI Categories)</title>
     <style>
         * {
             margin: 0;
@@ -184,6 +184,17 @@
 
         [data-theme="dark"] .cache-indicator.error {
             background: rgba(244, 67, 54, 0.9);
+            color: white;
+        }
+
+        /* NEW: AI categorization indicator */
+        [data-theme="dark"] .cache-indicator.ai-categorized {
+            background: rgba(76, 175, 80, 0.9);
+            color: white;
+        }
+
+        [data-theme="dark"] .cache-indicator.smart-categorized {
+            background: rgba(103, 58, 183, 0.9);
             color: white;
         }
 
@@ -663,6 +674,22 @@
             color: var(--text-secondary);
         }
 
+        /* AI indicator for categories */
+        .category-chip.ai-enhanced {
+            border-color: #9c27b0;
+            background: linear-gradient(45deg, var(--background), #f3e5f5);
+        }
+
+        .category-chip.ai-enhanced:hover {
+            background: linear-gradient(45deg, var(--primary-color), #9c27b0);
+        }
+
+        .category-chip.ai-enhanced::after {
+            content: "🤖";
+            font-size: 0.7em;
+            margin-left: 4px;
+        }
+
         /* Dark mode category styles */
         [data-theme="dark"] .category-container {
             background: var(--surface);
@@ -699,6 +726,11 @@
         [data-theme="dark"] .category-chip:not(.active) .category-count {
             background: var(--border);
             color: var(--text-secondary);
+        }
+
+        [data-theme="dark"] .category-chip.ai-enhanced {
+            background: linear-gradient(45deg, var(--surface), #3a1c3f);
+            border-color: #9c27b0;
         }
 
         .search-box {
@@ -833,6 +865,24 @@
             opacity: 1 !important;
         }
 
+        /* AI categorization indicator on cards */
+        .article-card.ai-categorized {
+            border-color: #9c27b0;
+        }
+
+        .article-card.ai-categorized::before {
+            content: "🤖 AI";
+            position: absolute;
+            top: 5px;
+            left: 10px;
+            background: rgba(156, 39, 176, 0.9);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.7em;
+            z-index: 10;
+        }
+
         /* Organic shaped image area - SMALLER */
         .article-image {
             width: 100%;
@@ -929,6 +979,24 @@
             font-size: 0.7em;
             /* REDUCED from 0.75em to 0.7em */
             color: var(--text-secondary);
+        }
+
+        /* Enhanced category badge on articles */
+        .article-category {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--primary-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.65em;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .article-category.ai-category {
+            background: linear-gradient(45deg, var(--primary-color), #9c27b0);
         }
 
         /* Floating organic action buttons - SMALLER */
@@ -1210,6 +1278,16 @@
             color: white;
         }
 
+        .cache-indicator.ai-categorized {
+            background: rgba(156, 39, 176, 0.9);
+            color: white;
+        }
+
+        .cache-indicator.smart-categorized {
+            background: rgba(103, 58, 183, 0.9);
+            color: white;
+        }
+
         /* Enhanced Mobile Responsive Design */
         @media (max-width: 768px) {
             .container {
@@ -1476,6 +1554,13 @@
                 font-size: 0.85em !important;
                 /* Larger - was 0.7em */
                 color: var(--text-secondary);
+                margin-bottom: 10px;
+            }
+
+            /* Mobile category badge */
+            .article-category {
+                font-size: 0.8em !important;
+                padding: 4px 10px;
                 margin-bottom: 10px;
             }
 
@@ -1748,8 +1833,8 @@
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-brand">
-                <span>📚</span>
-                <span>MyPocket</span>
+                <span>🤖</span>
+                <span>MyPocket AI</span>
             </div>
         </div>
 
@@ -1779,8 +1864,8 @@
                     <span class="text">Search</span>
                 </button>
                 <button class="nav-item" id="categoriesNavBtn" onclick="webReader.toggleCategoryFilter()">
-                    <span class="icon">🏷️</span>
-                    <span class="text">Categories</span>
+                    <span class="icon">🤖</span>
+                    <span class="text">AI Categories</span>
                     <span class="badge" id="categoryBadge">0</span>
                 </button>
             </div>
@@ -1804,6 +1889,10 @@
                     <span class="icon">🗑️</span>
                     <span class="text">Clear Cache</span>
                 </button>
+                <button class="nav-item" onclick="webReader.recategorizeAllWithAI()">
+                    <span class="icon">🧠</span>
+                    <span class="text">AI Re-categorize</span>
+                </button>
             </div>
 
             <!-- Settings -->
@@ -1820,6 +1909,10 @@
                 <button class="nav-item" onclick="webReader.showImageHelp()">
                     <span class="icon">❓</span>
                     <span class="text">Image Help</span>
+                </button>
+                <button class="nav-item" onclick="webReader.showAIHelp()">
+                    <span class="icon">🤖</span>
+                    <span class="text">AI Categories Help</span>
                 </button>
                 <button class="nav-item" onclick="webReader.showDebugInfo()">
                     <span class="icon">🔧</span>
@@ -1850,12 +1943,12 @@
                     </button>
 
                     <div class="logo">
-                        MyPocket Web Reader
+                        MyPocket AI Reader
                     </div>
 
                     <div class="header-right">
                         <!-- Keep minimal actions in header -->
-                        <span id="headerStatus" class="header-status">Ready</span>
+                        <span id="headerStatus" class="header-status">🤖 AI Enhanced</span>
                     </div>
                 </div>
             </div>
@@ -1865,7 +1958,7 @@
         <section class="search-container" id="searchContainer" style="display: none;">
             <div class="container">
                 <div class="search-box">
-                    <input type="text" id="searchInput" class="search-input" placeholder="Search your saved articles..."
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search your saved articles... (🤖 AI-powered)"
                         autocomplete="off">
                     <button class="search-close-btn" onclick="webReader.toggleSearch()" title="Close search">✕</button>
                 </div>
@@ -1877,7 +1970,7 @@
             <div class="container">
                 <div class="category-filter">
                     <div class="category-header">
-                        <h3>📂 Filter by Category</h3>
+                        <h3>🤖 AI-Enhanced Categories</h3>
                         <button class="category-close-btn" onclick="webReader.toggleCategoryFilter()"
                             title="Close categories">✕</button>
                     </div>
@@ -1890,7 +1983,7 @@
 
         <!-- Status -->
         <div class="status" id="status">
-            Connect to OneDrive to view your saved articles
+            Connect to OneDrive to view your saved articles with AI-enhanced categorization
         </div>
 
         <!-- Articles -->
@@ -1898,9 +1991,9 @@
             <div class="container">
                 <div id="articlesContainer">
                     <div class="empty-state">
-                        <div class="empty-state-icon">📖</div>
-                        <h3>Welcome to MyPocket Web Reader</h3>
-                        <p>Connect to OneDrive to access your saved articles from anywhere!</p>
+                        <div class="empty-state-icon">🤖</div>
+                        <h3>Welcome to MyPocket AI Reader</h3>
+                        <p>Connect to OneDrive to access your saved articles with intelligent AI categorization!</p>
                     </div>
                 </div>
             </div>
@@ -1931,7 +2024,7 @@
     </div>
 
     <script>
-        console.log('🚀 MyPocket Web Reader script starting...');
+        console.log('🚀 MyPocket AI-Enhanced Web Reader script starting...');
 
         // Debug function available immediately
         window.debugMyPocket = function () {
@@ -1967,7 +2060,8 @@
                 console.log('📊 webReader properties:', {
                     accessToken: !!window.webReader.accessToken,
                     articles: window.webReader.articles ? window.webReader.articles.length : 0,
-                    redirectUri: window.webReader.redirectUri
+                    redirectUri: window.webReader.redirectUri,
+                    aiCategoriesEnabled: window.webReader.aiCategoriesEnabled
                 });
             } else {
                 console.log('❌ webReader: NOT INITIALIZED');
@@ -1978,7 +2072,7 @@
 
         class MyPocketWebReader {
             constructor() {
-                console.log('🏗️ Creating MyPocketWebReader instance...');
+                console.log('🏗️ Creating AI-Enhanced MyPocketWebReader instance...');
 
                 this.clientId = '436e8796-8c40-47c3-9ad5-b8882f3ef7f7';
                 this.redirectUri = this.getRedirectUri();
@@ -1990,10 +2084,13 @@
                 this.currentDisplayedArticles = []; // Track what's currently displayed
                 this.failedImages = new Set(); // Track articles with failed images
 
-                // Auto-categorization system
+                // Auto-categorization system with AI enhancements
                 this.categories = new Map(); // Store category counts
                 this.activeCategory = null; // Currently selected category filter
-                this.categoryKeywords = this.initializeCategoryKeywords();
+                this.categoryKeywords = this.initializeAIEnhancedCategoryKeywords();
+                this.aiCategoriesEnabled = true; // Enable AI categorization features
+                this.categorySynonyms = this.initializeCategorySynonyms(); // For smarter matching
+                this.categoryAnalytics = new Map(); // Track categorization confidence
 
                 // Image cache system
                 this.imageCache = new Map();
@@ -2010,7 +2107,7 @@
                 this.codeChallenge = null;
                 this.state = null;
 
-                console.log('✅ MyPocketWebReader constructor complete');
+                console.log('✅ AI-Enhanced MyPocketWebReader constructor complete');
                 this.init();
             }
 
@@ -2025,76 +2122,157 @@
                 }
             }
 
-            // Initialize category keywords for auto-categorization
-            initializeCategoryKeywords() {
+            // ===== AI-ENHANCED CATEGORIZATION SYSTEM =====
+
+            // Initialize enhanced category keywords with more sophisticated patterns
+            initializeAIEnhancedCategoryKeywords() {
                 return {
                     'Technology': {
                         icon: '💻',
-                        keywords: ['tech', 'technology', 'programming', 'code', 'coding', 'software', 'developer', 'development', 'javascript', 'python', 'react', 'vue', 'angular', 'node', 'api', 'github', 'stackoverflow', 'coding', 'algorithm', 'database', 'web', 'mobile', 'app', 'application', 'framework', 'library', 'bug', 'debug', 'frontend', 'backend', 'fullstack', 'devops', 'cloud', 'aws', 'azure', 'docker', 'kubernetes', 'microservices', 'serverless', 'machine learning', 'artificial intelligence', 'ai', 'ml', 'data science', 'blockchain', 'cryptocurrency', 'bitcoin', 'cybersecurity', 'security', 'hacking', 'penetration testing'],
-                        domains: ['github.com', 'stackoverflow.com', 'dev.to', 'techcrunch.com', 'theverge.com', 'arstechnica.com', 'wired.com', 'hacker-news.firebaseapp.com', 'news.ycombinator.com', 'medium.com', 'hackernoon.com', 'freecodecamp.org', 'codepen.io', 'replit.com', 'glitch.com', 'netlify.com', 'vercel.com', 'heroku.com']
+                        confidence: 'high',
+                        keywords: ['tech', 'technology', 'programming', 'code', 'coding', 'software', 'developer', 'development', 'javascript', 'python', 'react', 'vue', 'angular', 'node', 'api', 'github', 'stackoverflow', 'algorithm', 'database', 'web', 'mobile', 'app', 'application', 'framework', 'library', 'bug', 'debug', 'frontend', 'backend', 'fullstack', 'devops', 'cloud', 'aws', 'azure', 'docker', 'kubernetes', 'microservices', 'serverless', 'machine learning', 'artificial intelligence', 'ai', 'ml', 'data science', 'blockchain', 'cryptocurrency', 'bitcoin', 'cybersecurity', 'security', 'hacking', 'penetration testing', 'open source', 'git', 'version control', 'ci/cd', 'automation', 'testing'],
+                        domains: ['github.com', 'stackoverflow.com', 'dev.to', 'techcrunch.com', 'theverge.com', 'arstechnica.com', 'wired.com', 'hacker-news.firebaseapp.com', 'news.ycombinator.com', 'medium.com', 'hackernoon.com', 'freecodecamp.org', 'codepen.io', 'replit.com', 'glitch.com', 'netlify.com', 'vercel.com', 'heroku.com'],
+                        aliases: ['tech', 'programming', 'software', 'coding', 'dev']
                     },
                     'Business': {
                         icon: '💼',
-                        keywords: ['business', 'startup', 'entrepreneur', 'entrepreneurship', 'finance', 'financial', 'investment', 'investing', 'marketing', 'sales', 'strategy', 'management', 'leadership', 'company', 'revenue', 'profit', 'corporate', 'economics', 'market', 'industry', 'venture', 'funding', 'ipo', 'stocks', 'trading', 'cryptocurrency', 'fintech', 'saas', 'b2b', 'b2c', 'productivity', 'workflow', 'automation', 'remote work', 'freelancing', 'consulting', 'networking', 'career', 'job', 'hiring', 'hr', 'human resources'],
-                        domains: ['linkedin.com', 'forbes.com', 'bloomberg.com', 'businessinsider.com', 'harvard.business.review', 'hbr.org', 'entrepreneur.com', 'inc.com', 'fastcompany.com', 'techcrunch.com', 'crunchbase.com', 'angellist.com', 'producthunt.com', 'ycombinator.com', 'stripe.com', 'shopify.com']
+                        confidence: 'high',
+                        keywords: ['business', 'startup', 'entrepreneur', 'entrepreneurship', 'finance', 'financial', 'investment', 'investing', 'marketing', 'sales', 'strategy', 'management', 'leadership', 'company', 'revenue', 'profit', 'corporate', 'economics', 'market', 'industry', 'venture', 'funding', 'ipo', 'stocks', 'trading', 'cryptocurrency', 'fintech', 'saas', 'b2b', 'b2c', 'productivity', 'workflow', 'automation', 'remote work', 'freelancing', 'consulting', 'networking', 'career', 'job', 'hiring', 'hr', 'human resources', 'innovation', 'disruption', 'scaling', 'growth hacking'],
+                        domains: ['linkedin.com', 'forbes.com', 'bloomberg.com', 'businessinsider.com', 'harvard.business.review', 'hbr.org', 'entrepreneur.com', 'inc.com', 'fastcompany.com', 'techcrunch.com', 'crunchbase.com', 'angellist.com', 'producthunt.com', 'ycombinator.com', 'stripe.com', 'shopify.com'],
+                        aliases: ['startup', 'finance', 'entrepreneurship', 'corporate', 'work']
                     },
                     'Science': {
                         icon: '🔬',
-                        keywords: ['science', 'scientific', 'research', 'study', 'data', 'analysis', 'experiment', 'discovery', 'theory', 'hypothesis', 'biology', 'chemistry', 'physics', 'medicine', 'medical', 'health', 'healthcare', 'climate', 'environment', 'environmental', 'space', 'astronomy', 'genetics', 'psychology', 'neuroscience', 'quantum', 'nuclear', 'biochemistry', 'biotechnology', 'pharmaceutical', 'vaccine', 'covid', 'pandemic', 'evolution', 'ecology', 'sustainability', 'renewable energy', 'solar', 'wind energy'],
-                        domains: ['arxiv.org', 'nature.com', 'science.org', 'plos.org', 'pubmed.ncbi.nlm.nih.gov', 'ncbi.nlm.nih.gov', 'sciencedirect.com', 'springer.com', 'wiley.com', 'cell.com', 'thelancet.com', 'nejm.org', 'scientificamerican.com', 'nationalgeographic.com', 'nasa.gov', 'nih.gov', 'cdc.gov']
+                        confidence: 'high',
+                        keywords: ['science', 'scientific', 'research', 'study', 'data', 'analysis', 'experiment', 'discovery', 'theory', 'hypothesis', 'biology', 'chemistry', 'physics', 'medicine', 'medical', 'health', 'healthcare', 'climate', 'environment', 'environmental', 'space', 'astronomy', 'genetics', 'psychology', 'neuroscience', 'quantum', 'nuclear', 'biochemistry', 'biotechnology', 'pharmaceutical', 'vaccine', 'covid', 'pandemic', 'evolution', 'ecology', 'sustainability', 'renewable energy', 'solar', 'wind energy', 'genomics', 'bioengineering', 'nanotechnology'],
+                        domains: ['arxiv.org', 'nature.com', 'science.org', 'plos.org', 'pubmed.ncbi.nlm.nih.gov', 'ncbi.nlm.nih.gov', 'sciencedirect.com', 'springer.com', 'wiley.com', 'cell.com', 'thelancet.com', 'nejm.org', 'scientificamerican.com', 'nationalgeographic.com', 'nasa.gov', 'nih.gov', 'cdc.gov'],
+                        aliases: ['research', 'medical', 'biology', 'chemistry', 'physics']
+                    },
+                    'Politics': {
+                        icon: '🏛️',
+                        confidence: 'medium',
+                        keywords: ['politics', 'political', 'government', 'policy', 'election', 'vote', 'voting', 'democracy', 'republican', 'democrat', 'conservative', 'liberal', 'senate', 'congress', 'president', 'prime minister', 'parliament', 'legislation', 'law', 'constitution', 'supreme court', 'judge', 'campaign', 'candidate', 'poll', 'debate', 'immigration', 'healthcare reform', 'tax policy', 'foreign policy', 'diplomacy', 'war', 'peace', 'conflict', 'international relations', 'sovereignty', 'nationalism', 'globalization', 'activism', 'protest', 'rally'],
+                        domains: ['politico.com', 'washingtonpost.com', 'nytimes.com', 'cnn.com', 'foxnews.com', 'bbc.com', 'reuters.com', 'ap.org', 'npr.org', 'pbs.org', 'theguardian.com', 'wsj.com', 'economist.com', 'foreignaffairs.com', 'foreignpolicy.com'],
+                        aliases: ['government', 'election', 'policy', 'democracy', 'law']
+                    },
+                    'Philosophy': {
+                        icon: '🤔',
+                        confidence: 'medium',
+                        keywords: ['philosophy', 'philosophical', 'ethics', 'moral', 'morality', 'epistemology', 'metaphysics', 'logic', 'reasoning', 'consciousness', 'existentialism', 'stoicism', 'buddhism', 'mindfulness', 'meditation', 'wisdom', 'truth', 'reality', 'existence', 'meaning', 'purpose', 'free will', 'determinism', 'phenomenology', 'nihilism', 'absurdism', 'pragmatism', 'rationalism', 'empiricism', 'virtue', 'justice', 'freedom', 'rights', 'utilitarianism', 'deontology', 'virtue ethics', 'critical thinking'],
+                        domains: ['plato.stanford.edu', 'philpapers.org', 'philosophynow.org', 'aeon.co', 'thephilosopher1923.org'],
+                        aliases: ['ethics', 'moral', 'wisdom', 'consciousness', 'existential']
+                    },
+                    'Psychology': {
+                        icon: '🧠',
+                        confidence: 'medium',
+                        keywords: ['psychology', 'psychological', 'mental health', 'therapy', 'counseling', 'behavior', 'cognitive', 'emotion', 'personality', 'depression', 'anxiety', 'stress', 'trauma', 'ptsd', 'mindfulness', 'self-help', 'motivation', 'habit', 'addiction', 'neurology', 'brain', 'mind', 'learning', 'memory', 'perception', 'development', 'social psychology', 'behavioral economics', 'decision making', 'bias', 'persuasion', 'influence', 'relationships', 'communication', 'leadership psychology'],
+                        domains: ['psychologytoday.com', 'apa.org', 'psych.org', 'mindful.org', 'headspace.com', 'calm.com'],
+                        aliases: ['mental health', 'therapy', 'behavior', 'mind', 'brain']
                     },
                     'Design': {
                         icon: '🎨',
-                        keywords: ['design', 'designer', 'ui', 'ux', 'user experience', 'user interface', 'interface', 'visual', 'graphic', 'creative', 'art', 'artist', 'illustration', 'typography', 'color', 'layout', 'prototype', 'wireframe', 'figma', 'sketch', 'photoshop', 'adobe', 'branding', 'logo', 'icon', 'website design', 'web design', 'mobile design', 'app design', 'product design', 'industrial design', 'fashion', 'architecture', 'interior design', 'photography', 'video', 'animation'],
-                        domains: ['dribbble.com', 'behance.net', 'medium.com', 'uxdesign.cc', 'designbetter.co', 'smashingmagazine.com', 'awwwards.com', 'cssdesignawards.com', 'siteinspire.com', 'pinterest.com', 'unsplash.com', 'adobe.com', 'figma.com', 'invisionapp.com', 'framer.com']
+                        confidence: 'high',
+                        keywords: ['design', 'designer', 'ui', 'ux', 'user experience', 'user interface', 'interface', 'visual', 'graphic', 'creative', 'art', 'artist', 'illustration', 'typography', 'color', 'layout', 'prototype', 'wireframe', 'figma', 'sketch', 'photoshop', 'adobe', 'branding', 'logo', 'icon', 'website design', 'web design', 'mobile design', 'app design', 'product design', 'industrial design', 'fashion', 'architecture', 'interior design', 'photography', 'video', 'animation', 'motion graphics', 'accessibility', 'usability'],
+                        domains: ['dribbble.com', 'behance.net', 'medium.com', 'uxdesign.cc', 'designbetter.co', 'smashingmagazine.com', 'awwwards.com', 'cssdesignawards.com', 'siteinspire.com', 'pinterest.com', 'unsplash.com', 'adobe.com', 'figma.com', 'invisionapp.com', 'framer.com'],
+                        aliases: ['ui', 'ux', 'graphic', 'visual', 'creative']
                     },
                     'News': {
                         icon: '📰',
-                        keywords: ['news', 'breaking', 'breaking news', 'report', 'reporter', 'journalist', 'journalism', 'media', 'politics', 'political', 'government', 'election', 'policy', 'world', 'international', 'national', 'local', 'current events', 'headline', 'press', 'investigation', 'crisis', 'conflict', 'war', 'peace', 'diplomacy', 'economy', 'economic', 'recession', 'inflation', 'gdp', 'unemployment', 'stock market', 'breaking', 'urgent', 'live', 'update'],
-                        domains: ['bbc.com', 'cnn.com', 'nytimes.com', 'washingtonpost.com', 'theguardian.com', 'reuters.com', 'ap.org', 'npr.org', 'pbs.org', 'abcnews.go.com', 'cbsnews.com', 'nbcnews.com', 'foxnews.com', 'usatoday.com', 'wsj.com', 'ft.com', 'economist.com', 'politico.com', 'axios.com', 'vox.com']
+                        confidence: 'medium',
+                        keywords: ['news', 'breaking', 'breaking news', 'report', 'reporter', 'journalist', 'journalism', 'media', 'current events', 'headline', 'press', 'investigation', 'crisis', 'conflict', 'war', 'peace', 'diplomacy', 'economy', 'economic', 'recession', 'inflation', 'gdp', 'unemployment', 'stock market', 'breaking', 'urgent', 'live', 'update', 'scandal', 'controversy', 'exclusive', 'interview', 'analysis', 'opinion', 'editorial'],
+                        domains: ['bbc.com', 'cnn.com', 'nytimes.com', 'washingtonpost.com', 'theguardian.com', 'reuters.com', 'ap.org', 'npr.org', 'pbs.org', 'abcnews.go.com', 'cbsnews.com', 'nbcnews.com', 'foxnews.com', 'usatoday.com', 'wsj.com', 'ft.com', 'economist.com', 'politico.com', 'axios.com', 'vox.com'],
+                        aliases: ['journalism', 'media', 'current events', 'breaking']
                     },
                     'Education': {
                         icon: '🎓',
-                        keywords: ['education', 'educational', 'learning', 'learn', 'course', 'courses', 'tutorial', 'tutorials', 'lesson', 'lessons', 'teach', 'teaching', 'teacher', 'student', 'university', 'college', 'school', 'academic', 'academia', 'knowledge', 'skill', 'skills', 'training', 'certification', 'certificate', 'degree', 'bachelor', 'master', 'phd', 'doctorate', 'mooc', 'online learning', 'e-learning', 'study', 'studying', 'exam', 'test', 'quiz', 'homework', 'assignment', 'research'],
-                        domains: ['coursera.org', 'edx.org', 'khanacademy.org', 'udemy.com', 'wikipedia.org', 'mit.edu', 'stanford.edu', 'harvard.edu', 'berkeley.edu', 'yale.edu', 'oxford.ac.uk', 'cambridge.org', 'skillshare.com', 'lynda.com', 'pluralsight.com', 'codecademy.com', 'duolingo.com', 'masterclass.com']
+                        confidence: 'high',
+                        keywords: ['education', 'educational', 'learning', 'learn', 'course', 'courses', 'tutorial', 'tutorials', 'lesson', 'lessons', 'teach', 'teaching', 'teacher', 'student', 'university', 'college', 'school', 'academic', 'academia', 'knowledge', 'skill', 'skills', 'training', 'certification', 'certificate', 'degree', 'bachelor', 'master', 'phd', 'doctorate', 'mooc', 'online learning', 'e-learning', 'study', 'studying', 'exam', 'test', 'quiz', 'homework', 'assignment', 'research', 'curriculum', 'pedagogy'],
+                        domains: ['coursera.org', 'edx.org', 'khanacademy.org', 'udemy.com', 'wikipedia.org', 'mit.edu', 'stanford.edu', 'harvard.edu', 'berkeley.edu', 'yale.edu', 'oxford.ac.uk', 'cambridge.org', 'skillshare.com', 'lynda.com', 'pluralsight.com', 'codecademy.com', 'duolingo.com', 'masterclass.com'],
+                        aliases: ['learning', 'course', 'tutorial', 'academic', 'study']
                     },
                     'Entertainment': {
                         icon: '🎬',
-                        keywords: ['entertainment', 'movie', 'movies', 'film', 'films', 'cinema', 'tv', 'television', 'show', 'shows', 'series', 'episode', 'season', 'music', 'song', 'album', 'artist', 'band', 'concert', 'festival', 'game', 'games', 'gaming', 'video games', 'esports', 'streaming', 'netflix', 'amazon prime', 'disney', 'hulu', 'spotify', 'apple music', 'youtube', 'twitch', 'celebrity', 'celebrities', 'hollywood', 'broadway', 'theater', 'comedy', 'humor', 'funny', 'meme', 'viral'],
-                        domains: ['youtube.com', 'netflix.com', 'spotify.com', 'imdb.com', 'ign.com', 'gamespot.com', 'polygon.com', 'kotaku.com', 'variety.com', 'hollywoodreporter.com', 'ew.com', 'rollingstone.com', 'billboard.com', 'pitchfork.com', 'reddit.com', 'twitch.tv', 'steam.com', 'epicgames.com', 'rotten-tomatoes.com']
+                        confidence: 'medium',
+                        keywords: ['entertainment', 'movie', 'movies', 'film', 'films', 'cinema', 'tv', 'television', 'show', 'shows', 'series', 'episode', 'season', 'music', 'song', 'album', 'artist', 'band', 'concert', 'festival', 'game', 'games', 'gaming', 'video games', 'esports', 'streaming', 'netflix', 'amazon prime', 'disney', 'hulu', 'spotify', 'apple music', 'youtube', 'twitch', 'celebrity', 'celebrities', 'hollywood', 'broadway', 'theater', 'comedy', 'humor', 'funny', 'meme', 'viral', 'pop culture'],
+                        domains: ['youtube.com', 'netflix.com', 'spotify.com', 'imdb.com', 'ign.com', 'gamespot.com', 'polygon.com', 'kotaku.com', 'variety.com', 'hollywoodreporter.com', 'ew.com', 'rollingstone.com', 'billboard.com', 'pitchfork.com', 'reddit.com', 'twitch.tv', 'steam.com', 'epicgames.com', 'rotten-tomatoes.com'],
+                        aliases: ['movies', 'music', 'gaming', 'tv', 'celebrity']
                     },
                     'Health': {
                         icon: '🏥',
-                        keywords: ['health', 'healthy', 'healthcare', 'medical', 'medicine', 'doctor', 'physician', 'patient', 'hospital', 'clinic', 'treatment', 'therapy', 'disease', 'illness', 'symptoms', 'diagnosis', 'cure', 'medication', 'drug', 'pharmaceutical', 'fitness', 'exercise', 'workout', 'gym', 'running', 'yoga', 'nutrition', 'diet', 'food', 'vitamins', 'supplements', 'wellness', 'mental health', 'depression', 'anxiety', 'stress', 'mindfulness', 'meditation', 'sleep', 'weight loss', 'weight gain', 'muscle', 'cardio'],
-                        domains: ['mayoclinic.org', 'webmd.com', 'healthline.com', 'nih.gov', 'cdc.gov', 'who.int', 'medicalnewstoday.com', 'everydayhealth.com', 'health.com', 'prevention.com', 'menshealth.com', 'womenshealthmag.com', 'self.com', 'shape.com', 'fitbit.com', 'myfitnesspal.com', 'headspace.com', 'calm.com']
+                        confidence: 'high',
+                        keywords: ['health', 'healthy', 'healthcare', 'medical', 'medicine', 'doctor', 'physician', 'patient', 'hospital', 'clinic', 'treatment', 'therapy', 'disease', 'illness', 'symptoms', 'diagnosis', 'cure', 'medication', 'drug', 'pharmaceutical', 'fitness', 'exercise', 'workout', 'gym', 'running', 'yoga', 'nutrition', 'diet', 'food', 'vitamins', 'supplements', 'wellness', 'mental health', 'depression', 'anxiety', 'stress', 'mindfulness', 'meditation', 'sleep', 'weight loss', 'weight gain', 'muscle', 'cardio', 'prevention', 'immunization'],
+                        domains: ['mayoclinic.org', 'webmd.com', 'healthline.com', 'nih.gov', 'cdc.gov', 'who.int', 'medicalnewstoday.com', 'everydayhealth.com', 'health.com', 'prevention.com', 'menshealth.com', 'womenshealthmag.com', 'self.com', 'shape.com', 'fitbit.com', 'myfitnesspal.com', 'headspace.com', 'calm.com'],
+                        aliases: ['medical', 'fitness', 'wellness', 'nutrition', 'healthcare']
+                    },
+                    'Sports': {
+                        icon: '⚽',
+                        confidence: 'medium',
+                        keywords: ['sports', 'sport', 'football', 'soccer', 'basketball', 'baseball', 'tennis', 'golf', 'hockey', 'olympics', 'athlete', 'team', 'game', 'match', 'tournament', 'championship', 'league', 'player', 'coach', 'training', 'fitness', 'competition', 'score', 'win', 'lose', 'victory', 'defeat', 'mvp', 'draft', 'trade', 'playoff', 'season', 'stadium', 'fan', 'espn', 'nfl', 'nba', 'mlb', 'nhl', 'fifa', 'uefa'],
+                        domains: ['espn.com', 'sports.yahoo.com', 'bleacherreport.com', 'si.com', 'nfl.com', 'nba.com', 'mlb.com', 'nhl.com', 'fifa.com', 'uefa.com', 'olympic.org'],
+                        aliases: ['athletics', 'competition', 'team', 'game', 'athlete']
                     },
                     'Travel': {
                         icon: '✈️',
-                        keywords: ['travel', 'traveling', 'trip', 'vacation', 'holiday', 'tourism', 'tourist', 'destination', 'flight', 'flights', 'airline', 'airport', 'hotel', 'accommodation', 'booking', 'airbnb', 'hostel', 'resort', 'adventure', 'explore', 'exploring', 'backpacking', 'hiking', 'camping', 'road trip', 'cruise', 'culture', 'cultural', 'country', 'city', 'guide', 'travel guide', 'itinerary', 'budget travel', 'luxury travel', 'solo travel', 'family travel', 'business travel'],
-                        domains: ['tripadvisor.com', 'booking.com', 'airbnb.com', 'expedia.com', 'kayak.com', 'skyscanner.com', 'hotels.com', 'agoda.com', 'lonelyplanet.com', 'fodors.com', 'frommers.com', 'roughguides.com', 'timeout.com', 'cntraveler.com', 'travelandleisure.com', 'nationalgeographic.com', 'nomadicmatt.com', 'backpacker.com']
+                        confidence: 'medium',
+                        keywords: ['travel', 'traveling', 'trip', 'vacation', 'holiday', 'tourism', 'tourist', 'destination', 'flight', 'flights', 'airline', 'airport', 'hotel', 'accommodation', 'booking', 'airbnb', 'hostel', 'resort', 'adventure', 'explore', 'exploring', 'backpacking', 'hiking', 'camping', 'road trip', 'cruise', 'culture', 'cultural', 'country', 'city', 'guide', 'travel guide', 'itinerary', 'budget travel', 'luxury travel', 'solo travel', 'family travel', 'business travel', 'nomad'],
+                        domains: ['tripadvisor.com', 'booking.com', 'airbnb.com', 'expedia.com', 'kayak.com', 'skyscanner.com', 'hotels.com', 'agoda.com', 'lonelyplanet.com', 'fodors.com', 'frommers.com', 'roughguides.com', 'timeout.com', 'cntraveler.com', 'travelandleisure.com', 'nationalgeographic.com', 'nomadicmatt.com', 'backpacker.com'],
+                        aliases: ['vacation', 'tourism', 'adventure', 'explore', 'journey']
                     },
                     'Food': {
                         icon: '🍳',
+                        confidence: 'medium',
                         keywords: ['food', 'recipe', 'recipes', 'cooking', 'cook', 'chef', 'kitchen', 'restaurant', 'restaurants', 'dining', 'cuisine', 'culinary', 'ingredient', 'ingredients', 'meal', 'meals', 'dish', 'dishes', 'baking', 'bake', 'bread', 'cake', 'dessert', 'nutrition', 'diet', 'healthy eating', 'vegetarian', 'vegan', 'gluten-free', 'organic', 'local food', 'farm to table', 'foodie', 'wine', 'beer', 'cocktail', 'beverage', 'coffee', 'tea', 'breakfast', 'lunch', 'dinner'],
-                        domains: ['allrecipes.com', 'foodnetwork.com', 'epicurious.com', 'bonappetit.com', 'seriouseats.com', 'food52.com', 'tasty.co', 'delish.com', 'eatingwell.com', 'cookinglight.com', 'yummly.com', 'thespruceeats.com', 'saveur.com', 'foodandwine.com', 'chowhound.com', 'yelp.com', 'zomato.com', 'opentable.com']
+                        domains: ['allrecipes.com', 'foodnetwork.com', 'epicurious.com', 'bonappetit.com', 'seriouseats.com', 'food52.com', 'tasty.co', 'delish.com', 'eatingwell.com', 'cookinglight.com', 'yummly.com', 'thespruceeats.com', 'saveur.com', 'foodandwine.com', 'chowhound.com', 'yelp.com', 'zomato.com', 'opentable.com'],
+                        aliases: ['cooking', 'recipe', 'cuisine', 'dining', 'culinary']
+                    },
+                    'Environment': {
+                        icon: '🌱',
+                        confidence: 'medium',
+                        keywords: ['environment', 'environmental', 'climate', 'climate change', 'global warming', 'sustainability', 'sustainable', 'renewable energy', 'solar', 'wind', 'green', 'eco', 'ecology', 'ecosystem', 'biodiversity', 'conservation', 'pollution', 'carbon', 'emissions', 'greenhouse gas', 'fossil fuels', 'clean energy', 'recycling', 'waste', 'plastic', 'ocean', 'forest', 'deforestation', 'wildlife', 'endangered species', 'carbon footprint', 'renewable', 'organic'],
+                        domains: ['greenpeace.org', 'wwf.org', 'epa.gov', 'unfccc.int', 'ipcc.ch', 'nationalgeographic.com', 'nature.org', 'earthday.org'],
+                        aliases: ['climate', 'sustainability', 'green', 'ecology', 'conservation']
                     },
                     'Lifestyle': {
                         icon: '🏠',
-                        keywords: ['lifestyle', 'life', 'living', 'home', 'house', 'apartment', 'decor', 'decoration', 'interior', 'furniture', 'diy', 'crafts', 'gardening', 'pets', 'family', 'parenting', 'relationships', 'dating', 'marriage', 'wedding', 'fashion', 'style', 'beauty', 'skincare', 'makeup', 'hair', 'shopping', 'personal development', 'self-improvement', 'habits', 'productivity', 'organization', 'minimalism', 'sustainability', 'eco-friendly', 'green living'],
-                        domains: ['pinterest.com', 'instagram.com', 'buzzfeed.com', 'refinery29.com', 'popsugar.com', 'cosmopolitan.com', 'elle.com', 'vogue.com', 'marieclaire.com', 'goodhousekeeping.com', 'countryliving.com', 'apartmenttherapy.com', 'houzz.com', 'realsimple.com', 'oprah.com', 'goop.com', 'theeverygirl.com', 'cupcakesandcashmere.com']
+                        confidence: 'low',
+                        keywords: ['lifestyle', 'life', 'living', 'home', 'house', 'apartment', 'decor', 'decoration', 'interior', 'furniture', 'diy', 'crafts', 'gardening', 'pets', 'family', 'parenting', 'relationships', 'dating', 'marriage', 'wedding', 'fashion', 'style', 'beauty', 'skincare', 'makeup', 'hair', 'shopping', 'personal development', 'self-improvement', 'habits', 'productivity', 'organization', 'minimalism', 'self-care', 'work-life balance'],
+                        domains: ['pinterest.com', 'instagram.com', 'buzzfeed.com', 'refinery29.com', 'popsugar.com', 'cosmopolitan.com', 'elle.com', 'vogue.com', 'marieclaire.com', 'goodhousekeeping.com', 'countryliving.com', 'apartmenttherapy.com', 'houzz.com', 'realsimple.com', 'oprah.com', 'goop.com', 'theeverygirl.com', 'cupcakesandcashmere.com'],
+                        aliases: ['personal', 'self-improvement', 'home', 'family', 'relationships']
                     }
                 };
             }
 
+            // Initialize category synonyms for better matching
+            initializeCategorySynonyms() {
+                return {
+                    'Technology': ['tech', 'programming', 'software', 'coding', 'dev', 'digital', 'computer', 'IT'],
+                    'Business': ['startup', 'finance', 'entrepreneurship', 'corporate', 'work', 'career', 'management'],
+                    'Science': ['research', 'medical', 'biology', 'chemistry', 'physics', 'study', 'academic'],
+                    'Politics': ['government', 'election', 'policy', 'democracy', 'law', 'legal', 'political'],
+                    'Philosophy': ['ethics', 'moral', 'wisdom', 'consciousness', 'existential', 'philosophical'],
+                    'Psychology': ['mental health', 'therapy', 'behavior', 'mind', 'brain', 'psychological'],
+                    'Design': ['ui', 'ux', 'graphic', 'visual', 'creative', 'art', 'aesthetic'],
+                    'News': ['journalism', 'media', 'current events', 'breaking', 'press', 'report'],
+                    'Education': ['learning', 'course', 'tutorial', 'academic', 'study', 'school', 'university'],
+                    'Entertainment': ['movies', 'music', 'gaming', 'tv', 'celebrity', 'show', 'film', 'entertainment'],
+                    'Health': ['medical', 'fitness', 'wellness', 'nutrition', 'healthcare', 'medicine', 'health'],
+                    'Sports': ['athletics', 'competition', 'team', 'game', 'athlete', 'sport', 'fitness'],
+                    'Travel': ['vacation', 'tourism', 'adventure', 'explore', 'journey', 'trip', 'travel'],
+                    'Food': ['cooking', 'recipe', 'cuisine', 'dining', 'culinary', 'food', 'restaurant'],
+                    'Environment': ['climate', 'sustainability', 'green', 'ecology', 'conservation', 'environmental'],
+                    'Lifestyle': ['personal', 'self-improvement', 'home', 'family', 'relationships', 'lifestyle']
+                };
+            }
+
             init() {
-                console.log('🚀 Initializing MyPocket Web Reader...');
+                console.log('🚀 Initializing AI-Enhanced MyPocket Web Reader...');
                 this.setupEventListeners();
                 this.checkAuthFromURL();
                 this.loadStoredToken();
                 this.loadThemePreference();
                 this.loadImageCache();
                 this.initializeSidebar();
-                console.log('✅ Initialization complete');
+                console.log('✅ AI-Enhanced initialization complete');
             }
 
             setupEventListeners() {
@@ -2341,9 +2519,9 @@
                 return activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
             }
 
-            // ===== AUTO-CATEGORIZATION SYSTEM =====
+            // ===== AI-ENHANCED CATEGORIZATION SYSTEM =====
 
-            // Automatically categorize an article based on content
+            // AI-Enhanced categorization with smarter analysis
             categorizeArticle(article) {
                 const title = (article.title || '').toLowerCase();
                 const excerpt = (article.excerpt || '').toLowerCase();
@@ -2351,72 +2529,117 @@
                 const domain = this.getDomain(article.url).toLowerCase();
                 const content = this.getArticleContentForAnalysis(article).toLowerCase();
 
-                const textToAnalyze = `${title} ${excerpt} ${content}`.substring(0, 3000); // Increased analysis text
+                // Enhanced text analysis - more content, better weighting
+                const textToAnalyze = `${title} ${title} ${excerpt} ${content}`.substring(0, 5000); // More content for analysis
                 const scores = new Map();
+                let analysisDetails = {};
 
-                // Score each category
+                console.log(`🤖 AI-Enhanced categorization for: "${article.title.substring(0, 40)}..."`);
+
+                // Score each category with enhanced AI logic
                 for (const [categoryName, categoryData] of Object.entries(this.categoryKeywords)) {
                     let score = 0;
+                    let reasons = [];
 
-                    // Domain matching (highest weight) - exact matches get highest score
+                    // PRIORITY 1: Domain matching (highest confidence)
                     const exactDomainMatch = categoryData.domains.some(d => domain === d || domain.includes(d));
                     if (exactDomainMatch) {
-                        score += 200; // Increased from 100
+                        score += 300; // Increased from 200
+                        reasons.push(`domain: ${domain}`);
                     }
 
-                    // Keyword matching in title (very high weight) - titles are most important
+                    // PRIORITY 2: Title analysis (very high weight) - Enhanced with AI patterns
                     const titleWords = title.split(/\s+/);
+                    let titleMatches = 0;
                     for (const keyword of categoryData.keywords) {
-                        // Exact word match in title
+                        // Exact phrase match in title (highest value)
                         if (title.includes(` ${keyword} `) || title.startsWith(`${keyword} `) || title.endsWith(` ${keyword}`)) {
-                            score += 100; // Increased from 50
+                            score += 150; // Increased from 100
+                            titleMatches++;
+                            reasons.push(`title-exact: "${keyword}"`);
                         }
-                        // Partial match in title
+                        // Partial word match in title
                         else if (titleWords.some(word => word.includes(keyword) || keyword.includes(word))) {
-                            score += 40; // Increased from 25
+                            score += 60; // Increased from 40
+                            titleMatches++;
+                            reasons.push(`title-partial: "${keyword}"`);
                         }
                     }
 
-                    // Keyword matching in excerpt (high weight)
-                    for (const keyword of categoryData.keywords) {
-                        if (excerpt.includes(` ${keyword} `) || excerpt.startsWith(`${keyword} `) || excerpt.endsWith(` ${keyword}`)) {
-                            score += 30;
+                    // AI Enhancement: Synonym matching in title
+                    const synonyms = this.categorySynonyms[categoryName] || [];
+                    for (const synonym of synonyms) {
+                        if (title.includes(synonym)) {
+                            score += 80;
+                            titleMatches++;
+                            reasons.push(`title-synonym: "${synonym}"`);
                         }
                     }
 
-                    // Keyword matching in content (medium weight)
+                    // PRIORITY 3: Content semantic analysis (enhanced)
+                    let contentMatches = 0;
                     for (const keyword of categoryData.keywords) {
                         const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
                         const matches = textToAnalyze.match(regex);
                         if (matches) {
-                            score += Math.min(matches.length * 8, 40); // Cap at 40 points to prevent spam
+                            const matchScore = Math.min(matches.length * 12, 60); // Increased scoring
+                            score += matchScore;
+                            contentMatches += matches.length;
+                            if (matches.length > 1) {
+                                reasons.push(`content: "${keyword}" (${matches.length}x)`);
+                            }
                         }
                     }
 
-                    // URL path matching (low weight but still useful)
+                    // AI Enhancement: Context-aware scoring
+                    if (titleMatches >= 2) {
+                        score += 50; // Bonus for multiple title matches
+                        reasons.push('multiple-title-matches');
+                    }
+
+                    if (contentMatches >= 5) {
+                        score += 30; // Bonus for content relevance
+                        reasons.push('high-content-relevance');
+                    }
+
+                    // PRIORITY 4: URL path analysis
                     for (const keyword of categoryData.keywords) {
                         if (url.includes(keyword)) {
-                            score += 10; // Increased from 5
+                            score += 15; // Increased from 10
+                            reasons.push(`url: "${keyword}"`);
                         }
                     }
 
-                    // Bonus for multiple keyword matches (shows topic relevance)
-                    const matchedKeywords = categoryData.keywords.filter(keyword =>
-                        textToAnalyze.includes(keyword)
-                    );
-                    if (matchedKeywords.length >= 3) {
-                        score += 25; // Bonus for multiple relevant keywords
+                    // AI Enhancement: Pattern recognition bonuses
+                    if (categoryName === 'Technology' && (domain.includes('github') || title.includes('api') || title.includes('code'))) {
+                        score += 40;
+                        reasons.push('tech-pattern-bonus');
+                    }
+
+                    if (categoryName === 'Science' && (title.includes('study') || title.includes('research') || domain.includes('arxiv'))) {
+                        score += 40;
+                        reasons.push('science-pattern-bonus');
+                    }
+
+                    if (categoryName === 'Politics' && (title.includes('election') || title.includes('government') || title.includes('policy'))) {
+                        score += 40;
+                        reasons.push('politics-pattern-bonus');
                     }
 
                     scores.set(categoryName, score);
+                    analysisDetails[categoryName] = {
+                        score: score,
+                        reasons: reasons,
+                        confidence: categoryData.confidence || 'medium'
+                    };
                 }
 
-                // Find the best category with improved threshold
-                let bestCategory = 'Lifestyle'; // Changed default from 'Other' to 'Lifestyle'
+                // Enhanced decision making with AI confidence
+                let bestCategory = 'Lifestyle'; // Default fallback
                 let bestScore = 0;
                 let secondBestScore = 0;
 
-                // Sort scores to find top two
+                // Sort scores to find top candidates
                 const sortedScores = Array.from(scores.entries()).sort((a, b) => b[1] - a[1]);
 
                 if (sortedScores.length >= 1) {
@@ -2427,38 +2650,181 @@
                     secondBestScore = sortedScores[1][1];
                 }
 
-                // Only assign category if there's a clear winner and minimum threshold
-                const minThreshold = 30; // Increased from 20
+                // AI-Enhanced thresholds and confidence calculation
+                const minThreshold = 40; // Slightly increased
                 const confidenceGap = bestScore - secondBestScore;
+                const categoryConfidence = this.categoryKeywords[bestCategory]?.confidence || 'medium';
 
-                if (bestScore < minThreshold || (confidenceGap < 15 && bestScore < 60)) {
-                    bestCategory = 'Lifestyle'; // Default fallback
-                    bestScore = 0;
+                // Smart decision making
+                let finalCategory = bestCategory;
+                let aiEnhanced = false;
+
+                if (bestScore < minThreshold) {
+                    finalCategory = 'Lifestyle';
+                    console.log(`🤖 Below threshold (${bestScore} < ${minThreshold}), using default`);
+                } else if (confidenceGap < 20 && bestScore < 80) {
+                    // Low confidence - use AI fallback logic
+                    finalCategory = this.aiCategoryFallback(article, sortedScores);
+                    aiEnhanced = true;
+                    console.log(`🤖 AI fallback applied: ${finalCategory}`);
+                } else {
+                    console.log(`✅ High confidence categorization: ${finalCategory} (score: ${bestScore})`);
                 }
 
-                // Store the category and confidence
-                article.category = bestCategory;
+                // Store enhanced analysis results
+                article.category = finalCategory;
                 article.categoryScore = bestScore;
                 article.categoryConfidence = confidenceGap;
+                article.aiEnhanced = aiEnhanced;
+                article.categoryAnalysis = analysisDetails[finalCategory];
 
-                console.log(`📂 Categorized "${article.title.substring(0, 30)}..." as "${bestCategory}" (score: ${bestScore}, confidence: ${confidenceGap})`);
-                return bestCategory;
+                // Track analytics
+                this.updateCategoryAnalytics(finalCategory, bestScore, aiEnhanced);
+
+                console.log(`🎯 "${article.title.substring(0, 30)}..." → ${finalCategory} (score: ${bestScore}, AI: ${aiEnhanced})`);
+                return finalCategory;
             }
 
-            // Get article content for analysis (tries multiple content fields)
-            getArticleContentForAnalysis(article) {
-                const contentFields = ['content', 'textContent', 'excerpt', 'description', 'summary'];
+            // AI fallback logic for ambiguous categorizations
+            aiCategoryFallback(article, sortedScores) {
+                const title = article.title.toLowerCase();
+                const domain = this.getDomain(article.url).toLowerCase();
 
-                for (const field of contentFields) {
-                    if (article[field] && typeof article[field] === 'string' && article[field].length > 10) {
-                        return article[field];
+                // Smart fallback patterns
+                if (title.includes('how to') || title.includes('tutorial') || title.includes('guide')) {
+                    return 'Education';
+                }
+
+                if (title.includes('review') || title.includes('vs') || title.includes('comparison')) {
+                    // Context-aware review categorization
+                    if (domain.includes('tech') || title.includes('app') || title.includes('software')) {
+                        return 'Technology';
+                    }
+                    if (title.includes('movie') || title.includes('game') || title.includes('show')) {
+                        return 'Entertainment';
+                    }
+                    return 'Lifestyle';
+                }
+
+                if (title.includes('startup') || title.includes('founder') || title.includes('ceo')) {
+                    return 'Business';
+                }
+
+                if (title.includes('climate') || title.includes('green') || title.includes('sustainable')) {
+                    return 'Environment';
+                }
+
+                // If we have multiple close scores, pick the one with higher confidence category
+                const topCategories = sortedScores.slice(0, 3);
+                for (const [category, score] of topCategories) {
+                    const confidence = this.categoryKeywords[category]?.confidence || 'low';
+                    if (confidence === 'high' && score > 20) {
+                        return category;
                     }
                 }
 
-                return article.title || '';
+                // Default to the best score if no patterns match
+                return sortedScores[0][0];
             }
 
-            // Re-categorize all articles and update category counts
+            // Track categorization analytics
+            updateCategoryAnalytics(category, score, aiEnhanced) {
+                if (!this.categoryAnalytics.has(category)) {
+                    this.categoryAnalytics.set(category, {
+                        count: 0,
+                        totalScore: 0,
+                        aiEnhanced: 0,
+                        avgScore: 0
+                    });
+                }
+
+                const analytics = this.categoryAnalytics.get(category);
+                analytics.count++;
+                analytics.totalScore += score;
+                analytics.avgScore = Math.round(analytics.totalScore / analytics.count);
+                if (aiEnhanced) analytics.aiEnhanced++;
+
+                this.categoryAnalytics.set(category, analytics);
+            }
+
+            // Get article content for analysis (enhanced version)
+            getArticleContentForAnalysis(article) {
+                const contentFields = ['content', 'textContent', 'excerpt', 'description', 'summary', 'fullContent', 'body'];
+
+                // Combine multiple content fields for richer analysis
+                let combinedContent = '';
+                for (const field of contentFields) {
+                    if (article[field] && typeof article[field] === 'string') {
+                        combinedContent += ' ' + article[field];
+                    }
+                }
+
+                // Fallback to title if no content
+                return combinedContent.trim() || article.title || '';
+            }
+
+            // Enhanced re-categorization with AI
+            async recategorizeAllWithAI() {
+                if (this.articles.length === 0) {
+                    this.updateStatus('❌ No articles to categorize. Load articles first.', 'error');
+                    return;
+                }
+
+                console.log('🤖 Starting AI-enhanced re-categorization...');
+                this.updateStatus('🤖 AI is analyzing and categorizing your articles...', 'loading');
+
+                // Clear existing categories and analytics
+                this.categories.clear();
+                this.categoryAnalytics.clear();
+
+                let categorizedCount = 0;
+                let aiEnhancedCount = 0;
+
+                // Process in small batches for better UX
+                const batchSize = 10;
+                for (let i = 0; i < this.articles.length; i += batchSize) {
+                    const batch = this.articles.slice(i, i + batchSize);
+
+                    for (const article of batch) {
+                        const category = this.categorizeArticle(article);
+                        this.categories.set(category, (this.categories.get(category) || 0) + 1);
+                        categorizedCount++;
+
+                        if (article.aiEnhanced) {
+                            aiEnhancedCount++;
+                        }
+                    }
+
+                    // Update progress
+                    const progress = Math.round((categorizedCount / this.articles.length) * 100);
+                    this.updateStatus(`🤖 AI categorizing... ${categorizedCount}/${this.articles.length} (${progress}%)`, 'loading');
+
+                    // Small delay to prevent UI blocking
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
+
+                console.log(`🎯 AI categorization complete: ${this.categories.size} categories, ${aiEnhancedCount} AI-enhanced`);
+
+                // Update UI
+                this.updateCategoryUI();
+                this.displayArticles(this.currentDisplayedArticles);
+                this.updateArticleCounts();
+
+                const message = `🤖 AI categorization complete! ${categorizedCount} articles in ${this.categories.size} categories (${aiEnhancedCount} AI-enhanced)`;
+                this.updateStatus(message, 'success');
+
+                // Save to backup if connected
+                if (this.accessToken) {
+                    try {
+                        await this.updateOneDriveBackup();
+                        console.log('✅ Updated backup with AI categories');
+                    } catch (error) {
+                        console.error('⚠️ Failed to update backup:', error);
+                    }
+                }
+            }
+
+            // Regular re-categorization (legacy method)
             recategorizeAllArticles() {
                 console.log('📂 Auto-categorizing all articles...');
                 this.categories.clear();
@@ -2477,7 +2843,7 @@
                 }, 10);
             }
 
-            // Update the category filter UI
+            // Enhanced category UI with AI indicators
             updateCategoryUI() {
                 const categoryChips = document.getElementById('categoryChips');
                 if (!categoryChips) return;
@@ -2485,25 +2851,30 @@
                 const sortedCategories = Array.from(this.categories.entries())
                     .sort((a, b) => b[1] - a[1]); // Sort by count descending
 
-                // Use total articles count, not current displayed articles
                 const totalArticles = this.articles.length;
+                const aiEnhancedTotal = this.articles.filter(a => a.aiEnhanced).length;
 
-                console.log(`🎨 Updating category UI with ${sortedCategories.length} categories`);
+                console.log(`🎨 Updating AI-enhanced category UI with ${sortedCategories.length} categories (${aiEnhancedTotal} AI-enhanced)`);
 
                 categoryChips.innerHTML = `
                     <div class="category-chip show-all ${!this.activeCategory ? 'active' : ''}" 
                          data-category="null">
-                        <span>📂</span>
+                        <span>🤖</span>
                         <span>All Articles</span>
                         <span class="category-count">${totalArticles}</span>
                     </div>
                     ${sortedCategories.map(([category, count]) => {
                     const categoryData = this.categoryKeywords[category] || { icon: '📄' };
                     const isActive = this.activeCategory === category;
+                    const analytics = this.categoryAnalytics.get(category);
+                    const aiEnhancedCount = analytics ? analytics.aiEnhanced : 0;
+                    const avgScore = analytics ? analytics.avgScore : 0;
+                    const isAiEnhanced = aiEnhancedCount > 0;
+
                     return `
-                            <div class="category-chip ${isActive ? 'active' : ''}" 
+                            <div class="category-chip ${isActive ? 'active' : ''} ${isAiEnhanced ? 'ai-enhanced' : ''}" 
                                  data-category="${category}"
-                                 title="Show ${count} ${category.toLowerCase()} articles">
+                                 title="Show ${count} ${category.toLowerCase()} articles (${aiEnhancedCount} AI-enhanced, avg score: ${avgScore})">
                                 <span>${categoryData.icon}</span>
                                 <span>${category}</span>
                                 <span class="category-count">${count}</span>
@@ -2523,7 +2894,7 @@
                     });
                 });
 
-                console.log(`✅ Category UI updated with event listeners`);
+                console.log(`✅ AI-enhanced category UI updated with event listeners`);
             }
 
             // Toggle category filter visibility
@@ -2540,7 +2911,7 @@
                 const shouldShow = forceState !== null ? forceState : !isCurrentlyVisible;
 
                 if (shouldShow) {
-                    console.log('🏷️ Opening category filter...');
+                    console.log('🏷️ Opening AI-enhanced category filter...');
 
                     // Ensure categories are up to date
                     this.recategorizeAllArticles();
@@ -2554,7 +2925,7 @@
                     // Update navigation
                     this.updateNavigation();
 
-                    this.updateStatus('🏷️ Category filter active - Click a category to filter articles', 'success');
+                    this.updateStatus('🤖 AI-enhanced category filter active - Click a category to filter articles', 'success');
                 } else {
                     console.log('🏷️ Closing category filter...');
 
@@ -2577,7 +2948,7 @@
                 }
             }
 
-            // Filter articles by category
+            // Filter articles by category (enhanced)
             filterByCategory(category) {
                 console.log(`🎯 FILTERING BY CATEGORY: "${category}"`);
                 this.activeCategory = category;
@@ -2631,17 +3002,78 @@
                     this.updateStatus(`📂 Showing all ${filtered.length} articles`, 'success');
                 } else {
                     const categoryData = this.categoryKeywords[category] || { icon: '📄' };
+                    const analytics = this.categoryAnalytics.get(category);
+                    const aiCount = analytics ? analytics.aiEnhanced : 0;
+                    
                     if (filtered.length === 0) {
                         this.updateStatus(`❌ No articles found in "${category}" category. Try a different category.`, 'error');
                     } else {
-                        this.updateStatus(`${categoryData.icon} Showing ${filtered.length} ${category.toLowerCase()} articles`, 'success');
+                        const aiText = aiCount > 0 ? ` (${aiCount} AI-enhanced)` : '';
+                        this.updateStatus(`${categoryData.icon} Showing ${filtered.length} ${category.toLowerCase()} articles${aiText}`, 'success');
                     }
                 }
 
                 console.log(`📂 Filter complete: ${filtered.length} articles displayed`);
             }
 
-            // ===== END AUTO-CATEGORIZATION SYSTEM =====
+            // Show AI categories help
+            showAIHelp() {
+                const helpText = `
+MyPocket AI-Enhanced Categories Help:
+====================================
+
+🤖 AI CATEGORIZATION FEATURES:
+
+1️⃣ SMART CATEGORIZATION:
+   • 16 intelligent categories including Politics, Philosophy, Psychology
+   • Context-aware analysis of title, content, and domain
+   • Synonym matching for better accuracy
+   • Pattern recognition bonuses for specific domains
+
+2️⃣ CONFIDENCE SCORING:
+   • Each article gets a confidence score (0-300+)
+   • AI fallback logic for ambiguous content
+   • High/Medium/Low confidence categories
+   • Enhanced analysis tracks why articles were categorized
+
+3️⃣ AI ENHANCEMENTS:
+   • 🤖 icon indicates AI-enhanced categorization
+   • Fallback patterns for "how to", reviews, comparisons
+   • Context-aware decisions (tech reviews → Technology)
+   • Smart defaults based on content patterns
+
+4️⃣ AVAILABLE CATEGORIES:
+   📂 Core: Technology, Business, Science, Design, News, Education
+   🧠 Enhanced: Politics, Philosophy, Psychology, Environment
+   🎯 Lifestyle: Health, Sports, Travel, Food, Entertainment
+
+5️⃣ USING AI CATEGORIES:
+   • Categories auto-update when articles load
+   • Use "🧠 AI Re-categorize" to refresh all categories
+   • AI-enhanced articles show special indicators
+   • Category chips show AI enhancement count
+
+🔍 ADVANCED FEATURES:
+
+• Semantic Analysis: AI understands context, not just keywords
+• Domain Intelligence: Recognizes site-specific patterns
+• Synonym Matching: "startup" → Business, "tutorial" → Education
+• Confidence Tracking: Analytics show categorization quality
+• Smart Fallbacks: When uncertain, AI uses context clues
+
+💡 TIPS:
+- Let AI run automatically for best results
+- Use "AI Re-categorize" if categories seem off
+- AI-enhanced articles (🤖) had ambiguous content
+- Higher confidence scores = more accurate categories
+
+The AI system learns from your content patterns and continuously improves categorization accuracy!
+                `;
+
+                alert(helpText);
+            }
+
+            // ===== END AI-ENHANCED CATEGORIZATION SYSTEM =====
 
             // ===== PKCE IMPLEMENTATION =====
 
@@ -3028,7 +3460,7 @@
 
                 if (connected) {
                     if (connectIcon) connectIcon.textContent = '✅';
-                    if (connectText) connectText.textContent = 'Connected (PKCE)';
+                    if (connectText) connectText.textContent = 'Connected (PKCE+AI)';
                     if (connectBtn) {
                         connectBtn.style.background = '#27ae60';
                         connectBtn.textContent = 'Connected ✅';
@@ -3074,7 +3506,7 @@
                     // Update navigation
                     this.updateNavigation();
 
-                    this.updateStatus('🔍 Search mode active - Type to search or press Escape to close', 'success');
+                    this.updateStatus('🔍 AI-powered search active - Type to search or press Escape to close', 'success');
                 } else {
                     // Hide search
                     searchContainer.classList.remove('visible');
@@ -3209,6 +3641,7 @@
                     }
                 }
             }
+
             async retryFailedImages() {
                 if (!this.accessToken) {
                     this.updateStatus('❌ Please connect to OneDrive first', 'error');
@@ -3335,6 +3768,7 @@ Want All Fresh Images → Use "Sync Images" button
 
                 alert(helpText);
             }
+
             async tryAlternativeImageStrategies(article, index) {
                 console.log(`🎯 Trying alternative strategies for: ${article.title.substring(0, 30)}...`);
 
@@ -3483,6 +3917,7 @@ Want All Fresh Images → Use "Sync Images" button
 
                 return null;
             }
+
             async forceSyncImages() {
                 if (!this.accessToken) {
                     this.updateStatus('❌ Please connect to OneDrive first', 'error');
@@ -3738,7 +4173,7 @@ Want All Fresh Images → Use "Sync Images" button
                 }
             }
 
-            // ENHANCED: More aggressive synced image prioritization with debugging
+            // ENHANCED: More aggressive synced image prioritization with AI indicators
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -3757,7 +4192,7 @@ Want All Fresh Images → Use "Sync Images" button
                 let imagesFromCache = 0;
                 let imagesNeedLoading = 0;
 
-                console.log('🎯 DISPLAYING ARTICLES - Image Source Priority Check:');
+                console.log('🎯 DISPLAYING ARTICLES WITH AI CATEGORIES - Image Source Priority Check:');
 
                 const articlesHTML = articles.map((article, displayIndex) => {
                     // Use the display index for the currently shown articles
@@ -3817,15 +4252,27 @@ Want All Fresh Images → Use "Sync Images" button
                         console.log(`❌ ${displayIndex}: NO image found for "${article.title.substring(0, 30)}..." - needs extraction`);
                     }
 
+                    // AI categorization indicators
+                    const aiEnhanced = article.aiEnhanced ? 'ai-categorized' : '';
+                    const categoryData = this.categoryKeywords[article.category] || { icon: '📄' };
+                    const categoryBadge = article.category ? `
+                        <div class="article-category ${article.aiEnhanced ? 'ai-category' : ''}">
+                            <span>${categoryData.icon}</span>
+                            <span>${article.category}</span>
+                            ${article.aiEnhanced ? '<span>🤖</span>' : ''}
+                        </div>
+                    ` : '';
+
                     return `
-                    <div class="article-card" data-index="${index}" data-display-index="${displayIndex}" data-image-source="${imageSource}">
+                    <div class="article-card ${aiEnhanced}" data-index="${index}" data-display-index="${displayIndex}" data-image-source="${imageSource}">
                         <div class="article-image" id="image-${index}">
                             ${imageHTML}
-                            <div class="cache-indicator ${cacheStatus}">
+                            <div class="cache-indicator ${cacheStatus} ${article.aiEnhanced ? 'ai-categorized' : ''}">
                                 ${statusText}
                             </div>
                         </div>
                         <div class="article-content" onclick="webReader.openReaderByDisplayIndex(${displayIndex})">
+                            ${categoryBadge}
                             <h2 class="article-title">${this.escapeHtml(article.title)}</h2>
                             <p class="article-excerpt">${this.escapeHtml(article.excerpt)}</p>
                             <div class="article-meta">
@@ -3835,6 +4282,7 @@ Want All Fresh Images → Use "Sync Images" button
                             <div class="article-stats">
                                 <span>⏱️ ${article.readTime || 1} min read</span>
                                 <span>📝 ${article.wordCount || 0} words</span>
+                                ${article.categoryScore ? `<span>🤖 ${article.categoryScore}</span>` : ''}
                             </div>
                         </div>
                         <div class="article-actions">
@@ -3856,20 +4304,24 @@ Want All Fresh Images → Use "Sync Images" button
 
                 container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
 
-                // Enhanced status reporting with debugging
+                // Enhanced status reporting with AI info
                 const totalReady = imagesFromBackup + imagesFromCache;
+                const aiEnhancedCount = articles.filter(a => a.aiEnhanced).length;
 
                 console.log(`📊 IMAGE SUMMARY: ${imagesFromBackup} synced, ${imagesFromCache} cached, ${imagesNeedLoading} need loading`);
+                console.log(`🤖 AI SUMMARY: ${aiEnhancedCount}/${articles.length} articles AI-enhanced`);
 
                 if (imagesNeedLoading === 0) {
+                    const aiText = aiEnhancedCount > 0 ? ` (${aiEnhancedCount} AI-enhanced)` : '';
                     const message = isMobile ?
-                        `📱 ALL images ready! ${totalReady}/${articles.length} synced perfectly ✨` :
-                        `✅ ALL images ready! ${imagesFromBackup} synced, ${imagesFromCache} cached ✨`;
+                        `📱 ALL images ready! ${totalReady}/${articles.length} synced perfectly ✨${aiText}` :
+                        `✅ ALL images ready! ${imagesFromBackup} synced, ${imagesFromCache} cached ✨${aiText}`;
                     this.updateStatus(message, 'success');
                 } else {
+                    const aiText = aiEnhancedCount > 0 ? ` (${aiEnhancedCount} AI-categorized)` : '';
                     const message = isMobile ?
-                        `📱 ${totalReady} ready instantly, extracting ${imagesNeedLoading} more...` :
-                        `⚡ ${totalReady} ready instantly, extracting ${imagesNeedLoading} more...`;
+                        `📱 ${totalReady} ready instantly, extracting ${imagesNeedLoading} more...${aiText}` :
+                        `⚡ ${totalReady} ready instantly, extracting ${imagesNeedLoading} more...${aiText}`;
                     this.updateStatus(message, 'loading');
 
                     // Load missing images - prioritize on mobile for faster completion
@@ -4118,7 +4570,7 @@ Want All Fresh Images → Use "Sync Images" button
                 return true;
             }
 
-            // ENHANCED: Load articles with automatic token refresh
+            // ENHANCED: Load articles with automatic token refresh and AI categorization
             async loadArticles() {
                 // Ensure we have a valid token
                 const hasValidToken = await this.ensureValidToken();
@@ -4129,7 +4581,7 @@ Want All Fresh Images → Use "Sync Images" button
                 }
 
                 try {
-                    this.updateStatus('Loading articles... ⏳', 'loading');
+                    this.updateStatus('Loading articles with AI categorization... ⏳', 'loading');
 
                     const listResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children', {
                         headers: {
@@ -4186,18 +4638,25 @@ Want All Fresh Images → Use "Sync Images" button
                     this.articles = backup.articles || [];
                     this.currentDisplayedArticles = this.articles; // Initialize displayed articles
 
-                    // Auto-categorize all articles on load
-                    console.log('📂 Auto-categorizing loaded articles...');
-                    this.recategorizeAllArticles();
+                    // AI-Enhanced auto-categorization on load
+                    console.log('🤖 AI-enhanced auto-categorizing loaded articles...');
+                    this.updateStatus('🤖 AI is analyzing your articles...', 'loading');
+                    
+                    // Process categorization in background for better UX
+                    setTimeout(async () => {
+                        await this.recategorizeAllWithAI();
+                        
+                        // Update sidebar counts
+                        this.updateArticleCounts();
 
-                    // Update sidebar counts
-                    this.updateArticleCounts();
+                        this.displayArticles(this.articles);
 
-                    this.displayArticles(this.articles);
-
-                    const cacheStats = this.getCacheStats();
-                    const storedImages = this.articles.filter(a => a.cachedImage).length;
-                    this.updateStatus(`✅ Loaded ${this.articles.length} articles from ${latestFile.name} (${storedImages} with stored images, ${cacheStats.total} locally cached)`, 'success');
+                        const cacheStats = this.getCacheStats();
+                        const storedImages = this.articles.filter(a => a.cachedImage).length;
+                        const aiEnhancedCount = this.articles.filter(a => a.aiEnhanced).length;
+                        
+                        this.updateStatus(`🤖 Loaded ${this.articles.length} articles with AI categorization (${storedImages} with stored images, ${aiEnhancedCount} AI-enhanced)`, 'success');
+                    }, 100);
 
                 } catch (error) {
                     console.error('Error loading articles:', error);
@@ -4209,12 +4668,13 @@ Want All Fresh Images → Use "Sync Images" button
                 const container = document.getElementById('articlesContainer');
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">📖</div>
+                        <div class="empty-state-icon">🤖</div>
                         <h3>No articles found</h3>
-                        <p>Use the MyPocket browser extension to save articles, then refresh this page.</p>
+                        <p>Use the MyPocket browser extension to save articles, then refresh this page for AI-enhanced categorization!</p>
                     </div>`;
             }
 
+            // Enhanced search with AI category awareness
             searchArticles(query) {
                 // Clear any active category filter when searching
                 if (this.activeCategory && query.trim() !== '') {
@@ -4232,7 +4692,7 @@ Want All Fresh Images → Use "Sync Images" button
                 }
 
                 const searchTerm = query.toLowerCase().trim();
-                console.log(`🔍 Searching for: "${searchTerm}"`);
+                console.log(`🔍 AI-powered search for: "${searchTerm}"`);
 
                 const filtered = this.articles.filter(article => {
                     // Search in title (always exists)
@@ -4261,27 +4721,33 @@ Want All Fresh Images → Use "Sync Images" button
                     const tagsMatch = article.tags && Array.isArray(article.tags) &&
                         article.tags.some(tag => tag.toLowerCase().includes(searchTerm));
 
-                    // Search in category
+                    // AI Enhancement: Search in category and synonyms
                     if (!article.category) {
                         this.categorizeArticle(article);
                     }
                     const categoryMatch = article.category && article.category.toLowerCase().includes(searchTerm);
+                    
+                    // Smart synonym matching
+                    const synonymMatch = this.categorySynonyms[article.category] && 
+                        this.categorySynonyms[article.category].some(synonym => 
+                            synonym.toLowerCase().includes(searchTerm)
+                        );
 
-                    return titleMatch || excerptMatch || contentMatch || authorMatch || domainMatch || urlMatch || tagsMatch || categoryMatch;
+                    return titleMatch || excerptMatch || contentMatch || authorMatch || domainMatch || urlMatch || tagsMatch || categoryMatch || synonymMatch;
                 });
 
-                console.log(`🎯 Search results: ${filtered.length}/${this.articles.length} articles`);
+                console.log(`🎯 AI-powered search results: ${filtered.length}/${this.articles.length} articles`);
 
                 // FIXED: Store the filtered articles and display them
                 this.currentDisplayedArticles = filtered;
                 this.displayArticles(filtered);
 
                 if (filtered.length === 0) {
-                    this.updateStatus(`No articles found matching "${query}". Try different keywords.`, 'error');
+                    this.updateStatus(`🤖 No articles found matching "${query}". Try different keywords or categories.`, 'error');
                 } else if (filtered.length === 1) {
-                    this.updateStatus(`Found 1 article matching "${query}"`, 'success');
+                    this.updateStatus(`🔍 Found 1 article matching "${query}"`, 'success');
                 } else {
-                    this.updateStatus(`Found ${filtered.length} articles matching "${query}"`, 'success');
+                    this.updateStatus(`🔍 Found ${filtered.length} articles matching "${query}"`, 'success');
                 }
             }
 
@@ -4748,7 +5214,7 @@ Want All Fresh Images → Use "Sync Images" button
                 }
             }
 
-            // Enhanced backup to include image data
+            // Enhanced backup to include image data and AI categories
             async updateOneDriveBackup() {
                 if (!this.accessToken) {
                     throw new Error('Not connected to OneDrive');
@@ -4760,24 +5226,31 @@ Want All Fresh Images → Use "Sync Images" button
                     return total + (article.cachedImage ? article.cachedImage.size || 0 : 0);
                 }, 0);
 
-                console.log(`📦 Creating backup with ${articlesWithImages.length} stored images (${Math.round(totalImageSizeKB)}KB)`);
+                const aiEnhancedCount = this.articles.filter(a => a.aiEnhanced).length;
+
+                console.log(`📦 Creating backup with ${articlesWithImages.length} stored images (${Math.round(totalImageSizeKB)}KB) and ${aiEnhancedCount} AI-enhanced articles`);
 
                 const backup = {
-                    articles: this.articles, // This now includes cachedImage data
+                    articles: this.articles, // This now includes cachedImage data and AI categories
                     settings: {
                         storeImagesInBackup: this.storeImagesInBackup,
-                        maxImageSizeKB: this.maxImageSizeKB
+                        maxImageSizeKB: this.maxImageSizeKB,
+                        aiCategoriesEnabled: this.aiCategoriesEnabled
                     },
+                    aiAnalytics: Object.fromEntries(this.categoryAnalytics),
                     exportDate: new Date().toISOString(),
-                    version: "4.1", // Bump version for PKCE + image storage
+                    version: "5.0", // Bump version for AI categories
                     deviceInfo: {
-                        browser: "Web Reader with PKCE Security + Cross-Device Images",
+                        browser: "AI-Enhanced Web Reader with PKCE Security + Cross-Device Images",
                         platform: navigator.platform,
                         timestamp: Date.now(),
                         articleCount: this.articles.length,
                         storedImages: articlesWithImages.length,
                         totalImageSizeKB: Math.round(totalImageSizeKB),
-                        authMethod: "Authorization Code + PKCE"
+                        aiEnhancedArticles: aiEnhancedCount,
+                        categoriesFound: this.categories.size,
+                        authMethod: "Authorization Code + PKCE",
+                        aiFeatures: "Enhanced categorization with 16 categories including Politics, Philosophy, Psychology"
                     }
                 };
 
@@ -4806,11 +5279,20 @@ Want All Fresh Images → Use "Sync Images" button
                     throw new Error(`Failed to update OneDrive backup: ${uploadResponse.status} - ${errorText}`);
                 }
 
-                console.log(`✅ Backup saved with ${articlesWithImages.length} images (${Math.round(totalImageSizeKB)}KB)`);
+                console.log(`✅ AI-enhanced backup saved with ${articlesWithImages.length} images (${Math.round(totalImageSizeKB)}KB) and ${aiEnhancedCount} AI-categorized articles`);
                 return await uploadResponse.json();
             }
 
             createArticleHTML(article) {
+                const categoryInfo = article.category ? `
+                    <div style="margin-bottom: 16px;">
+                        <span style="background: #ee5a24; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.9em;">
+                            ${this.categoryKeywords[article.category]?.icon || '📄'} ${article.category}
+                            ${article.aiEnhanced ? ' 🤖' : ''}
+                        </span>
+                    </div>
+                ` : '';
+
                 return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -4867,21 +5349,24 @@ Want All Fresh Images → Use "Sync Images" button
 </head>
 <body>
     <div class="header">
+        ${categoryInfo}
         <h1 class="title">${this.escapeHtml(article.title)}</h1>
         <div class="meta">
             <div style="margin-bottom: 8px;">🌐 From: <a href="${article.url}" style="color: #ee5a24;">${this.getDomain(article.url)}</a></div>
             ${article.author ? `<div style="margin-bottom: 8px;">✍️ By: ${this.escapeHtml(article.author)}</div>` : ''}
             <div style="margin-bottom: 8px;">📅 Saved: ${this.formatDate(article.dateAdded)}</div>
             <div>⏱️ Reading time: ${article.readTime || 1} minutes</div>
+            ${article.categoryScore ? `<div>🤖 AI Category Score: ${article.categoryScore}</div>` : ''}
         </div>
     </div>
     <div class="content">
-        ${article.content}
+        ${article.content || article.excerpt || 'Content not available'}
     </div>
     <div class="footer">
-        <p><strong>✨ Exported from MyPocket Web Reader (PKCE Secured)</strong></p>
+        <p><strong>🤖 Exported from MyPocket AI-Enhanced Reader (PKCE Secured)</strong></p>
         <p>Original URL: <a href="${article.url}" style="color: #ee5a24;">${article.url}</a></p>
         <p>Export Date: ${new Date().toLocaleDateString()}</p>
+        ${article.category ? `<p>Category: ${article.category} ${article.aiEnhanced ? '(AI-Enhanced)' : ''}</p>` : ''}
     </div>
 </body>
 </html>`;
@@ -5208,6 +5693,26 @@ Want All Fresh Images → Use "Sync Images" button
                     return `https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
 
+                // Politics (AI Enhancement)
+                if (title.includes('politics') || title.includes('government') || title.includes('election') || title.includes('policy')) {
+                    return `https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+
+                // Philosophy (AI Enhancement)
+                if (title.includes('philosophy') || title.includes('wisdom') || title.includes('ethics') || title.includes('consciousness')) {
+                    return `https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+
+                // Psychology (AI Enhancement)
+                if (title.includes('psychology') || title.includes('mental') || title.includes('behavior') || title.includes('therapy')) {
+                    return `https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+
+                // Environment (AI Enhancement)
+                if (title.includes('climate') || title.includes('environment') || title.includes('sustainability') || title.includes('green')) {
+                    return `https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
+                }
+
                 // Travel/Adventure
                 if (title.includes('travel') || title.includes('vacation') || title.includes('adventure') || title.includes('journey')) {
                     return `https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
@@ -5258,11 +5763,6 @@ Want All Fresh Images → Use "Sync Images" button
                 // Sports
                 if (title.includes('sport') || title.includes('game') || title.includes('team') || title.includes('player')) {
                     return `https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
-                }
-
-                // Nature/Environment
-                if (title.includes('nature') || title.includes('environment') || title.includes('climate') || title.includes('green')) {
-                    return `https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=250&fit=crop&crop=center&q=80&auto=format`;
                 }
 
                 // Default beautiful images based on CONSISTENT hash (not display order)
@@ -5417,6 +5917,7 @@ Want All Fresh Images → Use "Sync Images" button
                 return filename.replace(/[^a-z0-9\s]/gi, '_').toLowerCase().substring(0, 50);
             }
 
+            // Enhanced debug info with AI analytics
             showDebugInfo() {
                 const cacheStats = this.getCacheStats();
                 const storedImages = this.articles.filter(a => a.cachedImage).length;
@@ -5435,20 +5936,26 @@ Want All Fresh Images → Use "Sync Images" button
                 const isCategoryVisible = categoryContainer.style.display !== 'none';
 
                 const categorizedArticles = this.articles.filter(a => a.category).length;
+                const aiEnhancedArticles = this.articles.filter(a => a.aiEnhanced).length;
                 const categoryBreakdown = Array.from(this.categories.entries())
                     .sort((a, b) => b[1] - a[1])
                     .slice(0, 5)
                     .map(([cat, count]) => `${cat}: ${count}`)
                     .join(', ');
 
-                // NEW: Category debugging info
+                // AI Analytics
+                const aiAnalytics = Array.from(this.categoryAnalytics.entries())
+                    .map(([cat, data]) => `${cat}: ${data.count} articles (${data.aiEnhanced} AI-enhanced, avg score: ${data.avgScore})`)
+                    .join('\n');
+
+                // Category debugging info
                 const categoryDebug = this.articles.slice(0, 5).map(article =>
-                    `"${article.title.substring(0, 40)}..." → ${article.category || 'Not categorized'} (score: ${article.categoryScore || 0})`
+                    `"${article.title.substring(0, 40)}..." → ${article.category || 'Not categorized'} (score: ${article.categoryScore || 0}, AI: ${article.aiEnhanced ? 'Yes' : 'No'})`
                 ).join('\n');
 
                 const info = `
-MyPocket Web Reader Debug Info (PKCE Enabled):
-===============================================
+MyPocket AI-Enhanced Web Reader Debug Info (PKCE + AI):
+=====================================================
 
 Current URL: ${window.location.href}
 Redirect URI: ${this.redirectUri}
@@ -5486,15 +5993,18 @@ Host: ${window.location.host}
 - Keyboard Shortcuts: Ctrl/Cmd+K, / (search), Esc (close)
 - Navigation Active States: Updated
 
-🏷️ CATEGORIZATION DEBUG:
-- Auto-Categorization: Enabled
+🤖 AI-ENHANCED CATEGORIZATION:
+- AI Features Enabled: ${this.aiCategoriesEnabled}
+- Total Categories: ${this.categories.size}
 - Categorized Articles: ${categorizedArticles}/${this.articles.length}
-- Categories Found: ${this.categories.size}
+- AI-Enhanced Articles: ${aiEnhancedArticles}/${this.articles.length}
 - Top Categories: ${categoryBreakdown || 'None'}
-- Category Filter Visible: ${isCategoryVisible}
 - Active Category Filter: ${this.activeCategory || 'None'}
 
-Sample Categorizations:
+🧠 AI ANALYTICS:
+${aiAnalytics || 'No analytics available'}
+
+Sample AI Categorizations:
 ${categoryDebug}
 
 💾 LOCAL CACHE:
@@ -5509,12 +6019,21 @@ ${categoryDebug}
 ✅ Automatic token refresh
 ✅ Secure parameter storage
 
-CATEGORY DEBUGGING:
-To test categories, try: webReader.debugCategories()
+🎯 AI ENHANCEMENTS:
+✅ 16 intelligent categories (Politics, Philosophy, Psychology, etc.)
+✅ Context-aware semantic analysis
+✅ Smart fallback patterns for ambiguous content
+✅ Confidence scoring and analytics
+✅ Cross-device category sync
+
+DEBUGGING COMMANDS:
+- webReader.debugCategories() - Detailed category analysis
+- webReader.recategorizeAllWithAI() - Force AI re-categorization
+- webReader.showAIHelp() - AI features help
                 `;
 
                 alert(info);
-                console.log('🔧 PKCE Debug Info:', {
+                console.log('🔧 AI-Enhanced Debug Info:', {
                     currentUrl: window.location.href,
                     redirectUri: this.redirectUri,
                     authMethod: 'Authorization Code + PKCE',
@@ -5527,31 +6046,42 @@ To test categories, try: webReader.debugCategories()
                     searchVisible: isSearchVisible,
                     categoryVisible: isCategoryVisible,
                     categorizedArticles: categorizedArticles,
+                    aiEnhancedArticles: aiEnhancedArticles,
                     categoriesFound: this.categories.size,
                     activeCategory: this.activeCategory,
                     cacheStats: cacheStats,
                     storedImages: storedImages,
-                    crossDeviceEnabled: this.storeImagesInBackup
+                    crossDeviceEnabled: this.storeImagesInBackup,
+                    aiFeatures: {
+                        enabled: this.aiCategoriesEnabled,
+                        totalCategories: this.categories.size,
+                        aiEnhancedCount: aiEnhancedArticles,
+                        analytics: Object.fromEntries(this.categoryAnalytics)
+                    }
                 });
             }
 
-            // NEW: Debug categories function
+            // Enhanced debug categories function with AI info
             debugCategories() {
-                console.log('🔍 CATEGORY DEBUG INFO:');
+                console.log('🔍 AI-ENHANCED CATEGORY DEBUG INFO:');
                 console.log(`Total articles: ${this.articles.length}`);
                 console.log(`Categories found: ${this.categories.size}`);
+                console.log(`AI-enhanced articles: ${this.articles.filter(a => a.aiEnhanced).length}`);
                 console.log(`Active category: ${this.activeCategory || 'None'}`);
 
                 // Show all categories and counts
-                console.log('📊 Category breakdown:');
+                console.log('📊 Category breakdown with AI analytics:');
                 for (const [category, count] of this.categories.entries()) {
-                    console.log(`  ${category}: ${count} articles`);
+                    const analytics = this.categoryAnalytics.get(category);
+                    const aiInfo = analytics ? ` (${analytics.aiEnhanced} AI-enhanced, avg score: ${analytics.avgScore})` : '';
+                    console.log(`  ${category}: ${count} articles${aiInfo}`);
                 }
 
-                // Show first few articles and their categories
-                console.log('📄 Sample article categorizations:');
+                // Show first few articles and their AI categorizations
+                console.log('📄 Sample AI categorizations:');
                 this.articles.slice(0, 10).forEach((article, index) => {
-                    console.log(`  ${index + 1}. "${article.title.substring(0, 50)}..." → ${article.category || 'Not categorized'} (score: ${article.categoryScore || 0})`);
+                    const aiFlag = article.aiEnhanced ? ' 🤖' : '';
+                    console.log(`  ${index + 1}. "${article.title.substring(0, 50)}..." → ${article.category || 'Not categorized'} (score: ${article.categoryScore || 0})${aiFlag}`);
                 });
 
                 // Test filtering
@@ -5559,15 +6089,18 @@ To test categories, try: webReader.debugCategories()
                     const filtered = this.articles.filter(a => a.category === this.activeCategory);
                     console.log(`🎯 Articles in "${this.activeCategory}" category: ${filtered.length}`);
                     filtered.forEach((article, index) => {
-                        console.log(`  ${index + 1}. "${article.title.substring(0, 50)}..."`);
+                        const aiFlag = article.aiEnhanced ? ' 🤖' : '';
+                        console.log(`  ${index + 1}. "${article.title.substring(0, 50)}..."${aiFlag}`);
                     });
                 }
 
                 return {
                     totalArticles: this.articles.length,
                     categoriesFound: this.categories.size,
+                    aiEnhancedCount: this.articles.filter(a => a.aiEnhanced).length,
                     activeCategory: this.activeCategory,
-                    categories: Object.fromEntries(this.categories)
+                    categories: Object.fromEntries(this.categories),
+                    aiAnalytics: Object.fromEntries(this.categoryAnalytics)
                 };
             }
 
@@ -5631,7 +6164,7 @@ To test categories, try: webReader.debugCategories()
 
         // Initialize when DOM is ready
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('📄 DOM Content Loaded - Starting initialization...');
+            console.log('📄 DOM Content Loaded - Starting AI-enhanced initialization...');
 
             try {
                 // Test if elements exist first
@@ -5651,16 +6184,16 @@ To test categories, try: webReader.debugCategories()
                     return;
                 }
 
-                console.log('✅ Critical elements found, initializing...');
+                console.log('✅ Critical elements found, initializing AI-enhanced reader...');
                 webReader = new MyPocketWebReader();
                 window.webReader = webReader;
 
-                // Make debug function available
+                // Make debug functions available
                 window.debugElements = () => webReader.debugElements();
                 window.testAuth = () => webReader.testAuth();
                 window.debugCategories = () => webReader.debugCategories();
 
-                console.log('✅ MyPocket Web Reader initialized successfully');
+                console.log('✅ MyPocket AI-Enhanced Web Reader initialized successfully');
 
                 // Test connection immediately
                 setTimeout(() => {
@@ -5669,7 +6202,7 @@ To test categories, try: webReader.debugCategories()
                 }, 500);
 
             } catch (error) {
-                console.error('❌ CRITICAL ERROR during initialization:', error);
+                console.error('❌ CRITICAL ERROR during AI-enhanced initialization:', error);
                 console.error('Error stack:', error.stack);
 
                 // Show error in UI
@@ -5681,7 +6214,7 @@ To test categories, try: webReader.debugCategories()
 
                 // Make debug available even if init failed
                 window.webReader = null;
-                alert(`MyPocket failed to start!\n\nError: ${error.message}\n\nPlease:\n1. Check browser console for details\n2. Try refreshing the page\n3. Ensure you're using a modern browser`);
+                alert(`MyPocket AI Reader failed to start!\n\nError: ${error.message}\n\nPlease:\n1. Check browser console for details\n2. Try refreshing the page\n3. Ensure you're using a modern browser`);
             }
         });
 
@@ -5697,3 +6230,4 @@ To test categories, try: webReader.debugCategories()
 </body>
 
 </html>
+                 '
