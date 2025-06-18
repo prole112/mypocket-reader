@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPocket - Enhanced AI Reader with Advanced Categorization</title>
+    <title>MyPocket - Enhanced AI Reader with Improved Categorization</title>
     <style>
         * {
             margin: 0;
@@ -849,7 +849,7 @@
         }
 
         .article-card.advanced-ai::before {
-            content: "🧠 Advanced AI";
+            content: "🧠 High Accuracy";
             background: linear-gradient(135deg, var(--ai-secondary), #7b1fa2);
         }
 
@@ -962,10 +962,13 @@
         }
 
         @keyframes aiPulse {
-            0%, 100% { 
+
+            0%,
+            100% {
                 box-shadow: var(--ai-glow);
             }
-            50% { 
+
+            50% {
                 box-shadow: 0 0 30px rgba(156, 39, 176, 0.5);
             }
         }
@@ -1239,6 +1242,7 @@
                 transform: rotate(0deg);
                 filter: hue-rotate(0deg);
             }
+
             100% {
                 transform: rotate(360deg);
                 filter: hue-rotate(360deg);
@@ -1660,9 +1664,9 @@
         <div class="sidebar-header">
             <div class="sidebar-brand">
                 <span>🧠</span>
-                <span>MyPocket Advanced AI</span>
+                <span>MyPocket Smart AI</span>
             </div>
-            <div class="ai-status">Enhanced categorization with 20+ intelligent categories</div>
+            <div class="ai-status">Improved accuracy with precision categorization</div>
         </div>
 
         <!-- Connection Status -->
@@ -1680,7 +1684,7 @@
         <nav class="sidebar-nav">
             <!-- Main Actions -->
             <div class="nav-section">
-                <div class="nav-section-title">AI Library</div>
+                <div class="nav-section-title">Smart Library</div>
                 <button class="nav-item" id="allArticlesNav" onclick="webReader.showAllArticles()">
                     <span class="icon">📖</span>
                     <span class="text">All Articles</span>
@@ -1700,9 +1704,9 @@
             <!-- AI Tools -->
             <div class="nav-section">
                 <div class="nav-section-title">AI Tools</div>
-                <button class="nav-item ai-nav-item" id="aiAnalyzeBtn" onclick="webReader.runAdvancedAIAnalysis()">
+                <button class="nav-item ai-nav-item" id="aiAnalyzeBtn" onclick="webReader.runSmartAIAnalysis()">
                     <span class="icon">🤖</span>
-                    <span class="text">Advanced AI Analysis</span>
+                    <span class="text">Smart AI Analysis</span>
                 </button>
                 <button class="nav-item ai-nav-item" id="semanticSearchBtn" onclick="webReader.toggleSemanticSearch()">
                     <span class="icon">🧠</span>
@@ -1771,12 +1775,12 @@
 
                     <div class="logo">
                         <span>🧠</span>
-                        MyPocket Advanced AI Reader
-                        <span class="ai-badge">20+ AI Categories</span>
+                        MyPocket Smart AI Reader
+                        <span class="ai-badge">Improved Accuracy</span>
                     </div>
 
                     <div class="header-right">
-                        <span id="headerStatus" class="header-status">🧠 Advanced AI Enhanced</span>
+                        <span id="headerStatus" class="header-status">🧠 Smart AI Enhanced</span>
                     </div>
                 </div>
             </div>
@@ -1787,7 +1791,8 @@
             <div class="container">
                 <div class="search-box">
                     <input type="text" id="searchInput" class="search-input"
-                        placeholder="🧠 Advanced AI-powered semantic search... (Try: 'machine learning tutorials' or 'startup funding advice')" autocomplete="off">
+                        placeholder="🧠 Smart AI-powered search... (Try: 'machine learning' or 'startup advice')"
+                        autocomplete="off">
                     <button class="search-close-btn" onclick="webReader.toggleSearch()" title="Close search">✕</button>
                 </div>
             </div>
@@ -1799,8 +1804,8 @@
                 <div class="category-filter">
                     <div class="category-header">
                         <div>
-                            <h3>🧠 Advanced AI Categories</h3>
-                            <div class="ai-stats" id="aiStats">20+ intelligent categories with semantic analysis</div>
+                            <h3>🧠 Smart AI Categories</h3>
+                            <div class="ai-stats" id="aiStats">Precision categorization with enhanced accuracy</div>
                         </div>
                         <button class="category-close-btn" onclick="webReader.toggleCategoryFilter()"
                             title="Close categories">✕</button>
@@ -1814,7 +1819,7 @@
 
         <!-- Status -->
         <div class="status" id="status">
-            Connect to OneDrive to view your saved articles with advanced AI categorization
+            Connect to OneDrive to view your saved articles with smart AI categorization
         </div>
 
         <!-- Articles -->
@@ -1823,8 +1828,8 @@
                 <div id="articlesContainer">
                     <div class="empty-state">
                         <div class="empty-state-icon">🧠</div>
-                        <h3>Welcome to MyPocket Advanced AI Reader</h3>
-                        <p>Connect to OneDrive to access your saved articles with 20+ intelligent AI categories and semantic analysis!</p>
+                        <h3>Welcome to MyPocket Smart AI Reader</h3>
+                        <p>Connect to OneDrive to access your saved articles with improved AI categorization accuracy!</p>
                     </div>
                 </div>
             </div>
@@ -1855,1049 +1860,567 @@
     </div>
 
     <script>
-        console.log('🚀 MyPocket Advanced AI Reader with Enhanced Categorization starting...');
+        console.log('🚀 MyPocket Smart AI Reader with Enhanced Accuracy starting...');
 
-        // Advanced AI categorization system
-        class AdvancedAICategorizationEngine {
+        // Improved Smart AI categorization system with higher accuracy
+        class SmartAICategorizationEngine {
             constructor() {
-                this.categories = this.initializeAdvancedCategories();
-                this.semanticPatterns = this.initializeSemanticPatterns();
-                this.contextAnalyzer = this.initializeContextAnalyzer();
-                this.confidenceThresholds = this.initializeConfidenceThresholds();
-                this.categoryHierarchy = this.initializeCategoryHierarchy();
-                this.sentimentAnalyzer = this.initializeSentimentAnalyzer();
-                this.topicModeling = this.initializeTopicModeling();
+                this.categories = this.initializePreciseCategories();
+                this.domainMappings = this.initializeDomainMappings();
+                this.titlePatterns = this.initializeTitlePatterns();
+                this.contentAnalyzers = this.initializeContentAnalyzers();
                 
-                console.log('🧠 Advanced AI Categorization Engine initialized with 20+ categories');
+                console.log('🧠 Smart AI Categorization Engine initialized with improved accuracy');
             }
 
-            // Initialize 20+ intelligent categories with advanced patterns
-            initializeAdvancedCategories() {
+            // Initialize categories with precise, non-overlapping keywords
+            initializePreciseCategories() {
                 return {
                     'Technology': {
                         icon: '💻',
-                        confidence: 'high',
                         priority: 1,
-                        keywords: [
-                            // Core tech
-                            'technology', 'tech', 'programming', 'code', 'coding', 'software', 'developer', 'development',
-                            'javascript', 'python', 'react', 'vue', 'angular', 'node', 'api', 'github', 'stackoverflow',
-                            'algorithm', 'database', 'web', 'mobile', 'app', 'application', 'framework', 'library',
-                            'bug', 'debug', 'frontend', 'backend', 'fullstack', 'devops', 'cloud', 'aws', 'azure',
-                            'docker', 'kubernetes', 'microservices', 'serverless', 'automation', 'testing',
-                            // Advanced tech
-                            'machine learning', 'artificial intelligence', 'ai', 'ml', 'neural network', 'deep learning',
-                            'data science', 'blockchain', 'cryptocurrency', 'bitcoin', 'cybersecurity', 'security',
-                            'hacking', 'penetration testing', 'open source', 'git', 'version control', 'ci/cd',
-                            'quantum computing', 'edge computing', 'iot', 'internet of things', 'robotics',
-                            'computer vision', 'nlp', 'natural language processing', 'big data', 'analytics'
+                        // Core tech keywords - very specific to avoid conflicts
+                        primaryKeywords: [
+                            'programming', 'coding', 'software development', 'web development', 'app development',
+                            'javascript', 'python', 'react', 'vue', 'angular', 'node.js', 'nodejs',
+                            'github', 'stackoverflow', 'api', 'database', 'framework', 'library',
+                            'frontend', 'backend', 'fullstack', 'devops', 'cloud computing', 
+                            'docker', 'kubernetes', 'microservices', 'serverless'
                         ],
-                        domains: ['github.com', 'stackoverflow.com', 'dev.to', 'techcrunch.com', 'theverge.com', 'arstechnica.com'],
-                        semanticContext: ['innovation', 'digital transformation', 'emerging tech', 'tech trends'],
-                        relatedCategories: ['Science', 'Business', 'Education']
+                        secondaryKeywords: [
+                            'tech', 'technology', 'developer', 'development', 'code', 'software',
+                            'algorithm', 'debugging', 'testing', 'automation', 'version control', 'git'
+                        ],
+                        domains: ['github.com', 'stackoverflow.com', 'dev.to', 'hashnode.com', 'medium.com/tag/programming'],
+                        excludeWords: ['ai', 'artificial intelligence', 'machine learning', 'neural network']
                     },
                     'Artificial Intelligence': {
                         icon: '🤖',
-                        confidence: 'high',
                         priority: 1,
-                        keywords: [
-                            'artificial intelligence', 'ai', 'machine learning', 'ml', 'deep learning', 'neural network',
-                            'chatgpt', 'gpt', 'llm', 'large language model', 'transformer', 'bert', 'opencv',
-                            'tensorflow', 'pytorch', 'keras', 'scikit-learn', 'pandas', 'numpy', 'jupyter',
-                            'computer vision', 'nlp', 'natural language processing', 'sentiment analysis',
-                            'reinforcement learning', 'supervised learning', 'unsupervised learning',
-                            'generative ai', 'prompt engineering', 'fine tuning', 'model training',
-                            'data mining', 'predictive analytics', 'recommendation system', 'chatbot',
-                            'voice recognition', 'image recognition', 'pattern recognition', 'automation',
-                            'cognitive computing', 'expert system', 'knowledge graph', 'ai ethics'
+                        primaryKeywords: [
+                            'artificial intelligence', 'machine learning', 'deep learning', 'neural network',
+                            'chatgpt', 'gpt', 'llm', 'large language model', 'transformer', 'bert',
+                            'computer vision', 'natural language processing', 'nlp', 'generative ai',
+                            'reinforcement learning', 'supervised learning', 'unsupervised learning'
+                        ],
+                        secondaryKeywords: [
+                            'ai', 'ml', 'tensorflow', 'pytorch', 'keras', 'opencv', 'prompt engineering',
+                            'fine tuning', 'model training', 'data mining', 'predictive analytics'
                         ],
                         domains: ['openai.com', 'deepmind.com', 'ai.google', 'research.facebook.com', 'arxiv.org'],
-                        semanticContext: ['intelligent systems', 'automation', 'cognitive technology', 'ai research'],
-                        relatedCategories: ['Technology', 'Science', 'Philosophy', 'Psychology']
+                        excludeWords: []
                     },
                     'Business': {
                         icon: '💼',
-                        confidence: 'high',
                         priority: 2,
-                        keywords: [
-                            'business', 'startup', 'entrepreneur', 'entrepreneurship', 'finance', 'financial',
-                            'investment', 'investing', 'marketing', 'sales', 'strategy', 'management', 'leadership',
-                            'company', 'revenue', 'profit', 'corporate', 'economics', 'market', 'industry',
-                            'venture', 'funding', 'ipo', 'stocks', 'trading', 'cryptocurrency', 'fintech',
-                            'saas', 'b2b', 'b2c', 'productivity', 'workflow', 'remote work', 'freelancing',
-                            'consulting', 'networking', 'career', 'job', 'hiring', 'hr', 'human resources',
-                            'innovation', 'disruption', 'scaling', 'growth hacking', 'customer acquisition',
-                            'retention', 'conversion', 'roi', 'kpi', 'metrics', 'analytics', 'digital marketing'
+                        primaryKeywords: [
+                            'startup', 'entrepreneur', 'entrepreneurship', 'business strategy', 'venture capital',
+                            'investment', 'funding', 'ipo', 'revenue', 'profit', 'corporate strategy',
+                            'marketing strategy', 'sales strategy', 'customer acquisition', 'growth hacking'
+                        ],
+                        secondaryKeywords: [
+                            'business', 'finance', 'marketing', 'sales', 'management', 'leadership',
+                            'company', 'industry', 'market', 'productivity', 'remote work'
                         ],
                         domains: ['linkedin.com', 'forbes.com', 'bloomberg.com', 'businessinsider.com', 'hbr.org'],
-                        semanticContext: ['commercial success', 'market dynamics', 'economic growth', 'corporate strategy'],
-                        relatedCategories: ['Technology', 'Economics', 'Psychology']
+                        excludeWords: ['technology', 'programming', 'software']
                     },
                     'Science': {
                         icon: '🔬',
-                        confidence: 'high',
                         priority: 1,
-                        keywords: [
-                            'science', 'scientific', 'research', 'study', 'data', 'analysis', 'experiment',
-                            'discovery', 'theory', 'hypothesis', 'biology', 'chemistry', 'physics', 'medicine',
-                            'medical', 'health', 'healthcare', 'climate', 'environment', 'environmental',
-                            'space', 'astronomy', 'genetics', 'neuroscience', 'quantum', 'nuclear',
-                            'biochemistry', 'biotechnology', 'pharmaceutical', 'vaccine', 'covid', 'pandemic',
-                            'evolution', 'ecology', 'sustainability', 'renewable energy', 'solar', 'wind energy',
-                            'genomics', 'bioengineering', 'nanotechnology', 'materials science', 'particle physics',
-                            'cosmology', 'astrophysics', 'molecular biology', 'microbiology', 'immunology'
+                        primaryKeywords: [
+                            'scientific research', 'peer review', 'research study', 'clinical trial',
+                            'biology', 'chemistry', 'physics', 'medicine', 'medical research',
+                            'space exploration', 'astronomy', 'genetics', 'neuroscience', 'quantum physics'
+                        ],
+                        secondaryKeywords: [
+                            'science', 'research', 'study', 'experiment', 'discovery', 'theory',
+                            'analysis', 'data', 'hypothesis', 'methodology'
                         ],
                         domains: ['arxiv.org', 'nature.com', 'science.org', 'plos.org', 'ncbi.nlm.nih.gov'],
-                        semanticContext: ['scientific method', 'peer review', 'empirical evidence', 'research methodology'],
-                        relatedCategories: ['Technology', 'Health', 'Environment', 'Philosophy']
-                    },
-                    'Politics': {
-                        icon: '🏛️',
-                        confidence: 'medium',
-                        priority: 3,
-                        keywords: [
-                            'politics', 'political', 'government', 'policy', 'election', 'vote', 'voting',
-                            'democracy', 'republican', 'democrat', 'conservative', 'liberal', 'senate',
-                            'congress', 'president', 'prime minister', 'parliament', 'legislation', 'law',
-                            'constitution', 'supreme court', 'judge', 'campaign', 'candidate', 'poll',
-                            'debate', 'immigration', 'healthcare reform', 'tax policy', 'foreign policy',
-                            'diplomacy', 'war', 'peace', 'conflict', 'international relations', 'sovereignty',
-                            'nationalism', 'globalization', 'activism', 'protest', 'rally', 'geopolitics',
-                            'governance', 'public policy', 'civil rights', 'social justice', 'electoral system'
-                        ],
-                        domains: ['politico.com', 'washingtonpost.com', 'nytimes.com', 'cnn.com', 'bbc.com'],
-                        semanticContext: ['governance', 'civic engagement', 'political discourse', 'democratic process'],
-                        relatedCategories: ['News', 'Philosophy', 'Society', 'Law']
-                    },
-                    'Philosophy': {
-                        icon: '🤔',
-                        confidence: 'medium',
-                        priority: 4,
-                        keywords: [
-                            'philosophy', 'philosophical', 'ethics', 'moral', 'morality', 'epistemology',
-                            'metaphysics', 'logic', 'reasoning', 'consciousness', 'existentialism', 'stoicism',
-                            'buddhism', 'mindfulness', 'meditation', 'wisdom', 'truth', 'reality', 'existence',
-                            'meaning', 'purpose', 'free will', 'determinism', 'phenomenology', 'nihilism',
-                            'absurdism', 'pragmatism', 'rationalism', 'empiricism', 'virtue', 'justice',
-                            'freedom', 'rights', 'utilitarianism', 'deontology', 'virtue ethics', 'critical thinking',
-                            'philosophical inquiry', 'ontology', 'axiology', 'aesthetics', 'philosophy of mind',
-                            'philosophy of science', 'social philosophy', 'political philosophy'
-                        ],
-                        domains: ['plato.stanford.edu', 'philpapers.org', 'philosophynow.org', 'aeon.co'],
-                        semanticContext: ['intellectual inquiry', 'fundamental questions', 'conceptual analysis', 'wisdom'],
-                        relatedCategories: ['Psychology', 'Science', 'Religion', 'Politics']
-                    },
-                    'Psychology': {
-                        icon: '🧠',
-                        confidence: 'medium',
-                        priority: 3,
-                        keywords: [
-                            'psychology', 'psychological', 'mental health', 'therapy', 'counseling', 'behavior',
-                            'cognitive', 'emotion', 'personality', 'depression', 'anxiety', 'stress', 'trauma',
-                            'ptsd', 'mindfulness', 'self-help', 'motivation', 'habit', 'addiction', 'neurology',
-                            'brain', 'mind', 'learning', 'memory', 'perception', 'development', 'social psychology',
-                            'behavioral economics', 'decision making', 'bias', 'persuasion', 'influence',
-                            'relationships', 'communication', 'leadership psychology', 'cognitive science',
-                            'neuropsychology', 'clinical psychology', 'positive psychology', 'resilience'
-                        ],
-                        domains: ['psychologytoday.com', 'apa.org', 'psych.org', 'mindful.org'],
-                        semanticContext: ['human behavior', 'mental processes', 'psychological well-being', 'therapy'],
-                        relatedCategories: ['Health', 'Philosophy', 'Science', 'Self-Development']
-                    },
-                    'Design': {
-                        icon: '🎨',
-                        confidence: 'high',
-                        priority: 2,
-                        keywords: [
-                            'design', 'designer', 'ui', 'ux', 'user experience', 'user interface', 'interface',
-                            'visual', 'graphic', 'creative', 'art', 'artist', 'illustration', 'typography',
-                            'color', 'layout', 'prototype', 'wireframe', 'figma', 'sketch', 'photoshop',
-                            'adobe', 'branding', 'logo', 'icon', 'website design', 'web design', 'mobile design',
-                            'app design', 'product design', 'industrial design', 'fashion', 'architecture',
-                            'interior design', 'photography', 'video', 'animation', 'motion graphics',
-                            'accessibility', 'usability', 'design thinking', 'human-centered design'
-                        ],
-                        domains: ['dribbble.com', 'behance.net', 'medium.com', 'uxdesign.cc', 'designbetter.co'],
-                        semanticContext: ['visual communication', 'aesthetic appeal', 'user-centered design', 'creativity'],
-                        relatedCategories: ['Technology', 'Art', 'Psychology']
-                    },
-                    'News': {
-                        icon: '📰',
-                        confidence: 'medium',
-                        priority: 3,
-                        keywords: [
-                            'news', 'breaking', 'breaking news', 'report', 'reporter', 'journalist', 'journalism',
-                            'media', 'current events', 'headline', 'press', 'investigation', 'crisis', 'conflict',
-                            'war', 'peace', 'diplomacy', 'economy', 'economic', 'recession', 'inflation', 'gdp',
-                            'unemployment', 'stock market', 'urgent', 'live', 'update', 'scandal', 'controversy',
-                            'exclusive', 'interview', 'analysis', 'opinion', 'editorial', 'fact-check',
-                            'misinformation', 'fake news', 'media literacy', 'press freedom'
-                        ],
-                        domains: ['bbc.com', 'cnn.com', 'nytimes.com', 'washingtonpost.com', 'reuters.com'],
-                        semanticContext: ['current affairs', 'information dissemination', 'public awareness', 'journalism'],
-                        relatedCategories: ['Politics', 'Society', 'Economics']
-                    },
-                    'Education': {
-                        icon: '🎓',
-                        confidence: 'high',
-                        priority: 2,
-                        keywords: [
-                            'education', 'educational', 'learning', 'learn', 'course', 'courses', 'tutorial',
-                            'tutorials', 'lesson', 'lessons', 'teach', 'teaching', 'teacher', 'student',
-                            'university', 'college', 'school', 'academic', 'academia', 'knowledge', 'skill',
-                            'skills', 'training', 'certification', 'certificate', 'degree', 'bachelor',
-                            'master', 'phd', 'doctorate', 'mooc', 'online learning', 'e-learning', 'study',
-                            'studying', 'exam', 'test', 'quiz', 'homework', 'assignment', 'research',
-                            'curriculum', 'pedagogy', 'educational technology', 'distance learning'
-                        ],
-                        domains: ['coursera.org', 'edx.org', 'khanacademy.org', 'udemy.com', 'wikipedia.org'],
-                        semanticContext: ['knowledge acquisition', 'skill development', 'academic achievement', 'learning'],
-                        relatedCategories: ['Technology', 'Science', 'Philosophy']
-                    },
-                    'Entertainment': {
-                        icon: '🎬',
-                        confidence: 'medium',
-                        priority: 4,
-                        keywords: [
-                            'entertainment', 'movie', 'movies', 'film', 'films', 'cinema', 'tv', 'television',
-                            'show', 'shows', 'series', 'episode', 'season', 'music', 'song', 'album', 'artist',
-                            'band', 'concert', 'festival', 'game', 'games', 'gaming', 'video games', 'esports',
-                            'streaming', 'netflix', 'amazon prime', 'disney', 'hulu', 'spotify', 'apple music',
-                            'youtube', 'twitch', 'celebrity', 'celebrities', 'hollywood', 'broadway', 'theater',
-                            'comedy', 'humor', 'funny', 'meme', 'viral', 'pop culture', 'social media'
-                        ],
-                        domains: ['youtube.com', 'netflix.com', 'spotify.com', 'imdb.com', 'ign.com'],
-                        semanticContext: ['leisure activities', 'cultural content', 'mass media', 'popular culture'],
-                        relatedCategories: ['Technology', 'Art', 'Society']
+                        excludeWords: ['business', 'marketing', 'startup']
                     },
                     'Health': {
                         icon: '🏥',
-                        confidence: 'high',
                         priority: 2,
-                        keywords: [
-                            'health', 'healthy', 'healthcare', 'medical', 'medicine', 'doctor', 'physician',
-                            'patient', 'hospital', 'clinic', 'treatment', 'therapy', 'disease', 'illness',
-                            'symptoms', 'diagnosis', 'cure', 'medication', 'drug', 'pharmaceutical', 'fitness',
-                            'exercise', 'workout', 'gym', 'running', 'yoga', 'nutrition', 'diet', 'food',
-                            'vitamins', 'supplements', 'wellness', 'mental health', 'sleep', 'weight loss',
-                            'weight gain', 'muscle', 'cardio', 'prevention', 'immunization', 'public health',
-                            'epidemiology', 'telemedicine', 'health technology', 'medical research'
+                        primaryKeywords: [
+                            'healthcare', 'medical treatment', 'health advice', 'fitness training',
+                            'nutrition guide', 'diet plan', 'exercise routine', 'mental health',
+                            'wellness tips', 'medical diagnosis', 'symptoms', 'disease prevention'
+                        ],
+                        secondaryKeywords: [
+                            'health', 'medical', 'fitness', 'nutrition', 'wellness', 'exercise',
+                            'diet', 'doctor', 'hospital', 'treatment', 'therapy'
                         ],
                         domains: ['mayoclinic.org', 'webmd.com', 'healthline.com', 'nih.gov', 'who.int'],
-                        semanticContext: ['medical care', 'physical wellness', 'health management', 'disease prevention'],
-                        relatedCategories: ['Science', 'Psychology', 'Technology']
+                        excludeWords: ['technology', 'business', 'programming']
                     },
-                    'Economics': {
-                        icon: '📈',
-                        confidence: 'medium',
-                        priority: 3,
-                        keywords: [
-                            'economics', 'economic', 'economy', 'market', 'markets', 'finance', 'financial',
-                            'inflation', 'deflation', 'recession', 'growth', 'gdp', 'unemployment', 'employment',
-                            'labor', 'trade', 'import', 'export', 'currency', 'exchange rate', 'monetary policy',
-                            'fiscal policy', 'central bank', 'federal reserve', 'interest rates', 'bonds',
-                            'commodities', 'supply chain', 'demand', 'supply', 'microeconomics', 'macroeconomics',
-                            'behavioral economics', 'economic theory', 'capitalism', 'socialism', 'free market'
+                    'Education': {
+                        icon: '🎓',
+                        priority: 2,
+                        primaryKeywords: [
+                            'online course', 'tutorial', 'learning guide', 'how to learn', 'study guide',
+                            'educational content', 'teaching method', 'skill development', 'certification course',
+                            'university course', 'academic program', 'learning platform'
                         ],
-                        domains: ['economist.com', 'bloomberg.com', 'wsj.com', 'ft.com', 'federalreserve.gov'],
-                        semanticContext: ['economic systems', 'market forces', 'financial analysis', 'economic policy'],
-                        relatedCategories: ['Business', 'Politics', 'Mathematics']
+                        secondaryKeywords: [
+                            'education', 'learning', 'course', 'tutorial', 'lesson', 'teaching',
+                            'study', 'academic', 'knowledge', 'skill', 'training'
+                        ],
+                        domains: ['coursera.org', 'edx.org', 'khanacademy.org', 'udemy.com', 'pluralsight.com'],
+                        excludeWords: []
                     },
-                    'Environment': {
-                        icon: '🌱',
-                        confidence: 'medium',
+                    'News': {
+                        icon: '📰',
                         priority: 3,
-                        keywords: [
-                            'environment', 'environmental', 'climate', 'climate change', 'global warming',
-                            'sustainability', 'sustainable', 'renewable energy', 'solar', 'wind', 'green',
-                            'eco', 'ecology', 'ecosystem', 'biodiversity', 'conservation', 'pollution',
-                            'carbon', 'emissions', 'greenhouse gas', 'fossil fuels', 'clean energy', 'recycling',
-                            'waste', 'plastic', 'ocean', 'forest', 'deforestation', 'wildlife', 'endangered species',
-                            'carbon footprint', 'renewable', 'organic', 'environmental science', 'green technology',
-                            'climate action', 'environmental policy', 'ecological footprint'
+                        primaryKeywords: [
+                            'breaking news', 'news report', 'current events', 'latest news', 'live update',
+                            'press release', 'news analysis', 'journalism', 'media coverage', 'headline news'
                         ],
-                        domains: ['greenpeace.org', 'wwf.org', 'epa.gov', 'unfccc.int', 'ipcc.ch'],
-                        semanticContext: ['environmental protection', 'sustainability', 'climate action', 'conservation'],
-                        relatedCategories: ['Science', 'Politics', 'Technology']
+                        secondaryKeywords: [
+                            'news', 'breaking', 'report', 'update', 'announcement', 'story',
+                            'journalist', 'media', 'press', 'coverage'
+                        ],
+                        domains: ['bbc.com', 'cnn.com', 'nytimes.com', 'washingtonpost.com', 'reuters.com'],
+                        excludeWords: ['tutorial', 'guide', 'how to']
+                    },
+                    'Politics': {
+                        icon: '🏛️',
+                        priority: 3,
+                        primaryKeywords: [
+                            'political news', 'election results', 'government policy', 'political analysis',
+                            'voting', 'campaign', 'legislation', 'political party', 'senate', 'congress',
+                            'foreign policy', 'diplomacy', 'political commentary'
+                        ],
+                        secondaryKeywords: [
+                            'politics', 'government', 'election', 'vote', 'policy', 'political',
+                            'democracy', 'republican', 'democrat', 'candidate', 'campaign'
+                        ],
+                        domains: ['politico.com', 'washingtonpost.com/politics', 'cnn.com/politics'],
+                        excludeWords: ['technology', 'programming', 'software']
+                    },
+                    'Design': {
+                        icon: '🎨',
+                        priority: 2,
+                        primaryKeywords: [
+                            'ui design', 'ux design', 'user experience', 'user interface', 'web design',
+                            'graphic design', 'visual design', 'design thinking', 'product design',
+                            'figma', 'sketch', 'adobe', 'design system', 'wireframe', 'prototype'
+                        ],
+                        secondaryKeywords: [
+                            'design', 'designer', 'visual', 'creative', 'interface', 'layout',
+                            'typography', 'color', 'branding', 'logo'
+                        ],
+                        domains: ['dribbble.com', 'behance.net', 'medium.com/tag/design', 'uxdesign.cc'],
+                        excludeWords: []
+                    },
+                    'Psychology': {
+                        icon: '🧠',
+                        priority: 3,
+                        primaryKeywords: [
+                            'psychological research', 'mental health', 'behavioral psychology', 'cognitive psychology',
+                            'therapy techniques', 'psychological study', 'human behavior', 'psychology research',
+                            'counseling', 'psychological analysis', 'behavioral analysis'
+                        ],
+                        secondaryKeywords: [
+                            'psychology', 'psychological', 'behavior', 'mental', 'cognitive', 'therapy',
+                            'emotion', 'personality', 'mind', 'brain'
+                        ],
+                        domains: ['psychologytoday.com', 'apa.org', 'psych.org'],
+                        excludeWords: ['technology', 'programming', 'business']
+                    },
+                    'Entertainment': {
+                        icon: '🎬',
+                        priority: 4,
+                        primaryKeywords: [
+                            'movie review', 'tv show', 'entertainment news', 'celebrity news', 'gaming news',
+                            'music review', 'film review', 'streaming', 'netflix', 'gaming', 'video games'
+                        ],
+                        secondaryKeywords: [
+                            'entertainment', 'movie', 'film', 'music', 'game', 'celebrity', 'show',
+                            'streaming', 'youtube', 'netflix'
+                        ],
+                        domains: ['youtube.com', 'netflix.com', 'imdb.com', 'ign.com', 'entertainment.com'],
+                        excludeWords: ['programming', 'technology', 'software']
                     },
                     'Society': {
                         icon: '👥',
-                        confidence: 'medium',
                         priority: 3,
-                        keywords: [
-                            'society', 'social', 'community', 'culture', 'cultural', 'sociology', 'anthropology',
-                            'social justice', 'equality', 'inequality', 'diversity', 'inclusion', 'racism',
-                            'discrimination', 'human rights', 'civil rights', 'gender', 'feminism', 'lgbtq',
-                            'immigration', 'refugee', 'poverty', 'homelessness', 'education', 'healthcare',
-                            'social media', 'digital society', 'urbanization', 'demographics', 'population',
-                            'social change', 'social movements', 'activism', 'social issues', 'public policy',
-                            'social welfare', 'social psychology', 'group dynamics', 'social behavior'
+                        primaryKeywords: [
+                            'social issues', 'cultural analysis', 'social commentary', 'community issues',
+                            'social justice', 'cultural trends', 'society analysis', 'social change',
+                            'human rights', 'social movements', 'cultural studies'
                         ],
-                        domains: ['sociologyguide.com', 'asa.org', 'chronicle.com'],
-                        semanticContext: ['social structures', 'human interaction', 'cultural patterns', 'social change'],
-                        relatedCategories: ['Politics', 'Psychology', 'Philosophy']
-                    },
-                    'Religion': {
-                        icon: '🙏',
-                        confidence: 'low',
-                        priority: 4,
-                        keywords: [
-                            'religion', 'religious', 'faith', 'belief', 'spiritual', 'spirituality', 'god',
-                            'christianity', 'islam', 'judaism', 'buddhism', 'hinduism', 'church', 'mosque',
-                            'temple', 'prayer', 'worship', 'bible', 'quran', 'torah', 'meditation', 'pilgrimage',
-                            'theology', 'scripture', 'doctrine', 'denomination', 'clergy', 'priest', 'pastor',
-                            'imam', 'rabbi', 'religious studies', 'comparative religion', 'mysticism',
-                            'secularism', 'atheism', 'agnosticism', 'interfaith', 'religious freedom'
+                        secondaryKeywords: [
+                            'society', 'social', 'community', 'culture', 'cultural', 'justice',
+                            'equality', 'diversity', 'rights', 'movement'
                         ],
-                        domains: ['religionfacts.com', 'patheos.com', 'beliefnet.com'],
-                        semanticContext: ['spiritual beliefs', 'religious practices', 'faith traditions', 'theology'],
-                        relatedCategories: ['Philosophy', 'Society', 'History']
-                    },
-                    'History': {
-                        icon: '📜',
-                        confidence: 'medium',
-                        priority: 3,
-                        keywords: [
-                            'history', 'historical', 'ancient', 'medieval', 'modern', 'contemporary', 'past',
-                            'civilization', 'empire', 'war', 'battle', 'revolution', 'discovery', 'exploration',
-                            'archaeology', 'artifact', 'monument', 'museum', 'heritage', 'tradition', 'culture',
-                            'timeline', 'chronology', 'period', 'era', 'dynasty', 'ruler', 'king', 'queen',
-                            'emperor', 'historical figure', 'biography', 'documentary', 'primary source',
-                            'secondary source', 'historiography', 'social history', 'cultural history',
-                            'political history', 'military history', 'economic history'
-                        ],
-                        domains: ['history.com', 'smithsonianmag.com', 'nationalgeographic.com', 'britannica.com'],
-                        semanticContext: ['historical events', 'past civilizations', 'historical analysis', 'heritage'],
-                        relatedCategories: ['Politics', 'Society', 'Education']
-                    },
-                    'Sports': {
-                        icon: '⚽',
-                        confidence: 'medium',
-                        priority: 4,
-                        keywords: [
-                            'sports', 'sport', 'football', 'soccer', 'basketball', 'baseball', 'tennis', 'golf',
-                            'hockey', 'olympics', 'athlete', 'team', 'game', 'match', 'tournament', 'championship',
-                            'league', 'player', 'coach', 'training', 'fitness', 'competition', 'score', 'win',
-                            'lose', 'victory', 'defeat', 'mvp', 'draft', 'trade', 'playoff', 'season', 'stadium',
-                            'fan', 'espn', 'nfl', 'nba', 'mlb', 'nhl', 'fifa', 'uefa', 'athletic performance',
-                            'sports science', 'sports psychology', 'sports medicine', 'professional sports'
-                        ],
-                        domains: ['espn.com', 'sports.yahoo.com', 'bleacherreport.com', 'si.com'],
-                        semanticContext: ['athletic competition', 'physical performance', 'team dynamics', 'sportsmanship'],
-                        relatedCategories: ['Health', 'Entertainment', 'Psychology']
-                    },
-                    'Travel': {
-                        icon: '✈️',
-                        confidence: 'medium',
-                        priority: 4,
-                        keywords: [
-                            'travel', 'traveling', 'trip', 'vacation', 'holiday', 'tourism', 'tourist',
-                            'destination', 'flight', 'flights', 'airline', 'airport', 'hotel', 'accommodation',
-                            'booking', 'airbnb', 'hostel', 'resort', 'adventure', 'explore', 'exploring',
-                            'backpacking', 'hiking', 'camping', 'road trip', 'cruise', 'culture', 'cultural',
-                            'country', 'city', 'guide', 'travel guide', 'itinerary', 'budget travel',
-                            'luxury travel', 'solo travel', 'family travel', 'business travel', 'nomad',
-                            'wanderlust', 'sightseeing', 'landmark', 'national park'
-                        ],
-                        domains: ['tripadvisor.com', 'booking.com', 'airbnb.com', 'lonelyplanet.com'],
-                        semanticContext: ['exploration', 'cultural experience', 'leisure travel', 'adventure'],
-                        relatedCategories: ['Geography', 'Culture', 'Entertainment']
-                    },
-                    'Food': {
-                        icon: '🍳',
-                        confidence: 'medium',
-                        priority: 4,
-                        keywords: [
-                            'food', 'recipe', 'recipes', 'cooking', 'cook', 'chef', 'kitchen', 'restaurant',
-                            'restaurants', 'dining', 'cuisine', 'culinary', 'ingredient', 'ingredients', 'meal',
-                            'meals', 'dish', 'dishes', 'baking', 'bake', 'bread', 'cake', 'dessert', 'nutrition',
-                            'diet', 'healthy eating', 'vegetarian', 'vegan', 'gluten-free', 'organic',
-                            'local food', 'farm to table', 'foodie', 'wine', 'beer', 'cocktail', 'beverage',
-                            'coffee', 'tea', 'breakfast', 'lunch', 'dinner', 'gastronomy', 'food science',
-                            'molecular gastronomy', 'food culture', 'food sustainability'
-                        ],
-                        domains: ['allrecipes.com', 'foodnetwork.com', 'epicurious.com', 'bonappetit.com'],
-                        semanticContext: ['culinary arts', 'gastronomy', 'food culture', 'nutrition'],
-                        relatedCategories: ['Health', 'Culture', 'Science']
-                    },
-                    'Self-Development': {
-                        icon: '🌟',
-                        confidence: 'medium',
-                        priority: 3,
-                        keywords: [
-                            'self development', 'personal development', 'self improvement', 'growth', 'mindset',
-                            'motivation', 'inspiration', 'goals', 'productivity', 'habits', 'discipline',
-                            'self help', 'coaching', 'mentoring', 'leadership', 'success', 'achievement',
-                            'confidence', 'self esteem', 'resilience', 'emotional intelligence', 'mindfulness',
-                            'meditation', 'self awareness', 'personal growth', 'life skills', 'time management',
-                            'organization', 'planning', 'decision making', 'problem solving', 'creativity',
-                            'innovation', 'learning', 'skill building', 'career development', 'life coaching'
-                        ],
-                        domains: ['ted.com', 'medium.com', 'psychologytoday.com', 'mindful.org'],
-                        semanticContext: ['personal growth', 'self-improvement', 'life enhancement', 'skill development'],
-                        relatedCategories: ['Psychology', 'Philosophy', 'Education']
+                        domains: ['sociologyguide.com', 'asa.org'],
+                        excludeWords: ['technology', 'programming', 'business']
                     }
                 };
             }
 
-            // Initialize semantic patterns for advanced understanding
-            initializeSemanticPatterns() {
+            // Initialize precise domain mappings
+            initializeDomainMappings() {
                 return {
-                    questionPatterns: [
-                        /^(how|what|why|when|where|who|which|can|should|will|would|could|is|are|do|does|did)/i,
-                        /\b(tutorial|guide|explanation|introduction|overview)\b/i
-                    ],
-                    tutorialPatterns: [
-                        /\b(tutorial|guide|how to|step by step|walkthrough|beginner|learn|master)\b/i,
-                        /\b(getting started|introduction to|basics of)\b/i
-                    ],
-                    newsPatterns: [
-                        /\b(breaking|urgent|update|report|announces|reveals|discovers)\b/i,
-                        /\b(yesterday|today|this week|recently|latest|new)\b/i
-                    ],
-                    opinionPatterns: [
-                        /\b(opinion|thoughts|review|analysis|commentary|perspective|critique)\b/i,
-                        /\b(i think|in my opinion|personally|arguably|controversial)\b/i
-                    ],
-                    technicalPatterns: [
-                        /\b(implementation|architecture|framework|algorithm|methodology)\b/i,
-                        /\b(performance|optimization|scalability|security|testing)\b/i
+                    'github.com': 'Technology',
+                    'stackoverflow.com': 'Technology',
+                    'dev.to': 'Technology',
+                    'hashnode.com': 'Technology',
+                    'openai.com': 'Artificial Intelligence',
+                    'deepmind.com': 'Artificial Intelligence',
+                    'arxiv.org': 'Science',
+                    'nature.com': 'Science',
+                    'science.org': 'Science',
+                    'mayoclinic.org': 'Health',
+                    'webmd.com': 'Health',
+                    'healthline.com': 'Health',
+                    'coursera.org': 'Education',
+                    'edx.org': 'Education',
+                    'khanacademy.org': 'Education',
+                    'udemy.com': 'Education',
+                    'dribbble.com': 'Design',
+                    'behance.net': 'Design',
+                    'linkedin.com': 'Business',
+                    'forbes.com': 'Business',
+                    'bloomberg.com': 'Business',
+                    'bbc.com': 'News',
+                    'cnn.com': 'News',
+                    'nytimes.com': 'News',
+                    'politico.com': 'Politics',
+                    'psychologytoday.com': 'Psychology',
+                    'youtube.com': 'Entertainment',
+                    'netflix.com': 'Entertainment',
+                    'imdb.com': 'Entertainment'
+                };
+            }
+
+            // Initialize title pattern recognition
+            initializeTitlePatterns() {
+                return {
+                    'How to': 'Education',
+                    'Tutorial': 'Education',
+                    'Guide to': 'Education',
+                    'Learning': 'Education',
+                    'Introduction to': 'Education',
+                    'Getting started with': 'Education',
+                    'Breaking:': 'News',
+                    'News:': 'News',
+                    'Live:': 'News',
+                    'Update:': 'News',
+                    'Review:': 'Entertainment',
+                    'Analysis:': 'News',
+                    'Study:': 'Science',
+                    'Research:': 'Science',
+                    'AI': 'Artificial Intelligence',
+                    'Machine Learning': 'Artificial Intelligence',
+                    'Programming': 'Technology',
+                    'Coding': 'Technology',
+                    'Design': 'Design',
+                    'UX': 'Design',
+                    'UI': 'Design'
+                };
+            }
+
+            // Initialize content analyzers for deeper understanding
+            initializeContentAnalyzers() {
+                return {
+                    codePatterns: [
+                        /```[\s\S]*```/g,
+                        /`[^`]+`/g,
+                        /function\s+\w+\s*\(/g,
+                        /class\s+\w+/g,
+                        /import\s+.*from/g,
+                        /const\s+\w+\s*=/g,
+                        /let\s+\w+\s*=/g,
+                        /var\s+\w+\s*=/g
                     ],
                     researchPatterns: [
-                        /\b(study|research|findings|results|conclusion|methodology|hypothesis)\b/i,
-                        /\b(data|analysis|statistics|survey|experiment|peer reviewed)\b/i
+                        /methodology/i,
+                        /hypothesis/i,
+                        /results/i,
+                        /conclusion/i,
+                        /peer.?reviewed/i,
+                        /statistical/i,
+                        /correlation/i,
+                        /experiment/i
+                    ],
+                    newsPatterns: [
+                        /yesterday/i,
+                        /today/i,
+                        /this week/i,
+                        /breaking/i,
+                        /reports/i,
+                        /according to/i,
+                        /sources say/i,
+                        /officials/i
+                    ],
+                    tutorialPatterns: [
+                        /step \d+/i,
+                        /first,/i,
+                        /next,/i,
+                        /finally,/i,
+                        /let's start/i,
+                        /you will learn/i,
+                        /this tutorial/i,
+                        /by the end/i
                     ]
                 };
             }
 
-            // Initialize context analyzer for better understanding
-            initializeContextAnalyzer() {
-                return {
-                    domainContext: {
-                        'github.com': { primary: 'Technology', secondary: ['Open Source', 'Programming'] },
-                        'arxiv.org': { primary: 'Science', secondary: ['Research', 'Academic'] },
-                        'medium.com': { primary: 'Technology', secondary: ['Opinion', 'Tutorial'] },
-                        'stackoverflow.com': { primary: 'Technology', secondary: ['Programming', 'Problem Solving'] },
-                        'youtube.com': { primary: 'Entertainment', secondary: ['Education', 'Tutorial'] },
-                        'linkedin.com': { primary: 'Business', secondary: ['Professional', 'Career'] },
-                        'ted.com': { primary: 'Education', secondary: ['Inspiration', 'Ideas'] }
-                    },
-                    titlePatterns: {
-                        'Ultimate Guide': { boost: ['Education'], confidence: 0.3 },
-                        'How to': { boost: ['Education'], confidence: 0.4 },
-                        'Introduction to': { boost: ['Education'], confidence: 0.3 },
-                        'Breaking': { boost: ['News'], confidence: 0.5 },
-                        'Review': { boost: ['Entertainment', 'Technology'], confidence: 0.2 },
-                        'Analysis': { boost: ['Science', 'Business'], confidence: 0.3 },
-                        'Deep Dive': { boost: ['Education', 'Technology'], confidence: 0.4 },
-                        'Best Practices': { boost: ['Technology', 'Business'], confidence: 0.3 },
-                        'Case Study': { boost: ['Business', 'Education'], confidence: 0.4 },
-                        'Tutorial': { boost: ['Education', 'Technology'], confidence: 0.5 },
-                        'Research': { boost: ['Science'], confidence: 0.4 },
-                        'Opinion': { boost: ['Politics', 'Philosophy'], confidence: 0.2 }
-                    },
-                    contentLength: {
-                        short: { threshold: 500, bias: ['News', 'Social Media'] },
-                        medium: { threshold: 2000, bias: ['Technology', 'Business'] },
-                        long: { threshold: 5000, bias: ['Science', 'Education', 'Philosophy'] }
-                    }
-                };
-            }
+            // Main categorization method with improved accuracy
+            categorizeWithSmartAI(article) {
+                console.log(`🧠 Smart AI categorization for: "${article.title.substring(0, 40)}..."`);
 
-            // Initialize confidence thresholds for different categories
-            initializeConfidenceThresholds() {
-                return {
-                    high: { threshold: 80, categories: ['Technology', 'Science', 'Health'] },
-                    medium: { threshold: 60, categories: ['Business', 'Education', 'Design'] },
-                    low: { threshold: 40, categories: ['Politics', 'Philosophy', 'Entertainment'] },
-                    fallback: { threshold: 20, categories: ['Society', 'Lifestyle'] }
-                };
-            }
-
-            // Initialize category hierarchy for better relationships
-            initializeCategoryHierarchy() {
-                return {
-                    'Technology': {
-                        parent: null,
-                        children: ['Artificial Intelligence', 'Design'],
-                        related: ['Science', 'Business', 'Education']
-                    },
-                    'Artificial Intelligence': {
-                        parent: 'Technology',
-                        children: [],
-                        related: ['Science', 'Philosophy', 'Psychology']
-                    },
-                    'Science': {
-                        parent: null,
-                        children: ['Health', 'Environment'],
-                        related: ['Technology', 'Education', 'Philosophy']
-                    },
-                    'Business': {
-                        parent: null,
-                        children: ['Economics'],
-                        related: ['Technology', 'Psychology', 'Society']
-                    }
-                };
-            }
-
-            // Initialize sentiment analyzer for context
-            initializeSentimentAnalyzer() {
-                return {
-                    positive: ['amazing', 'excellent', 'great', 'wonderful', 'fantastic', 'outstanding', 'brilliant', 'innovative'],
-                    negative: ['terrible', 'awful', 'bad', 'poor', 'disappointing', 'frustrating', 'broken', 'failed'],
-                    neutral: ['interesting', 'notable', 'significant', 'important', 'relevant', 'useful', 'practical'],
-                    technical: ['implementation', 'architecture', 'performance', 'scalability', 'efficiency', 'optimization']
-                };
-            }
-
-            // Initialize topic modeling patterns
-            initializeTopicModeling() {
-                return {
-                    clusters: {
-                        'AI_ML': ['artificial intelligence', 'machine learning', 'neural network', 'deep learning', 'ai model'],
-                        'WEB_DEV': ['javascript', 'react', 'frontend', 'backend', 'web development', 'api'],
-                        'DATA_SCIENCE': ['data science', 'analytics', 'big data', 'statistics', 'data mining'],
-                        'BLOCKCHAIN': ['blockchain', 'cryptocurrency', 'bitcoin', 'ethereum', 'smart contract'],
-                        'CLIMATE': ['climate change', 'global warming', 'sustainability', 'renewable energy'],
-                        'HEALTH_TECH': ['digital health', 'telemedicine', 'health app', 'medical technology'],
-                        'FINTECH': ['fintech', 'digital banking', 'payment', 'financial technology'],
-                        'POLITICS_NEWS': ['election', 'government', 'policy', 'political news', 'legislation']
-                    },
-                    weights: {
-                        'AI_ML': { 'Artificial Intelligence': 0.9, 'Technology': 0.7, 'Science': 0.3 },
-                        'WEB_DEV': { 'Technology': 0.8, 'Design': 0.4, 'Education': 0.3 },
-                        'DATA_SCIENCE': { 'Technology': 0.7, 'Science': 0.6, 'Business': 0.4 },
-                        'BLOCKCHAIN': { 'Technology': 0.8, 'Business': 0.6, 'Economics': 0.5 },
-                        'CLIMATE': { 'Environment': 0.9, 'Science': 0.7, 'Politics': 0.4 },
-                        'HEALTH_TECH': { 'Health': 0.8, 'Technology': 0.6, 'Science': 0.4 },
-                        'FINTECH': { 'Business': 0.8, 'Technology': 0.6, 'Economics': 0.5 },
-                        'POLITICS_NEWS': { 'Politics': 0.8, 'News': 0.6, 'Society': 0.4 }
-                    }
-                };
-            }
-
-            // Advanced AI categorization with semantic understanding
-            categorizeWithAdvancedAI(article) {
-                console.log(`🧠 Advanced AI categorization for: "${article.title.substring(0, 40)}..."`);
-                
                 const title = (article.title || '').toLowerCase();
                 const excerpt = (article.excerpt || '').toLowerCase();
                 const url = (article.url || '').toLowerCase();
                 const domain = this.getDomain(article.url).toLowerCase();
                 const content = this.getArticleContentForAnalysis(article).toLowerCase();
-                
-                // Enhanced text analysis with more context
-                const fullText = `${title} ${title} ${excerpt} ${content}`.substring(0, 8000);
-                
+
+                // Enhanced text analysis
+                const fullText = `${title} ${title} ${excerpt} ${content}`.substring(0, 5000);
+
+                // Step 1: Domain-based categorization (highest confidence)
+                const domainCategory = this.categorizeBySuperDomain(domain);
+                if (domainCategory) {
+                    console.log(`🎯 Domain match: ${domain} → ${domainCategory}`);
+                    article.categoryConfidence = 95;
+                    article.aiEnhanced = false;
+                    article.categorySource = 'domain';
+                    return domainCategory;
+                }
+
+                // Step 2: Title pattern recognition
+                const titleCategory = this.categorizeByTitlePatterns(title);
+                if (titleCategory) {
+                    console.log(`🎯 Title pattern match: "${title}" → ${titleCategory}`);
+                    article.categoryConfidence = 85;
+                    article.aiEnhanced = true;
+                    article.categorySource = 'title_pattern';
+                    return titleCategory;
+                }
+
+                // Step 3: Content analysis with scoring
+                const contentCategory = this.categorizeByContentAnalysis(fullText, title);
+                if (contentCategory.category) {
+                    console.log(`🎯 Content analysis: "${title}" → ${contentCategory.category} (score: ${contentCategory.score})`);
+                    article.categoryConfidence = Math.min(contentCategory.score, 90);
+                    article.aiEnhanced = true;
+                    article.categorySource = 'content_analysis';
+                    return contentCategory.category;
+                }
+
+                // Step 4: Smart fallback based on URL and basic patterns
+                const fallbackCategory = this.smartFallback(title, url, domain);
+                console.log(`🤖 Smart fallback: "${title}" → ${fallbackCategory}`);
+                article.categoryConfidence = 60;
+                article.aiEnhanced = true;
+                article.categorySource = 'smart_fallback';
+                return fallbackCategory;
+            }
+
+            // Categorize by super domain (more precise than subdomain)
+            categorizeBySuperDomain(domain) {
+                // Direct domain matches
+                if (this.domainMappings[domain]) {
+                    return this.domainMappings[domain];
+                }
+
+                // Check for subdomain matches
+                for (const [mappedDomain, category] of Object.entries(this.domainMappings)) {
+                    if (domain.includes(mappedDomain)) {
+                        return category;
+                    }
+                }
+
+                return null;
+            }
+
+            // Categorize by title patterns
+            categorizeByTitlePatterns(title) {
+                for (const [pattern, category] of Object.entries(this.titlePatterns)) {
+                    if (title.includes(pattern.toLowerCase())) {
+                        return category;
+                    }
+                }
+                return null;
+            }
+
+            // Enhanced content analysis with precise scoring
+            categorizeByContentAnalysis(fullText, title) {
                 const scores = new Map();
-                let analysisDetails = {};
-                let contextFactors = this.analyzeContext(article, domain, title, fullText);
-                
-                // Multi-layered scoring system
+
                 for (const [categoryName, categoryData] of Object.entries(this.categories)) {
                     let score = 0;
-                    let reasons = [];
-                    let confidenceFactors = [];
-                    
-                    // Layer 1: Domain and URL analysis (highest priority)
-                    const domainScore = this.analyzeDomain(domain, url, categoryData);
-                    score += domainScore.score;
-                    if (domainScore.score > 0) {
-                        reasons.push(...domainScore.reasons);
-                        confidenceFactors.push('domain_match');
-                    }
-                    
-                    // Layer 2: Semantic title analysis
-                    const titleScore = this.analyzeTitle(title, categoryData, categoryName);
-                    score += titleScore.score;
-                    if (titleScore.score > 0) {
-                        reasons.push(...titleScore.reasons);
-                        confidenceFactors.push('title_semantic');
-                    }
-                    
-                    // Layer 3: Content semantic analysis
-                    const contentScore = this.analyzeContent(fullText, categoryData, categoryName);
-                    score += contentScore.score;
-                    if (contentScore.score > 0) {
-                        reasons.push(...contentScore.reasons);
-                        confidenceFactors.push('content_semantic');
-                    }
-                    
-                    // Layer 4: Topic modeling and clustering
-                    const topicScore = this.analyzeTopics(fullText, categoryName);
-                    score += topicScore.score;
-                    if (topicScore.score > 0) {
-                        reasons.push(...topicScore.reasons);
-                        confidenceFactors.push('topic_modeling');
-                    }
-                    
-                    // Layer 5: Context and pattern recognition
-                    const contextScore = this.analyzeContextPatterns(fullText, title, categoryName, contextFactors);
-                    score += contextScore.score;
-                    if (contextScore.score > 0) {
-                        reasons.push(...contextScore.reasons);
-                        confidenceFactors.push('context_patterns');
-                    }
-                    
-                    // Layer 6: Relationship and hierarchy bonuses
-                    const relationshipScore = this.analyzeRelationships(scores, categoryName);
-                    score += relationshipScore;
-                    
-                    scores.set(categoryName, score);
-                    analysisDetails[categoryName] = {
-                        score: Math.round(score),
-                        reasons: reasons,
-                        confidence: categoryData.confidence || 'medium',
-                        confidenceFactors: confidenceFactors,
-                        priority: categoryData.priority || 5
-                    };
-                }
-                
-                // Advanced decision making with AI logic
-                const decision = this.makeAdvancedDecision(scores, analysisDetails, contextFactors, article);
-                
-                // Store enhanced analysis results
-                article.category = decision.category;
-                article.categoryScore = decision.score;
-                article.categoryConfidence = decision.confidence;
-                article.aiEnhanced = decision.aiEnhanced;
-                article.advancedAI = decision.advancedAI;
-                article.categoryAnalysis = decision.analysis;
-                article.semanticTags = decision.semanticTags;
-                
-                console.log(`🎯 Advanced AI: "${article.title.substring(0, 30)}..." → ${decision.category} (score: ${decision.score}, confidence: ${decision.confidence}%)`);
-                
-                return decision.category;
-            }
 
-            // Analyze domain with advanced patterns
-            analyzeDomain(domain, url, categoryData) {
-                let score = 0;
-                let reasons = [];
-                
-                // Exact domain matches
-                for (const d of categoryData.domains || []) {
-                    if (domain === d || domain.includes(d)) {
-                        score += 400; // Increased from 300
-                        reasons.push(`exact_domain: ${d}`);
-                        break;
+                    // Primary keywords (high weight)
+                    for (const keyword of categoryData.primaryKeywords || []) {
+                        const regex = new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+                        const matches = fullText.match(regex);
+                        if (matches) {
+                            score += matches.length * 15; // High weight for primary keywords
+                        }
                     }
-                }
-                
-                // Context-aware domain patterns
-                const domainContext = this.contextAnalyzer.domainContext[domain];
-                if (domainContext && categoryData.relatedCategories?.includes(domainContext.primary)) {
-                    score += 200;
-                    reasons.push(`domain_context: ${domainContext.primary}`);
-                }
-                
-                // URL path analysis
-                for (const keyword of categoryData.keywords || []) {
-                    if (url.includes(keyword)) {
-                        score += 25;
-                        reasons.push(`url_keyword: ${keyword}`);
-                    }
-                }
-                
-                return { score, reasons };
-            }
 
-            // Advanced title analysis with semantic understanding
-            analyzeTitle(title, categoryData, categoryName) {
-                let score = 0;
-                let reasons = [];
-                
-                const titleWords = title.split(/\s+/);
-                
-                // Semantic phrase matching
-                for (const keyword of categoryData.keywords || []) {
-                    // Multi-word phrase matching
-                    if (keyword.includes(' ') && title.includes(keyword)) {
-                        score += 200; // Higher score for phrase matches
-                        reasons.push(`title_phrase: "${keyword}"`);
-                    }
-                    // Single word matches with context
-                    else if (titleWords.some(word => word === keyword || word.includes(keyword))) {
-                        score += 120;
-                        reasons.push(`title_word: "${keyword}"`);
-                    }
-                    // Partial matches with semantic similarity
-                    else if (titleWords.some(word => this.areSemanticallySimilar(word, keyword))) {
-                        score += 80;
-                        reasons.push(`title_semantic: "${keyword}"`);
-                    }
-                }
-                
-                // Title pattern analysis
-                for (const [pattern, config] of Object.entries(this.contextAnalyzer.titlePatterns)) {
-                    if (title.includes(pattern.toLowerCase())) {
-                        if (config.boost.includes(categoryName)) {
-                            score += config.confidence * 300;
-                            reasons.push(`title_pattern: "${pattern}"`);
+                    // Secondary keywords (medium weight)
+                    for (const keyword of categoryData.secondaryKeywords || []) {
+                        const regex = new RegExp(`\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+                        const matches = fullText.match(regex);
+                        if (matches) {
+                            score += matches.length * 8; // Medium weight for secondary keywords
                         }
                     }
-                }
-                
-                // Question pattern detection
-                for (const pattern of this.semanticPatterns.questionPatterns) {
-                    if (pattern.test(title)) {
-                        if (['Education', 'Technology'].includes(categoryName)) {
-                            score += 100;
-                            reasons.push('question_pattern');
-                        }
-                        break;
-                    }
-                }
-                
-                return { score, reasons };
-            }
 
-            // Advanced content analysis with NLP-inspired techniques
-            analyzeContent(content, categoryData, categoryName) {
-                let score = 0;
-                let reasons = [];
-                
-                // Keyword density analysis
-                const contentWords = content.split(/\s+/);
-                const totalWords = contentWords.length;
-                
-                for (const keyword of categoryData.keywords || []) {
-                    const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
-                    const matches = content.match(regex);
-                    if (matches) {
-                        const density = matches.length / totalWords;
-                        const densityScore = Math.min(density * 5000, 150); // Cap at 150
-                        score += densityScore;
-                        
-                        if (matches.length > 2) {
-                            reasons.push(`content_density: "${keyword}" (${matches.length}x, ${(density * 100).toFixed(2)}%)`);
-                        }
-                    }
-                }
-                
-                // Semantic context analysis
-                if (categoryData.semanticContext) {
-                    for (const context of categoryData.semanticContext) {
-                        if (content.includes(context)) {
-                            score += 80;
-                            reasons.push(`semantic_context: "${context}"`);
-                        }
-                    }
-                }
-                
-                // Technical pattern recognition
-                for (const pattern of this.semanticPatterns.technicalPatterns) {
-                    if (pattern.test(content)) {
-                        if (['Technology', 'Science', 'Business'].includes(categoryName)) {
-                            score += 60;
-                            reasons.push('technical_pattern');
-                        }
-                    }
-                }
-                
-                return { score, reasons };
-            }
+                    // Apply content pattern bonuses
+                    score += this.analyzeContentPatterns(fullText, categoryName);
 
-            // Topic modeling and clustering analysis
-            analyzeTopics(content, categoryName) {
-                let score = 0;
-                let reasons = [];
-                
-                for (const [clusterName, keywords] of Object.entries(this.topicModeling.clusters)) {
-                    let clusterMatches = 0;
-                    for (const keyword of keywords) {
-                        if (content.includes(keyword)) {
-                            clusterMatches++;
-                        }
-                    }
-                    
-                    if (clusterMatches >= 2) {
-                        const weights = this.topicModeling.weights[clusterName];
-                        if (weights && weights[categoryName]) {
-                            const clusterScore = clusterMatches * weights[categoryName] * 100;
-                            score += clusterScore;
-                            reasons.push(`topic_cluster: ${clusterName} (${clusterMatches} matches)`);
-                        }
-                    }
-                }
-                
-                return { score, reasons };
-            }
-
-            // Context pattern analysis
-            analyzeContextPatterns(content, title, categoryName, contextFactors) {
-                let score = 0;
-                let reasons = [];
-                
-                // Tutorial and educational content detection
-                if (this.semanticPatterns.tutorialPatterns.some(pattern => pattern.test(title + ' ' + content))) {
-                    if (['Education', 'Technology'].includes(categoryName)) {
-                        score += 100;
-                        reasons.push('tutorial_pattern');
-                    }
-                }
-                
-                // News and current events detection
-                if (this.semanticPatterns.newsPatterns.some(pattern => pattern.test(title + ' ' + content))) {
-                    if (['News', 'Politics', 'Society'].includes(categoryName)) {
-                        score += 120;
-                        reasons.push('news_pattern');
-                    }
-                }
-                
-                // Research and academic content detection
-                if (this.semanticPatterns.researchPatterns.some(pattern => pattern.test(content))) {
-                    if (['Science', 'Education', 'Health'].includes(categoryName)) {
-                        score += 150;
-                        reasons.push('research_pattern');
-                    }
-                }
-                
-                // Opinion and analysis detection
-                if (this.semanticPatterns.opinionPatterns.some(pattern => pattern.test(content))) {
-                    if (['Politics', 'Philosophy', 'Society'].includes(categoryName)) {
-                        score += 80;
-                        reasons.push('opinion_pattern');
-                    }
-                }
-                
-                return { score, reasons };
-            }
-
-            // Analyze category relationships and hierarchies
-            analyzeRelationships(scores, categoryName) {
-                let bonus = 0;
-                const hierarchy = this.categoryHierarchy[categoryName];
-                
-                if (hierarchy) {
-                    // Parent-child relationship bonus
-                    if (hierarchy.parent && scores.has(hierarchy.parent)) {
-                        const parentScore = scores.get(hierarchy.parent);
-                        if (parentScore > 100) {
-                            bonus += parentScore * 0.3; // 30% of parent score
-                        }
-                    }
-                    
-                    // Related category bonus
-                    if (hierarchy.related) {
-                        for (const relatedCategory of hierarchy.related) {
-                            if (scores.has(relatedCategory)) {
-                                const relatedScore = scores.get(relatedCategory);
-                                if (relatedScore > 50) {
-                                    bonus += relatedScore * 0.15; // 15% of related score
-                                }
+                    // Apply exclusion penalties
+                    if (categoryData.excludeWords) {
+                        for (const excludeWord of categoryData.excludeWords) {
+                            const regex = new RegExp(`\\b${excludeWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+                            const matches = fullText.match(regex);
+                            if (matches) {
+                                score -= matches.length * 10; // Penalty for excluded words
                             }
                         }
                     }
+
+                    scores.set(categoryName, Math.max(0, score));
                 }
+
+                // Find the best category
+                const sortedScores = Array.from(scores.entries()).sort((a, b) => b[1] - a[1]);
                 
+                if (sortedScores.length > 0 && sortedScores[0][1] > 25) {
+                    return {
+                        category: sortedScores[0][0],
+                        score: sortedScores[0][1]
+                    };
+                }
+
+                return { category: null, score: 0 };
+            }
+
+            // Analyze content patterns for additional scoring
+            analyzeContentPatterns(content, categoryName) {
+                let bonus = 0;
+
+                // Check for code patterns (Technology)
+                if (categoryName === 'Technology') {
+                    for (const pattern of this.contentAnalyzers.codePatterns) {
+                        if (pattern.test(content)) {
+                            bonus += 20;
+                        }
+                    }
+                }
+
+                // Check for research patterns (Science)
+                if (categoryName === 'Science') {
+                    for (const pattern of this.contentAnalyzers.researchPatterns) {
+                        if (pattern.test(content)) {
+                            bonus += 15;
+                        }
+                    }
+                }
+
+                // Check for news patterns (News)
+                if (categoryName === 'News') {
+                    for (const pattern of this.contentAnalyzers.newsPatterns) {
+                        if (pattern.test(content)) {
+                            bonus += 12;
+                        }
+                    }
+                }
+
+                // Check for tutorial patterns (Education)
+                if (categoryName === 'Education') {
+                    for (const pattern of this.contentAnalyzers.tutorialPatterns) {
+                        if (pattern.test(content)) {
+                            bonus += 18;
+                        }
+                    }
+                }
+
                 return bonus;
             }
 
-            // Advanced decision making with multiple factors
-            makeAdvancedDecision(scores, analysisDetails, contextFactors, article) {
-                const sortedScores = Array.from(scores.entries()).sort((a, b) => b[1] - a[1]);
-                
-                let bestCategory = 'Society'; // Default fallback
-                let bestScore = 0;
-                let secondBestScore = 0;
-                let confidence = 0;
-                let aiEnhanced = false;
-                let advancedAI = false;
-                
-                if (sortedScores.length >= 1) {
-                    bestScore = sortedScores[0][1];
-                    bestCategory = sortedScores[0][0];
-                }
-                if (sortedScores.length >= 2) {
-                    secondBestScore = sortedScores[1][1];
-                }
-                
-                const confidenceGap = bestScore - secondBestScore;
-                const categoryData = this.categories[bestCategory];
-                const categoryPriority = categoryData?.priority || 5;
-                
-                // Advanced confidence calculation
-                confidence = Math.min(
-                    (bestScore / 10) + 
-                    (confidenceGap / 5) + 
-                    (categoryPriority === 1 ? 20 : categoryPriority === 2 ? 15 : 10),
-                    95
-                );
-                
-                // AI enhancement detection
-                if (confidenceGap < 50 || bestScore < 200) {
-                    aiEnhanced = true;
-                    bestCategory = this.applyAIFallbackLogic(article, sortedScores, contextFactors);
-                }
-                
-                // Advanced AI detection (very sophisticated analysis)
-                if (analysisDetails[bestCategory]?.confidenceFactors?.length >= 4) {
-                    advancedAI = true;
-                }
-                
-                // Semantic tags extraction
-                const semanticTags = this.extractSemanticTags(article, bestCategory, analysisDetails);
-                
-                return {
-                    category: bestCategory,
-                    score: Math.round(bestScore),
-                    confidence: Math.round(confidence),
-                    aiEnhanced: aiEnhanced,
-                    advancedAI: advancedAI,
-                    analysis: analysisDetails[bestCategory],
-                    semanticTags: semanticTags
-                };
-            }
-
-            // AI fallback logic with advanced patterns
-            applyAIFallbackLogic(article, sortedScores, contextFactors) {
-                const title = article.title.toLowerCase();
-                const domain = this.getDomain(article.url).toLowerCase();
-                
-                // Advanced pattern matching
-                const advancedPatterns = {
-                    'how to': 'Education',
-                    'tutorial': 'Education',
-                    'guide to': 'Education',
-                    'introduction to': 'Education',
-                    'getting started': 'Education',
-                    'beginner': 'Education',
-                    'learn': 'Education',
+            // Smart fallback with improved logic
+            smartFallback(title, url, domain) {
+                // Advanced pattern matching for fallback
+                const fallbackPatterns = {
                     'startup': 'Business',
                     'entrepreneur': 'Business',
-                    'founder': 'Business',
-                    'investment': 'Business',
+                    'invest': 'Business',
                     'funding': 'Business',
+                    'revenue': 'Business',
                     'ai': 'Artificial Intelligence',
                     'machine learning': 'Artificial Intelligence',
-                    'neural network': 'Artificial Intelligence',
-                    'climate change': 'Environment',
-                    'global warming': 'Environment',
-                    'sustainability': 'Environment',
+                    'neural': 'Artificial Intelligence',
+                    'algorithm': 'Technology',
+                    'software': 'Technology',
+                    'app': 'Technology',
+                    'website': 'Technology',
+                    'health': 'Health',
+                    'medical': 'Health',
+                    'fitness': 'Health',
+                    'nutrition': 'Health',
+                    'recipe': 'Health',
+                    'design': 'Design',
+                    'ui': 'Design',
+                    'ux': 'Design',
+                    'tutorial': 'Education',
+                    'course': 'Education',
+                    'learn': 'Education',
+                    'study': 'Education',
+                    'news': 'News',
+                    'breaking': 'News',
+                    'update': 'News',
+                    'report': 'News',
                     'election': 'Politics',
                     'government': 'Politics',
                     'policy': 'Politics',
-                    'research': 'Science',
-                    'study': 'Science',
-                    'experiment': 'Science'
+                    'movie': 'Entertainment',
+                    'game': 'Entertainment',
+                    'music': 'Entertainment',
+                    'review': 'Entertainment'
                 };
-                
-                for (const [pattern, category] of Object.entries(advancedPatterns)) {
-                    if (title.includes(pattern)) {
-                        console.log(`🤖 AI fallback: "${pattern}" → ${category}`);
+
+                const fullText = `${title} ${url}`.toLowerCase();
+
+                for (const [pattern, category] of Object.entries(fallbackPatterns)) {
+                    if (fullText.includes(pattern)) {
                         return category;
                     }
                 }
-                
-                // Domain-based fallbacks
-                const domainFallbacks = {
-                    'github.com': 'Technology',
-                    'stackoverflow.com': 'Technology',
-                    'medium.com': 'Technology',
-                    'dev.to': 'Technology',
-                    'arxiv.org': 'Science',
-                    'nature.com': 'Science',
-                    'nih.gov': 'Health',
-                    'who.int': 'Health',
-                    'ted.com': 'Education',
-                    'coursera.org': 'Education',
-                    'linkedin.com': 'Business',
-                    'forbes.com': 'Business'
-                };
-                
-                for (const [d, category] of Object.entries(domainFallbacks)) {
-                    if (domain.includes(d)) {
-                        console.log(`🤖 AI domain fallback: ${d} → ${category}`);
-                        return category;
-                    }
-                }
-                
-                // Use highest confidence category from top 3
-                const topCategories = sortedScores.slice(0, 3);
-                for (const [category, score] of topCategories) {
-                    const categoryData = this.categories[category];
-                    if (categoryData?.confidence === 'high' && score > 50) {
-                        console.log(`🤖 AI confidence fallback: ${category}`);
-                        return category;
-                    }
-                }
-                
-                return sortedScores[0][0]; // Default to best score
+
+                // Domain-based fallback
+                if (domain.includes('github') || domain.includes('stackoverflow')) return 'Technology';
+                if (domain.includes('health') || domain.includes('medical')) return 'Health';
+                if (domain.includes('news') || domain.includes('cnn') || domain.includes('bbc')) return 'News';
+                if (domain.includes('business') || domain.includes('forbes')) return 'Business';
+                if (domain.includes('design')) return 'Design';
+                if (domain.includes('edu')) return 'Education';
+
+                // Default fallback
+                return 'Technology';
             }
 
-            // Extract semantic tags for enhanced categorization
-            extractSemanticTags(article, category, analysisDetails) {
-                const tags = [];
-                const analysis = analysisDetails[category];
-                
-                if (analysis?.confidenceFactors?.includes('domain_match')) {
-                    tags.push('domain-verified');
-                }
-                if (analysis?.confidenceFactors?.includes('topic_modeling')) {
-                    tags.push('topic-clustered');
-                }
-                if (analysis?.confidenceFactors?.includes('semantic_analysis')) {
-                    tags.push('semantic-enhanced');
-                }
-                if (analysis?.score > 300) {
-                    tags.push('high-confidence');
-                }
-                
-                return tags;
-            }
-
-            // Semantic similarity check (simple implementation)
-            areSemanticallySimilar(word1, word2) {
-                // Simple similarity based on common roots and patterns
-                const synonyms = {
-                    'tech': ['technology', 'technical'],
-                    'ai': ['artificial intelligence', 'machine learning'],
-                    'dev': ['development', 'developer'],
-                    'biz': ['business'],
-                    'sci': ['science', 'scientific'],
-                    'med': ['medical', 'medicine'],
-                    'edu': ['education', 'educational']
-                };
-                
-                for (const [root, variants] of Object.entries(synonyms)) {
-                    if ((word1.includes(root) || variants.some(v => word1.includes(v))) &&
-                        (word2.includes(root) || variants.some(v => word2.includes(v)))) {
-                        return true;
-                    }
-                }
-                
-                return false;
-            }
-
-            // Analyze overall context
-            analyzeContext(article, domain, title, content) {
-                return {
-                    domain: domain,
-                    titleLength: title.length,
-                    contentLength: content.length,
-                    hasNumbers: /\d/.test(title),
-                    hasQuestionMark: title.includes('?'),
-                    isUpperCase: title === title.toUpperCase(),
-                    wordCount: content.split(/\s+/).length
-                };
-            }
-
-            // Get article content for analysis
+            // Utility methods
             getArticleContentForAnalysis(article) {
                 const contentFields = ['content', 'textContent', 'excerpt', 'description', 'summary', 'fullContent', 'body'];
                 let combinedContent = '';
-                
+
                 for (const field of contentFields) {
                     if (article[field] && typeof article[field] === 'string') {
                         combinedContent += ' ' + article[field];
                     }
                 }
-                
+
                 return combinedContent.trim() || article.title || '';
             }
 
-            // Get domain from URL
             getDomain(url) {
                 try {
                     return new URL(url).hostname.replace('www.', '');
@@ -2910,7 +2433,7 @@
         // Main Enhanced MyPocket Web Reader class
         class MyPocketWebReader {
             constructor() {
-                console.log('🏗️ Creating Advanced AI MyPocketWebReader instance...');
+                console.log('🏗️ Creating Smart AI MyPocketWebReader instance...');
 
                 this.clientId = '436e8796-8c40-47c3-9ad5-b8882f3ef7f7';
                 this.redirectUri = this.getRedirectUri();
@@ -2922,14 +2445,14 @@
                 this.currentDisplayedArticles = [];
                 this.failedImages = new Set();
 
-                // Advanced AI categorization system
-                this.aiEngine = new AdvancedAICategorizationEngine();
+                // Smart AI categorization system
+                this.aiEngine = new SmartAICategorizationEngine();
                 this.categories = new Map();
                 this.activeCategory = null;
                 this.categoryAnalytics = new Map();
                 this.aiCategoriesEnabled = true;
                 this.semanticSearchEnabled = false;
-                this.advancedAIMode = true;
+                this.smartAIMode = true;
 
                 // Image cache system
                 this.imageCache = new Map();
@@ -2944,7 +2467,7 @@
                 this.codeChallenge = null;
                 this.state = null;
 
-                console.log('✅ Advanced AI MyPocketWebReader constructor complete');
+                console.log('✅ Smart AI MyPocketWebReader constructor complete');
                 this.init();
             }
 
@@ -2960,14 +2483,14 @@
             }
 
             init() {
-                console.log('🚀 Initializing Advanced AI MyPocket Web Reader...');
+                console.log('🚀 Initializing Smart AI MyPocket Web Reader...');
                 this.setupEventListeners();
                 this.checkAuthFromURL();
                 this.loadStoredToken();
                 this.loadThemePreference();
                 this.loadImageCache();
                 this.initializeSidebar();
-                console.log('✅ Advanced AI initialization complete');
+                console.log('✅ Smart AI initialization complete');
             }
 
             setupEventListeners() {
@@ -3168,7 +2691,7 @@
                 this.displayArticles(this.articles);
                 this.updateNavigation();
 
-                this.updateStatus(`📖 Showing all ${this.articles.length} articles with Advanced AI categorization`, 'success');
+                this.updateStatus(`📖 Showing all ${this.articles.length} articles with Smart AI categorization`, 'success');
             }
 
             // Update navigation active states
@@ -3197,82 +2720,82 @@
                 return activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
             }
 
-            // Advanced AI Analysis - NEW FEATURE
-            async runAdvancedAIAnalysis() {
+            // Smart AI Analysis - IMPROVED METHOD
+            async runSmartAIAnalysis() {
                 if (this.articles.length === 0) {
                     this.updateStatus('❌ No articles to analyze. Load articles first.', 'error');
                     return;
                 }
 
-                console.log('🧠 Starting Advanced AI Analysis...');
-                this.updateStatus('🧠 Running Advanced AI Analysis with semantic understanding...', 'ai-processing');
+                console.log('🧠 Starting Smart AI Analysis with improved accuracy...');
+                this.updateStatus('🧠 Smart AI is analyzing your articles with improved accuracy...', 'ai-processing');
 
                 this.categories.clear();
                 this.categoryAnalytics.clear();
 
                 let analyzedCount = 0;
-                let advancedAICount = 0;
-                let semanticTagsFound = 0;
+                let aiEnhancedCount = 0;
+                let highConfidenceCount = 0;
 
                 const batchSize = 5;
                 for (let i = 0; i < this.articles.length; i += batchSize) {
                     const batch = this.articles.slice(i, i + batchSize);
 
                     for (const article of batch) {
-                        const category = this.aiEngine.categorizeWithAdvancedAI(article);
+                        const category = this.aiEngine.categorizeWithSmartAI(article);
                         this.categories.set(category, (this.categories.get(category) || 0) + 1);
                         analyzedCount++;
 
-                        if (article.advancedAI) {
-                            advancedAICount++;
+                        if (article.aiEnhanced) {
+                            aiEnhancedCount++;
                         }
-                        if (article.semanticTags && article.semanticTags.length > 0) {
-                            semanticTagsFound++;
+                        if (article.categoryConfidence >= 80) {
+                            highConfidenceCount++;
                         }
 
-                        this.updateCategoryAnalytics(category, article.categoryScore || 0, article.aiEnhanced || false, article.advancedAI || false);
+                        this.updateCategoryAnalytics(category, article.categoryConfidence || 60, article.aiEnhanced || false);
                     }
 
                     const progress = Math.round((analyzedCount / this.articles.length) * 100);
-                    this.updateStatus(`🧠 Advanced AI analyzing... ${analyzedCount}/${this.articles.length} (${progress}%)`, 'ai-processing');
+                    this.updateStatus(`🧠 Smart AI analyzing... ${analyzedCount}/${this.articles.length} (${progress}%)`, 'ai-processing');
 
                     await new Promise(resolve => setTimeout(resolve, 100));
                 }
 
-                console.log(`🎯 Advanced AI analysis complete: ${this.categories.size} categories, ${advancedAICount} advanced AI enhanced`);
+                console.log(`🎯 Smart AI analysis complete: ${this.categories.size} categories, ${highConfidenceCount} high confidence`);
 
                 this.updateCategoryUI();
                 this.displayArticles(this.currentDisplayedArticles);
                 this.updateArticleCounts();
 
-                const message = `🧠 Advanced AI Analysis Complete! ${analyzedCount} articles analyzed, ${this.categories.size} categories found, ${advancedAICount} advanced AI enhanced, ${semanticTagsFound} with semantic tags`;
+                const message = `🧠 Smart AI Analysis Complete! ${analyzedCount} articles analyzed, ${this.categories.size} categories found, ${highConfidenceCount} high confidence, ${aiEnhancedCount} AI enhanced`;
                 this.updateStatus(message, 'success');
 
                 if (this.accessToken) {
                     try {
                         await this.updateOneDriveBackup();
-                        console.log('✅ Updated backup with Advanced AI analysis');
+                        console.log('✅ Updated backup with Smart AI analysis');
                     } catch (error) {
                         console.error('⚠️ Failed to update backup:', error);
                     }
                 }
             }
 
-            // Toggle semantic search - NEW FEATURE
+            // Toggle semantic search
             toggleSemanticSearch() {
                 this.semanticSearchEnabled = !this.semanticSearchEnabled;
-                
+
                 const searchInput = document.getElementById('searchInput');
                 if (searchInput) {
                     if (this.semanticSearchEnabled) {
                         searchInput.placeholder = "🧠 Semantic search active! Try: 'learning about AI' or 'business growth strategies'";
                         this.updateStatus('🧠 Semantic search enabled - Search understands context and meaning!', 'success');
                     } else {
-                        searchInput.placeholder = "🧠 Advanced AI-powered semantic search... (Try: 'machine learning tutorials' or 'startup funding advice')";
+                        searchInput.placeholder = "🧠 Smart AI-powered search... (Try: 'machine learning' or 'startup advice')";
                         this.updateStatus('🔍 Regular search active', 'success');
                     }
                 }
-                
+
                 // Update button state
                 const semanticSearchBtn = document.getElementById('semanticSearchBtn');
                 if (semanticSearchBtn) {
@@ -3286,38 +2809,34 @@
 
             // Enhanced categorization with new AI engine
             categorizeArticle(article) {
-                return this.aiEngine.categorizeWithAdvancedAI(article);
+                return this.aiEngine.categorizeWithSmartAI(article);
             }
 
-            // Update category analytics with advanced metrics
-            updateCategoryAnalytics(category, score, aiEnhanced, advancedAI = false) {
+            // Update category analytics with improved metrics
+            updateCategoryAnalytics(category, confidence, aiEnhanced) {
                 if (!this.categoryAnalytics.has(category)) {
                     this.categoryAnalytics.set(category, {
                         count: 0,
-                        totalScore: 0,
+                        totalConfidence: 0,
                         aiEnhanced: 0,
-                        advancedAI: 0,
-                        avgScore: 0,
-                        confidence: 0
+                        avgConfidence: 0
                     });
                 }
 
                 const analytics = this.categoryAnalytics.get(category);
                 analytics.count++;
-                analytics.totalScore += score;
-                analytics.avgScore = Math.round(analytics.totalScore / analytics.count);
+                analytics.totalConfidence += confidence;
+                analytics.avgConfidence = Math.round(analytics.totalConfidence / analytics.count);
                 if (aiEnhanced) analytics.aiEnhanced++;
-                if (advancedAI) analytics.advancedAI++;
-                analytics.confidence = Math.min(analytics.avgScore / 3, 100);
 
                 this.categoryAnalytics.set(category, analytics);
             }
 
-            // Enhanced category UI with advanced AI indicators
+            // Enhanced category UI with improved AI indicators
             updateCategoryUI() {
                 const categoryChips = document.getElementById('categoryChips');
                 const aiStats = document.getElementById('aiStats');
-                
+
                 if (!categoryChips) return;
 
                 const sortedCategories = Array.from(this.categories.entries())
@@ -3325,13 +2844,12 @@
 
                 const totalArticles = this.articles.length;
                 const aiEnhancedTotal = this.articles.filter(a => a.aiEnhanced).length;
-                const advancedAITotal = this.articles.filter(a => a.advancedAI).length;
-                const semanticTagsTotal = this.articles.filter(a => a.semanticTags && a.semanticTags.length > 0).length;
+                const highConfidenceTotal = this.articles.filter(a => a.categoryConfidence >= 80).length;
 
-                console.log(`🎨 Updating Advanced AI category UI with ${sortedCategories.length} categories`);
+                console.log(`🎨 Updating Smart AI category UI with ${sortedCategories.length} categories`);
 
                 if (aiStats) {
-                    aiStats.textContent = `${sortedCategories.length} categories • ${aiEnhancedTotal} AI enhanced • ${advancedAITotal} advanced AI • ${semanticTagsTotal} semantic tags`;
+                    aiStats.textContent = `${sortedCategories.length} categories • ${aiEnhancedTotal} AI enhanced • ${highConfidenceTotal} high confidence`;
                 }
 
                 categoryChips.innerHTML = `
@@ -3346,23 +2864,21 @@
                     const isActive = this.activeCategory === category;
                     const analytics = this.categoryAnalytics.get(category);
                     const aiEnhancedCount = analytics ? analytics.aiEnhanced : 0;
-                    const advancedAICount = analytics ? analytics.advancedAI : 0;
-                    const avgScore = analytics ? analytics.avgScore : 0;
-                    const confidence = analytics ? analytics.confidence : 0;
-                    
+                    const avgConfidence = analytics ? analytics.avgConfidence : 0;
+
                     let chipClass = 'category-chip';
                     if (isActive) chipClass += ' active';
                     if (aiEnhancedCount > 0) chipClass += ' ai-enhanced';
-                    if (advancedAICount > 0) chipClass += ' advanced-ai';
+                    if (avgConfidence >= 80) chipClass += ' advanced-ai';
 
                     return `
                             <div class="${chipClass}" 
                                  data-category="${category}"
-                                 title="Show ${count} ${category.toLowerCase()} articles (${aiEnhancedCount} AI enhanced, ${advancedAICount} advanced AI, avg score: ${avgScore}, confidence: ${confidence}%)">
+                                 title="Show ${count} ${category.toLowerCase()} articles (${aiEnhancedCount} AI enhanced, avg confidence: ${avgConfidence}%)">
                                 <span>${categoryData.icon}</span>
                                 <span>${category}</span>
                                 <span class="category-count">${count}</span>
-                                ${advancedAICount > 0 ? '<span class="ai-indicator">🧠</span>' : ''}
+                                ${avgConfidence >= 80 ? '<span class="ai-indicator">🧠</span>' : ''}
                             </div>
                         `;
                 }).join('')}
@@ -3378,7 +2894,7 @@
                     });
                 });
 
-                console.log(`✅ Advanced AI category UI updated with event listeners`);
+                console.log(`✅ Smart AI category UI updated with event listeners`);
             }
 
             // Toggle category filter visibility
@@ -3395,10 +2911,10 @@
                 const shouldShow = forceState !== null ? forceState : !isCurrentlyVisible;
 
                 if (shouldShow) {
-                    console.log('🏷️ Opening Advanced AI category filter...');
+                    console.log('🏷️ Opening Smart AI category filter...');
 
                     if (this.articles.length > 0 && this.categories.size === 0) {
-                        this.runAdvancedAIAnalysis();
+                        this.runSmartAIAnalysis();
                     }
 
                     categoryContainer.style.display = 'block';
@@ -3407,7 +2923,7 @@
                     }, 10);
 
                     this.updateNavigation();
-                    this.updateStatus('🧠 Advanced AI category filter active - Click a category to filter articles', 'success');
+                    this.updateStatus('🧠 Smart AI category filter active - Click a category to filter articles', 'success');
                 } else {
                     console.log('🏷️ Closing category filter...');
 
@@ -3467,12 +2983,12 @@
                     const categoryData = this.aiEngine.categories[category] || { icon: '📄' };
                     const analytics = this.categoryAnalytics.get(category);
                     const aiCount = analytics ? analytics.aiEnhanced : 0;
-                    const advancedAICount = analytics ? analytics.advancedAI : 0;
+                    const avgConfidence = analytics ? analytics.avgConfidence : 0;
 
                     if (filtered.length === 0) {
                         this.updateStatus(`❌ No articles found in "${category}" category. Try a different category.`, 'error');
                     } else {
-                        const aiText = aiCount > 0 ? ` (${aiCount} AI enhanced, ${advancedAICount} advanced AI)` : '';
+                        const aiText = aiCount > 0 ? ` (${aiCount} AI enhanced, ${avgConfidence}% avg confidence)` : '';
                         this.updateStatus(`${categoryData.icon} Showing ${filtered.length} ${category.toLowerCase()} articles${aiText}`, 'success');
                     }
                 }
@@ -3483,43 +2999,43 @@
             // Show AI help
             showAIHelp() {
                 const helpText = `
-Advanced AI Categorization System Help:
-=====================================
+Smart AI Categorization System Help:
+==================================
 
-🧠 NEXT-GENERATION AI FEATURES:
+🧠 IMPROVED ACCURACY FEATURES:
 
-1️⃣ ADVANCED AI CATEGORIZATION:
-   • 20+ intelligent categories with semantic understanding
-   • Multi-layered analysis: domain, title, content, context, relationships
-   • Confidence scoring with advanced decision making
-   • Topic modeling and clustering for better accuracy
-   • Category hierarchy and relationship analysis
+1️⃣ SMART AI CATEGORIZATION:
+   • Precise, non-overlapping categories for better accuracy
+   • Domain-based categorization (95% confidence)
+   • Title pattern recognition (85% confidence)
+   • Content analysis with exclusion rules
+   • Smart fallback with improved logic
 
-2️⃣ SEMANTIC UNDERSTANDING:
-   • Context-aware pattern recognition
-   • Advanced NLP-inspired techniques
-   • Sentiment and opinion analysis
-   • Tutorial and educational content detection
-   • Research and academic content identification
-
-3️⃣ ENHANCED CATEGORIES:
+2️⃣ ENHANCED CATEGORIES:
    📚 Core: Technology, Artificial Intelligence, Science, Business, Design
-   🎯 Advanced: Politics, Philosophy, Psychology, Economics, Environment
-   🌟 Specialized: Self-Development, Religion, History, Society
-   📱 Lifestyle: Health, Sports, Travel, Food, Entertainment, Education
+   🎯 Specialized: Health, Education, News, Politics, Psychology
+   📱 General: Entertainment, Society
 
-4️⃣ AI CONFIDENCE INDICATORS:
-   • 🤖 AI Enhanced: Articles with ambiguous content resolved by AI
-   • 🧠 Advanced AI: Multi-factor analysis with high confidence
-   • Semantic tags for enhanced understanding
-   • Confidence percentages and scoring metrics
+3️⃣ IMPROVED ACCURACY METHODS:
+   • Primary vs Secondary keyword weighting
+   • Content pattern analysis (code, research, news, tutorials)
+   • Exclusion word penalties to prevent misclassification
+   • Domain confidence scoring
+   • Multi-layer validation
 
-5️⃣ ADVANCED FEATURES:
-   • Advanced AI Analysis: Deep semantic understanding
-   • Semantic Search: Context and meaning aware search
-   • Category relationships and hierarchies
+4️⃣ CONFIDENCE INDICATORS:
+   • Domain Match (95%): Direct domain mapping
+   • Title Pattern (85%): Clear title indicators
+   • Content Analysis (60-90%): Keyword and pattern scoring
+   • Smart Fallback (60%): Intelligent guessing
+   • 🧠 High Accuracy: 80%+ confidence categories
+
+5️⃣ ENHANCED FEATURES:
+   • Smart AI Analysis: Improved precision categorization
+   • Semantic Search: Context-aware search
+   • Category analytics with confidence metrics
    • Cross-device synchronization with AI metadata
-   • Real-time confidence and analytics tracking
+   • Real-time accuracy tracking
 
 🔍 SEMANTIC SEARCH:
    Enable semantic search to understand context and meaning:
@@ -3527,19 +3043,20 @@ Advanced AI Categorization System Help:
    - "business growth strategies" finds startup and scaling content
    - "health and wellness tips" finds fitness and nutrition articles
 
-🧠 AI ANALYSIS MODES:
-   • Regular AI: Standard categorization with enhanced patterns
-   • Advanced AI: Multi-layered semantic analysis with relationships
-   • Topic Modeling: Clustering similar content for better accuracy
-   • Context Analysis: Understanding article purpose and audience
+🧠 ACCURACY IMPROVEMENTS:
+   • Reduced category conflicts with exclusion rules
+   • Better domain recognition for instant categorization
+   • Improved content analysis with pattern detection
+   • Smarter fallback logic with multiple factors
+   • Higher confidence scoring for better reliability
 
 💡 USAGE TIPS:
-   - Use "Advanced AI Analysis" for most accurate categorization
-   - Enable semantic search for better content discovery
-   - Check AI indicators to understand categorization confidence
-   - Advanced AI articles have the highest accuracy and context understanding
+   - Use "Smart AI Analysis" for best categorization accuracy
+   - Check confidence percentages to understand AI certainty
+   - High confidence (80%+) articles are most accurately categorized
+   - Domain-matched articles have the highest accuracy (95%)
 
-The system learns patterns from your content and continuously improves categorization accuracy with each analysis!
+The improved system focuses on precision over complexity for better categorization results!
                 `;
 
                 alert(helpText);
@@ -3857,7 +3374,7 @@ The system learns patterns from your content and continuously improves categoriz
 
                 if (connected) {
                     if (connectIcon) connectIcon.textContent = '✅';
-                    if (connectText) connectText.textContent = 'Connected (Advanced AI)';
+                    if (connectText) connectText.textContent = 'Connected (Smart AI)';
                     if (connectBtn) {
                         connectBtn.style.background = '#27ae60';
                         connectBtn.textContent = 'Connected ✅';
@@ -3901,7 +3418,7 @@ The system learns patterns from your content and continuously improves categoriz
 
                     this.updateNavigation();
 
-                    const searchType = this.semanticSearchEnabled ? 'semantic' : 'AI-powered';
+                    const searchType = this.semanticSearchEnabled ? 'semantic' : 'Smart AI-powered';
                     this.updateStatus(`🔍 ${searchType} search active - Type to search or press Escape to close`, 'success');
                 } else {
                     searchContainer.classList.remove('visible');
@@ -3967,7 +3484,7 @@ The system learns patterns from your content and continuously improves categoriz
             regularSearch(article, searchTerm) {
                 const titleMatch = article.title && article.title.toLowerCase().includes(searchTerm);
                 const excerptMatch = article.excerpt && article.excerpt.toLowerCase().includes(searchTerm);
-                
+
                 const contentFields = ['content', 'textContent', 'html', 'fullContent', 'body', 'readableContent'];
                 const contentMatch = contentFields.some(field =>
                     article[field] && typeof article[field] === 'string' &&
@@ -3977,7 +3494,7 @@ The system learns patterns from your content and continuously improves categoriz
                 const authorMatch = article.author && article.author.toLowerCase().includes(searchTerm);
                 const domainMatch = this.aiEngine.getDomain(article.url).toLowerCase().includes(searchTerm);
                 const urlMatch = article.url && article.url.toLowerCase().includes(searchTerm);
-                
+
                 const tagsMatch = article.tags && Array.isArray(article.tags) &&
                     article.tags.some(tag => tag.toLowerCase().includes(searchTerm));
 
@@ -3986,12 +3503,8 @@ The system learns patterns from your content and continuously improves categoriz
                 }
                 const categoryMatch = article.category && article.category.toLowerCase().includes(searchTerm);
 
-                // Enhanced: Semantic tags search
-                const semanticTagsMatch = article.semanticTags && Array.isArray(article.semanticTags) &&
-                    article.semanticTags.some(tag => tag.toLowerCase().includes(searchTerm));
-
-                return titleMatch || excerptMatch || contentMatch || authorMatch || domainMatch || 
-                       urlMatch || tagsMatch || categoryMatch || semanticTagsMatch;
+                return titleMatch || excerptMatch || contentMatch || authorMatch || domainMatch ||
+                    urlMatch || tagsMatch || categoryMatch;
             }
 
             // Advanced semantic search
@@ -4030,9 +3543,9 @@ The system learns patterns from your content and continuously improves categoriz
                     this.categorizeArticle(article);
                 }
 
-                const categoryKeywords = this.aiEngine.categories[article.category]?.keywords || [];
+                const categoryKeywords = this.aiEngine.categories[article.category]?.primaryKeywords || [];
                 const searchWords = searchTerm.split(/\s+/);
-                
+
                 let semanticScore = 0;
                 for (const searchWord of searchWords) {
                     for (const keyword of categoryKeywords) {
@@ -4046,7 +3559,7 @@ The system learns patterns from your content and continuously improves categoriz
                 return semanticScore >= Math.min(searchWords.length, 2);
             }
 
-            // Load articles with advanced AI processing
+            // Load articles with smart AI processing
             async loadArticles() {
                 const hasValidToken = await this.ensureValidToken();
                 if (!hasValidToken) {
@@ -4056,7 +3569,7 @@ The system learns patterns from your content and continuously improves categoriz
                 }
 
                 try {
-                    this.updateStatus('Loading articles with Advanced AI categorization... ⏳', 'loading');
+                    this.updateStatus('Loading articles with Smart AI categorization... ⏳', 'loading');
 
                     const listResponse = await fetch('https://graph.microsoft.com/v1.0/me/drive/root:/MyPocket:/children', {
                         headers: {
@@ -4111,21 +3624,21 @@ The system learns patterns from your content and continuously improves categoriz
                     this.articles = backup.articles || [];
                     this.currentDisplayedArticles = this.articles;
 
-                    console.log('🧠 Starting Advanced AI auto-categorization on load...');
-                    this.updateStatus('🧠 Advanced AI is analyzing your articles...', 'ai-processing');
+                    console.log('🧠 Starting Smart AI auto-categorization on load...');
+                    this.updateStatus('🧠 Smart AI is analyzing your articles...', 'ai-processing');
 
-                    // Process with advanced AI in background
+                    // Process with smart AI in background
                     setTimeout(async () => {
-                        await this.runAdvancedAIAnalysis();
+                        await this.runSmartAIAnalysis();
                         this.updateArticleCounts();
                         this.displayArticles(this.articles);
 
                         const cacheStats = this.getCacheStats();
                         const storedImages = this.articles.filter(a => a.cachedImage).length;
                         const aiEnhancedCount = this.articles.filter(a => a.aiEnhanced).length;
-                        const advancedAICount = this.articles.filter(a => a.advancedAI).length;
+                        const highConfidenceCount = this.articles.filter(a => a.categoryConfidence >= 80).length;
 
-                        this.updateStatus(`🧠 Loaded ${this.articles.length} articles with Advanced AI (${storedImages} with stored images, ${aiEnhancedCount} AI enhanced, ${advancedAICount} advanced AI)`, 'success');
+                        this.updateStatus(`🧠 Loaded ${this.articles.length} articles with Smart AI (${storedImages} with stored images, ${aiEnhancedCount} AI enhanced, ${highConfidenceCount} high confidence)`, 'success');
                     }, 100);
 
                 } catch (error) {
@@ -4140,11 +3653,11 @@ The system learns patterns from your content and continuously improves categoriz
                     <div class="empty-state">
                         <div class="empty-state-icon">🧠</div>
                         <h3>No articles found</h3>
-                        <p>Use the MyPocket browser extension to save articles, then refresh this page for Advanced AI categorization with 20+ intelligent categories!</p>
+                        <p>Use the MyPocket browser extension to save articles, then refresh this page for Smart AI categorization with improved accuracy!</p>
                     </div>`;
             }
 
-            // Enhanced display with advanced AI indicators
+            // Enhanced display with smart AI indicators
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -4160,7 +3673,7 @@ The system learns patterns from your content and continuously improves categoriz
                 let imagesFromCache = 0;
                 let imagesNeedLoading = 0;
 
-                console.log('🎯 DISPLAYING ARTICLES WITH ADVANCED AI - Image Source Priority Check:');
+                console.log('🎯 DISPLAYING ARTICLES WITH SMART AI - Image Source Priority Check:');
 
                 const articlesHTML = articles.map((article, displayIndex) => {
                     const index = displayIndex;
@@ -4170,7 +3683,7 @@ The system learns patterns from your content and continuously improves categoriz
                     let statusText = '🔄 Loading';
                     let imageSource = 'none';
 
-                    // Image priority logic (same as before)
+                    // Image priority logic
                     if (article.cachedImage && article.cachedImage.base64) {
                         imageHTML = this.createImageHTML(article.cachedImage.base64, true);
                         cacheStatus = 'synced';
@@ -4207,20 +3720,20 @@ The system learns patterns from your content and continuously improves categoriz
                     // Enhanced AI indicators
                     let cardClass = 'article-card';
                     if (article.aiEnhanced) cardClass += ' ai-categorized';
-                    if (article.advancedAI) cardClass += ' advanced-ai';
+                    if (article.categoryConfidence >= 80) cardClass += ' advanced-ai';
 
                     // Enhanced category badge
                     const categoryData = this.aiEngine.categories[article.category] || { icon: '📄' };
                     let categoryClass = 'article-category';
                     if (article.aiEnhanced) categoryClass += ' ai-category';
-                    if (article.advancedAI) categoryClass += ' advanced-ai-category';
+                    if (article.categoryConfidence >= 80) categoryClass += ' advanced-ai-category';
 
                     const categoryBadge = article.category ? `
                         <div class="${categoryClass}">
                             <span>${categoryData.icon}</span>
                             <span>${article.category}</span>
                             ${article.aiEnhanced ? '<span>🤖</span>' : ''}
-                            ${article.advancedAI ? '<span>🧠</span>' : ''}
+                            ${article.categoryConfidence >= 80 ? '<span>🧠</span>' : ''}
                             ${article.categoryConfidence ? `<span class="ai-confidence">${article.categoryConfidence}%</span>` : ''}
                         </div>
                     ` : '';
@@ -4228,7 +3741,7 @@ The system learns patterns from your content and continuously improves categoriz
                     // Enhanced cache indicator
                     let indicatorClass = `cache-indicator ${cacheStatus}`;
                     if (article.aiEnhanced) indicatorClass += ' ai-categorized';
-                    if (article.advancedAI) indicatorClass += ' advanced-ai';
+                    if (article.categoryConfidence >= 80) indicatorClass += ' advanced-ai';
 
                     return `
                     <div class="${cardClass}" data-index="${index}" data-display-index="${displayIndex}" data-image-source="${imageSource}">
@@ -4249,8 +3762,8 @@ The system learns patterns from your content and continuously improves categoriz
                             <div class="article-stats">
                                 <span>⏱️ ${article.readTime || 1} min read</span>
                                 <span>📝 ${article.wordCount || 0} words</span>
-                                ${article.categoryScore ? `<span>🧠 ${article.categoryScore}</span>` : ''}
-                                ${article.semanticTags ? `<span>🏷️ ${article.semanticTags.length}</span>` : ''}
+                                ${article.categoryConfidence ? `<span>🧠 ${article.categoryConfidence}%</span>` : ''}
+                                ${article.categorySource ? `<span>📊 ${article.categorySource}</span>` : ''}
                             </div>
                         </div>
                         <div class="article-actions">
@@ -4275,19 +3788,19 @@ The system learns patterns from your content and continuously improves categoriz
                 // Enhanced status reporting
                 const totalReady = imagesFromBackup + imagesFromCache;
                 const aiEnhancedCount = articles.filter(a => a.aiEnhanced).length;
-                const advancedAICount = articles.filter(a => a.advancedAI).length;
+                const highConfidenceCount = articles.filter(a => a.categoryConfidence >= 80).length;
 
                 console.log(`📊 IMAGE SUMMARY: ${imagesFromBackup} synced, ${imagesFromCache} cached, ${imagesNeedLoading} need loading`);
-                console.log(`🧠 ADVANCED AI SUMMARY: ${aiEnhancedCount}/${articles.length} AI enhanced, ${advancedAICount}/${articles.length} advanced AI`);
+                console.log(`🧠 SMART AI SUMMARY: ${aiEnhancedCount}/${articles.length} AI enhanced, ${highConfidenceCount}/${articles.length} high confidence`);
 
                 if (imagesNeedLoading === 0) {
-                    const aiText = aiEnhancedCount > 0 ? ` (${aiEnhancedCount} AI enhanced, ${advancedAICount} advanced AI)` : '';
+                    const aiText = aiEnhancedCount > 0 ? ` (${aiEnhancedCount} AI enhanced, ${highConfidenceCount} high confidence)` : '';
                     const message = isMobile ?
                         `📱 ALL images ready! ${totalReady}/${articles.length} synced perfectly ✨${aiText}` :
                         `✅ ALL images ready! ${imagesFromBackup} synced, ${imagesFromCache} cached ✨${aiText}`;
                     this.updateStatus(message, 'success');
                 } else {
-                    const aiText = aiEnhancedCount > 0 ? ` (${aiEnhancedCount} AI categorized, ${advancedAICount} advanced AI)` : '';
+                    const aiText = aiEnhancedCount > 0 ? ` (${aiEnhancedCount} AI categorized, ${highConfidenceCount} high confidence)` : '';
                     const message = isMobile ?
                         `📱 ${totalReady} ready instantly, extracting ${imagesNeedLoading} more...${aiText}` :
                         `⚡ ${totalReady} ready instantly, extracting ${imagesNeedLoading} more...${aiText}`;
@@ -4301,7 +3814,7 @@ The system learns patterns from your content and continuously improves categoriz
                 }
             }
 
-            // Enhanced backup with advanced AI metadata
+            // Enhanced backup with smart AI metadata
             async updateOneDriveBackup() {
                 if (!this.accessToken) {
                     throw new Error('Not connected to OneDrive');
@@ -4313,10 +3826,9 @@ The system learns patterns from your content and continuously improves categoriz
                 }, 0);
 
                 const aiEnhancedCount = this.articles.filter(a => a.aiEnhanced).length;
-                const advancedAICount = this.articles.filter(a => a.advancedAI).length;
-                const semanticTagsCount = this.articles.filter(a => a.semanticTags && a.semanticTags.length > 0).length;
+                const highConfidenceCount = this.articles.filter(a => a.categoryConfidence >= 80).length;
 
-                console.log(`📦 Creating backup with ${articlesWithImages.length} stored images (${Math.round(totalImageSizeKB)}KB) and ${advancedAICount} advanced AI articles`);
+                console.log(`📦 Creating backup with ${articlesWithImages.length} stored images (${Math.round(totalImageSizeKB)}KB) and ${highConfidenceCount} high confidence articles`);
 
                 const backup = {
                     articles: this.articles,
@@ -4324,26 +3836,25 @@ The system learns patterns from your content and continuously improves categoriz
                         storeImagesInBackup: this.storeImagesInBackup,
                         maxImageSizeKB: this.maxImageSizeKB,
                         aiCategoriesEnabled: this.aiCategoriesEnabled,
-                        advancedAIMode: this.advancedAIMode,
+                        smartAIMode: this.smartAIMode,
                         semanticSearchEnabled: this.semanticSearchEnabled
                     },
                     aiAnalytics: Object.fromEntries(this.categoryAnalytics),
                     aiCategories: this.aiEngine.categories,
                     exportDate: new Date().toISOString(),
-                    version: "6.0", // Advanced AI version
+                    version: "7.0", // Smart AI version
                     deviceInfo: {
-                        browser: "Advanced AI Reader with 20+ Categories + PKCE Security + Cross-Device Images",
+                        browser: "Smart AI Reader with Improved Accuracy + PKCE Security + Cross-Device Images",
                         platform: navigator.platform,
                         timestamp: Date.now(),
                         articleCount: this.articles.length,
                         storedImages: articlesWithImages.length,
                         totalImageSizeKB: Math.round(totalImageSizeKB),
                         aiEnhancedArticles: aiEnhancedCount,
-                        advancedAIArticles: advancedAICount,
-                        semanticTagsCount: semanticTagsCount,
+                        highConfidenceArticles: highConfidenceCount,
                         categoriesFound: this.categories.size,
                         authMethod: "Authorization Code + PKCE",
-                        aiFeatures: "Advanced categorization engine with 20+ categories, semantic understanding, topic modeling, relationship analysis"
+                        aiFeatures: "Smart categorization engine with improved accuracy, semantic understanding, precise domain mapping, enhanced content analysis"
                     }
                 };
 
@@ -4371,12 +3882,9 @@ The system learns patterns from your content and continuously improves categoriz
                     throw new Error(`Failed to update OneDrive backup: ${uploadResponse.status} - ${errorText}`);
                 }
 
-                console.log(`✅ Advanced AI backup saved with ${articlesWithImages.length} images (${Math.round(totalImageSizeKB)}KB) and ${advancedAICount} advanced AI articles`);
+                console.log(`✅ Smart AI backup saved with ${articlesWithImages.length} images (${Math.round(totalImageSizeKB)}KB) and ${highConfidenceCount} high confidence articles`);
                 return await uploadResponse.json();
             }
-
-            // All other methods remain the same but with enhanced status messages and AI indicators...
-            // (Due to length constraints, I'll include the most important method signatures)
 
             updateStatus(message, type = '') {
                 const status = document.getElementById('status');
@@ -4832,7 +4340,7 @@ The system learns patterns from your content and continuously improves categoriz
             getCategoryBasedImage(article, index) {
                 const category = article.category || 'Technology';
                 const categoryData = this.aiEngine.categories[category];
-                
+
                 if (!categoryData) {
                     return 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop&crop=center&q=80&auto=format';
                 }
@@ -5010,7 +4518,8 @@ The system learns patterns from your content and continuously improves categoriz
                         <span style="background: linear-gradient(135deg, var(--ai-primary), var(--ai-secondary)); color: white; padding: 6px 15px; border-radius: 20px; font-size: 0.9em; font-weight: 600;">
                             ${this.aiEngine.categories[article.category]?.icon || '📄'} ${article.category}
                             ${article.aiEnhanced ? ' 🤖' : ''}
-                            ${article.advancedAI ? ' 🧠' : ''}
+                            ${article.categoryConfidence >= 80 ? ' 🧠' : ''}
+                            ${article.categoryConfidence ? ` ${article.categoryConfidence}%` : ''}
                         </span>
                     </div>
                 ` : '';
@@ -5078,18 +4587,18 @@ The system learns patterns from your content and continuously improves categoriz
             ${article.author ? `<div style="margin-bottom: 8px;">✍️ By: ${this.escapeHtml(article.author)}</div>` : ''}
             <div style="margin-bottom: 8px;">📅 Saved: ${this.formatDate(article.dateAdded)}</div>
             <div>⏱️ Reading time: ${article.readTime || 1} minutes</div>
-            ${article.categoryScore ? `<div>🧠 AI Category Score: ${article.categoryScore}</div>` : ''}
-            ${article.advancedAI ? `<div>🧠 Advanced AI Enhanced</div>` : ''}
+            ${article.categoryConfidence ? `<div>🧠 AI Confidence: ${article.categoryConfidence}%</div>` : ''}
+            ${article.categorySource ? `<div>📊 Source: ${article.categorySource}</div>` : ''}
         </div>
     </div>
     <div class="content">
         ${article.content || article.excerpt || 'Content not available'}
     </div>
     <div class="footer">
-        <p><strong>🧠 Exported from MyPocket Advanced AI Reader</strong></p>
+        <p><strong>🧠 Exported from MyPocket Smart AI Reader</strong></p>
         <p>Original URL: <a href="${article.url}" style="color: #9c27b0;">${article.url}</a></p>
         <p>Export Date: ${new Date().toLocaleDateString()}</p>
-        ${article.category ? `<p>Category: ${article.category} ${article.advancedAI ? '(Advanced AI)' : article.aiEnhanced ? '(AI Enhanced)' : ''}</p>` : ''}
+        ${article.category ? `<p>Category: ${article.category} ${article.categoryConfidence >= 80 ? '(High Confidence)' : article.aiEnhanced ? '(AI Enhanced)' : ''}</p>` : ''}
     </div>
 </body>
 </html>`;
@@ -5320,12 +4829,11 @@ The system learns patterns from your content and continuously improves categoriz
 
                 const categorizedArticles = this.articles.filter(a => a.category).length;
                 const aiEnhancedArticles = this.articles.filter(a => a.aiEnhanced).length;
-                const advancedAIArticles = this.articles.filter(a => a.advancedAI).length;
-                const semanticTagsCount = this.articles.filter(a => a.semanticTags && a.semanticTags.length > 0).length;
+                const highConfidenceArticles = this.articles.filter(a => a.categoryConfidence >= 80).length;
 
                 const info = `
-MyPocket Advanced AI Reader Debug Info:
-=====================================
+MyPocket Smart AI Reader Debug Info:
+===================================
 
 Current URL: ${window.location.href}
 Redirect URI: ${this.redirectUri}
@@ -5345,15 +4853,14 @@ Client ID: ${this.clientId}
 - Total Stored Image Size: ${Math.round(totalStoredSizeKB)}KB
 - Failed Images: ${this.failedImages.size}
 
-🧠 ADVANCED AI CATEGORIZATION:
+🧠 SMART AI CATEGORIZATION:
 - AI Features Enabled: ${this.aiCategoriesEnabled}
-- Advanced AI Mode: ${this.advancedAIMode}
+- Smart AI Mode: ${this.smartAIMode}
 - Semantic Search: ${this.semanticSearchEnabled}
 - Total Categories: ${this.categories.size}
 - Categorized Articles: ${categorizedArticles}/${this.articles.length}
 - AI Enhanced Articles: ${aiEnhancedArticles}/${this.articles.length}
-- Advanced AI Articles: ${advancedAIArticles}/${this.articles.length}
-- Semantic Tags Found: ${semanticTagsCount}/${this.articles.length}
+- High Confidence Articles: ${highConfidenceArticles}/${this.articles.length}
 - Active Category Filter: ${this.activeCategory || 'None'}
 
 💾 LOCAL CACHE:
@@ -5361,17 +4868,16 @@ Client ID: ${this.clientId}
 - Memory Usage: ${Math.round(cacheStats.memoryUsage / 1024)} KB
 - Cache Expiry: ${this.cacheExpiryDays} days
 
-🎯 AI ENHANCEMENTS:
-✅ 20+ intelligent categories
-✅ Multi-layered semantic analysis  
-✅ Topic modeling and clustering
-✅ Context-aware pattern recognition
-✅ Category relationships and hierarchies
-✅ Advanced confidence scoring
-✅ Cross-device AI metadata sync
+🎯 SMART AI IMPROVEMENTS:
+✅ Improved accuracy with precise categorization
+✅ Domain-based categorization (95% confidence)
+✅ Title pattern recognition (85% confidence)  
+✅ Enhanced content analysis with exclusion rules
+✅ Smart fallback with multiple factors
+✅ Confidence scoring and source tracking
 
 DEBUGGING COMMANDS:
-- webReader.runAdvancedAIAnalysis() - Run advanced AI analysis
+- webReader.runSmartAIAnalysis() - Run smart AI analysis
 - webReader.toggleSemanticSearch() - Toggle semantic search
 - webReader.showAIHelp() - Show AI help
                 `;
@@ -5384,7 +4890,7 @@ DEBUGGING COMMANDS:
 
         // Initialize when DOM is ready
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('📄 DOM Content Loaded - Starting Advanced AI initialization...');
+            console.log('📄 DOM Content Loaded - Starting Smart AI initialization...');
 
             try {
                 const connectBtn = document.getElementById('connectBtnSidebar');
@@ -5398,14 +4904,14 @@ DEBUGGING COMMANDS:
                     return;
                 }
 
-                console.log('✅ Critical elements found, initializing Advanced AI reader...');
+                console.log('✅ Critical elements found, initializing Smart AI reader...');
                 webReader = new MyPocketWebReader();
                 window.webReader = webReader;
 
                 window.debugElements = () => webReader.debugElements();
                 window.testAuth = () => webReader.testAuth();
 
-                console.log('✅ MyPocket Advanced AI Reader initialized successfully');
+                console.log('✅ MyPocket Smart AI Reader initialized successfully');
 
                 setTimeout(() => {
                     console.log('🧪 Running initial element test...');
@@ -5415,7 +4921,7 @@ DEBUGGING COMMANDS:
                 }, 500);
 
             } catch (error) {
-                console.error('❌ CRITICAL ERROR during Advanced AI initialization:', error);
+                console.error('❌ CRITICAL ERROR during Smart AI initialization:', error);
                 console.error('Error stack:', error.stack);
 
                 const status = document.getElementById('status');
@@ -5425,7 +4931,7 @@ DEBUGGING COMMANDS:
                 }
 
                 window.webReader = null;
-                alert(`MyPocket Advanced AI Reader failed to start!\n\nError: ${error.message}\n\nPlease:\n1. Check browser console for details\n2. Try refreshing the page\n3. Ensure you're using a modern browser`);
+                alert(`MyPocket Smart AI Reader failed to start!\n\nError: ${error.message}\n\nPlease:\n1. Check browser console for details\n2. Try refreshing the page\n3. Ensure you're using a modern browser`);
             }
         });
 
@@ -5456,7 +4962,7 @@ DEBUGGING COMMANDS:
                 console.log('📊 webReader properties:', {
                     accessToken: !!window.webReader.accessToken,
                     articles: window.webReader.articles ? window.webReader.articles.length : 0,
-                    advancedAIMode: window.webReader.advancedAIMode,
+                    smartAIMode: window.webReader.smartAIMode,
                     semanticSearchEnabled: window.webReader.semanticSearchEnabled,
                     categories: window.webReader.categories.size
                 });
