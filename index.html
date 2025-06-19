@@ -1889,6 +1889,12 @@
                     <span class="icon">🗑️</span>
                     <span class="text">Clear Cache</span>
                 </button>
+                <button class="nav-item" id="aiRecategorizeBtn" title="Advanced AI recategorization">
+                    <span class="icon">🧠</span>
+                    <span class="text">AI Re-categorize</span>
+                </button>
+                </div>
+                
                 <button class="nav-item" onclick="webReader.recategorizeAllWithAI()">
                     <span class="icon">🧠</span>
                     <span class="text">AI Re-categorize</span>
@@ -2438,7 +2444,7 @@
                 const titleWeight = 3.0;    // Title is most important
                 const excerptWeight = 2.0;  // Excerpt is very important  
                 const contentWeight = 1.0;  // Content is helpful but not always available
-                
+
                 const scores = new Map();
                 let analysisDetails = {};
 
@@ -2501,7 +2507,7 @@
                     let titleMatches = 0;
                     for (const keyword of categoryData.keywords) {
                         let keywordScore = 0;
-                        
+
                         // Exact phrase in title (highest priority)
                         if (keyword.includes(' ') && title.includes(keyword)) {
                             keywordScore += 150 * titleWeight;
@@ -2626,7 +2632,7 @@
 
                 // FIXED: Much better decision making
                 const sortedScores = Array.from(scores.entries()).sort((a, b) => b[1] - a[1]);
-                
+
                 let bestCategory = 'Lifestyle';
                 let bestScore = 0;
                 let secondBestScore = 0;
@@ -2725,10 +2731,10 @@
                     /\b(programming|coding|software|developer|api|framework|javascript|python|react|vue|angular)\b/i,
                     /\b(github|stackoverflow|dev\.to|programming|algorithm|database|docker|kubernetes)\b/i
                 ];
-                
+
                 const text = `${title} ${excerpt}`;
-                return strongTechPatterns.some(pattern => pattern.test(text)) || 
-                       ['github.com', 'stackoverflow.com', 'dev.to'].some(d => domain.includes(d));
+                return strongTechPatterns.some(pattern => pattern.test(text)) ||
+                    ['github.com', 'stackoverflow.com', 'dev.to'].some(d => domain.includes(d));
             }
 
             hasStrongScienceIndicators(title, excerpt, domain) {
@@ -2736,10 +2742,10 @@
                     /\b(research|study|scientific|experiment|clinical|peer.?review|hypothesis|laboratory)\b/i,
                     /\b(nature|science|arxiv|pubmed|journal|academic|university|biology|chemistry|physics)\b/i
                 ];
-                
+
                 const text = `${title} ${excerpt}`;
-                return strongSciencePatterns.some(pattern => pattern.test(text)) || 
-                       ['arxiv.org', 'nature.com', 'science.org', 'pubmed.ncbi.nlm.nih.gov'].some(d => domain.includes(d));
+                return strongSciencePatterns.some(pattern => pattern.test(text)) ||
+                    ['arxiv.org', 'nature.com', 'science.org', 'pubmed.ncbi.nlm.nih.gov'].some(d => domain.includes(d));
             }
 
             // FIXED: Enhanced fallback with better logic
@@ -2760,7 +2766,7 @@
                 };
 
                 const text = `${title} ${excerpt}`;
-                
+
                 // Find the category with the strongest pattern match
                 for (const [category, pattern] of Object.entries(contentTypePatterns)) {
                     if (pattern.test(text)) {
@@ -2792,7 +2798,7 @@
                     url: article.url,
                     hasContent: !!article.content,
                     contentLength: article.content?.length || 0,
-                    availableFields: Object.keys(article).filter(key => 
+                    availableFields: Object.keys(article).filter(key =>
                         typeof article[key] === 'string' && article[key].length > 0
                     )
                 });
@@ -2803,6 +2809,14 @@
 
             setupEventListeners() {
                 console.log('🔧 Setting up event listeners...');
+            // 🧠 AI Re-categorize button
+                    const aiRecategorizeBtn = document.getElementById('aiRecategorizeBtn');
+                    if (aiRecategorizeBtn) {
+                        aiRecategorizeBtn.addEventListener('click', () => this.recategorizeAllWithAI());
+                        console.log('✅ AI Recategorize button event listener added');
+                    } else {
+                        console.error('❌ AI Recategorize button not found!');
+                   }
 
                 // Sidebar connect button
                 const connectBtnSidebar = document.getElementById('connectBtnSidebar');
