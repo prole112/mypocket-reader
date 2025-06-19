@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPocket - Web Reader (Improved AI Categories)</title>
+    <title>MyPocket - Web Reader (Fixed AI Categories + Manual Editing)</title>
     <style>
         * {
             margin: 0;
@@ -993,10 +993,84 @@
             font-size: 0.65em;
             font-weight: 500;
             margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .article-category:hover {
+            background: var(--secondary-color);
+            transform: scale(1.05);
         }
 
         .article-category.ai-category {
             background: linear-gradient(45deg, var(--primary-color), #9c27b0);
+        }
+
+        /* NEW: Category editing dropdown */
+        .category-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow-hover);
+            z-index: 200;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            min-width: 150px;
+        }
+
+        .category-dropdown.visible {
+            display: block;
+        }
+
+        .category-option {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.9em;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-primary);
+        }
+
+        .category-option:hover {
+            background: var(--background);
+        }
+
+        .category-option.selected {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .category-option:last-child {
+            border-bottom: none;
+        }
+
+        /* Dark mode dropdown styles */
+        [data-theme="dark"] .category-dropdown {
+            background: var(--surface);
+            border-color: var(--primary-color);
+        }
+
+        [data-theme="dark"] .category-option {
+            color: var(--text-primary);
+            border-bottom-color: var(--border);
+        }
+
+        [data-theme="dark"] .category-option:hover {
+            background: var(--background);
+        }
+
+        [data-theme="dark"] .category-option.selected {
+            background: var(--primary-color);
+            color: white;
         }
 
         /* Floating organic action buttons - SMALLER */
@@ -1286,6 +1360,90 @@
         .cache-indicator.smart-categorized {
             background: rgba(103, 58, 183, 0.9);
             color: white;
+        }
+
+        /* NEW: Progress indicator for recategorization */
+        .progress-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1001;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .progress-overlay.visible {
+            display: flex;
+        }
+
+        .progress-container {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: var(--shadow-hover);
+            text-align: center;
+        }
+
+        .progress-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: var(--background);
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 6px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-top: 10px;
+        }
+
+        .progress-stats {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Dark mode progress styles */
+        [data-theme="dark"] .progress-container {
+            background: var(--surface);
+        }
+
+        [data-theme="dark"] .progress-title {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .progress-text,
+        [data-theme="dark"] .progress-stats {
+            color: var(--text-secondary);
+        }
+
+        [data-theme="dark"] .progress-stats {
+            border-top-color: var(--border);
         }
 
         /* Enhanced Mobile Responsive Design */
@@ -1679,6 +1837,26 @@
                 font-size: 1em;
                 line-height: 1.5;
             }
+
+            /* Mobile progress overlay */
+            .progress-container {
+                max-width: 350px;
+                padding: 25px;
+            }
+
+            .progress-title {
+                font-size: 1.1em;
+            }
+
+            .category-dropdown {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 280px;
+                max-height: 300px;
+                border-radius: 12px;
+            }
         }
 
         /* Extra small screens (very small phones) */
@@ -1889,12 +2067,7 @@
                     <span class="icon">🗑️</span>
                     <span class="text">Clear Cache</span>
                 </button>
-                <button class="nav-item" id="aiRecategorizeBtn" title="Advanced AI recategorization">
-                    <span class="icon">🧠</span>
-                    <span class="text">AI Re-categorize</span>
-                </button>
-                
-                <button class="nav-item" onclick="webReader.recategorizeAllWithAI()">
+                <button class="nav-item" id="recategorizeBtn" onclick="webReader.recategorizeAllWithAI()">
                     <span class="icon">🧠</span>
                     <span class="text">AI Re-categorize</span>
                 </button>
@@ -1948,12 +2121,11 @@
                     </button>
 
                     <div class="logo">
-                        MyPocket AI Reader
+                        MyPocket AI Reader (FIXED + Manual Edit)
                     </div>
 
                     <div class="header-right">
-                        <!-- Keep minimal actions in header -->
-                        <span id="headerStatus" class="header-status">🤖 AI Enhanced</span>
+                        <span id="headerStatus" class="header-status">🤖 Click categories to edit!</span>
                     </div>
                 </div>
             </div>
@@ -2028,6 +2200,20 @@
         </div>
     </div>
 
+    <!-- Progress Overlay for Recategorization -->
+    <div class="progress-overlay" id="progressOverlay">
+        <div class="progress-container">
+            <div class="progress-title">🧠 AI Re-categorization in Progress</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Initializing AI analysis...</div>
+            <div class="progress-stats" id="progressStats">
+                Processing articles with enhanced categorization...
+            </div>
+        </div>
+    </div>
+
     <script>
         console.log('🚀 MyPocket AI-Enhanced Web Reader script starting...');
 
@@ -2046,6 +2232,7 @@
                 'allArticlesNav': document.getElementById('allArticlesNav'),
                 'searchNavBtn': document.getElementById('searchNavBtn'),
                 'categoriesNavBtn': document.getElementById('categoriesNavBtn'),
+                'recategorizeBtn': document.getElementById('recategorizeBtn'),
                 'status': document.getElementById('status'),
                 'mainContent': document.getElementById('mainContent')
             };
@@ -2066,7 +2253,8 @@
                     accessToken: !!window.webReader.accessToken,
                     articles: window.webReader.articles ? window.webReader.articles.length : 0,
                     redirectUri: window.webReader.redirectUri,
-                    aiCategoriesEnabled: window.webReader.aiCategoriesEnabled
+                    aiCategoriesEnabled: window.webReader.aiCategoriesEnabled,
+                    isRecategorizing: window.webReader.isRecategorizing
                 });
             } else {
                 console.log('❌ webReader: NOT INITIALIZED');
@@ -2115,6 +2303,10 @@
                 this.codeVerifier = null;
                 this.codeChallenge = null;
                 this.state = null;
+
+                // NEW: Progress tracking for recategorization
+                this.isRecategorizing = false;
+                this.recategorizationProgress = 0;
 
                 console.log('✅ AI-Enhanced MyPocketWebReader constructor complete');
                 this.init();
@@ -2808,14 +3000,6 @@
 
             setupEventListeners() {
                 console.log('🔧 Setting up event listeners...');
-            // 🧠 AI Re-categorize button
-                    const aiRecategorizeBtn = document.getElementById('aiRecategorizeBtn');
-                    if (aiRecategorizeBtn) {
-                        aiRecategorizeBtn.addEventListener('click', () => this.recategorizeAllWithAI());
-                        console.log('✅ AI Recategorize button event listener added');
-                    } else {
-                        console.error('❌ AI Recategorize button not found!');
-                   }
 
                 // Sidebar connect button
                 const connectBtnSidebar = document.getElementById('connectBtnSidebar');
@@ -2904,6 +3088,16 @@
 
                 // Mobile menu setup
                 this.setupMobileMenu();
+
+                // Close all dropdowns when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.article-category') && !e.target.closest('.category-dropdown')) {
+                        document.querySelectorAll('.category-dropdown.visible').forEach(dropdown => {
+                            dropdown.classList.remove('visible');
+                        });
+                    }
+                });
+
                 console.log('✅ Event listeners setup complete');
             }
 
@@ -3102,63 +3296,155 @@
                 return combinedContent.trim() || article.title || '';
             }
 
-            // Enhanced re-categorization with AI
+            // FIXED: Enhanced re-categorization with AI (with proper progress tracking)
             async recategorizeAllWithAI() {
+                if (this.isRecategorizing) {
+                    this.updateStatus('⚠️ Recategorization already in progress!', 'error');
+                    return;
+                }
+
                 if (this.articles.length === 0) {
                     this.updateStatus('❌ No articles to categorize. Load articles first.', 'error');
                     return;
                 }
 
-                console.log('🧠 Starting IMPROVED AI categorization...');
-                this.updateStatus('🧠 Advanced AI is analyzing and categorizing your articles...', 'loading');
+                console.log('🧠 Starting IMPROVED AI categorization with progress tracking...');
+                this.isRecategorizing = true;
+
+                // Show progress overlay
+                this.showProgressOverlay();
+                this.updateRecategorizeButton(true);
+
+                try {
+                    await this.performRecategorization();
+                } catch (error) {
+                    console.error('Recategorization error:', error);
+                    this.updateStatus(`❌ Recategorization failed: ${error.message}`, 'error');
+                } finally {
+                    this.isRecategorizing = false;
+                    this.hideProgressOverlay();
+                    this.updateRecategorizeButton(false);
+                }
+            }
+
+            // NEW: Show/hide progress overlay
+            showProgressOverlay() {
+                const overlay = document.getElementById('progressOverlay');
+                if (overlay) {
+                    overlay.classList.add('visible');
+                }
+            }
+
+            hideProgressOverlay() {
+                const overlay = document.getElementById('progressOverlay');
+                if (overlay) {
+                    overlay.classList.remove('visible');
+                }
+            }
+
+            // NEW: Update progress display
+            updateProgress(percentage, text, stats = '') {
+                const fill = document.getElementById('progressFill');
+                const progressText = document.getElementById('progressText');
+                const progressStats = document.getElementById('progressStats');
+
+                if (fill) {
+                    fill.style.width = `${percentage}%`;
+                }
+                if (progressText) {
+                    progressText.textContent = text;
+                }
+                if (progressStats && stats) {
+                    progressStats.textContent = stats;
+                }
+            }
+
+            // NEW: Update recategorize button state
+            updateRecategorizeButton(isProcessing) {
+                const btn = document.getElementById('recategorizeBtn');
+                if (btn) {
+                    if (isProcessing) {
+                        btn.innerHTML = `
+                            <span class="icon">⏳</span>
+                            <span class="text">Processing...</span>
+                        `;
+                        btn.disabled = true;
+                        btn.style.opacity = '0.6';
+                        btn.style.pointerEvents = 'none';
+                    } else {
+                        btn.innerHTML = `
+                            <span class="icon">🧠</span>
+                            <span class="text">AI Re-categorize</span>
+                        `;
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                        btn.style.pointerEvents = 'auto';
+                    }
+                }
+            }
+
+            // FIXED: Perform recategorization with proper progress tracking
+            async performRecategorization() {
+                const total = this.articles.length;
+                let processed = 0;
+                let categorizedCount = 0;
+                let aiEnhancedCount = 0;
+                let highConfidenceCount = 0;
+
+                this.updateProgress(0, 'Initializing AI analysis...', `Preparing to analyze ${total} articles with enhanced categorization`);
 
                 // Clear existing categories and analytics
                 this.categories.clear();
                 this.categoryAnalytics.clear();
 
-                let categorizedCount = 0;
-                let aiEnhancedCount = 0;
-                let highConfidenceCount = 0;
-
                 // Process in small batches for better UX
                 const batchSize = 10;
-                for (let i = 0; i < this.articles.length; i += batchSize) {
-                    const batch = this.articles.slice(i, i + batchSize);
+
+                for (let i = 0; i < total; i += batchSize) {
+                    const batch = this.articles.slice(i, Math.min(i + batchSize, total));
 
                     for (const article of batch) {
-                        const category = this.categorizeArticle(article);
-                        this.categories.set(category, (this.categories.get(category) || 0) + 1);
-                        categorizedCount++;
+                        try {
+                            // Re-categorize article
+                            const category = this.categorizeArticle(article);
+                            this.categories.set(category, (this.categories.get(category) || 0) + 1);
 
-                        if (article.aiEnhanced) {
-                            aiEnhancedCount++;
-                        }
+                            // Update analytics
+                            this.updateCategoryAnalytics(category, article.categoryScore || 0, article.aiEnhanced || false);
 
-                        if (article.categoryScore >= 100) {
-                            highConfidenceCount++;
+                            categorizedCount++;
+                            if (article.aiEnhanced) aiEnhancedCount++;
+                            if (article.categoryScore >= 100) highConfidenceCount++;
+
+                            processed++;
+
+                            // Update progress
+                            const progress = Math.round((processed / total) * 100);
+                            const statsText = `${categorizedCount} articles categorized • ${aiEnhancedCount} AI-enhanced • ${highConfidenceCount} high-confidence • ${this.categories.size} categories found`;
+                            this.updateProgress(progress, `Analyzing article ${processed}/${total}...`, statsText);
+
+                        } catch (error) {
+                            console.error(`Error categorizing article ${processed}:`, error);
+                            // Continue with next article
+                            processed++;
                         }
                     }
-
-                    // Update progress
-                    const progress = Math.round((categorizedCount / this.articles.length) * 100);
-                    this.updateStatus(`🧠 Advanced AI categorizing... ${categorizedCount}/${this.articles.length} (${progress}%)`, 'loading');
 
                     // Small delay to prevent UI blocking
                     await new Promise(resolve => setTimeout(resolve, 50));
                 }
 
-                console.log(`🎯 IMPROVED AI categorization complete: ${this.categories.size} categories, ${aiEnhancedCount} AI-enhanced, ${highConfidenceCount} high-confidence`);
-
                 // Update UI
+                this.updateProgress(100, 'Updating display...', `Refreshing display with ${this.categories.size} categories`);
+                await new Promise(resolve => setTimeout(resolve, 200));
+
                 this.updateCategoryUI();
                 this.displayArticles(this.currentDisplayedArticles);
                 this.updateArticleCounts();
 
-                const message = `🧠 Advanced AI categorization complete! ${categorizedCount} articles in ${this.categories.size} categories (${aiEnhancedCount} AI-enhanced, ${highConfidenceCount} high-confidence)`;
-                this.updateStatus(message, 'success');
-
-                // Save to backup if connected
+                // Save to OneDrive if connected
                 if (this.accessToken) {
+                    this.updateProgress(100, 'Saving to OneDrive...', 'Updating backup with new categories');
                     try {
                         await this.updateOneDriveBackup();
                         console.log('✅ Updated backup with improved AI categories');
@@ -3166,6 +3452,9 @@
                         console.error('⚠️ Failed to update backup:', error);
                     }
                 }
+
+                const message = `🧠 ✅ Re-categorized ${categorizedCount} articles into ${this.categories.size} categories (${aiEnhancedCount} AI-enhanced, ${highConfidenceCount} high-confidence)`;
+                this.updateStatus(message, 'success');
             }
 
             // Regular re-categorization (legacy method)
@@ -3410,6 +3699,12 @@ MyPocket IMPROVED AI Categorization Help:
    • Smart confidence gap analysis
    • Manual overrides for edge cases
 
+6️⃣ MANUAL EDITING:
+   • Click any category badge to edit it instantly
+   • Dropdown with all available categories
+   • Changes save automatically to OneDrive
+   • Visual feedback for successful changes
+
 🔍 HOW IT WORKS (FIXED):
 
 • Step 1: Context phrase matching (highest priority)
@@ -3429,12 +3724,15 @@ MyPocket IMPROVED AI Categorization Help:
 ✅ Advanced confidence tracking
 ✅ Smart negative filtering
 ✅ Manual override system
+✅ Manual category editing
+✅ Progress tracking during recategorization
 
 🎯 USAGE TIPS:
 - Categorization now happens automatically with much higher accuracy
-- Use "🧠 AI Re-categorize" for immediate processing
+- Use "🧠 AI Re-categorize" for immediate processing with progress bar
 - High-confidence articles show 🎯 indicator
 - AI-enhanced articles show 🤖 indicator
+- Click any category badge to edit it manually
 - Category analytics show accuracy metrics
 - Debug individual articles with console: webReader.debugArticleData(article)
 
@@ -3780,46 +4078,6 @@ The fixed system now properly weights title/content over domain and prevents com
                 }
             }
 
-            // Debug function to check elements
-            debugElements() {
-                console.log('🔧 DEBUG: Checking sidebar elements...');
-                const elements = {
-                    'connectionStatusSidebar': document.getElementById('connectionStatusSidebar'),
-                    'connectionIcon': document.getElementById('connectionIcon'),
-                    'connectionText': document.getElementById('connectionText'),
-                    'connectBtnSidebar': document.getElementById('connectBtnSidebar'),
-                    'refreshNavBtn': document.getElementById('refreshNavBtn'),
-                    'syncNavBtn': document.getElementById('syncNavBtn'),
-                    'retryNavBtn': document.getElementById('retryNavBtn'),
-                };
-
-                for (const [name, element] of Object.entries(elements)) {
-                    if (element) {
-                        console.log(`✅ ${name}: Found`);
-                    } else {
-                        console.log(`❌ ${name}: NOT FOUND`);
-                    }
-                }
-
-                return elements;
-            }
-
-            // Test authentication method
-            testAuth() {
-                console.log('🧪 Testing authentication...');
-                console.log('📍 Redirect URI:', this.redirectUri);
-                console.log('🔑 Client ID:', this.clientId);
-
-                // Test if we can generate PKCE parameters
-                try {
-                    const testVerifier = this.generateCodeVerifier();
-                    console.log('✅ Code verifier generation: OK');
-                    console.log('✅ Authentication setup: Ready');
-                } catch (error) {
-                    console.error('❌ Authentication setup failed:', error);
-                }
-            }
-
             updateConnectionStatus(connected) {
                 // Use the correct IDs that actually exist in the HTML
                 const connectBtn = document.getElementById('connectBtnSidebar');
@@ -4086,7 +4344,7 @@ The fixed system now properly weights title/content over domain and prevents com
                 }
             }
 
-            // ENHANCED: More aggressive synced image prioritization with AI indicators
+            // ENHANCED: More aggressive synced image prioritization with AI indicators + Manual category editing
             displayArticles(articles) {
                 const container = document.getElementById('articlesContainer');
 
@@ -4105,7 +4363,7 @@ The fixed system now properly weights title/content over domain and prevents com
                 let imagesFromCache = 0;
                 let imagesNeedLoading = 0;
 
-                console.log('🎯 DISPLAYING ARTICLES WITH IMPROVED AI CATEGORIES - Image Source Priority Check:');
+                console.log('🎯 DISPLAYING ARTICLES WITH IMPROVED AI CATEGORIES + MANUAL EDITING - Image Source Priority Check:');
 
                 const articlesHTML = articles.map((article, displayIndex) => {
                     // Use the display index for the currently shown articles
@@ -4169,7 +4427,7 @@ The fixed system now properly weights title/content over domain and prevents com
                     const aiEnhanced = article.aiEnhanced ? 'ai-categorized' : '';
                     const categoryData = this.categoryKeywords[article.category] || { icon: '📄' };
 
-                    // Enhanced category badge with confidence indicators
+                    // Enhanced category badge with confidence indicators + MANUAL EDITING
                     let categoryBadge = '';
                     if (article.category) {
                         let confidenceIndicator = '';
@@ -4180,9 +4438,21 @@ The fixed system now properly weights title/content over domain and prevents com
                         }
 
                         categoryBadge = `
-                            <div class="article-category ${article.aiEnhanced ? 'ai-category' : ''}">
+                            <div class="article-category ${article.aiEnhanced ? 'ai-category' : ''}" 
+                                 onclick="webReader.editCategory(${displayIndex}, event)"
+                                 title="Click to edit category">
                                 <span>${categoryData.icon}</span>
                                 <span>${article.category}${confidenceIndicator}</span>
+                                <span style="margin-left: 4px; font-size: 0.6em;">✏️</span>
+                                <div class="category-dropdown" id="dropdown-${displayIndex}">
+                                    ${Object.entries(this.categoryKeywords).map(([catName, catData]) => `
+                                        <div class="category-option ${catName === article.category ? 'selected' : ''}" 
+                                             onclick="webReader.selectCategory(${displayIndex}, '${catName}', event)">
+                                            <span>${catData.icon}</span>
+                                            <span>${catName}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
                             </div>
                         `;
                     }
@@ -4255,6 +4525,91 @@ The fixed system now properly weights title/content over domain and prevents com
                     } else {
                         this.loadMissingImages(articles);
                     }
+                }
+            }
+
+            // NEW: Edit category functionality
+            editCategory(displayIndex, event) {
+                event.stopPropagation();
+                
+                const dropdown = document.getElementById(`dropdown-${displayIndex}`);
+                if (!dropdown) return;
+
+                // Close all other dropdowns first
+                document.querySelectorAll('.category-dropdown.visible').forEach(d => {
+                    if (d !== dropdown) d.classList.remove('visible');
+                });
+
+                // Toggle this dropdown
+                dropdown.classList.toggle('visible');
+
+                // Close dropdown when clicking outside
+                const closeDropdown = (e) => {
+                    if (!dropdown.contains(e.target)) {
+                        dropdown.classList.remove('visible');
+                        document.removeEventListener('click', closeDropdown);
+                    }
+                };
+
+                if (dropdown.classList.contains('visible')) {
+                    setTimeout(() => {
+                        document.addEventListener('click', closeDropdown);
+                    }, 10);
+                }
+            }
+
+            // NEW: Select category functionality
+            async selectCategory(displayIndex, newCategory, event) {
+                event.stopPropagation();
+
+                const article = this.currentDisplayedArticles[displayIndex];
+                if (!article) return;
+
+                const oldCategory = article.category;
+                
+                if (oldCategory === newCategory) {
+                    // Close dropdown if same category selected
+                    const dropdown = document.getElementById(`dropdown-${displayIndex}`);
+                    if (dropdown) dropdown.classList.remove('visible');
+                    return;
+                }
+
+                console.log(`✏️ Manually changing category: "${article.title.substring(0, 30)}..." from ${oldCategory} to ${newCategory}`);
+
+                // Update article
+                article.category = newCategory;
+
+                // Update category counts
+                if (oldCategory) {
+                    const oldCount = this.categories.get(oldCategory) || 1;
+                    if (oldCount <= 1) {
+                        this.categories.delete(oldCategory);
+                    } else {
+                        this.categories.set(oldCategory, oldCount - 1);
+                    }
+                }
+                this.categories.set(newCategory, (this.categories.get(newCategory) || 0) + 1);
+
+                // Update the article in the main array too
+                const mainIndex = this.articles.findIndex(a => a.url === article.url);
+                if (mainIndex !== -1) {
+                    this.articles[mainIndex].category = newCategory;
+                }
+
+                // Refresh display
+                this.displayArticles(this.currentDisplayedArticles);
+                this.updateArticleCounts();
+
+                // Save to OneDrive
+                if (this.accessToken) {
+                    try {
+                        await this.updateOneDriveBackup();
+                        this.updateStatus(`✅ Changed "${article.title.substring(0, 30)}..." to ${newCategory} and saved!`, 'success');
+                    } catch (error) {
+                        this.updateStatus(`✅ Changed category locally (save failed: ${error.message})`, 'warning');
+                    }
+                } else {
+                    this.updateStatus(`✅ Changed category locally (not connected to save)`, 'warning');
                 }
             }
 
@@ -4672,6 +5027,17 @@ The fixed system now properly weights title/content over domain and prevents com
                         this.imageCache.delete(cacheKey);
                         this.saveImageCache();
 
+                        // Update category counts
+                        const category = article.category;
+                        if (category) {
+                            const count = this.categories.get(category) || 1;
+                            if (count <= 1) {
+                                this.categories.delete(category);
+                            } else {
+                                this.categories.set(category, count - 1);
+                            }
+                        }
+
                         // Remove from main articles array
                         this.articles.splice(originalIndex, 1);
 
@@ -4688,6 +5054,7 @@ The fixed system now properly weights title/content over domain and prevents com
 
                         // Refresh the display with current articles
                         this.displayArticles(this.currentDisplayedArticles);
+                        this.updateArticleCounts();
 
                     } catch (error) {
                         console.error('Error deleting article:', error);
@@ -5008,9 +5375,9 @@ The fixed system now properly weights title/content over domain and prevents com
                     },
                     aiAnalytics: Object.fromEntries(this.categoryAnalytics),
                     exportDate: new Date().toISOString(),
-                    version: "6.1", // Bump version for fixed AI categories
+                    version: "7.1", // Bump version for FIXED AI categories + manual editing
                     deviceInfo: {
-                        browser: "AI-Enhanced Web Reader v3.0 with FIXED Categorization + PKCE Security + Cross-Device Images",
+                        browser: "AI-Enhanced Web Reader v3.1 with FIXED Categorization + Manual Editing + PKCE Security + Cross-Device Images",
                         platform: navigator.platform,
                         timestamp: Date.now(),
                         articleCount: this.articles.length,
@@ -5020,7 +5387,7 @@ The fixed system now properly weights title/content over domain and prevents com
                         highConfidenceArticles: highConfidenceCount,
                         categoriesFound: this.categories.size,
                         authMethod: "Authorization Code + PKCE",
-                        aiFeatures: "FIXED context-aware categorization with 16 categories, negative filtering, confidence scoring, manual overrides, and advanced pattern recognition"
+                        aiFeatures: "FIXED context-aware categorization with 16 categories, negative filtering, confidence scoring, manual overrides, manual category editing, and advanced pattern recognition"
                     }
                 };
 
@@ -5134,7 +5501,7 @@ The fixed system now properly weights title/content over domain and prevents com
         ${article.content || article.excerpt || 'Content not available'}
     </div>
     <div class="footer">
-        <p><strong>🧠 Exported from MyPocket AI-Enhanced Reader v3.0 (PKCE Secured + FIXED Categorization)</strong></p>
+        <p><strong>🧠 Exported from MyPocket AI-Enhanced Reader v3.1 (PKCE Secured + FIXED Categorization + Manual Editing)</strong></p>
         <p>Original URL: <a href="${article.url}" style="color: #ee5a24;">${article.url}</a></p>
         <p>Export Date: ${new Date().toLocaleDateString()}</p>
         ${article.category ? `<p>Category: ${article.category} ${article.aiEnhanced ? '(AI-Enhanced)' : ''} ${article.categoryScore >= 100 ? '(High-Confidence)' : ''}</p>` : ''}
@@ -5666,6 +6033,7 @@ MyPocket AI-Enhanced Web Reader Debug Info:
 - Active category filter: ${this.activeCategory || 'None'}
 - AI categories enabled: ${this.aiCategoriesEnabled}
 - Analytics tracked: ${this.categoryAnalytics.size} categories
+- Is recategorizing: ${this.isRecategorizing}
 
 💾 IMAGE CACHE:
 - Local cache entries: ${cacheStats.total}
@@ -5684,17 +6052,19 @@ MyPocket AI-Enhanced Web Reader Debug Info:
 - Enhanced image extraction: ✅
 - Cross-device image sync: ✅
 - FIXED AI categorization: ✅
+- Manual category editing: ✅
 - PKCE security: ✅
 - Smart fallback images: ✅
 - Advanced search: ✅
+- Progress tracking: ✅
 
 🎯 CATEGORIZATION ANALYTICS:
 ${Array.from(this.categoryAnalytics.entries()).map(([cat, stats]) =>
                     `• ${cat}: ${stats.count} articles (${stats.aiEnhanced} AI-enhanced, avg score: ${stats.avgScore})`
                 ).join('\n')}
 
-Version: 6.1 - AI-Enhanced with FIXED Categorization + PKCE Security
-Build: Fixed AI Categorization + Cross-Device Images
+Version: 7.1 - AI-Enhanced with FIXED Categorization + Manual Editing + PKCE Security
+Build: Fixed AI Categorization + Manual Category Editing + Cross-Device Images
                 `;
 
                 alert(debugInfo);
@@ -5703,8 +6073,188 @@ Build: Fixed AI Categorization + Cross-Device Images
                     categories: Object.fromEntries(this.categories),
                     cache: cacheStats,
                     analytics: Object.fromEntries(this.categoryAnalytics),
-                    failedImages: Array.from(this.failedImages)
+                    failedImages: Array.from(this.failedImages),
+                    isRecategorizing: this.isRecategorizing
                 });
+            }
+
+            // Utility functions for image handling
+            async refreshSingleImage(originalIndex, displayIndex) {
+                const article = this.currentDisplayedArticles[displayIndex];
+                if (!article) return;
+
+                console.log(`🔄 Refreshing image for: ${article.title.substring(0, 30)}...`);
+
+                // Clear existing cache for this article
+                const cacheKey = this.getCacheKey(article);
+                this.imageCache.delete(cacheKey);
+                
+                // Clear stored image
+                if (article.cachedImage) {
+                    delete article.cachedImage;
+                }
+
+                // Update status
+                const imageElement = document.getElementById(`image-${originalIndex}`);
+                if (imageElement) {
+                    imageElement.innerHTML = this.createPlaceholderHTML();
+                    const indicator = imageElement.querySelector('.cache-indicator');
+                    if (indicator) {
+                        indicator.textContent = '🔄 Refreshing...';
+                        indicator.className = 'cache-indicator loading';
+                    }
+                }
+
+                // Try to get a new image
+                try {
+                    await this.extractAndCacheRealImage(article, originalIndex);
+                    this.updateStatus(`✅ Image refreshed for "${article.title.substring(0, 30)}..."`, 'success');
+                } catch (error) {
+                    console.error('Error refreshing image:', error);
+                    this.updateStatus(`❌ Failed to refresh image: ${error.message}`, 'error');
+                }
+            }
+
+            async retryFailedImages() {
+                if (this.failedImages.size === 0) {
+                    this.updateStatus('✅ No failed images to retry!', 'success');
+                    return;
+                }
+
+                this.updateStatus(`🔁 Retrying ${this.failedImages.size} failed images...`, 'loading');
+
+                let successCount = 0;
+                const totalFailed = this.failedImages.size;
+
+                for (const index of this.failedImages) {
+                    const article = this.currentDisplayedArticles[index];
+                    if (article) {
+                        try {
+                            await this.extractAndCacheRealImage(article, index);
+                            this.failedImages.delete(index);
+                            successCount++;
+                        } catch (error) {
+                            console.error(`Retry failed for index ${index}:`, error);
+                        }
+                    }
+                }
+
+                if (successCount > 0) {
+                    this.updateStatus(`✅ Successfully retried ${successCount}/${totalFailed} failed images!`, 'success');
+                } else {
+                    this.updateStatus(`❌ Could not recover any failed images. They may need manual refresh.`, 'error');
+                }
+            }
+
+            async forceSyncImages() {
+                this.updateStatus('🌐 Force syncing all images to OneDrive...', 'loading');
+
+                let syncedCount = 0;
+                const total = this.articles.length;
+
+                for (let i = 0; i < total; i++) {
+                    const article = this.articles[i];
+                    
+                    // Get current image URL
+                    let imageUrl = null;
+                    if (article.cachedImage && article.cachedImage.url) {
+                        imageUrl = article.cachedImage.url;
+                    } else {
+                        const cached = this.getCachedImage(article);
+                        if (cached) {
+                            imageUrl = cached;
+                        }
+                    }
+
+                    if (imageUrl) {
+                        try {
+                            await this.setArticleImageAndCache(article, i, imageUrl, 'force_sync');
+                            syncedCount++;
+                        } catch (error) {
+                            console.error(`Failed to sync image for article ${i}:`, error);
+                        }
+                    }
+
+                    // Update progress
+                    if (i % 10 === 0) {
+                        const progress = Math.round((i / total) * 100);
+                        this.updateStatus(`🌐 Syncing images... ${i}/${total} (${progress}%)`, 'loading');
+                    }
+                }
+
+                // Save to OneDrive
+                if (this.accessToken) {
+                    try {
+                        await this.updateOneDriveBackup();
+                        this.updateStatus(`✅ Force sync complete! ${syncedCount} images synced to OneDrive.`, 'success');
+                    } catch (error) {
+                        this.updateStatus(`⚠️ ${syncedCount} images processed but OneDrive save failed: ${error.message}`, 'error');
+                    }
+                } else {
+                    this.updateStatus(`⚠️ ${syncedCount} images processed but not connected to OneDrive.`, 'warning');
+                }
+            }
+
+            showImageHelp() {
+                const helpText = `
+MyPocket Enhanced Image System Help:
+==================================
+
+🖼️ IMAGE FEATURES:
+
+1️⃣ CROSS-DEVICE SYNCHRONIZATION:
+   • Images stored in OneDrive backup as base64 data
+   • Automatically synced across all your devices
+   • No more missing images when switching devices
+   • Smart compression keeps file sizes manageable
+
+2️⃣ INTELLIGENT CACHING:
+   • Local cache for instant loading
+   • 7-day expiration for fresh content
+   • Automatic cleanup of old cached images
+   • Memory-efficient storage system
+
+3️⃣ ENHANCED EXTRACTION:
+   • Multiple proxy services for better success rates
+   • Platform-specific extraction (YouTube, GitHub, etc.)
+   • Smart fallback system with category-based images
+   • Meta tag analysis for best quality images
+
+4️⃣ IMAGE INDICATORS:
+   • 🌐 Synced: Stored for cross-device access
+   • 💾 Local Cache: Device-specific cache
+   • 📄 Metadata: From article data
+   • 🔄 Loading: Being extracted
+   • ❌ Failed: Extraction failed
+
+🔧 AVAILABLE ACTIONS:
+
+• 🖼️ Refresh Image: Re-extract image for specific article
+• 🔁 Retry Failed: Attempt to recover failed image extractions
+• 🌐 Sync Images: Force sync all images to OneDrive
+• 🗑️ Clear Cache: Remove all cached image data
+
+💡 TIPS:
+
+- Images are automatically extracted and synced
+- Failed images can be manually refreshed
+- Clear cache if experiencing image issues
+- Larger images may not sync due to size limits
+- Use "Force Sync" to ensure all images are backed up
+
+🎯 IMAGE PRIORITY:
+
+1. Synced base64 data (highest quality, cross-device)
+2. Synced URLs (cross-device but less reliable)
+3. Local cache (device-specific)
+4. Article metadata (extracted from saved data)
+5. Real-time extraction (from original website)
+6. Smart category-based fallbacks (consistent per article)
+
+The system prioritizes cross-device compatibility while maintaining performance!
+                `;
+
+                alert(helpText);
             }
 
             // Utility functions
@@ -5756,26 +6306,6 @@ Build: Fixed AI Categorization + Cross-Device Images
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-            }
-
-            // Additional utility methods for image handling
-            async refreshSingleImage(originalIndex, displayIndex) {
-                // Implementation would go here - simplified for space
-                console.log('Refreshing image for article', originalIndex, displayIndex);
-            }
-
-            async retryFailedImages() {
-                // Implementation would go here - simplified for space
-                console.log('Retrying failed images');
-            }
-
-            async forceSyncImages() {
-                // Implementation would go here - simplified for space
-                console.log('Force syncing images');
-            }
-
-            showImageHelp() {
-                alert('Image help functionality - see original implementation for full details');
             }
         }
 
@@ -5852,7 +6382,7 @@ Build: Fixed AI Categorization + Cross-Device Images
             }
         });
 
-        console.log('🎯 MyPocket AI-Enhanced Web Reader script loaded - FIXED Categorization + PKCE Security + Cross-Device Images');
+        console.log('🎯 MyPocket AI-Enhanced Web Reader script loaded - FIXED Categorization + Manual Category Editing + PKCE Security + Cross-Device Images');
     </script>
 </body>
 
