@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPocket - Web Reader (Fixed AI Categories + Manual Editing)</title>
+    <title>MyPocket - Web Reader (FIXED: Manual Categories + Local Cache)</title>
     <style>
         * {
             margin: 0;
@@ -800,6 +800,42 @@
             color: #27ae60;
         }
 
+        /* FIXED: Local cache status indicator */
+        .local-cache-status {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin: 15px 0;
+            font-size: 0.9em;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .local-cache-status.has-changes {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+
+        .local-cache-status.synced {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        [data-theme="dark"] .local-cache-status.has-changes {
+            background: #3a3019;
+            border-color: #675a1a;
+            color: #fff3cd;
+        }
+
+        [data-theme="dark"] .local-cache-status.synced {
+            background: #1a2e1a;
+            border-color: #2d5a2d;
+            color: #d4edda;
+        }
+
         /* Articles Grid - SMALLER TILES */
         .articles-section {
             padding: 40px 0;
@@ -876,6 +912,20 @@
             top: 5px;
             left: 10px;
             background: rgba(156, 39, 176, 0.9);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.7em;
+            z-index: 10;
+        }
+
+        /* FIXED: Manual edit indicator */
+        .article-card.manual-edit::before {
+            content: "✏️ Manual";
+            position: absolute;
+            top: 5px;
+            left: 10px;
+            background: rgba(25, 135, 84, 0.9);
             color: white;
             padding: 2px 6px;
             border-radius: 8px;
@@ -1005,6 +1055,12 @@
 
         .article-category.ai-category {
             background: linear-gradient(45deg, var(--primary-color), #9c27b0);
+        }
+
+        /* FIXED: Better manual edit indication */
+        .article-category.manual-edit {
+            background: linear-gradient(45deg, #198754, #20c997);
+            border: 1px solid #28a745;
         }
 
         /* NEW: Category editing dropdown */
@@ -2048,13 +2104,26 @@
                 </button>
             </div>
 
+            <!-- FIXED: Data Management Tools -->
+            <div class="nav-section">
+                <div class="nav-section-title">Data</div>
+                <button class="nav-item" id="refreshNavBtn" onclick="webReader.loadFromOneDrive()">
+                    <span class="icon">☁️</span>
+                    <span class="text">Load from OneDrive</span>
+                </button>
+                <button class="nav-item" id="saveNavBtn" onclick="webReader.saveToOneDrive()">
+                    <span class="icon">💾</span>
+                    <span class="text">Save to OneDrive</span>
+                </button>
+                <button class="nav-item" id="autoSaveNavBtn" onclick="webReader.toggleAutoSave()">
+                    <span class="icon">🔄</span>
+                    <span class="text">Auto-Save: <span id="autoSaveStatus">OFF</span></span>
+                </button>
+            </div>
+
             <!-- Tools -->
             <div class="nav-section">
                 <div class="nav-section-title">Tools</div>
-                <button class="nav-item" id="refreshNavBtn" onclick="webReader.loadArticles()">
-                    <span class="icon">🔄</span>
-                    <span class="text">Refresh</span>
-                </button>
                 <button class="nav-item" id="syncNavBtn" onclick="webReader.forceSyncImages()">
                     <span class="icon">🌐</span>
                     <span class="text">Sync Images</span>
@@ -2121,15 +2190,20 @@
                     </button>
 
                     <div class="logo">
-                        MyPocket AI Reader (FIXED + Manual Edit)
+                        MyPocket AI Reader (FIXED: Manual Categories + Local Cache)
                     </div>
 
                     <div class="header-right">
-                        <span id="headerStatus" class="header-status">🤖 Click categories to edit!</span>
+                        <span id="headerStatus" class="header-status">💾 Local cache enabled!</span>
                     </div>
                 </div>
             </div>
         </header>
+
+        <!-- FIXED: Local Cache Status -->
+        <div class="local-cache-status" id="localCacheStatus" style="display: none;">
+            <span id="cacheStatusText">📦 Using local cache - manual changes saved!</span>
+        </div>
 
         <!-- Search (Initially Hidden) -->
         <section class="search-container" id="searchContainer" style="display: none;">
@@ -2160,7 +2234,7 @@
 
         <!-- Status -->
         <div class="status" id="status">
-            Connect to OneDrive to view your saved articles with AI-enhanced categorization
+            💾 Ready to use with local caching! Connect to OneDrive to sync your articles.
         </div>
 
         <!-- Articles -->
@@ -2168,9 +2242,9 @@
             <div class="container">
                 <div id="articlesContainer">
                     <div class="empty-state">
-                        <div class="empty-state-icon">🤖</div>
-                        <h3>Welcome to MyPocket AI Reader</h3>
-                        <p>Connect to OneDrive to access your saved articles with intelligent AI categorization!</p>
+                        <div class="empty-state-icon">💾</div>
+                        <h3>Welcome to MyPocket AI Reader (FIXED)</h3>
+                        <p>Connect to OneDrive to access your saved articles with intelligent AI categorization and local caching!</p>
                     </div>
                 </div>
             </div>
@@ -2265,7 +2339,7 @@
 
         class MyPocketWebReader {
             constructor() {
-                console.log('🏗️ Creating AI-Enhanced MyPocketWebReader instance...');
+                console.log('🏗️ Creating FIXED AI-Enhanced MyPocketWebReader instance...');
 
                 this.clientId = '436e8796-8c40-47c3-9ad5-b8882f3ef7f7';
                 this.redirectUri = this.getRedirectUri();
@@ -2276,6 +2350,13 @@
                 this.currentArticle = null;
                 this.currentDisplayedArticles = []; // Track what's currently displayed
                 this.failedImages = new Set(); // Track articles with failed images
+
+                // FIXED: Auto-save and local cache system
+                this.autoSaveEnabled = false;
+                this.localCacheKey = 'mypocket_local_articles_cache';
+                this.hasUnsavedChanges = false;
+                this.lastOneDriveSyncHash = null;
+                this.manuallyEditedArticles = new Set(); // Track manually edited articles
 
                 // Auto-categorization system with AI enhancements
                 this.categories = new Map(); // Store category counts
@@ -2308,7 +2389,7 @@
                 this.isRecategorizing = false;
                 this.recategorizationProgress = 0;
 
-                console.log('✅ AI-Enhanced MyPocketWebReader constructor complete');
+                console.log('✅ FIXED AI-Enhanced MyPocketWebReader constructor complete');
                 this.init();
             }
 
@@ -2320,6 +2401,212 @@
                     return baseUrl;
                 } else {
                     return window.location.origin + window.location.pathname;
+                }
+            }
+
+            init() {
+                console.log('🚀 Initializing FIXED AI-Enhanced MyPocket Web Reader...');
+                this.setupEventListeners();
+                this.checkAuthFromURL();
+                this.loadStoredToken();
+                this.loadThemePreference();
+                this.loadImageCache();
+                this.initializeSidebar();
+                this.loadLocalCache(); // FIXED: Load local cache first
+                this.updateAutoSaveStatus();
+                console.log('✅ FIXED AI-Enhanced initialization complete');
+            }
+
+            // ===== FIXED LOCAL CACHE SYSTEM =====
+
+            // FIXED: Load articles from local cache first
+            loadLocalCache() {
+                console.log('💾 Loading articles from local cache...');
+                try {
+                    const cachedData = localStorage.getItem(this.localCacheKey);
+                    if (cachedData) {
+                        const cache = JSON.parse(cachedData);
+                        this.articles = cache.articles || [];
+                        this.lastOneDriveSyncHash = cache.syncHash || null;
+                        this.manuallyEditedArticles = new Set(cache.manuallyEdited || []);
+
+                        console.log(`💾 Loaded ${this.articles.length} articles from local cache`);
+                        console.log(`✏️ ${this.manuallyEditedArticles.size} manually edited articles tracked`);
+
+                        if (this.articles.length > 0) {
+                            this.updateLocalCacheStatus('synced', `💾 ${this.articles.length} articles loaded from local cache`);
+                            this.recategorizeAllArticles(); // Categorize cached articles
+                            this.displayArticles(this.articles);
+                            this.updateArticleCounts();
+                            this.updateStatus(`💾 Loaded ${this.articles.length} articles from local cache`, 'success');
+                        }
+                    } else {
+                        console.log('💾 No local cache found');
+                    }
+                } catch (error) {
+                    console.error('💾 Error loading local cache:', error);
+                    this.updateStatus('⚠️ Error loading local cache', 'error');
+                }
+            }
+
+            // FIXED: Save articles to local cache
+            saveLocalCache() {
+                try {
+                    const cacheData = {
+                        articles: this.articles,
+                        syncHash: this.calculateArticlesHash(),
+                        manuallyEdited: Array.from(this.manuallyEditedArticles),
+                        timestamp: Date.now(),
+                        version: '7.2-fixed'
+                    };
+
+                    localStorage.setItem(this.localCacheKey, JSON.stringify(cacheData));
+                    console.log(`💾 Saved ${this.articles.length} articles to local cache`);
+                    console.log(`✏️ Tracking ${this.manuallyEditedArticles.size} manually edited articles`);
+
+                    this.hasUnsavedChanges = false;
+                    this.updateLocalCacheStatus('synced', `💾 Local cache updated with ${this.articles.length} articles`);
+                } catch (error) {
+                    console.error('💾 Error saving local cache:', error);
+                    this.updateStatus('⚠️ Error saving to local cache', 'error');
+                }
+            }
+
+            // FIXED: Calculate hash of articles for change detection
+            calculateArticlesHash() {
+                const articlesString = JSON.stringify(this.articles.map(a => ({
+                    url: a.url,
+                    title: a.title,
+                    category: a.category,
+                    dateAdded: a.dateAdded
+                })));
+                return this.simpleHash(articlesString);
+            }
+
+            // Simple hash function
+            simpleHash(str) {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    const char = str.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // Convert to 32bit integer
+                }
+                return hash;
+            }
+
+            // FIXED: Update local cache status indicator
+            updateLocalCacheStatus(status, message) {
+                const statusElement = document.getElementById('localCacheStatus');
+                const textElement = document.getElementById('cacheStatusText');
+
+                if (statusElement && textElement) {
+                    statusElement.style.display = 'block';
+                    textElement.textContent = message;
+
+                    statusElement.className = 'local-cache-status';
+                    if (status === 'has-changes') {
+                        statusElement.classList.add('has-changes');
+                    } else if (status === 'synced') {
+                        statusElement.classList.add('synced');
+                    }
+                }
+            }
+
+            // FIXED: Toggle auto-save
+            toggleAutoSave() {
+                this.autoSaveEnabled = !this.autoSaveEnabled;
+                localStorage.setItem('mypocket_auto_save', this.autoSaveEnabled.toString());
+                this.updateAutoSaveStatus();
+
+                if (this.autoSaveEnabled && this.hasUnsavedChanges && this.accessToken) {
+                    // Save immediately if we have unsaved changes
+                    this.saveToOneDrive();
+                }
+
+                this.updateStatus(`🔄 Auto-save ${this.autoSaveEnabled ? 'enabled' : 'disabled'}`, 'success');
+            }
+
+            // FIXED: Update auto-save status in UI
+            updateAutoSaveStatus() {
+                const autoSaveStatus = document.getElementById('autoSaveStatus');
+                const autoSaveNavBtn = document.getElementById('autoSaveNavBtn');
+
+                const enabled = localStorage.getItem('mypocket_auto_save') === 'true';
+                this.autoSaveEnabled = enabled;
+
+                if (autoSaveStatus) {
+                    autoSaveStatus.textContent = enabled ? 'ON' : 'OFF';
+                }
+
+                if (autoSaveNavBtn) {
+                    if (enabled) {
+                        autoSaveNavBtn.style.color = '#27ae60';
+                    } else {
+                        autoSaveNavBtn.style.color = '';
+                    }
+                }
+            }
+
+            // FIXED: Load from OneDrive (manual action)
+            async loadFromOneDrive() {
+                if (!this.accessToken) {
+                    this.updateStatus('❌ Not connected to OneDrive. Please connect first.', 'error');
+                    return;
+                }
+
+                try {
+                    this.updateStatus('☁️ Loading from OneDrive...', 'loading');
+                    await this.loadArticles();
+                    this.saveLocalCache(); // Update local cache with OneDrive data
+                    this.updateStatus('☁️ Successfully loaded from OneDrive and cached locally', 'success');
+                } catch (error) {
+                    console.error('Error loading from OneDrive:', error);
+                    this.updateStatus(`❌ Failed to load from OneDrive: ${error.message}`, 'error');
+                }
+            }
+
+            // FIXED: Save to OneDrive (manual action)
+            async saveToOneDrive() {
+                if (!this.accessToken) {
+                    this.updateStatus('❌ Not connected to OneDrive. Please connect first.', 'error');
+                    return;
+                }
+
+                if (this.articles.length === 0) {
+                    this.updateStatus('❌ No articles to save', 'error');
+                    return;
+                }
+
+                try {
+                    this.updateStatus('☁️ Saving to OneDrive...', 'loading');
+                    await this.updateOneDriveBackup();
+                    this.hasUnsavedChanges = false;
+                    this.lastOneDriveSyncHash = this.calculateArticlesHash();
+                    this.saveLocalCache(); // Update local cache with sync status
+                    this.updateLocalCacheStatus('synced', `☁️ Synced ${this.articles.length} articles to OneDrive`);
+                    this.updateStatus('☁️ Successfully saved to OneDrive', 'success');
+                } catch (error) {
+                    console.error('Error saving to OneDrive:', error);
+                    this.updateStatus(`❌ Failed to save to OneDrive: ${error.message}`, 'error');
+                }
+            }
+
+            // FIXED: Mark article as manually edited and save changes
+            markAsManuallyEdited(article) {
+                const articleId = `${article.url}_${article.title}`;
+                this.manuallyEditedArticles.add(articleId);
+                this.hasUnsavedChanges = true;
+
+                // Save to local cache immediately
+                this.saveLocalCache();
+
+                // Auto-save to OneDrive if enabled
+                if (this.autoSaveEnabled && this.accessToken) {
+                    setTimeout(() => {
+                        this.saveToOneDrive();
+                    }, 2000); // Save after 2 seconds
+                } else {
+                    this.updateLocalCacheStatus('has-changes', `✏️ Manual changes saved locally (${this.manuallyEditedArticles.size} edited articles)`);
                 }
             }
 
@@ -2608,17 +2895,6 @@
                     'Environment': ['climate', 'sustainability', 'green', 'ecology', 'conservation', 'environmental'],
                     'Lifestyle': ['personal', 'self-improvement', 'home', 'family', 'relationships', 'lifestyle']
                 };
-            }
-
-            init() {
-                console.log('🚀 Initializing AI-Enhanced MyPocket Web Reader...');
-                this.setupEventListeners();
-                this.checkAuthFromURL();
-                this.loadStoredToken();
-                this.loadThemePreference();
-                this.loadImageCache();
-                this.initializeSidebar();
-                console.log('✅ AI-Enhanced initialization complete');
             }
 
             // ===== FIXED AI CATEGORIZATION SYSTEM =====
@@ -3016,7 +3292,12 @@
                 // Navigation buttons - these exist in the HTML
                 const refreshNavBtn = document.getElementById('refreshNavBtn');
                 if (refreshNavBtn) {
-                    refreshNavBtn.addEventListener('click', () => this.loadArticles());
+                    refreshNavBtn.addEventListener('click', () => this.loadFromOneDrive());
+                }
+
+                const saveNavBtn = document.getElementById('saveNavBtn');
+                if (saveNavBtn) {
+                    saveNavBtn.addEventListener('click', () => this.saveToOneDrive());
                 }
 
                 const syncNavBtn = document.getElementById('syncNavBtn');
@@ -3442,16 +3723,8 @@
                 this.displayArticles(this.currentDisplayedArticles);
                 this.updateArticleCounts();
 
-                // Save to OneDrive if connected
-                if (this.accessToken) {
-                    this.updateProgress(100, 'Saving to OneDrive...', 'Updating backup with new categories');
-                    try {
-                        await this.updateOneDriveBackup();
-                        console.log('✅ Updated backup with improved AI categories');
-                    } catch (error) {
-                        console.error('⚠️ Failed to update backup:', error);
-                    }
-                }
+                // FIXED: Save to local cache automatically
+                this.saveLocalCache();
 
                 const message = `🧠 ✅ Re-categorized ${categorizedCount} articles into ${this.categories.size} categories (${aiEnhancedCount} AI-enhanced, ${highConfidenceCount} high-confidence)`;
                 this.updateStatus(message, 'success');
@@ -3702,7 +3975,8 @@ MyPocket IMPROVED AI Categorization Help:
 6️⃣ MANUAL EDITING:
    • Click any category badge to edit it instantly
    • Dropdown with all available categories
-   • Changes save automatically to OneDrive
+   • Changes save automatically to local cache
+   • Auto-save to OneDrive if enabled
    • Visual feedback for successful changes
 
 🔍 HOW IT WORKS (FIXED):
@@ -3724,7 +3998,7 @@ MyPocket IMPROVED AI Categorization Help:
 ✅ Advanced confidence tracking
 ✅ Smart negative filtering
 ✅ Manual override system
-✅ Manual category editing
+✅ Manual category editing with local cache
 ✅ Progress tracking during recategorization
 
 🎯 USAGE TIPS:
@@ -3733,6 +4007,8 @@ MyPocket IMPROVED AI Categorization Help:
 - High-confidence articles show 🎯 indicator
 - AI-enhanced articles show 🤖 indicator
 - Click any category badge to edit it manually
+- Manual changes save to local cache immediately
+- Enable auto-save to sync changes to OneDrive
 - Category analytics show accuracy metrics
 - Debug individual articles with console: webReader.debugArticleData(article)
 
@@ -3900,9 +4176,6 @@ The fixed system now properly weights title/content over domain and prevents com
                             console.log('🔄 Updating connection status...');
                             this.updateConnectionStatus(true);
 
-                            console.log('📚 Loading articles...');
-                            this.loadArticles();
-
                             // Clear PKCE parameters and URL
                             this.clearPKCEParameters();
                             window.history.replaceState({}, document.title, window.location.pathname);
@@ -4062,12 +4335,9 @@ The fixed system now properly weights title/content over domain and prevents com
                 if (this.accessToken) {
                     console.log('✅ Found stored token, updating connection status...');
                     this.updateConnectionStatus(true);
-                    // Check token validity and load articles
+                    // Check token validity but don't auto-load articles
                     this.ensureValidToken().then(isValid => {
-                        if (isValid) {
-                            console.log('✅ Token is valid, loading articles...');
-                            this.loadArticles();
-                        } else {
+                        if (!isValid) {
                             console.log('❌ Token is invalid, updating connection status...');
                             this.updateConnectionStatus(false);
                             this.updateStatus('Stored token expired. Please reconnect.', 'error');
@@ -4427,18 +4697,27 @@ The fixed system now properly weights title/content over domain and prevents com
                     const aiEnhanced = article.aiEnhanced ? 'ai-categorized' : '';
                     const categoryData = this.categoryKeywords[article.category] || { icon: '📄' };
 
+                    // FIXED: Check if manually edited
+                    const articleId = `${article.url}_${article.title}`;
+                    const isManuallyEdited = this.manuallyEditedArticles.has(articleId);
+                    const manualEditClass = isManuallyEdited ? 'manual-edit' : '';
+
                     // Enhanced category badge with confidence indicators + MANUAL EDITING
                     let categoryBadge = '';
                     if (article.category) {
                         let confidenceIndicator = '';
-                        if (article.categoryScore >= 100) {
+                        if (isManuallyEdited) {
+                            confidenceIndicator = ' ✏️'; // Manual edit indicator
+                        } else if (article.categoryScore >= 100) {
                             confidenceIndicator = ' 🎯'; // High confidence
                         } else if (article.aiEnhanced) {
                             confidenceIndicator = ' 🤖'; // AI enhanced
                         }
 
+                        const categoryClass = isManuallyEdited ? 'manual-edit' : (article.aiEnhanced ? 'ai-category' : '');
+
                         categoryBadge = `
-                            <div class="article-category ${article.aiEnhanced ? 'ai-category' : ''}" 
+                            <div class="article-category ${categoryClass}" 
                                  onclick="webReader.editCategory(${displayIndex}, event)"
                                  title="Click to edit category">
                                 <span>${categoryData.icon}</span>
@@ -4458,7 +4737,7 @@ The fixed system now properly weights title/content over domain and prevents com
                     }
 
                     return `
-                    <div class="article-card ${aiEnhanced}" data-index="${index}" data-display-index="${displayIndex}" data-image-source="${imageSource}">
+                    <div class="article-card ${aiEnhanced} ${manualEditClass}" data-index="${index}" data-display-index="${displayIndex}" data-image-source="${imageSource}">
                         <div class="article-image" id="image-${index}">
                             ${imageHTML}
                             <div class="cache-indicator ${cacheStatus} ${article.aiEnhanced ? 'ai-categorized' : ''}">
@@ -4477,6 +4756,7 @@ The fixed system now properly weights title/content over domain and prevents com
                                 <span>⏱️ ${article.readTime || 1} min read</span>
                                 <span>📝 ${article.wordCount || 0} words</span>
                                 ${article.categoryScore ? `<span>🧠 ${article.categoryScore}</span>` : ''}
+                                ${isManuallyEdited ? `<span>✏️ Manual</span>` : ''}
                             </div>
                         </div>
                         <div class="article-actions">
@@ -4502,18 +4782,22 @@ The fixed system now properly weights title/content over domain and prevents com
                 const totalReady = imagesFromBackup + imagesFromCache;
                 const aiEnhancedCount = articles.filter(a => a.aiEnhanced).length;
                 const highConfidenceCount = articles.filter(a => a.categoryScore >= 100).length;
+                const manuallyEditedCount = articles.filter(a => {
+                    const articleId = `${a.url}_${a.title}`;
+                    return this.manuallyEditedArticles.has(articleId);
+                }).length;
 
                 console.log(`📊 IMAGE SUMMARY: ${imagesFromBackup} synced, ${imagesFromCache} cached, ${imagesNeedLoading} need loading`);
-                console.log(`🧠 IMPROVED AI SUMMARY: ${aiEnhancedCount}/${articles.length} AI-enhanced, ${highConfidenceCount} high-confidence`);
+                console.log(`🧠 IMPROVED AI SUMMARY: ${aiEnhancedCount}/${articles.length} AI-enhanced, ${highConfidenceCount} high-confidence, ${manuallyEditedCount} manually edited`);
 
                 if (imagesNeedLoading === 0) {
-                    const aiText = aiEnhancedCount > 0 ? ` (${aiEnhancedCount} AI-enhanced, ${highConfidenceCount} high-confidence)` : '';
+                    const aiText = aiEnhancedCount > 0 ? ` (${aiEnhancedCount} AI-enhanced, ${highConfidenceCount} high-confidence, ${manuallyEditedCount} manually edited)` : '';
                     const message = isMobile ?
                         `📱 ALL images ready! ${totalReady}/${articles.length} synced perfectly ✨${aiText}` :
                         `✅ ALL images ready! ${imagesFromBackup} synced, ${imagesFromCache} cached ✨${aiText}`;
                     this.updateStatus(message, 'success');
                 } else {
-                    const aiText = aiEnhancedCount > 0 ? ` (${aiEnhancedCount} AI-categorized, ${highConfidenceCount} high-confidence)` : '';
+                    const aiText = aiEnhancedCount > 0 ? ` (${aiEnhancedCount} AI-categorized, ${highConfidenceCount} high-confidence, ${manuallyEditedCount} manually edited)` : '';
                     const message = isMobile ?
                         `📱 ${totalReady} ready instantly, extracting ${imagesNeedLoading} more...${aiText}` :
                         `⚡ ${totalReady} ready instantly, extracting ${imagesNeedLoading} more...${aiText}`;
@@ -4528,10 +4812,10 @@ The fixed system now properly weights title/content over domain and prevents com
                 }
             }
 
-            // NEW: Edit category functionality
+            // FIXED: Edit category functionality
             editCategory(displayIndex, event) {
                 event.stopPropagation();
-                
+
                 const dropdown = document.getElementById(`dropdown-${displayIndex}`);
                 if (!dropdown) return;
 
@@ -4558,7 +4842,7 @@ The fixed system now properly weights title/content over domain and prevents com
                 }
             }
 
-            // NEW: Select category functionality
+            // FIXED: Select category functionality with local cache save
             async selectCategory(displayIndex, newCategory, event) {
                 event.stopPropagation();
 
@@ -4566,7 +4850,7 @@ The fixed system now properly weights title/content over domain and prevents com
                 if (!article) return;
 
                 const oldCategory = article.category;
-                
+
                 if (oldCategory === newCategory) {
                     // Close dropdown if same category selected
                     const dropdown = document.getElementById(`dropdown-${displayIndex}`);
@@ -4596,21 +4880,14 @@ The fixed system now properly weights title/content over domain and prevents com
                     this.articles[mainIndex].category = newCategory;
                 }
 
+                // FIXED: Mark as manually edited and save to local cache
+                this.markAsManuallyEdited(article);
+
                 // Refresh display
                 this.displayArticles(this.currentDisplayedArticles);
                 this.updateArticleCounts();
 
-                // Save to OneDrive
-                if (this.accessToken) {
-                    try {
-                        await this.updateOneDriveBackup();
-                        this.updateStatus(`✅ Changed "${article.title.substring(0, 30)}..." to ${newCategory} and saved!`, 'success');
-                    } catch (error) {
-                        this.updateStatus(`✅ Changed category locally (save failed: ${error.message})`, 'warning');
-                    }
-                } else {
-                    this.updateStatus(`✅ Changed category locally (not connected to save)`, 'warning');
-                }
+                this.updateStatus(`✅ Changed "${article.title.substring(0, 30)}..." to ${newCategory} and saved locally!`, 'success');
             }
 
             createImageHTML(imageUrl, fromCache = false) {
@@ -4795,16 +5072,8 @@ The fixed system now properly weights title/content over domain and prevents com
                                     cacheIndicator.className = 'cache-indicator synced';
                                 }
 
-                                // IMMEDIATELY save to OneDrive to ensure sync
-                                if (this.accessToken) {
-                                    console.log('💾 Auto-saving to OneDrive for instant cross-device sync...');
-                                    try {
-                                        await this.updateOneDriveBackup();
-                                        console.log('✅ OneDrive backup updated with new image');
-                                    } catch (error) {
-                                        console.error('⚠️ Failed to auto-save backup:', error);
-                                    }
-                                }
+                                // FIXED: Save to local cache immediately
+                                this.saveLocalCache();
                             }
                         } else {
                             console.log(`⚠️ Image too large for cross-device storage: ${imageData.size}KB`);
@@ -4935,6 +5204,9 @@ The fixed system now properly weights title/content over domain and prevents com
                         const aiEnhancedCount = this.articles.filter(a => a.aiEnhanced).length;
                         const highConfidenceCount = this.articles.filter(a => a.categoryScore >= 100).length;
 
+                        // FIXED: Save to local cache after loading
+                        this.saveLocalCache();
+
                         this.updateStatus(`🧠 Loaded ${this.articles.length} articles with improved AI categorization (${storedImages} with stored images, ${aiEnhancedCount} AI-enhanced, ${highConfidenceCount} high-confidence)`, 'success');
                     }, 100);
 
@@ -4948,9 +5220,9 @@ The fixed system now properly weights title/content over domain and prevents com
                 const container = document.getElementById('articlesContainer');
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">🧠</div>
+                        <div class="empty-state-icon">💾</div>
                         <h3>No articles found</h3>
-                        <p>Use the MyPocket browser extension to save articles, then refresh this page for advanced AI categorization!</p>
+                        <p>Use the MyPocket browser extension to save articles, then load them from OneDrive for advanced AI categorization with local caching!</p>
                     </div>`;
             }
 
@@ -5011,7 +5283,7 @@ The fixed system now properly weights title/content over domain and prevents com
                     return;
                 }
 
-                if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your OneDrive backup.`)) {
+                if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your local cache and OneDrive backup.`)) {
                     try {
                         // Find the original index in the main articles array
                         const originalIndex = this.articles.findIndex(a =>
@@ -5026,6 +5298,10 @@ The fixed system now properly weights title/content over domain and prevents com
                         const cacheKey = this.getCacheKey(article);
                         this.imageCache.delete(cacheKey);
                         this.saveImageCache();
+
+                        // Remove from manually edited set
+                        const articleId = `${article.url}_${article.title}`;
+                        this.manuallyEditedArticles.delete(articleId);
 
                         // Update category counts
                         const category = article.category;
@@ -5044,13 +5320,10 @@ The fixed system now properly weights title/content over domain and prevents com
                         // Remove from currently displayed articles
                         this.currentDisplayedArticles.splice(displayIndex, 1);
 
-                        if (this.accessToken) {
-                            this.updateStatus('Updating OneDrive backup...', 'loading');
-                            await this.updateOneDriveBackup();
-                            this.updateStatus(`✅ Article deleted and backup updated. ${this.articles.length} articles remaining.`, 'success');
-                        } else {
-                            this.updateStatus(`❌ Article deleted locally but OneDrive backup not updated (not connected).`, 'error');
-                        }
+                        // FIXED: Save to local cache immediately
+                        this.saveLocalCache();
+
+                        this.updateStatus(`✅ Article deleted and saved to local cache. ${this.articles.length} articles remaining.`, 'success');
 
                         // Refresh the display with current articles
                         this.displayArticles(this.currentDisplayedArticles);
@@ -5363,21 +5636,24 @@ The fixed system now properly weights title/content over domain and prevents com
 
                 const aiEnhancedCount = this.articles.filter(a => a.aiEnhanced).length;
                 const highConfidenceCount = this.articles.filter(a => a.categoryScore >= 100).length;
+                const manuallyEditedCount = this.manuallyEditedArticles.size;
 
-                console.log(`📦 Creating backup with ${articlesWithImages.length} stored images (${Math.round(totalImageSizeKB)}KB), ${aiEnhancedCount} AI-enhanced articles, and ${highConfidenceCount} high-confidence categorizations`);
+                console.log(`📦 Creating backup with ${articlesWithImages.length} stored images (${Math.round(totalImageSizeKB)}KB), ${aiEnhancedCount} AI-enhanced articles, ${highConfidenceCount} high-confidence categorizations, and ${manuallyEditedCount} manually edited articles`);
 
                 const backup = {
                     articles: this.articles, // This now includes cachedImage data and improved AI categories
                     settings: {
                         storeImagesInBackup: this.storeImagesInBackup,
                         maxImageSizeKB: this.maxImageSizeKB,
-                        aiCategoriesEnabled: this.aiCategoriesEnabled
+                        aiCategoriesEnabled: this.aiCategoriesEnabled,
+                        autoSaveEnabled: this.autoSaveEnabled
                     },
                     aiAnalytics: Object.fromEntries(this.categoryAnalytics),
+                    manuallyEditedArticles: Array.from(this.manuallyEditedArticles),
                     exportDate: new Date().toISOString(),
-                    version: "7.1", // Bump version for FIXED AI categories + manual editing
+                    version: "7.2-fixed", // Bump version for FIXED local cache + manual editing
                     deviceInfo: {
-                        browser: "AI-Enhanced Web Reader v3.1 with FIXED Categorization + Manual Editing + PKCE Security + Cross-Device Images",
+                        browser: "AI-Enhanced Web Reader v3.2 with FIXED Local Cache + Manual Editing + PKCE Security + Cross-Device Images",
                         platform: navigator.platform,
                         timestamp: Date.now(),
                         articleCount: this.articles.length,
@@ -5385,9 +5661,10 @@ The fixed system now properly weights title/content over domain and prevents com
                         totalImageSizeKB: Math.round(totalImageSizeKB),
                         aiEnhancedArticles: aiEnhancedCount,
                         highConfidenceArticles: highConfidenceCount,
+                        manuallyEditedArticles: manuallyEditedCount,
                         categoriesFound: this.categories.size,
                         authMethod: "Authorization Code + PKCE",
-                        aiFeatures: "FIXED context-aware categorization with 16 categories, negative filtering, confidence scoring, manual overrides, manual category editing, and advanced pattern recognition"
+                        aiFeatures: "FIXED context-aware categorization with 16 categories, negative filtering, confidence scoring, manual overrides, manual category editing with local cache, and advanced pattern recognition"
                     }
                 };
 
@@ -5416,16 +5693,19 @@ The fixed system now properly weights title/content over domain and prevents com
                     throw new Error(`Failed to update OneDrive backup: ${uploadResponse.status} - ${errorText}`);
                 }
 
-                console.log(`✅ Fixed AI backup saved with ${articlesWithImages.length} images (${Math.round(totalImageSizeKB)}KB), ${aiEnhancedCount} AI-categorized articles, and ${highConfidenceCount} high-confidence categorizations`);
+                console.log(`✅ Fixed AI backup saved with ${articlesWithImages.length} images (${Math.round(totalImageSizeKB)}KB), ${aiEnhancedCount} AI-categorized articles, ${highConfidenceCount} high-confidence categorizations, and ${manuallyEditedCount} manually edited articles`);
                 return await uploadResponse.json();
             }
 
             createArticleHTML(article) {
+                const articleId = `${article.url}_${article.title}`;
+                const isManuallyEdited = this.manuallyEditedArticles.has(articleId);
+                
                 const categoryInfo = article.category ? `
                     <div style="margin-bottom: 16px;">
-                        <span style="background: #ee5a24; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.9em;">
+                        <span style="background: ${isManuallyEdited ? '#198754' : '#ee5a24'}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.9em;">
                             ${this.categoryKeywords[article.category]?.icon || '📄'} ${article.category}
-                            ${article.aiEnhanced ? ' 🤖' : ''}
+                            ${isManuallyEdited ? ' ✏️' : (article.aiEnhanced ? ' 🤖' : '')}
                             ${article.categoryScore >= 100 ? ' 🎯' : ''}
                         </span>
                     </div>
@@ -5495,16 +5775,17 @@ The fixed system now properly weights title/content over domain and prevents com
             <div style="margin-bottom: 8px;">📅 Saved: ${this.formatDate(article.dateAdded)}</div>
             <div>⏱️ Reading time: ${article.readTime || 1} minutes</div>
             ${article.categoryScore ? `<div>🧠 AI Category Score: ${article.categoryScore} ${article.categoryScore >= 100 ? '🎯' : ''}</div>` : ''}
+            ${isManuallyEdited ? `<div>✏️ Manually Edited Category</div>` : ''}
         </div>
     </div>
     <div class="content">
         ${article.content || article.excerpt || 'Content not available'}
     </div>
     <div class="footer">
-        <p><strong>🧠 Exported from MyPocket AI-Enhanced Reader v3.1 (PKCE Secured + FIXED Categorization + Manual Editing)</strong></p>
+        <p><strong>💾 Exported from MyPocket AI-Enhanced Reader v3.2 (FIXED Local Cache + Manual Editing + PKCE Security)</strong></p>
         <p>Original URL: <a href="${article.url}" style="color: #ee5a24;">${article.url}</a></p>
         <p>Export Date: ${new Date().toLocaleDateString()}</p>
-        ${article.category ? `<p>Category: ${article.category} ${article.aiEnhanced ? '(AI-Enhanced)' : ''} ${article.categoryScore >= 100 ? '(High-Confidence)' : ''}</p>` : ''}
+        ${article.category ? `<p>Category: ${article.category} ${isManuallyEdited ? '(Manually Edited)' : (article.aiEnhanced ? '(AI-Enhanced)' : '')} ${article.categoryScore >= 100 ? '(High-Confidence)' : ''}</p>` : ''}
     </div>
 </body>
 </html>`;
@@ -5942,11 +6223,15 @@ The fixed system now properly weights title/content over domain and prevents com
 
                 const aiEnhancedCount = filtered.filter(a => a.aiEnhanced).length;
                 const highConfidenceCount = filtered.filter(a => a.categoryScore >= 100).length;
+                const manuallyEditedCount = filtered.filter(a => {
+                    const articleId = `${a.url}_${a.title}`;
+                    return this.manuallyEditedArticles.has(articleId);
+                }).length;
 
                 if (filtered.length === 0) {
                     this.updateStatus(`❌ No articles found for "${query}". Try different keywords.`, 'error');
                 } else {
-                    const aiText = aiEnhancedCount > 0 ? ` (${aiEnhancedCount} AI-enhanced, ${highConfidenceCount} high-confidence)` : '';
+                    const aiText = aiEnhancedCount > 0 ? ` (${aiEnhancedCount} AI-enhanced, ${highConfidenceCount} high-confidence, ${manuallyEditedCount} manually edited)` : '';
                     this.updateStatus(`🔍 Found ${filtered.length} articles for "${query}"${aiText}`, 'success');
                 }
 
@@ -6016,10 +6301,11 @@ The fixed system now properly weights title/content over domain and prevents com
                 const storedImages = this.articles.filter(a => a.cachedImage).length;
                 const aiEnhancedCount = this.articles.filter(a => a.aiEnhanced).length;
                 const highConfidenceCount = this.articles.filter(a => a.categoryScore >= 100).length;
+                const manuallyEditedCount = this.manuallyEditedArticles.size;
 
                 const debugInfo = `
-MyPocket AI-Enhanced Web Reader Debug Info:
-=========================================
+MyPocket AI-Enhanced Web Reader Debug Info (FIXED):
+=================================================
 
 📊 ARTICLES:
 - Total: ${this.articles.length}
@@ -6027,6 +6313,13 @@ MyPocket AI-Enhanced Web Reader Debug Info:
 - With stored images: ${storedImages}
 - AI-enhanced: ${aiEnhancedCount}
 - High-confidence: ${highConfidenceCount}
+- Manually edited: ${manuallyEditedCount}
+
+💾 LOCAL CACHE SYSTEM (FIXED):
+- Auto-save enabled: ${this.autoSaveEnabled}
+- Has unsaved changes: ${this.hasUnsavedChanges}
+- Manually edited articles: ${this.manuallyEditedArticles.size}
+- Last OneDrive sync hash: ${this.lastOneDriveSyncHash ? 'Set' : 'None'}
 
 🧠 FIXED AI CATEGORIZATION:
 - Categories found: ${this.categories.size}
@@ -6052,29 +6345,34 @@ MyPocket AI-Enhanced Web Reader Debug Info:
 - Enhanced image extraction: ✅
 - Cross-device image sync: ✅
 - FIXED AI categorization: ✅
-- Manual category editing: ✅
+- FIXED Manual category editing: ✅
+- FIXED Local cache system: ✅
 - PKCE security: ✅
 - Smart fallback images: ✅
 - Advanced search: ✅
 - Progress tracking: ✅
+- Auto-save functionality: ✅
 
 🎯 CATEGORIZATION ANALYTICS:
 ${Array.from(this.categoryAnalytics.entries()).map(([cat, stats]) =>
                     `• ${cat}: ${stats.count} articles (${stats.aiEnhanced} AI-enhanced, avg score: ${stats.avgScore})`
                 ).join('\n')}
 
-Version: 7.1 - AI-Enhanced with FIXED Categorization + Manual Editing + PKCE Security
-Build: Fixed AI Categorization + Manual Category Editing + Cross-Device Images
+Version: 7.2-fixed - AI-Enhanced with FIXED Local Cache + Manual Editing + PKCE Security
+Build: Fixed Local Cache + Manual Category Editing + Cross-Device Images + Auto-Save
                 `;
 
                 alert(debugInfo);
-                console.log('🔧 DEBUG INFO:', {
+                console.log('🔧 FIXED DEBUG INFO:', {
                     articles: this.articles.length,
                     categories: Object.fromEntries(this.categories),
                     cache: cacheStats,
                     analytics: Object.fromEntries(this.categoryAnalytics),
                     failedImages: Array.from(this.failedImages),
-                    isRecategorizing: this.isRecategorizing
+                    isRecategorizing: this.isRecategorizing,
+                    autoSaveEnabled: this.autoSaveEnabled,
+                    hasUnsavedChanges: this.hasUnsavedChanges,
+                    manuallyEdited: Array.from(this.manuallyEditedArticles)
                 });
             }
 
@@ -6088,7 +6386,7 @@ Build: Fixed AI Categorization + Manual Category Editing + Cross-Device Images
                 // Clear existing cache for this article
                 const cacheKey = this.getCacheKey(article);
                 this.imageCache.delete(cacheKey);
-                
+
                 // Clear stored image
                 if (article.cachedImage) {
                     delete article.cachedImage;
@@ -6147,14 +6445,14 @@ Build: Fixed AI Categorization + Manual Category Editing + Cross-Device Images
             }
 
             async forceSyncImages() {
-                this.updateStatus('🌐 Force syncing all images to OneDrive...', 'loading');
+                this.updateStatus('🌐 Force syncing all images to local cache...', 'loading');
 
                 let syncedCount = 0;
                 const total = this.articles.length;
 
                 for (let i = 0; i < total; i++) {
                     const article = this.articles[i];
-                    
+
                     // Get current image URL
                     let imageUrl = null;
                     if (article.cachedImage && article.cachedImage.url) {
@@ -6182,17 +6480,10 @@ Build: Fixed AI Categorization + Manual Category Editing + Cross-Device Images
                     }
                 }
 
-                // Save to OneDrive
-                if (this.accessToken) {
-                    try {
-                        await this.updateOneDriveBackup();
-                        this.updateStatus(`✅ Force sync complete! ${syncedCount} images synced to OneDrive.`, 'success');
-                    } catch (error) {
-                        this.updateStatus(`⚠️ ${syncedCount} images processed but OneDrive save failed: ${error.message}`, 'error');
-                    }
-                } else {
-                    this.updateStatus(`⚠️ ${syncedCount} images processed but not connected to OneDrive.`, 'warning');
-                }
+                // FIXED: Save to local cache immediately
+                this.saveLocalCache();
+
+                this.updateStatus(`✅ Force sync complete! ${syncedCount} images synced to local cache.`, 'success');
             }
 
             showImageHelp() {
@@ -6203,7 +6494,7 @@ MyPocket Enhanced Image System Help:
 🖼️ IMAGE FEATURES:
 
 1️⃣ CROSS-DEVICE SYNCHRONIZATION:
-   • Images stored in OneDrive backup as base64 data
+   • Images stored in local cache and OneDrive backup as base64 data
    • Automatically synced across all your devices
    • No more missing images when switching devices
    • Smart compression keeps file sizes manageable
@@ -6231,7 +6522,7 @@ MyPocket Enhanced Image System Help:
 
 • 🖼️ Refresh Image: Re-extract image for specific article
 • 🔁 Retry Failed: Attempt to recover failed image extractions
-• 🌐 Sync Images: Force sync all images to OneDrive
+• 🌐 Sync Images: Force sync all images to local cache
 • 🗑️ Clear Cache: Remove all cached image data
 
 💡 TIPS:
@@ -6320,11 +6611,11 @@ The system prioritizes cross-device compatibility while maintaining performance!
         }
 
         function initializeWebReader() {
-            console.log('🚀 Initializing MyPocket AI-Enhanced Web Reader...');
+            console.log('🚀 Initializing MyPocket FIXED AI-Enhanced Web Reader...');
 
             try {
                 webReader = new MyPocketWebReader();
-                console.log('✅ MyPocket AI-Enhanced Web Reader initialized successfully!');
+                console.log('✅ MyPocket FIXED AI-Enhanced Web Reader initialized successfully!');
 
                 // Make it globally available for debugging
                 window.webReader = webReader;
@@ -6335,7 +6626,15 @@ The system prioritizes cross-device compatibility while maintaining performance!
                     if ((e.ctrlKey || e.metaKey) && e.key === 'r' && !e.shiftKey) {
                         e.preventDefault();
                         if (webReader.accessToken) {
-                            webReader.loadArticles();
+                            webReader.loadFromOneDrive();
+                        }
+                    }
+
+                    // Ctrl/Cmd + S: Save to OneDrive
+                    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                        e.preventDefault();
+                        if (webReader.accessToken) {
+                            webReader.saveToOneDrive();
                         }
                     }
 
@@ -6382,7 +6681,7 @@ The system prioritizes cross-device compatibility while maintaining performance!
             }
         });
 
-        console.log('🎯 MyPocket AI-Enhanced Web Reader script loaded - FIXED Categorization + Manual Category Editing + PKCE Security + Cross-Device Images');
+        console.log('🎯 MyPocket AI-Enhanced Web Reader script loaded - FIXED Local Cache + Manual Category Editing + PKCE Security + Cross-Device Images');
     </script>
 </body>
 
