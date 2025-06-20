@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPocket - Web Reader (FIXED: Manual Categories + Local Cache)</title>
+    <title>MyPocket - Web Reader (FIXED: Category Saving + Local Cache)</title>
     <style>
         * {
             margin: 0;
@@ -1061,6 +1061,13 @@
         .article-category.manual-edit {
             background: linear-gradient(45deg, #198754, #20c997);
             border: 1px solid #28a745;
+        }
+
+        /* FIXED: Category editing success indicator */
+        .article-category.just-saved {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
         }
 
         /* NEW: Category editing dropdown */
@@ -2190,7 +2197,7 @@
                     </button>
 
                     <div class="logo">
-                        MyPocket AI Reader (FIXED: Manual Categories + Local Cache)
+                        MyPocket AI Reader (FIXED: Category Saving + Local Cache)
                     </div>
 
                     <div class="header-right">
@@ -2244,7 +2251,8 @@
                     <div class="empty-state">
                         <div class="empty-state-icon">💾</div>
                         <h3>Welcome to MyPocket AI Reader (FIXED)</h3>
-                        <p>Connect to OneDrive to access your saved articles with intelligent AI categorization and local caching!</p>
+                        <p>Connect to OneDrive to access your saved articles with intelligent AI categorization and
+                            local caching!</p>
                     </div>
                 </div>
             </div>
@@ -2353,10 +2361,11 @@
 
                 // FIXED: Auto-save and local cache system
                 this.autoSaveEnabled = false;
-                this.localCacheKey = 'mypocket_local_articles_cache';
+                this.localCacheKey = 'mypocket_local_articles_cache_v2'; // Changed version for fixes
                 this.hasUnsavedChanges = false;
                 this.lastOneDriveSyncHash = null;
                 this.manuallyEditedArticles = new Set(); // Track manually edited articles
+                this.lastCacheSaveTime = 0; // Track cache save timing
 
                 // Auto-categorization system with AI enhancements
                 this.categories = new Map(); // Store category counts
@@ -2419,7 +2428,44 @@
 
             // ===== FIXED LOCAL CACHE SYSTEM =====
 
-            // FIXED: Load articles from local cache first
+            // FIXED: Enhanced article identification system for better matching
+            generateArticleId(article) {
+                // Create a more robust article ID using multiple fields
+                const urlHash = this.simpleHash(article.url || '');
+                const titleHash = this.simpleHash((article.title || '').substring(0, 100));
+                const dateHash = this.simpleHash(article.dateAdded || '');
+                
+                return `article_${urlHash}_${titleHash}_${dateHash}`;
+            }
+
+            // FIXED: Find article in array using robust matching
+            findArticleInArray(targetArticle, articleArray) {
+                const targetId = this.generateArticleId(targetArticle);
+                
+                // Try exact ID match first
+                let foundArticle = articleArray.find(a => this.generateArticleId(a) === targetId);
+                if (foundArticle) {
+                    return { article: foundArticle, index: articleArray.indexOf(foundArticle) };
+                }
+
+                // Fallback to URL + title match
+                foundArticle = articleArray.find(a => 
+                    a.url === targetArticle.url && a.title === targetArticle.title
+                );
+                if (foundArticle) {
+                    return { article: foundArticle, index: articleArray.indexOf(foundArticle) };
+                }
+
+                // Fallback to URL match only
+                foundArticle = articleArray.find(a => a.url === targetArticle.url);
+                if (foundArticle) {
+                    return { article: foundArticle, index: articleArray.indexOf(foundArticle) };
+                }
+
+                return { article: null, index: -1 };
+            }
+
+            // FIXED: Load articles from local cache first with better error handling
             loadLocalCache() {
                 console.log('💾 Loading articles from local cache...');
                 try {
@@ -2428,10 +2474,14 @@
                         const cache = JSON.parse(cachedData);
                         this.articles = cache.articles || [];
                         this.lastOneDriveSyncHash = cache.syncHash || null;
-                        this.manuallyEditedArticles = new Set(cache.manuallyEdited || []);
+                        
+                        // FIXED: Better manual edit tracking
+                        if (cache.manuallyEdited) {
+                            this.manuallyEditedArticles = new Set(cache.manuallyEdited);
+                            console.log(`✏️ Loaded ${this.manuallyEditedArticles.size} manually edited articles:`, Array.from(this.manuallyEditedArticles));
+                        }
 
                         console.log(`💾 Loaded ${this.articles.length} articles from local cache`);
-                        console.log(`✏️ ${this.manuallyEditedArticles.size} manually edited articles tracked`);
 
                         if (this.articles.length > 0) {
                             this.updateLocalCacheStatus('synced', `💾 ${this.articles.length} articles loaded from local cache`);
@@ -2445,33 +2495,63 @@
                     }
                 } catch (error) {
                     console.error('💾 Error loading local cache:', error);
-                    this.updateStatus('⚠️ Error loading local cache', 'error');
+                    this.updateStatus('⚠️ Error loading local cache - will start fresh', 'error');
+                    // Reset to clean state if cache is corrupted
+                    this.articles = [];
+                    this.manuallyEditedArticles = new Set();
                 }
             }
 
-            // FIXED: Save articles to local cache with better error handling
-            saveLocalCache() {
+            // FIXED: Enhanced cache saving with better error handling and timing
+            async saveLocalCache() {
+                // Prevent too frequent saves
+                const now = Date.now();
+                if (now - this.lastCacheSaveTime < 1000) {
+                    console.log('💾 Debouncing cache save - too recent');
+                    return;
+                }
+                this.lastCacheSaveTime = now;
+
                 try {
-                    console.log('💾 Starting local cache save...');
-                    
+                    console.log('💾 Starting enhanced local cache save...');
+
+                    // FIXED: Ensure all manually edited articles have proper IDs
+                    const validManualEdits = new Set();
+                    for (const articleId of this.manuallyEditedArticles) {
+                        // Try to find the article with this ID
+                        const found = this.articles.some(article => {
+                            const currentId = this.generateArticleId(article);
+                            const legacyId = `${article.url}_${article.title}`;
+                            return currentId === articleId || legacyId === articleId;
+                        });
+                        
+                        if (found) {
+                            validManualEdits.add(articleId);
+                        } else {
+                            console.log(`💾 Removing invalid manual edit ID: ${articleId}`);
+                        }
+                    }
+                    this.manuallyEditedArticles = validManualEdits;
+
                     // Clean articles data to remove non-serializable content
                     const cleanedArticles = this.cleanArticlesForStorage(this.articles);
-                    
+
                     const cacheData = {
                         articles: cleanedArticles,
                         syncHash: this.calculateArticlesHash(),
                         manuallyEdited: Array.from(this.manuallyEditedArticles),
                         timestamp: Date.now(),
-                        version: '7.2-fixed'
+                        version: '7.3-fixed-category-saving'
                     };
 
                     // Check size before saving
                     const dataString = JSON.stringify(cacheData);
                     const sizeKB = Math.round(dataString.length / 1024);
                     const sizeMB = Math.round(sizeKB / 1024 * 100) / 100;
-                    
+
                     console.log(`💾 Cache data size: ${sizeKB}KB (${sizeMB}MB)`);
-                    
+                    console.log(`💾 Manually edited articles: ${this.manuallyEditedArticles.size}`);
+
                     // localStorage typically has 5-10MB limit
                     if (sizeKB > 8000) { // 8MB safety limit
                         console.warn(`⚠️ Cache data too large: ${sizeMB}MB`);
@@ -2479,10 +2559,10 @@
                         const lightCacheData = this.createLightweightCache(cleanedArticles);
                         const lightDataString = JSON.stringify(lightCacheData);
                         const lightSizeKB = Math.round(lightDataString.length / 1024);
-                        
+
                         console.log(`💾 Trying lightweight cache: ${lightSizeKB}KB`);
                         localStorage.setItem(this.localCacheKey, lightDataString);
-                        
+
                         this.updateLocalCacheStatus('synced', `💾 Lightweight cache saved (${lightSizeKB}KB) - images excluded`);
                         this.updateStatus(`💾 Local cache saved (${lightSizeKB}KB) - large images excluded for space`, 'success');
                     } else {
@@ -2494,10 +2574,10 @@
                         this.updateLocalCacheStatus('synced', `💾 Local cache updated with ${cleanedArticles.length} articles (${sizeKB}KB)`);
                         this.updateStatus(`💾 Local cache saved successfully (${sizeKB}KB)`, 'success');
                     }
-                    
+
                 } catch (error) {
                     console.error('💾 Error saving local cache:', error);
-                    
+
                     // More specific error handling
                     if (error.name === 'QuotaExceededError' || error.message.includes('quota')) {
                         this.handleStorageQuotaError();
@@ -2514,17 +2594,17 @@
             cleanArticlesForStorage(articles) {
                 return articles.map(article => {
                     const cleaned = {};
-                    
+
                     // Copy safe properties
                     for (const [key, value] of Object.entries(article)) {
                         if (value === null || value === undefined) {
                             continue; // Skip null/undefined
                         }
-                        
+
                         if (typeof value === 'function') {
                             continue; // Skip functions
                         }
-                        
+
                         if (typeof value === 'object') {
                             // Handle objects carefully
                             if (Array.isArray(value)) {
@@ -2551,7 +2631,7 @@
                             cleaned[key] = value; // Primitive values are safe
                         }
                     }
-                    
+
                     return cleaned;
                 });
             }
@@ -2560,7 +2640,7 @@
             createLightweightCache(articles) {
                 const lightArticles = articles.map(article => {
                     const light = { ...article };
-                    
+
                     // Remove large base64 images but keep URLs
                     if (light.cachedImage && light.cachedImage.base64) {
                         light.cachedImage = {
@@ -2571,21 +2651,21 @@
                             // base64 removed to save space
                         };
                     }
-                    
+
                     // Remove very large content fields
                     if (light.content && light.content.length > 50000) {
                         light.content = light.content.substring(0, 50000) + '... [truncated for cache]';
                     }
-                    
+
                     return light;
                 });
-                
+
                 return {
                     articles: lightArticles,
                     syncHash: this.calculateArticlesHash(),
                     manuallyEdited: Array.from(this.manuallyEditedArticles),
                     timestamp: Date.now(),
-                    version: '7.2-fixed-light',
+                    version: '7.3-fixed-light',
                     note: 'Lightweight cache - some images and content truncated'
                 };
             }
@@ -2593,20 +2673,20 @@
             // FIXED: Handle storage quota exceeded error
             handleStorageQuotaError() {
                 console.error('💾 Storage quota exceeded!');
-                
+
                 // Try to clear some space
                 this.clearOldCacheData();
-                
+
                 // Try saving lightweight version
                 try {
                     const lightCache = this.createLightweightCache(this.articles);
                     localStorage.setItem(this.localCacheKey, JSON.stringify(lightCache));
-                    
+
                     this.updateLocalCacheStatus('synced', '💾 Lightweight cache saved (storage full)');
                     this.updateStatus('💾 Storage full - saved lightweight cache without large images', 'warning');
                 } catch (e) {
                     this.updateStatus('❌ Storage full - cannot save cache. Try clearing browser data.', 'error');
-                    
+
                     // Show help dialog
                     alert(`Storage Error:\n\nYour browser's localStorage is full. To fix this:\n\n1. Clear browser data/cache\n2. Enable auto-save to OneDrive instead\n3. Use "Clear Cache" button to remove old data\n\nYour articles are still loaded in memory and can be saved to OneDrive.`);
                 }
@@ -2615,13 +2695,13 @@
             // FIXED: Handle JSON serialization errors
             handleSerializationError(error) {
                 console.error('💾 JSON serialization error:', error);
-                
+
                 // Try to identify problematic data
                 try {
                     // Test serialization of main components
                     JSON.stringify(this.articles.slice(0, 1)); // Test first article
                     JSON.stringify(Array.from(this.manuallyEditedArticles)); // Test manually edited set
-                    
+
                     this.updateStatus('❌ Data serialization error - some article data may be corrupted', 'error');
                 } catch (e) {
                     console.error('💾 Specific serialization issue:', e);
@@ -2634,7 +2714,7 @@
                 try {
                     // Clear image cache
                     localStorage.removeItem(this.cacheKey);
-                    
+
                     // Clear other potential MyPocket data
                     for (let i = localStorage.length - 1; i >= 0; i--) {
                         const key = localStorage.key(i);
@@ -2643,7 +2723,7 @@
                             console.log(`Cleared old cache: ${key}`);
                         }
                     }
-                    
+
                     console.log('💾 Cleared old cache data to free space');
                 } catch (error) {
                     console.error('Error clearing old cache:', error);
@@ -2769,14 +2849,18 @@
                 }
             }
 
-            // FIXED: Mark article as manually edited and save changes
+            // FIXED: Mark article as manually edited and save changes immediately
             markAsManuallyEdited(article) {
-                const articleId = `${article.url}_${article.title}`;
+                const articleId = this.generateArticleId(article);
+                console.log(`✏️ Marking article as manually edited: ${articleId}`);
+                
                 this.manuallyEditedArticles.add(articleId);
                 this.hasUnsavedChanges = true;
 
-                // Save to local cache immediately
-                this.saveLocalCache();
+                // FIXED: Save to local cache immediately with proper timing
+                setTimeout(() => {
+                    this.saveLocalCache();
+                }, 100);
 
                 // Auto-save to OneDrive if enabled
                 if (this.autoSaveEnabled && this.accessToken) {
@@ -4875,9 +4959,10 @@ The fixed system now properly weights title/content over domain and prevents com
                     const aiEnhanced = article.aiEnhanced ? 'ai-categorized' : '';
                     const categoryData = this.categoryKeywords[article.category] || { icon: '📄' };
 
-                    // FIXED: Check if manually edited
-                    const articleId = `${article.url}_${article.title}`;
-                    const isManuallyEdited = this.manuallyEditedArticles.has(articleId);
+                    // FIXED: Check if manually edited using robust ID system
+                    const articleId = this.generateArticleId(article);
+                    const legacyId = `${article.url}_${article.title}`;
+                    const isManuallyEdited = this.manuallyEditedArticles.has(articleId) || this.manuallyEditedArticles.has(legacyId);
                     const manualEditClass = isManuallyEdited ? 'manual-edit' : '';
 
                     // Enhanced category badge with confidence indicators + MANUAL EDITING
@@ -4961,8 +5046,9 @@ The fixed system now properly weights title/content over domain and prevents com
                 const aiEnhancedCount = articles.filter(a => a.aiEnhanced).length;
                 const highConfidenceCount = articles.filter(a => a.categoryScore >= 100).length;
                 const manuallyEditedCount = articles.filter(a => {
-                    const articleId = `${a.url}_${a.title}`;
-                    return this.manuallyEditedArticles.has(articleId);
+                    const articleId = this.generateArticleId(a);
+                    const legacyId = `${a.url}_${a.title}`;
+                    return this.manuallyEditedArticles.has(articleId) || this.manuallyEditedArticles.has(legacyId);
                 }).length;
 
                 console.log(`📊 IMAGE SUMMARY: ${imagesFromBackup} synced, ${imagesFromCache} cached, ${imagesNeedLoading} need loading`);
@@ -4990,7 +5076,7 @@ The fixed system now properly weights title/content over domain and prevents com
                 }
             }
 
-            // FIXED: Edit category functionality
+            // FIXED: Edit category functionality with proper article ID handling
             editCategory(displayIndex, event) {
                 event.stopPropagation();
 
@@ -5020,12 +5106,15 @@ The fixed system now properly weights title/content over domain and prevents com
                 }
             }
 
-            // FIXED: Select category functionality with local cache save
+            // FIXED: Select category functionality with enhanced saving and visual feedback
             async selectCategory(displayIndex, newCategory, event) {
                 event.stopPropagation();
 
                 const article = this.currentDisplayedArticles[displayIndex];
-                if (!article) return;
+                if (!article) {
+                    console.error('Article not found at display index:', displayIndex);
+                    return;
+                }
 
                 const oldCategory = article.category;
 
@@ -5036,10 +5125,12 @@ The fixed system now properly weights title/content over domain and prevents com
                     return;
                 }
 
-                console.log(`✏️ Manually changing category: "${article.title.substring(0, 30)}..." from ${oldCategory} to ${newCategory}`);
+                console.log(`✏️ FIXED: Manually changing category: "${article.title.substring(0, 30)}..." from ${oldCategory} to ${newCategory}`);
 
                 // Update article
                 article.category = newCategory;
+                article.aiEnhanced = false; // Reset AI flag since this is manual
+                article.categoryScore = 999; // High score for manual edits
 
                 // Update category counts
                 if (oldCategory) {
@@ -5052,20 +5143,46 @@ The fixed system now properly weights title/content over domain and prevents com
                 }
                 this.categories.set(newCategory, (this.categories.get(newCategory) || 0) + 1);
 
-                // Update the article in the main array too
-                const mainIndex = this.articles.findIndex(a => a.url === article.url);
-                if (mainIndex !== -1) {
+                // FIXED: Update the article in the main array using robust matching
+                const { article: mainArticle, index: mainIndex } = this.findArticleInArray(article, this.articles);
+                if (mainArticle && mainIndex !== -1) {
                     this.articles[mainIndex].category = newCategory;
+                    this.articles[mainIndex].aiEnhanced = false;
+                    this.articles[mainIndex].categoryScore = 999;
+                    console.log(`✅ Updated main article at index ${mainIndex}`);
+                } else {
+                    console.warn('Could not find article in main array for updating');
                 }
 
-                // FIXED: Mark as manually edited and save to local cache
+                // FIXED: Mark as manually edited using robust ID system and save immediately
                 this.markAsManuallyEdited(article);
 
-                // Refresh display
-                this.displayArticles(this.currentDisplayedArticles);
-                this.updateArticleCounts();
+                // FIXED: Provide immediate visual feedback
+                const categoryElement = event.target.closest('.article-category');
+                if (categoryElement) {
+                    // Add success animation
+                    categoryElement.classList.add('just-saved');
+                    setTimeout(() => {
+                        categoryElement.classList.remove('just-saved');
+                    }, 2000);
+                }
 
-                this.updateStatus(`✅ Changed "${article.title.substring(0, 30)}..." to ${newCategory} and saved locally!`, 'success');
+                // Close dropdown
+                const dropdown = document.getElementById(`dropdown-${displayIndex}`);
+                if (dropdown) dropdown.classList.remove('visible');
+
+                // FIXED: Refresh display immediately to show changes
+                setTimeout(() => {
+                    this.displayArticles(this.currentDisplayedArticles);
+                    this.updateArticleCounts();
+                    this.updateCategoryUI();
+                }, 100);
+
+                // FIXED: Show success message with better details
+                const categoryData = this.categoryKeywords[newCategory] || { icon: '📄' };
+                this.updateStatus(`✅ ${categoryData.icon} Changed "${article.title.substring(0, 30)}..." to ${newCategory} and saved locally!`, 'success');
+
+                console.log(`💾 Category change completed and saved: ${oldCategory} → ${newCategory}`);
             }
 
             createImageHTML(imageUrl, fromCache = false) {
@@ -5232,8 +5349,8 @@ The fixed system now properly weights title/content over domain and prevents com
 
                         if (imageData.stored) {
                             // Find the article in our array and add image data
-                            const articleIndex = this.articles.findIndex(a => a.url === article.url);
-                            if (articleIndex !== -1) {
+                            const { article: foundArticle, index: articleIndex } = this.findArticleInArray(article, this.articles);
+                            if (foundArticle && articleIndex !== -1) {
                                 this.articles[articleIndex].cachedImage = {
                                     base64: imageData.base64,
                                     url: imageData.url,
@@ -5364,6 +5481,12 @@ The fixed system now properly weights title/content over domain and prevents com
                     this.articles = backup.articles || [];
                     this.currentDisplayedArticles = this.articles; // Initialize displayed articles
 
+                    // FIXED: Load manually edited articles from backup
+                    if (backup.manuallyEditedArticles) {
+                        this.manuallyEditedArticles = new Set(backup.manuallyEditedArticles);
+                        console.log(`✏️ Loaded ${this.manuallyEditedArticles.size} manually edited articles from OneDrive`);
+                    }
+
                     // IMPROVED AI-Enhanced auto-categorization on load
                     console.log('🧠 Advanced AI auto-categorizing loaded articles...');
                     this.updateStatus('🧠 Advanced AI is analyzing your articles...', 'loading');
@@ -5463,12 +5586,10 @@ The fixed system now properly weights title/content over domain and prevents com
 
                 if (confirm(`Delete "${article.title}"?\n\nThis will permanently remove the article from your local cache and OneDrive backup.`)) {
                     try {
-                        // Find the original index in the main articles array
-                        const originalIndex = this.articles.findIndex(a =>
-                            a.url === article.url && a.title === article.title
-                        );
+                        // Find the original index in the main articles array using robust matching
+                        const { article: foundArticle, index: originalIndex } = this.findArticleInArray(article, this.articles);
 
-                        if (originalIndex === -1) {
+                        if (!foundArticle || originalIndex === -1) {
                             throw new Error('Could not find article in main collection');
                         }
 
@@ -5477,9 +5598,11 @@ The fixed system now properly weights title/content over domain and prevents com
                         this.imageCache.delete(cacheKey);
                         this.saveImageCache();
 
-                        // Remove from manually edited set
-                        const articleId = `${article.url}_${article.title}`;
+                        // Remove from manually edited set using both ID systems
+                        const articleId = this.generateArticleId(article);
+                        const legacyId = `${article.url}_${article.title}`;
                         this.manuallyEditedArticles.delete(articleId);
+                        this.manuallyEditedArticles.delete(legacyId);
 
                         // Update category counts
                         const category = article.category;
@@ -5829,9 +5952,9 @@ The fixed system now properly weights title/content over domain and prevents com
                     aiAnalytics: Object.fromEntries(this.categoryAnalytics),
                     manuallyEditedArticles: Array.from(this.manuallyEditedArticles),
                     exportDate: new Date().toISOString(),
-                    version: "7.2-fixed", // Bump version for FIXED local cache + manual editing
+                    version: "7.3-fixed-category-saving", // Bump version for FIXED category saving
                     deviceInfo: {
-                        browser: "AI-Enhanced Web Reader v3.2 with FIXED Local Cache + Manual Editing + PKCE Security + Cross-Device Images",
+                        browser: "AI-Enhanced Web Reader v3.3 with FIXED Category Saving + Local Cache + Manual Editing + PKCE Security + Cross-Device Images",
                         platform: navigator.platform,
                         timestamp: Date.now(),
                         articleCount: this.articles.length,
@@ -5842,7 +5965,7 @@ The fixed system now properly weights title/content over domain and prevents com
                         manuallyEditedArticles: manuallyEditedCount,
                         categoriesFound: this.categories.size,
                         authMethod: "Authorization Code + PKCE",
-                        aiFeatures: "FIXED context-aware categorization with 16 categories, negative filtering, confidence scoring, manual overrides, manual category editing with local cache, and advanced pattern recognition"
+                        aiFeatures: "FIXED context-aware categorization with 16 categories, negative filtering, confidence scoring, manual overrides, FIXED manual category editing with robust ID system and local cache, and advanced pattern recognition"
                     }
                 };
 
@@ -5871,14 +5994,15 @@ The fixed system now properly weights title/content over domain and prevents com
                     throw new Error(`Failed to update OneDrive backup: ${uploadResponse.status} - ${errorText}`);
                 }
 
-                console.log(`✅ Fixed AI backup saved with ${articlesWithImages.length} images (${Math.round(totalImageSizeKB)}KB), ${aiEnhancedCount} AI-categorized articles, ${highConfidenceCount} high-confidence categorizations, and ${manuallyEditedCount} manually edited articles`);
+                console.log(`✅ Fixed category saving backup saved with ${articlesWithImages.length} images (${Math.round(totalImageSizeKB)}KB), ${aiEnhancedCount} AI-categorized articles, ${highConfidenceCount} high-confidence categorizations, and ${manuallyEditedCount} manually edited articles`);
                 return await uploadResponse.json();
             }
 
             createArticleHTML(article) {
-                const articleId = `${article.url}_${article.title}`;
-                const isManuallyEdited = this.manuallyEditedArticles.has(articleId);
-                
+                const articleId = this.generateArticleId(article);
+                const legacyId = `${article.url}_${article.title}`;
+                const isManuallyEdited = this.manuallyEditedArticles.has(articleId) || this.manuallyEditedArticles.has(legacyId);
+
                 const categoryInfo = article.category ? `
                     <div style="margin-bottom: 16px;">
                         <span style="background: ${isManuallyEdited ? '#198754' : '#ee5a24'}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.9em;">
@@ -5960,7 +6084,7 @@ The fixed system now properly weights title/content over domain and prevents com
         ${article.content || article.excerpt || 'Content not available'}
     </div>
     <div class="footer">
-        <p><strong>💾 Exported from MyPocket AI-Enhanced Reader v3.2 (FIXED Local Cache + Manual Editing + PKCE Security)</strong></p>
+        <p><strong>💾 Exported from MyPocket AI-Enhanced Reader v3.3 (FIXED Category Saving + Local Cache + Manual Editing + PKCE Security)</strong></p>
         <p>Original URL: <a href="${article.url}" style="color: #ee5a24;">${article.url}</a></p>
         <p>Export Date: ${new Date().toLocaleDateString()}</p>
         ${article.category ? `<p>Category: ${article.category} ${isManuallyEdited ? '(Manually Edited)' : (article.aiEnhanced ? '(AI-Enhanced)' : '')} ${article.categoryScore >= 100 ? '(High-Confidence)' : ''}</p>` : ''}
@@ -6402,8 +6526,9 @@ The fixed system now properly weights title/content over domain and prevents com
                 const aiEnhancedCount = filtered.filter(a => a.aiEnhanced).length;
                 const highConfidenceCount = filtered.filter(a => a.categoryScore >= 100).length;
                 const manuallyEditedCount = filtered.filter(a => {
-                    const articleId = `${a.url}_${a.title}`;
-                    return this.manuallyEditedArticles.has(articleId);
+                    const articleId = this.generateArticleId(a);
+                    const legacyId = `${a.url}_${a.title}`;
+                    return this.manuallyEditedArticles.has(articleId) || this.manuallyEditedArticles.has(legacyId);
                 }).length;
 
                 if (filtered.length === 0) {
@@ -6487,19 +6612,19 @@ The fixed system now properly weights title/content over domain and prevents com
                 try {
                     let totalSize = 0;
                     let myPocketSize = 0;
-                    
+
                     for (let i = 0; i < localStorage.length; i++) {
                         const key = localStorage.key(i);
                         const value = localStorage.getItem(key);
                         const size = value ? value.length : 0;
                         totalSize += size;
-                        
+
                         if (key && key.startsWith('mypocket_')) {
                             myPocketSize += size;
                             localStorageDetails += `\n  • ${key}: ${Math.round(size / 1024)}KB`;
                         }
                     }
-                    
+
                     const totalMB = Math.round(totalSize / 1024 / 1024 * 100) / 100;
                     const myPocketMB = Math.round(myPocketSize / 1024 / 1024 * 100) / 100;
                     localStorageUsage = `${totalMB}MB total, ${myPocketMB}MB MyPocket`;
@@ -6570,13 +6695,13 @@ ${Array.from(this.categoryAnalytics.entries()).map(([cat, stats]) =>
 - Large base64 images can fill storage quickly
 - Use OneDrive sync for large collections
 
-Version: 7.2-fixed - AI-Enhanced with FIXED Local Cache + Manual Editing + PKCE Security
-Build: Fixed Local Cache + Manual Category Editing + Cross-Device Images + Auto-Save
+Version: 7.3-fixed-category-saving - AI-Enhanced with FIXED Category Saving + Local Cache + Manual Editing + PKCE Security
+Build: Fixed Category Saving + Robust Article Matching + Enhanced Local Cache + Cross-Device Images + Auto-Save
                 `;
 
                 // Enhanced debug with action buttons
                 const userAction = confirm(debugInfo + '\n\nDo you want to clear old cache data to free up space?');
-                
+
                 if (userAction) {
                     this.clearOldCacheData();
                     this.updateStatus('🗑️ Cleared old cache data to free up storage space', 'success');
@@ -6901,7 +7026,7 @@ The system prioritizes cross-device compatibility while maintaining performance!
             }
         });
 
-        console.log('🎯 MyPocket AI-Enhanced Web Reader script loaded - FIXED Local Cache + Manual Category Editing + PKCE Security + Cross-Device Images');
+        console.log('🎯 MyPocket AI-Enhanced Web Reader script loaded - FIXED Category Saving + Local Cache + Manual Category Editing + PKCE Security + Cross-Device Images');
     </script>
 </body>
 
