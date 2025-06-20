@@ -2449,26 +2449,204 @@
                 }
             }
 
-            // FIXED: Save articles to local cache
+            // FIXED: Save articles to local cache with better error handling
             saveLocalCache() {
                 try {
+                    console.log('💾 Starting local cache save...');
+                    
+                    // Clean articles data to remove non-serializable content
+                    const cleanedArticles = this.cleanArticlesForStorage(this.articles);
+                    
                     const cacheData = {
-                        articles: this.articles,
+                        articles: cleanedArticles,
                         syncHash: this.calculateArticlesHash(),
                         manuallyEdited: Array.from(this.manuallyEditedArticles),
                         timestamp: Date.now(),
                         version: '7.2-fixed'
                     };
 
-                    localStorage.setItem(this.localCacheKey, JSON.stringify(cacheData));
-                    console.log(`💾 Saved ${this.articles.length} articles to local cache`);
-                    console.log(`✏️ Tracking ${this.manuallyEditedArticles.size} manually edited articles`);
+                    // Check size before saving
+                    const dataString = JSON.stringify(cacheData);
+                    const sizeKB = Math.round(dataString.length / 1024);
+                    const sizeMB = Math.round(sizeKB / 1024 * 100) / 100;
+                    
+                    console.log(`💾 Cache data size: ${sizeKB}KB (${sizeMB}MB)`);
+                    
+                    // localStorage typically has 5-10MB limit
+                    if (sizeKB > 8000) { // 8MB safety limit
+                        console.warn(`⚠️ Cache data too large: ${sizeMB}MB`);
+                        // Try saving without base64 images
+                        const lightCacheData = this.createLightweightCache(cleanedArticles);
+                        const lightDataString = JSON.stringify(lightCacheData);
+                        const lightSizeKB = Math.round(lightDataString.length / 1024);
+                        
+                        console.log(`💾 Trying lightweight cache: ${lightSizeKB}KB`);
+                        localStorage.setItem(this.localCacheKey, lightDataString);
+                        
+                        this.updateLocalCacheStatus('synced', `💾 Lightweight cache saved (${lightSizeKB}KB) - images excluded`);
+                        this.updateStatus(`💾 Local cache saved (${lightSizeKB}KB) - large images excluded for space`, 'success');
+                    } else {
+                        localStorage.setItem(this.localCacheKey, dataString);
+                        console.log(`✅ Saved ${cleanedArticles.length} articles to local cache (${sizeKB}KB)`);
+                        console.log(`✏️ Tracking ${this.manuallyEditedArticles.size} manually edited articles`);
 
-                    this.hasUnsavedChanges = false;
-                    this.updateLocalCacheStatus('synced', `💾 Local cache updated with ${this.articles.length} articles`);
+                        this.hasUnsavedChanges = false;
+                        this.updateLocalCacheStatus('synced', `💾 Local cache updated with ${cleanedArticles.length} articles (${sizeKB}KB)`);
+                        this.updateStatus(`💾 Local cache saved successfully (${sizeKB}KB)`, 'success');
+                    }
+                    
                 } catch (error) {
                     console.error('💾 Error saving local cache:', error);
-                    this.updateStatus('⚠️ Error saving to local cache', 'error');
+                    
+                    // More specific error handling
+                    if (error.name === 'QuotaExceededError' || error.message.includes('quota')) {
+                        this.handleStorageQuotaError();
+                    } else if (error.message.includes('JSON')) {
+                        this.handleSerializationError(error);
+                    } else {
+                        console.error('💾 Unexpected cache error:', error);
+                        this.updateStatus(`⚠️ Local cache error: ${error.message}`, 'error');
+                    }
+                }
+            }
+
+            // FIXED: Clean articles data for safe storage
+            cleanArticlesForStorage(articles) {
+                return articles.map(article => {
+                    const cleaned = {};
+                    
+                    // Copy safe properties
+                    for (const [key, value] of Object.entries(article)) {
+                        if (value === null || value === undefined) {
+                            continue; // Skip null/undefined
+                        }
+                        
+                        if (typeof value === 'function') {
+                            continue; // Skip functions
+                        }
+                        
+                        if (typeof value === 'object') {
+                            // Handle objects carefully
+                            if (Array.isArray(value)) {
+                                cleaned[key] = value; // Arrays are usually safe
+                            } else if (key === 'cachedImage') {
+                                // Handle cached images specially
+                                cleaned[key] = {
+                                    base64: value.base64,
+                                    url: value.url,
+                                    timestamp: value.timestamp,
+                                    size: value.size,
+                                    source: value.source
+                                };
+                            } else {
+                                // Try to serialize other objects
+                                try {
+                                    JSON.stringify(value);
+                                    cleaned[key] = value;
+                                } catch (e) {
+                                    console.warn(`Skipping non-serializable property: ${key}`);
+                                }
+                            }
+                        } else {
+                            cleaned[key] = value; // Primitive values are safe
+                        }
+                    }
+                    
+                    return cleaned;
+                });
+            }
+
+            // FIXED: Create lightweight cache without large images
+            createLightweightCache(articles) {
+                const lightArticles = articles.map(article => {
+                    const light = { ...article };
+                    
+                    // Remove large base64 images but keep URLs
+                    if (light.cachedImage && light.cachedImage.base64) {
+                        light.cachedImage = {
+                            url: light.cachedImage.url,
+                            timestamp: light.cachedImage.timestamp,
+                            size: light.cachedImage.size,
+                            source: light.cachedImage.source
+                            // base64 removed to save space
+                        };
+                    }
+                    
+                    // Remove very large content fields
+                    if (light.content && light.content.length > 50000) {
+                        light.content = light.content.substring(0, 50000) + '... [truncated for cache]';
+                    }
+                    
+                    return light;
+                });
+                
+                return {
+                    articles: lightArticles,
+                    syncHash: this.calculateArticlesHash(),
+                    manuallyEdited: Array.from(this.manuallyEditedArticles),
+                    timestamp: Date.now(),
+                    version: '7.2-fixed-light',
+                    note: 'Lightweight cache - some images and content truncated'
+                };
+            }
+
+            // FIXED: Handle storage quota exceeded error
+            handleStorageQuotaError() {
+                console.error('💾 Storage quota exceeded!');
+                
+                // Try to clear some space
+                this.clearOldCacheData();
+                
+                // Try saving lightweight version
+                try {
+                    const lightCache = this.createLightweightCache(this.articles);
+                    localStorage.setItem(this.localCacheKey, JSON.stringify(lightCache));
+                    
+                    this.updateLocalCacheStatus('synced', '💾 Lightweight cache saved (storage full)');
+                    this.updateStatus('💾 Storage full - saved lightweight cache without large images', 'warning');
+                } catch (e) {
+                    this.updateStatus('❌ Storage full - cannot save cache. Try clearing browser data.', 'error');
+                    
+                    // Show help dialog
+                    alert(`Storage Error:\n\nYour browser's localStorage is full. To fix this:\n\n1. Clear browser data/cache\n2. Enable auto-save to OneDrive instead\n3. Use "Clear Cache" button to remove old data\n\nYour articles are still loaded in memory and can be saved to OneDrive.`);
+                }
+            }
+
+            // FIXED: Handle JSON serialization errors
+            handleSerializationError(error) {
+                console.error('💾 JSON serialization error:', error);
+                
+                // Try to identify problematic data
+                try {
+                    // Test serialization of main components
+                    JSON.stringify(this.articles.slice(0, 1)); // Test first article
+                    JSON.stringify(Array.from(this.manuallyEditedArticles)); // Test manually edited set
+                    
+                    this.updateStatus('❌ Data serialization error - some article data may be corrupted', 'error');
+                } catch (e) {
+                    console.error('💾 Specific serialization issue:', e);
+                    this.updateStatus('❌ Cannot serialize article data - please reload from OneDrive', 'error');
+                }
+            }
+
+            // FIXED: Clear old cache data to free space
+            clearOldCacheData() {
+                try {
+                    // Clear image cache
+                    localStorage.removeItem(this.cacheKey);
+                    
+                    // Clear other potential MyPocket data
+                    for (let i = localStorage.length - 1; i >= 0; i--) {
+                        const key = localStorage.key(i);
+                        if (key && key.startsWith('mypocket_') && key !== this.localCacheKey) {
+                            localStorage.removeItem(key);
+                            console.log(`Cleared old cache: ${key}`);
+                        }
+                    }
+                    
+                    console.log('💾 Cleared old cache data to free space');
+                } catch (error) {
+                    console.error('Error clearing old cache:', error);
                 }
             }
 
@@ -6295,13 +6473,39 @@ The fixed system now properly weights title/content over domain and prevents com
                 }
             }
 
-            // Show debug information
+            // Show debug information with enhanced cache details
             showDebugInfo() {
                 const cacheStats = this.getCacheStats();
                 const storedImages = this.articles.filter(a => a.cachedImage).length;
                 const aiEnhancedCount = this.articles.filter(a => a.aiEnhanced).length;
                 const highConfidenceCount = this.articles.filter(a => a.categoryScore >= 100).length;
                 const manuallyEditedCount = this.manuallyEditedArticles.size;
+
+                // FIXED: Check localStorage usage
+                let localStorageUsage = 'Unknown';
+                let localStorageDetails = '';
+                try {
+                    let totalSize = 0;
+                    let myPocketSize = 0;
+                    
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        const value = localStorage.getItem(key);
+                        const size = value ? value.length : 0;
+                        totalSize += size;
+                        
+                        if (key && key.startsWith('mypocket_')) {
+                            myPocketSize += size;
+                            localStorageDetails += `\n  • ${key}: ${Math.round(size / 1024)}KB`;
+                        }
+                    }
+                    
+                    const totalMB = Math.round(totalSize / 1024 / 1024 * 100) / 100;
+                    const myPocketMB = Math.round(myPocketSize / 1024 / 1024 * 100) / 100;
+                    localStorageUsage = `${totalMB}MB total, ${myPocketMB}MB MyPocket`;
+                } catch (e) {
+                    localStorageUsage = `Error: ${e.message}`;
+                }
 
                 const debugInfo = `
 MyPocket AI-Enhanced Web Reader Debug Info (FIXED):
@@ -6320,6 +6524,8 @@ MyPocket AI-Enhanced Web Reader Debug Info (FIXED):
 - Has unsaved changes: ${this.hasUnsavedChanges}
 - Manually edited articles: ${this.manuallyEditedArticles.size}
 - Last OneDrive sync hash: ${this.lastOneDriveSyncHash ? 'Set' : 'None'}
+- LocalStorage usage: ${localStorageUsage}
+- Cache details: ${localStorageDetails || '\n  • No MyPocket data found'}
 
 🧠 FIXED AI CATEGORIZATION:
 - Categories found: ${this.categories.size}
@@ -6358,11 +6564,24 @@ ${Array.from(this.categoryAnalytics.entries()).map(([cat, stats]) =>
                     `• ${cat}: ${stats.count} articles (${stats.aiEnhanced} AI-enhanced, avg score: ${stats.avgScore})`
                 ).join('\n')}
 
+🔧 CACHE TROUBLESHOOTING:
+- If getting cache errors, try "Clear Cache" button
+- LocalStorage limit is usually 5-10MB per domain
+- Large base64 images can fill storage quickly
+- Use OneDrive sync for large collections
+
 Version: 7.2-fixed - AI-Enhanced with FIXED Local Cache + Manual Editing + PKCE Security
 Build: Fixed Local Cache + Manual Category Editing + Cross-Device Images + Auto-Save
                 `;
 
-                alert(debugInfo);
+                // Enhanced debug with action buttons
+                const userAction = confirm(debugInfo + '\n\nDo you want to clear old cache data to free up space?');
+                
+                if (userAction) {
+                    this.clearOldCacheData();
+                    this.updateStatus('🗑️ Cleared old cache data to free up storage space', 'success');
+                }
+
                 console.log('🔧 FIXED DEBUG INFO:', {
                     articles: this.articles.length,
                     categories: Object.fromEntries(this.categories),
@@ -6372,7 +6591,8 @@ Build: Fixed Local Cache + Manual Category Editing + Cross-Device Images + Auto-
                     isRecategorizing: this.isRecategorizing,
                     autoSaveEnabled: this.autoSaveEnabled,
                     hasUnsavedChanges: this.hasUnsavedChanges,
-                    manuallyEdited: Array.from(this.manuallyEditedArticles)
+                    manuallyEdited: Array.from(this.manuallyEditedArticles),
+                    localStorageUsage: localStorageUsage
                 });
             }
 
