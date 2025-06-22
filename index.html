@@ -2290,6 +2290,95 @@
     </div>
 
     <script>
+        // 🔥 CRITICAL FIX #1: Memory Management System
+            // ADD this right after <script> tag and BEFORE class MyPocketWebReader
+
+            class MemoryManager {
+                constructor(maxMemoryMB = 50) {
+                    this.maxMemoryMB = maxMemoryMB;
+                    this.currentMemoryMB = 0;
+                    this.imageReferences = new Map(); // Track image memory usage
+                    console.log(`💾 Memory Manager initialized with ${maxMemoryMB}MB limit`);
+                }
+
+                estimateImageSize(base64String) {
+                    if (!base64String) return 0;
+                    // Base64 adds ~33% overhead, actual image data is roughly 75% of base64 length
+                    return (base64String.length * 0.75) / 1024; // Return KB
+                }
+
+                canAddImage(sizeKB) {
+                    const wouldExceed = (this.currentMemoryMB + sizeKB / 1024) > this.maxMemoryMB;
+                    if (wouldExceed) {
+                        console.warn(`⚠️ Would exceed memory limit: ${this.currentMemoryMB + sizeKB / 1024}MB > ${this.maxMemoryMB}MB`);
+                    }
+                    return !wouldExceed;
+                }
+
+                addImage(articleId, base64Data, url) {
+                    const sizeKB = this.estimateImageSize(base64Data);
+
+                    // Remove existing entry if updating
+                    this.removeImage(articleId);
+
+                    if (!this.canAddImage(sizeKB)) {
+                        console.log(`🧹 Cleaning up memory to make space for ${sizeKB}KB image`);
+                        this.cleanup();
+                    }
+
+                    if (this.canAddImage(sizeKB)) {
+                        this.imageReferences.set(articleId, {
+                            sizeKB: sizeKB,
+                            url: url,
+                            timestamp: Date.now()
+                        });
+                        this.currentMemoryMB += sizeKB / 1024;
+                        console.log(`✅ Added ${sizeKB}KB image. Total memory: ${this.currentMemoryMB.toFixed(1)}MB`);
+                        return true;
+                    }
+
+                    console.warn(`❌ Cannot add ${sizeKB}KB image - would exceed memory limit`);
+                    return false;
+                }
+
+                removeImage(articleId) {
+                    const existing = this.imageReferences.get(articleId);
+                    if (existing) {
+                        this.currentMemoryMB -= existing.sizeKB / 1024;
+                        this.imageReferences.delete(articleId);
+                        console.log(`🗑️ Removed ${existing.sizeKB}KB image. Remaining: ${this.currentMemoryMB.toFixed(1)}MB`);
+                        return true;
+                    }
+                    return false;
+                }
+
+                cleanup() {
+                    if (this.imageReferences.size === 0) return;
+
+                    // Remove oldest 25% of cached images
+                    const entries = Array.from(this.imageReferences.entries());
+                    const toRemove = Math.max(1, Math.floor(entries.length * 0.25));
+
+                    console.log(`🧹 Cleaning up ${toRemove} oldest images from memory`);
+
+                    entries
+                        .sort((a, b) => a[1].timestamp - b[1].timestamp) // Sort by oldest first
+                        .slice(0, toRemove)
+                        .forEach(([articleId, data]) => {
+                            this.removeImage(articleId);
+                        });
+                }
+
+                getMemoryStats() {
+                    return {
+                        currentMB: this.currentMemoryMB,
+                        maxMB: this.maxMemoryMB,
+                        usagePercent: Math.round((this.currentMemoryMB / this.maxMemoryMB) * 100),
+                        imageCount: this.imageReferences.size,
+                        canAddMore: this.currentMemoryMB < (this.maxMemoryMB * 0.9) // 90% threshold
+                    };
+                }
+            }
         console.log('🚀 MyPocket AI-Enhanced Web Reader script starting...');
 
         // Debug function available immediately
@@ -2337,7 +2426,7 @@
 
             return elements;
         };
-
+        
         class MyPocketWebReader {
             constructor() {
                 console.log('🏗️ Creating FIXED AI-Enhanced MyPocketWebReader instance...');
@@ -6541,6 +6630,14 @@ MyPocket AI-Enhanced Web Reader Debug Info (FIXED):
 - Failed images tracked: ${this.failedImages.size}
 - Store in backup: ${this.storeImagesInBackup}
 - Max image size: ${this.maxImageSizeKB}KB
+
+// ADD this after the IMAGE CACHE section in showDebugInfo:
+💾 MEMORY MANAGEMENT:
+- Current usage: ${this.memoryManager.getMemoryStats().currentMB.toFixed(1)}MB / ${this.memoryManager.getMemoryStats().maxMB}MB
+- Usage: ${this.memoryManager.getMemoryStats().usagePercent}%
+- Images in memory: ${this.memoryManager.getMemoryStats().imageCount}
+- Can add more: ${this.memoryManager.getMemoryStats().canAddMore ? 'Yes' : 'No'}
+- Status: ${this.memoryManager.getMemoryStats().usagePercent > 90 ? '⚠️ High usage' : '✅ Normal'}
 
 🔐 AUTHENTICATION:
 - Connected: ${!!this.accessToken}
